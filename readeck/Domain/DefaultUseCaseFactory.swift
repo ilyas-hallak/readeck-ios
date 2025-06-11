@@ -2,23 +2,49 @@ import Foundation
 
 protocol UseCaseFactory {
     func makeLoginUseCase() -> LoginUseCase
-    func makeGetBooksmarksUseCase() -> GetBooksmarksUseCase
+    func makeGetBookmarksUseCase() -> GetBookmarksUseCase
+    func makeGetBookmarkUseCase() -> GetBookmarkUseCase
+    func makeGetBookmarkArticleUseCase() -> GetBookmarkArticleUseCase
+    func makeSaveSettingsUseCase() -> SaveSettingsUseCase
+    func makeLoadSettingsUseCase() -> LoadSettingsUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
-    private let api: PAPI
+    private let tokenProvider = CoreDataTokenProvider()
+    private lazy var api: PAPI = API(tokenProvider: tokenProvider)
+    private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: SettingsRepository())
+    private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     
     static let shared = DefaultUseCaseFactory()
     
-    init(api: PAPI = API(baseURL: "https://keep.mnk.any64.de/api")) {
-        self.api = api
-    }
+    private init() {}
     
     func makeLoginUseCase() -> LoginUseCase {
-        LoginUseCase(repository: AuthRepository(api: api))
+        LoginUseCase(repository: authRepository)
     }
     
-    func makeGetBooksmarksUseCase() -> GetBooksmarksUseCase {
-        GetBooksmarksUseCase(repository: .init(api: api))
+    func makeGetBookmarksUseCase() -> GetBookmarksUseCase {
+        GetBookmarksUseCase(repository: bookmarksRepository)
+    }
+    
+    func makeGetBookmarkUseCase() -> GetBookmarkUseCase {
+        GetBookmarkUseCase(repository: bookmarksRepository)
+    }
+    
+    func makeGetBookmarkArticleUseCase() -> GetBookmarkArticleUseCase {
+        GetBookmarkArticleUseCase(repository: bookmarksRepository)
+    }
+    
+    func makeSaveSettingsUseCase() -> SaveSettingsUseCase {
+        SaveSettingsUseCase(authRepository: authRepository)
+    }
+    
+    func makeLoadSettingsUseCase() -> LoadSettingsUseCase {
+        LoadSettingsUseCase(authRepository: authRepository)
+    }
+    
+    // Nicht mehr nötig - Token wird automatisch geladen
+    func refreshConfiguration() async {
+        // Optional: Cache löschen falls nötig
     }
 }

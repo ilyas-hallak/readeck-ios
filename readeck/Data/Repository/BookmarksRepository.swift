@@ -1,7 +1,9 @@
 import Foundation
 
 protocol PBookmarksRepository {
-    func fetchBookmarks() async throws -> [Bookmark]
+    func fetchBookmarks(state: BookmarkState?) async throws -> [Bookmark]
+    func fetchBookmark(id: String) async throws -> BookmarkDetail
+    func fetchBookmarkArticle(id: String) async throws -> String
     func addBookmark(bookmark: Bookmark) async throws
     func removeBookmark(id: String) async throws
 }
@@ -13,12 +15,34 @@ class BookmarksRepository: PBookmarksRepository {
         self.api = api
     }
     
-    func fetchBookmarks() async throws -> [Bookmark] {
-        let bookmarkDtos = try await api.getBookmarks()
-        api.authToken = UserDefaults.standard.string(forKey: "token")
-        return bookmarkDtos.map { dto in
-            Bookmark(id: dto.id, title: dto.title, url: dto.url, createdAt: dto.createdAt)
-        }
+    func fetchBookmarks(state: BookmarkState? = nil) async throws -> [Bookmark] {
+        let bookmarkDtos = try await api.getBookmarks(state: state)
+        return bookmarkDtos.map { $0.toDomain() }
+    }
+    
+    func fetchBookmark(id: String) async throws -> BookmarkDetail {
+        let bookmarkDetailDto = try await api.getBookmark(id: id)
+        return BookmarkDetail(
+            id: bookmarkDetailDto.id,
+            title: bookmarkDetailDto.title,
+            url: bookmarkDetailDto.url,
+            description: bookmarkDetailDto.description,
+            siteName: bookmarkDetailDto.siteName,
+            authors: bookmarkDetailDto.authors,
+            created: bookmarkDetailDto.created,
+            updated: bookmarkDetailDto.updated,
+            wordCount: bookmarkDetailDto.wordCount,
+            readingTime: bookmarkDetailDto.readingTime,
+            hasArticle: bookmarkDetailDto.hasArticle,
+            isMarked: bookmarkDetailDto.isMarked,
+            isArchived: bookmarkDetailDto.isArchived,
+            thumbnailUrl: bookmarkDetailDto.resources.thumbnail?.src ?? "",
+            imageUrl: bookmarkDetailDto.resources.image?.src ?? ""
+        )
+    }
+    
+    func fetchBookmarkArticle(id: String) async throws -> String {
+        return try await api.getBookmarkArticle(id: id)
     }
     
     func addBookmark(bookmark: Bookmark) async throws {
@@ -30,9 +54,20 @@ class BookmarksRepository: PBookmarksRepository {
     }
 }
 
-struct Bookmark {
+struct BookmarkDetail {
     let id: String
     let title: String
     let url: String
-    let createdAt: String
+    let description: String
+    let siteName: String
+    let authors: [String]
+    let created: String
+    let updated: String
+    let wordCount: Int
+    let readingTime: Int?
+    let hasArticle: Bool
+    let isMarked: Bool
+    let isArchived: Bool
+    let thumbnailUrl: String
+    let imageUrl: String
 }

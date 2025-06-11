@@ -6,47 +6,84 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Anmeldedaten"), footer: SectionFooter()) {
+                Section("Server-Einstellungen") {
+                    TextField("Endpoint URL", text: $viewModel.endpoint)
+                        .textContentType(.URL)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                    
                     TextField("Benutzername", text: $viewModel.username)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
+                        .textContentType(.username)
+                        .autocapitalization(.none)
                     
                     SecureField("Passwort", text: $viewModel.password)
-                    
-                    TextField("Endpoint", text: $viewModel.endpoint)                        
-                        .keyboardType(.URL)
-                    
+                        .textContentType(.password)
+                }
+                
+                Section {
+                    Button {
+                        Task {
+                            await viewModel.saveSettings()
+                        }
+                    } label: {
+                        HStack {
+                            if viewModel.isSaving {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                            Text("Einstellungen speichern")
+                        }
+                    }
+                    .disabled(!viewModel.canSave || viewModel.isSaving)
+                }
+                
+                Section("Anmeldung") {
                     Button {
                         Task {
                             await viewModel.login()
                         }
                     } label: {
-                        if viewModel.isLoading {
-                            ProgressView()
-                        } else {
-                            Text("Speichern")
+                        HStack {
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                            Text(viewModel.isLoggedIn ? "Erneut anmelden" : "Anmelden")
                         }
                     }
-                    .disabled(viewModel.isLoginDisabled)
+                    .disabled(!viewModel.canLogin || viewModel.isLoading)
+                    
+                    if viewModel.isLoggedIn {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Erfolgreich angemeldet")
+                        }
+                    }
                 }
                 
-                
+                // Success/Error Messages
+                if let successMessage = viewModel.successMessage {
+                    Section {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text(successMessage)
+                        }
+                    }
+                }
             }
             .navigationTitle("Einstellungen")
-        }
-    }
-    
-    @ViewBuilder
-    private func SectionFooter() -> some View {
-        switch viewModel.state {
-        case .error:
-            Text("Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.")
-                .foregroundColor(.red)
-        case .success:
-            Text("Anmeldung erfolgreich!")
-                .foregroundColor(.green)
-        case .default:
-            Text("")                
+            .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
+                Button("OK", role: .cancel) {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                Text(viewModel.errorMessage ?? "")
+            }
+            .task {
+                await viewModel.loadSettings()
+            }
         }
     }
 }

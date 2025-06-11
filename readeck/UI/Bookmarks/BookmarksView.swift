@@ -2,15 +2,19 @@ import SwiftUI
 
 struct BookmarksView: View {
     @State private var viewModel = BookmarksViewModel()
+    let state: BookmarkState
     
     var body: some View {
         NavigationView {
             ZStack {
                 if viewModel.isLoading {
                     ProgressView()
-                } else {
+                } else {                    
+                    
                     List(viewModel.bookmarks, id: \.id) { bookmark in
-                        BookmarkRow(bookmark: bookmark)
+                        NavigationLink(destination: BookmarkDetailView(bookmarkId: bookmark.id)) {
+                            BookmarkCardView(bookmark: bookmark)
+                        }
                     }
                     .refreshable {
                         await viewModel.loadBookmarks()
@@ -26,14 +30,14 @@ struct BookmarksView: View {
                     }
                 }
             }
-            .navigationTitle("Meine Bookmarks")
+            .navigationTitle(state.displayName)
             .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
             .task {
-                await viewModel.loadBookmarks()
+                await viewModel.loadBookmarks(state: state)
             }
         }
     }
@@ -44,18 +48,20 @@ private struct BookmarkRow: View {
     let bookmark: Bookmark
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(bookmark.title)
-                .font(.headline)
-            
-            Text(bookmark.url)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(bookmark.createdAt)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+        NavigationLink(destination: BookmarkDetailView(bookmarkId: bookmark.id)) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(bookmark.title)
+                    .font(.headline)
+                
+                Text(bookmark.url)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(bookmark.created)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
     }
 }
