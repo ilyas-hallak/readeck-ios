@@ -13,6 +13,8 @@ protocol PAPI {
     func getBookmarks(state: BookmarkState?) async throws -> [BookmarkDto]
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
+    func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws
+    func deleteBookmark(id: String) async throws
 }
 
 class API: PAPI {
@@ -162,12 +164,76 @@ class API: PAPI {
             endpoint: "/api/bookmarks/\(id)/article"
         )
     }
+    
+    func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws {
+        let requestData = try JSONEncoder().encode(updateRequest)
+        
+        // PATCH Request ohne Response-Body erwarten
+        let baseURL = await self.baseURL
+        let fullEndpoint = "/api/bookmarks/\(id)"
+        
+        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        if let token = await tokenProvider.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        request.httpBody = requestData
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard 200...299 ~= httpResponse.statusCode else {
+            print("Server Error: \(httpResponse.statusCode)")
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+    }
+    
+    func deleteBookmark(id: String) async throws {
+        // DELETE Request ohne Response-Body erwarten
+        let baseURL = await self.baseURL
+        let fullEndpoint = "/api/bookmarks/\(id)"
+        
+        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        if let token = await tokenProvider.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard 200...299 ~= httpResponse.statusCode else {
+            print("Server Error: \(httpResponse.statusCode)")
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+    }
 }
 
 enum HTTPMethod: String {
     case GET = "GET"
     case POST = "POST"
     case PUT = "PUT"
+    case PATCH = "PATCH"
     case DELETE = "DELETE"
 }
 

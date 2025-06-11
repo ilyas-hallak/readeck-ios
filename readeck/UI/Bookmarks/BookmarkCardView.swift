@@ -2,6 +2,12 @@ import SwiftUI
 
 struct BookmarkCardView: View {
     let bookmark: Bookmark
+    let currentState: BookmarkState
+    let onArchive: (Bookmark) -> Void
+    let onDelete: (Bookmark) -> Void
+    let onToggleFavorite: (Bookmark) -> Void
+    
+    @State private var showingActionSheet = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -22,18 +28,33 @@ struct BookmarkCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading, spacing: 4) {
-                // Status-Badges
+                // Status-Badges und Action-Button
                 HStack {
-                    if bookmark.isMarked {
-                        Badge(text: "Markiert", color: .blue)
+                    HStack(spacing: 4) {
+                        if bookmark.isMarked {
+                            Badge(text: "Markiert", color: .blue)
+                        }
+                        if bookmark.isArchived {
+                            Badge(text: "Archiviert", color: .gray)
+                        }
+                        if bookmark.hasArticle {
+                            Badge(text: "Artikel", color: .green)
+                        }
                     }
-                    if bookmark.isArchived {
-                        Badge(text: "Archiviert", color: .gray)
-                    }
-                    if bookmark.hasArticle {
-                        Badge(text: "Artikel", color: .green)
-                    }
+                    
                     Spacer()
+                    
+                    // Action Menu Button
+                    Button(action: {
+                        showingActionSheet = true
+                    }) {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.secondary)
+                            .padding(8)
+                            .background(Color.gray.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 
                 // Titel
@@ -80,6 +101,36 @@ struct BookmarkCardView: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .confirmationDialog("Bookmark Aktionen", isPresented: $showingActionSheet) {
+            actionButtons
+        }
+    }
+    
+    private var actionButtons: some View {
+        Group {
+            // Favorit Toggle
+            Button(bookmark.isMarked ? "Favorit entfernen" : "Als Favorit markieren") {
+                onToggleFavorite(bookmark)
+            }
+            
+            // Archivieren/Dearchivieren basierend auf aktuellem State
+            if currentState == .archived {
+                Button("Aus Archiv entfernen") {
+                    onArchive(bookmark)
+                }
+            } else {
+                Button("Archivieren") {
+                    onArchive(bookmark)
+                }
+            }
+            
+            // Permanent löschen (immer verfügbar)
+            Button("Permanent löschen", role: .destructive) {
+                onDelete(bookmark)
+            }
+            
+            Button("Abbrechen", role: .cancel) { }
+        }
     }
     
     private var imageURL: URL? {

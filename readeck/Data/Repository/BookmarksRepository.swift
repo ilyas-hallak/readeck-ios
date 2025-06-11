@@ -4,8 +4,9 @@ protocol PBookmarksRepository {
     func fetchBookmarks(state: BookmarkState?) async throws -> [Bookmark]
     func fetchBookmark(id: String) async throws -> BookmarkDetail
     func fetchBookmarkArticle(id: String) async throws -> String
+    func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws
+    func deleteBookmark(id: String) async throws
     func addBookmark(bookmark: Bookmark) async throws
-    func removeBookmark(id: String) async throws
 }
 
 class BookmarksRepository: PBookmarksRepository {
@@ -49,8 +50,24 @@ class BookmarksRepository: PBookmarksRepository {
         // Implement logic to add a bookmark if needed
     }
     
-    func removeBookmark(id: String) async throws {
-        // Implement logic to remove a bookmark if needed   
+    func deleteBookmark(id: String) async throws {
+        try await api.deleteBookmark(id: id)
+    }
+    
+    func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws {
+        let dto = UpdateBookmarkRequestDto(
+            addLabels: updateRequest.addLabels,
+            isArchived: updateRequest.isArchived,
+            isDeleted: updateRequest.isDeleted,
+            isMarked: updateRequest.isMarked,
+            labels: updateRequest.labels,
+            readAnchor: updateRequest.readAnchor,
+            readProgress: updateRequest.readProgress,
+            removeLabels: updateRequest.removeLabels,
+            title: updateRequest.title
+        )
+        
+        try await api.updateBookmark(id: id, updateRequest: dto)
     }
 }
 

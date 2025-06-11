@@ -7,6 +7,8 @@ protocol UseCaseFactory {
     func makeGetBookmarkArticleUseCase() -> GetBookmarkArticleUseCase
     func makeSaveSettingsUseCase() -> SaveSettingsUseCase
     func makeLoadSettingsUseCase() -> LoadSettingsUseCase
+    func makeUpdateBookmarkUseCase() -> UpdateBookmarkUseCase
+    func makeDeleteBookmarkUseCase() -> DeleteBookmarkUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
@@ -42,9 +44,17 @@ class DefaultUseCaseFactory: UseCaseFactory {
     func makeLoadSettingsUseCase() -> LoadSettingsUseCase {
         LoadSettingsUseCase(authRepository: authRepository)
     }
+
+    func makeUpdateBookmarkUseCase() -> UpdateBookmarkUseCase {
+        return UpdateBookmarkUseCase(repository: bookmarksRepository)
+    }
     
     // Nicht mehr nötig - Token wird automatisch geladen
     func refreshConfiguration() async {
         // Optional: Cache löschen falls nötig
+    }
+
+    func makeDeleteBookmarkUseCase() -> DeleteBookmarkUseCase {
+        return DeleteBookmarkUseCase(repository: bookmarksRepository)
     }
 }

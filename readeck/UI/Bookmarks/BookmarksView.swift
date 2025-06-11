@@ -7,24 +7,48 @@ struct BookmarksView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                if viewModel.isLoading {
-                    ProgressView()
-                } else {                    
-                    
-                    List(viewModel.bookmarks, id: \.id) { bookmark in
-                        NavigationLink(destination: BookmarkDetailView(bookmarkId: bookmark.id)) {
-                            BookmarkCardView(bookmark: bookmark)
+                if viewModel.isLoading && viewModel.bookmarks.isEmpty {
+                    ProgressView("Lade \(state.displayName)...")
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(viewModel.bookmarks, id: \.id) { bookmark in
+                                NavigationLink(destination: BookmarkDetailView(bookmarkId: bookmark.id)) {
+                                    BookmarkCardView(
+                                        bookmark: bookmark,
+                                        currentState: state,
+                                        onArchive: { bookmark in
+                                            Task {
+                                                await viewModel.toggleArchive(bookmark: bookmark)
+                                            }
+                                        },
+                                        onDelete: { bookmark in
+                                            Task {
+                                                await viewModel.deleteBookmark(bookmark: bookmark)
+                                            }
+                                        },
+                                        onToggleFavorite: { bookmark in
+                                            Task {
+                                                await viewModel.toggleFavorite(bookmark: bookmark)
+                                            }
+                                        }
+                                    )
+                                    .padding(.bottom, 20)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
+                        .padding()
                     }
                     .refreshable {
-                        await viewModel.loadBookmarks()
+                        await viewModel.refreshBookmarks()
                     }
                     .overlay {
                         if viewModel.bookmarks.isEmpty && !viewModel.isLoading {
                             ContentUnavailableView(
                                 "Keine Bookmarks",
                                 systemImage: "bookmark",
-                                description: Text("Es wurden noch keine Bookmarks gespeichert.")
+                                description: Text("Es wurden noch keine Bookmarks in \(state.displayName.lowercased()) gefunden.")
                             )
                         }
                     }
@@ -32,36 +56,15 @@ struct BookmarksView: View {
             }
             .navigationTitle(state.displayName)
             .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {
+                    viewModel.errorMessage = nil
+                }
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
             .task {
                 await viewModel.loadBookmarks(state: state)
             }
-        }
-    }
-}
-
-// Unterkomponente für die Darstellung eines einzelnen Bookmarks
-private struct BookmarkRow: View {
-    let bookmark: Bookmark
-    
-    var body: some View {
-        NavigationLink(destination: BookmarkDetailView(bookmarkId: bookmark.id)) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(bookmark.title)
-                    .font(.headline)
-                
-                Text(bookmark.url)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text(bookmark.created)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.vertical, 4)
         }
     }
 }
