@@ -4,9 +4,9 @@ protocol PBookmarksRepository {
     func fetchBookmarks(state: BookmarkState?) async throws -> [Bookmark]
     func fetchBookmark(id: String) async throws -> BookmarkDetail
     func fetchBookmarkArticle(id: String) async throws -> String
+    func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String
     func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws
     func deleteBookmark(id: String) async throws
-    func addBookmark(bookmark: Bookmark) async throws
 }
 
 class BookmarksRepository: PBookmarksRepository {
@@ -46,8 +46,21 @@ class BookmarksRepository: PBookmarksRepository {
         return try await api.getBookmarkArticle(id: id)
     }
     
-    func addBookmark(bookmark: Bookmark) async throws {
-        // Implement logic to add a bookmark if needed
+    func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String {
+        let dto = CreateBookmarkRequestDto(
+            url: createRequest.url,
+            title: createRequest.title,
+            labels: createRequest.labels
+        )
+        
+        let response = try await api.createBookmark(createRequest: dto)
+        
+        // Prüfe ob die Erstellung erfolgreich war
+        guard response.status == 0 else {
+            throw CreateBookmarkError.serverError(response.message)
+        }
+        
+        return response.message
     }
     
     func deleteBookmark(id: String) async throws {
@@ -80,11 +93,31 @@ struct BookmarkDetail {
     let authors: [String]
     let created: String
     let updated: String
-    let wordCount: Int
+    let wordCount: Int?
     let readingTime: Int?
     let hasArticle: Bool
     let isMarked: Bool
     let isArchived: Bool
     let thumbnailUrl: String
     let imageUrl: String
+}
+
+enum CreateBookmarkError: Error, LocalizedError {
+    case invalidURL
+    case duplicateBookmark
+    case networkError
+    case serverError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Die eingegebene URL ist ungültig"
+        case .duplicateBookmark:
+            return "Dieser Bookmark existiert bereits"
+        case .networkError:
+            return "Netzwerkfehler beim Erstellen des Bookmarks"
+        case .serverError(let message):
+            return message // Verwende die Server-Nachricht direkt
+        }
+    }
 }

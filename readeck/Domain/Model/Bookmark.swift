@@ -13,7 +13,7 @@ struct Bookmark {
     let siteName: String
     let site: String
     let readingTime: Int?
-    let wordCount: Int
+    let wordCount: Int?
     let hasArticle: Bool
     let isArchived: Bool
     let isDeleted: Bool

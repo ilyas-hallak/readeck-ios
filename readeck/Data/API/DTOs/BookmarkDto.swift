@@ -13,7 +13,7 @@ struct BookmarkDto: Codable {
     let siteName: String
     let site: String
     let readingTime: Int?
-    let wordCount: Int
+    let wordCount: Int?
     let hasArticle: Bool
     let isArchived: Bool
     let isDeleted: Bool
@@ -62,3 +62,5 @@ struct ImageResourceDto: Codable {
     let height: Int
     let width: Int
 }
+
+

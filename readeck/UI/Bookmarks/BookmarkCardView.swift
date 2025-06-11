@@ -28,17 +28,17 @@ struct BookmarkCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading, spacing: 4) {
-                // Status-Badges und Action-Button
+                // Status-Icons und Action-Button
                 HStack {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         if bookmark.isMarked {
-                            Badge(text: "Markiert", color: .blue)
+                            IconBadge(systemName: "heart.fill", color: .red)
                         }
                         if bookmark.isArchived {
-                            Badge(text: "Archiviert", color: .gray)
+                            IconBadge(systemName: "archivebox.fill", color: .gray)
                         }
                         if bookmark.hasArticle {
-                            Badge(text: "Artikel", color: .green)
+                            IconBadge(systemName: "doc.text.fill", color: .green)
                         }
                     }
                     
@@ -146,18 +146,17 @@ struct BookmarkCardView: View {
     }
 }
 
-struct Badge: View {
-    let text: String
+struct IconBadge: View {
+    let systemName: String
     let color: Color
     
     var body: some View {
-        Text(text)
+        Image(systemName: systemName)
             .font(.caption2)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
+            .padding(6)
             .background(color.opacity(0.2))
             .foregroundColor(color)
-            .clipShape(Capsule())
+            .clipShape(Circle())
     }
 }
 

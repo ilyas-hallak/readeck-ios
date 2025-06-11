@@ -13,6 +13,7 @@ protocol PAPI {
     func getBookmarks(state: BookmarkState?) async throws -> [BookmarkDto]
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
+    func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto
     func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws
     func deleteBookmark(id: String) async throws
 }
@@ -162,6 +163,17 @@ class API: PAPI {
     func getBookmarkArticle(id: String) async throws -> String {
         return try await makeStringRequest(
             endpoint: "/api/bookmarks/\(id)/article"
+        )
+    }
+    
+    func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto {
+        let requestData = try JSONEncoder().encode(createRequest)
+        
+        return try await makeJSONRequest(
+            endpoint: "/api/bookmarks",
+            method: .POST,
+            body: requestData,
+            responseType: CreateBookmarkResponseDto.self
         )
     }
     

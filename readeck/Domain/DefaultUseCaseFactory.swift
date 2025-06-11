@@ -9,6 +9,7 @@ protocol UseCaseFactory {
     func makeLoadSettingsUseCase() -> LoadSettingsUseCase
     func makeUpdateBookmarkUseCase() -> UpdateBookmarkUseCase
     func makeDeleteBookmarkUseCase() -> DeleteBookmarkUseCase
+    func makeCreateBookmarkUseCase() -> CreateBookmarkUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
@@ -56,5 +57,9 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeDeleteBookmarkUseCase() -> DeleteBookmarkUseCase {
         return DeleteBookmarkUseCase(repository: bookmarksRepository)
+    }
+
+    func makeCreateBookmarkUseCase() -> CreateBookmarkUseCase {
+        return CreateBookmarkUseCase(repository: bookmarksRepository)
     }
 }

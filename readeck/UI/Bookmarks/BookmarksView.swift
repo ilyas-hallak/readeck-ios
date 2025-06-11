@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BookmarksView: View {
     @State private var viewModel = BookmarksViewModel()
+    @State private var showingAddBookmark = false
     let state: BookmarkState
     
     var body: some View {
@@ -55,6 +56,18 @@ struct BookmarksView: View {
                 }
             }
             .navigationTitle(state.displayName)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingAddBookmark = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAddBookmark) {
+                AddBookmarkView()
+            }
             .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK", role: .cancel) {
                     viewModel.errorMessage = nil
@@ -64,6 +77,14 @@ struct BookmarksView: View {
             }
             .task {
                 await viewModel.loadBookmarks(state: state)
+            }
+            .onChange(of: showingAddBookmark) { oldValue, newValue in
+                // Refresh bookmarks when sheet is dismissed
+                if oldValue && !newValue {
+                    Task {
+                        await viewModel.refreshBookmarks()
+                    }
+                }
             }
         }
     }
