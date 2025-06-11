@@ -1,0 +1,4 @@
+module _OpenAPIGeneratorCore {
+    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/_OpenAPIGeneratorCore.build/_OpenAPIGeneratorCore-Swift.h"
+    requires objc
+}

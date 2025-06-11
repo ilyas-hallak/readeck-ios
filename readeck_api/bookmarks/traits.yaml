@@ -1,0 +1,27 @@
+---
+# SPDX-FileCopyrightText: © 2024 Olivier Meunier <olivier@neokraft.net>
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+sortable:
+  parameters:
+    - name: sort
+      in: query
+      description: Sorting parameters
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - created
+            - -created
+            - domain
+            - -domain
+            - duration
+            - -duration
+            - published
+            - -published
+            - site
+            - -site
+            - title
+            - -title

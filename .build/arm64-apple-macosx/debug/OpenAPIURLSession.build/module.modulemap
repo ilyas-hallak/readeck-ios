@@ -1,0 +1,4 @@
+module OpenAPIURLSession {
+    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/OpenAPIURLSession.build/OpenAPIURLSession-Swift.h"
+    requires objc
+}

@@ -23,6 +23,19 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		5D45FA1D2DF865BE0048D5B8 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		5D45F9C82DF858680048D5B8 /* readeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = readeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +115,7 @@
 				5D45F9C42DF858680048D5B8 /* Sources */,
 				5D45F9C52DF858680048D5B8 /* Frameworks */,
 				5D45F9C62DF858680048D5B8 /* Resources */,
+				5D45FA1D2DF865BE0048D5B8 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

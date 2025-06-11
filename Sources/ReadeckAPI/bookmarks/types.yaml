@@ -1,0 +1,580 @@
+---
+# SPDX-FileCopyrightText: © 2023 Olivier Meunier <olivier@neokraft.net>
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+schemas:
+  bookmarkSummary:
+    type: object
+    properties:
+      id:
+        type: string
+        format: short-uid
+        description: Bookmark's ID
+      href:
+        type: string
+        format: uri
+        description: Link to the bookmark info
+      created:
+        type: string
+        format: date-time
+        description: Creation date
+      updated:
+        type: string
+        format: date-time
+        description: Last update
+      state:
+        type: integer
+        enum: [0, 1, 2]
+        description: |
+          Indicates the state of the bookmark.
+          - `0`: loaded
+          - `1`: error
+          - `2`: loading
+      loaded:
+        type: boolean
+        description: Becomes true when the bookmark is ready (regardless of its error state)
+      url:
+        type: string
+        format: uri
+        description: Bookmark's original URL
+      title:
+        type: string
+        description: Bookmark's title
+      site_name:
+        type: string
+        description: Bookmark's site name
+      site:
+        type: string
+        format: hostname
+        description: Bookmark's site host name
+      published:
+        type: [string]
+        format: date-time
+        nullable: true
+        description: Publication date. Can be `null` when unknown.
+      authors:
+        type: array
+        items:
+          type: string
+        description: Author list
+      lang:
+        type: string
+        description: Language Code
+      text_direction:
+        type: string
+        enum: [rtl, ltr]
+        description: |
+          Direction of the article's text. It can be empty when it's unknown.
+      document_type:
+        type: string
+        description: |
+          The bookmark document type. This is usualy the same value as `type` but it can differ
+          depending on the extraction process.
+      type:
+        type: string
+        enum: [article, photo, video]
+        description: |
+          The bookmark type. Unlike `document_type`, this can only be one of the 3 values.
+      has_article:
+        type: boolean
+        description: |
+          Indicates whether the bookmarks contains an article. Please not that
+          there can be an article on any type.
+      description:
+        type: string
+        description: |
+          Bookmark's short description, when it exists. It's always an unformatted text.
+      is_deleted:
+        type: boolean
+        description: |
+          `true` when the bookmark is scheduled for deletion.
+      is_marked:
+        type: boolean
+        description: |
+          `true` when the bookmark is in the favorites.
+      is_archived:
+        type: boolean
+        description: |
+          `true` when the bookmark is in the archives.
+      read_progress:
+        type: integer
+        minimum: 0
+        maximum: 100
+        description: Reading progress percentage.
+      labels:
+        type: array
+        items:
+          type: string
+        description: Bookmark's labels
+      word_count:
+        type: integer
+        minimum: 0
+        description: Number of words in the article, used to compute the reading time.
+      reading_time:
+        type: integer
+        minimum: 0
+        description: | 
+          Duration of the article, in minutes. Either the actual duration for a
+          video or a reading time based on the word count.
+      resources:
+        type: object
+        description: |
+          This contains a list of resources associated with the bookmark.
+          The only fields that are always present are `log` and `props`.
+          The `article` field is only present when a bookmark provides a
+          text content. Other image fields depend on what was found during
+          extraction.
+        properties:
+          article:
+            $ref: "#/components/schemas/bookmarkResource"
+            description: Link to the article, when there is one.
+          icon:
+            $ref: "#/components/schemas/bookmarkResourceImage"
+            description: Link and information for the site icon.
+          image:
+            $ref: "#/components/schemas/bookmarkResourceImage"
+            description: Link and information for the article image.
+          thumbnail:
+            $ref: "#/components/schemas/bookmarkResourceImage"
+            description: Link and information for the article thumbnail.
+          log:
+            $ref: "#/components/schemas/bookmarkResource"
+            description: Link to the extraction log.
+          props:
+            $ref: "#/components/schemas/bookmarkResource"
+            description: Link to the bookmark's extra properties.
+
+  bookmarkResource:
+    type: object
+    properties:
+      src:
+        type: string
+        format: uri
+        description: URL of the resource
+
+  bookmarkResourceImage:
+    allOf:
+      - $ref: "#/components/schemas/bookmarkResource"
+      - type: object
+        properties:
+          height:
+            type: integer
+            description: Image height
+          width:
+            type: integer
+            description: Image width
+
+  bookmarkInfo:
+    allOf:
+      - $ref: "#/components/schemas/bookmarkSummary"
+      - type: object
+        properties:
+          read_anchor:
+            type: string
+            description: CSS selector of the last seen element.
+          links:
+            description: |
+              This contains the list of all the links collected in the
+              retrieved article.
+            type: array
+            items:
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Link URI
+                domain:
+                  type: string
+                  format: hostname
+                  description: Link's domain
+                title:
+                  type: string
+                  description: Link's title
+                is_page:
+                  type: boolean
+                  description: |
+                    `true` when the destination is a web page
+                content_type:
+                  type: string
+                  description: MIME type of the destination
+
+  bookmarkCreate:
+    required: [url]
+    properties:
+      url:
+        type: string
+        description: URL to fetch
+      title:
+        type: string
+        description: Title of the bookmark
+      labels:
+        type: array
+        items:
+          type: string
+        description: List of labels to set to the bookmark
+
+  bookmarkUpdate:
+    properties:
+      title:
+        type: string
+        description: New bookmark's title
+      is_marked:
+        type: boolean
+        description: Favortie state
+      is_archived:
+        type: boolean
+        description: Archive state
+      is_deleted:
+        type: boolean
+        description: |
+          If `true`, schedules the bookmark for deletion, otherwise, cancels any scheduled deletion
+      read_progress:
+        type: integer
+        minimum: 0
+        maximum: 100
+        description: Reading progress percentage
+      read_anchor:
+        type: string
+        description: CSS selector of the last seen element
+      labels:
+        type: array
+        items:
+          type: string
+        description: Replaces the bookmark's labels
+      add_labels:
+        items:
+          type: string
+        description: Add the given labels to the bookmark
+      remove_labels:
+        items:
+          type: string
+        description: Remove the given labels from the bookmark
+
+  bookmarkUpdated:
+    required: [href, id, updated]
+    properties:
+      href:
+        type: string
+        format: uri
+        description: Bookmark URI
+      id:
+        type: string
+        format: short-uid
+        description: Bookmark's ID
+      updated:
+        type: string
+        format: date-time
+        description: Last update
+      title:
+        type: string
+        description: Bookmark Title
+      is_marked:
+        type: string
+        description: Favorite status
+      is_archived:
+        type: string
+        description: Archive status
+      is_deleted:
+        type: string
+        description: Scheduled deletion status
+      read_progress:
+        type: integer
+        minimum: 0
+        maximum: 100
+        description: Reading progress percentage
+      read_anchor:
+        type: string
+        description: CSS selector of the last seen element
+      labels:
+        type: string
+        description: New label list
+
+  bookmarkShareLink:
+    properties:
+      url:
+        type: string
+        description: Public URL
+      expires:
+        type: string
+        format: date-time
+        description: Expiration date
+      title:
+        type: string
+        description: Bookmark title
+      id:
+        type: string
+        description: Bookmark ID
+
+  bookmarkShareEmail:
+    properties:
+      email:
+        type: string
+        format: email
+      format:
+        type: string
+        enum: ["html", "epub"]
+    example:
+      email: alice@localhost
+      format: html
+
+  labelInfo:
+    properties:
+      name:
+        type: string
+        description: Label's name
+      count:
+        type: integer
+        description: Number of bookmarks with this label
+      href:
+        type: string
+        format: uri
+        description: Link to the label info
+      href_bookmarks:
+        type: string
+        format: uri
+        description: Link to the bookmarks with this label
+
+  labelUpdate:
+    properties:
+      name:
+        type: string
+        description: New label
+
+  annotationSummary:
+    properties:
+      id:
+        type: string
+        format: short-uid
+        description: Highlight ID
+      href:
+        type: string
+        format: uri
+        description: Link to the highlight
+      text:
+        type: string
+        description: Highlighted text
+      created:
+        type: string
+        format: date-time
+        description: Highlight creation date
+      bookmark_id:
+        type: string
+        format: short-uid
+        description: Bookmark ID
+      bookmark_href:
+        type: string
+        format: uri
+        description: Link to the bookmark information
+      bookmark_url:
+        type: string
+        format: uri
+        description: Original bookmark's URL
+      bookmark_title:
+        type: string
+        description: Title of the bookmark
+      bookmark_site_name:
+        type: string
+        description: Bookmark's site name
+
+  annotationInfo:
+    properties:
+      id:
+        type: string
+        format: short-uid
+        description: Highlight ID
+      start_selector:
+        type: string
+        description: Start element's XPath selector
+      start_offset:
+        type: integer
+        description: Start element's text offset
+      end_selector:
+        type: string
+        description: End element's XPath selector
+      end_offset:
+        type: integer
+        description: End element's text offset
+      created:
+        type: string
+        format: date-time
+        description: Highlight creation date
+      text:
+        type: string
+        description: Highlighted text
+
+  annotationCreate:
+    required: [start_selector, start_offset, end_selector, end_offset, color]
+    properties:
+      start_selector:
+        type: string
+        description: Start element's XPath selector
+      start_offset:
+        type: integer
+        description: Start element's text offset
+      end_selector:
+        type: string
+        description: End element's XPath selector
+      end_offset:
+        type: integer
+        description: End element's text offset
+      color:
+        type: color
+        description: Annotation color
+
+  annotationUpdate:
+    required: [color]
+    properties:
+      color:
+        type: color
+        description: Annotation color
+
+  collectionSummary:
+    properties:
+      updated:
+        type: string
+        format: date-time
+        description: Last update date
+      name:
+        type: string
+        description: Collection's name
+      is_pinned:
+        type: boolean
+        description: |
+          `true` when the collection is pinned
+      is_deleted:
+        type: boolean
+        description: Collection is scheduled for deletion
+      search:
+        type: string
+        description: Search string
+      title:
+        type: string
+        description: Title filter
+      author:
+        type: string
+        description: Author filter
+      site:
+        type: string
+        description: Site (name, host or domain) filter
+      type:
+        type: array
+        items:
+          type: string
+          enum: [article, photo, video]
+        description: Type filter
+      labels:
+        type: string
+        description: Label filter
+      read_status:
+        type: array
+        items:
+          type: string
+          enum: [unread, reading, read]
+        description: Read progress status
+      is_marked:
+        type: boolean
+        description: Favorite filter
+      is_archived:
+        type: boolean
+        description: Archive filter
+      range_start:
+        type: string
+        description: From date filter
+      range_end:
+        type: string
+        description: To date filter
+
+  collectionInfo:
+    allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+            format: short-uid
+            description: Collection ID
+          href:
+            type: string
+            format: uri
+            description: Collection URL
+          created:
+            type: string
+            format: date-time
+            description: Creation date
+      - $ref: "#/components/schemas/collectionSummary"
+
+
+  collectionCreate:
+    properties:
+      name:
+        type: string
+        description: Collection's name
+      is_pinned:
+        type: boolean
+        description: |
+          `true` when the collection is pinned
+      is_deleted:
+        type: boolean
+        description: Collection is scheduled for deletion
+      search:
+        type: string
+        description: Search string
+      title:
+        type: string
+        description: Title filter
+      author:
+        type: string
+        description: Author filter
+      site:
+        type: string
+        description: Site (name, host or domain) filter
+      type:
+        type: array
+        items:
+          type: string
+          enum: [article, photo, video]
+        description: Type filter
+      labels:
+        type: string
+        description: Label filter
+      read_status:
+        type: array
+        items:
+          type: string
+          enum: [unread, reading, read]
+        description: Read progress status
+      is_marked:
+        type: boolean
+        description: Favorite filter
+      is_archived:
+        type: boolean
+        description: Archive filter
+      range_start:
+        type: string
+        description: From date filter
+      range_end:
+        type: string
+        description: To date filter
+
+  collectionUpdate:
+    allOf:
+      - $ref: "#/components/schemas/collectionCreate"
+
+  wallabagImport:
+    properties:
+      url:
+        type: string
+        format: uri
+        description: Your Wallabag instance's URL
+      username:
+        type: string
+        description: Your Wallabag username
+      password:
+        type: string
+        description: Your Wallabag password
+      client_id:
+        type: string
+        description: API Client ID
+      client_secret:
+        type: string
+        description: API Client Secret

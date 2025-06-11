@@ -1,0 +1,145 @@
+---
+# SPDX-FileCopyrightText: © 2023 Olivier Meunier <olivier@neokraft.net>
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# GET /cookbook/extrack
+extract:
+  summary: Extract Link
+  description: |
+    **NOTE: Only available for user in the admin group.**
+
+    This route extracts a link and returns the extraction result.
+
+    You can pass an `Accept` header to the request, with one of the following values:
+
+    - `application/json` (default) returns a JSON response
+    - `text/html` returns an HTML response with all the media included as base64 encoded
+      URLs.
+
+  parameters:
+    - name: url
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uri
+      description: URL to extract
+
+  responses:
+    "200":
+      description: |
+        Extraction result.
+      content:
+        application/json:
+          schema:
+            properties:
+              url:
+                type: string
+                format: uri
+                description: The extracted URL
+              logs:
+                type: array
+                items:
+                  type: string
+                description: Extraction log
+              errors:
+                type: array
+                items:
+                  type: string
+                description: Extraction errors, if any
+              meta:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                description: |
+                  Contains the meta tags extracted from the page.
+              properties:
+                properties:
+                  json-ld:
+                    type: array
+                    items:
+                      type: object
+                    description: A list of JSON-LD documents retrieved during the extraction
+                  link:
+                    type: array
+                    items:
+                      type: object
+                      patternProperties:
+                        "^@.+":
+                          type: string
+                          description: Link attribute, always starting with `@`
+                    description: A list of all `link` tags retrieved during the extraction
+                  meta:
+                    type: array
+                    items:
+                      type: object
+                      patternProperties:
+                        "^@.+":
+                          type: string
+                          description: Meta attribute, always starting with `@`
+                    description: A list of all `meta` tags retrieved during the extraction
+              domain:
+                type: string
+                format: hostname
+                description: Page's domain name
+              title:
+                type: string
+                description: Page's title
+              authors:
+                type: "[string]"
+                description: Page's author list
+              site:
+                type: string
+                format: hostname
+                description: Page's site
+              site_name:
+                type: string
+                description: Page's site name
+              lang:
+                type: string
+                description: Language Code
+              text_direction:
+                type: string
+                enum: [rtl, ltr]
+                description: |
+                  Direction of the article's text. It can be empty when it's unknown.
+              date:
+                type: [string]
+                format: date-time
+                nullable: true
+                description: Publication date. Can be `null` when unknown.
+              document_type:
+                type: string
+                description: |
+                  The detected document type. The value is usualy `article`, `photo` or `video`
+                  but can vary, based on the extraction process.
+              description:
+                type: string
+                description: |
+                  Page's short description, when it exists. It's always an unformatted text.
+              html:
+                type: string
+                description: |
+                  The HTML content after processing.
+              embed:
+                type: string
+                description: |
+                  The oembed HTML fragment, when it exists. It usualy contains an iframe when
+                  extracting videos.
+              images:
+                properties:
+                  additionalProperties:
+                    properties:
+                      size:
+                        type: "[integer]"
+                        description: The image size in pixels
+                      encoded:
+                        type: string
+                        description: The base64 URI encoded image
+
+        text/html:
+          schema:
+            type: string

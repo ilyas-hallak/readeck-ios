@@ -1,0 +1,4 @@
+module Numerics {
+    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/Numerics.build/Numerics-Swift.h"
+    requires objc
+}

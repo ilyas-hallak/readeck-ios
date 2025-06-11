@@ -1,0 +1,4 @@
+module OpenAPIKitCore {
+    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/OpenAPIKitCore-tool.build/OpenAPIKitCore-Swift.h"
+    requires objc
+}

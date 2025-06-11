@@ -1,0 +1,4 @@
+module ArgumentParserToolInfo {
+    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/ArgumentParserToolInfo-tool.build/ArgumentParserToolInfo-Swift.h"
+    requires objc
+}

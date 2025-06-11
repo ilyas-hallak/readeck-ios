@@ -1,0 +1,143 @@
+---
+# SPDX-FileCopyrightText: © 2023 Olivier Meunier <olivier@neokraft.net>
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+schemas:
+  authenticationForm:
+    type: object
+    required: [username, password, application]
+    properties:
+      username:
+        type: string
+        description: Username
+      password:
+        type: string
+        description: Password
+      application:
+        type: string
+        description: Application name. This can be anything.
+      roles:
+        type: array
+        items:
+          type: string
+        description: A list of roles to restrict the new token access.
+    example:
+      username: alice
+      password: "1234"
+      application: api doc
+
+  authenticationResult:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Token ID
+      token:
+        type: string
+        description: Authentication token. This is the value you must store in your application.
+    example:
+      {
+        "id": "RFutYEAVM95DUDLUDnhbQm",
+        "token": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJqdxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+
+  userProfile:
+    type: object
+    properties:
+      provider:
+        description: Authentication provider information
+        type: object
+        properties:
+          id:
+            type: string
+            format: short-uid
+            description: Authentication provider ID (ie. the token ID)
+          name:
+            type: string
+            description: Provider name
+          application:
+            type: string
+            description: The registered application name
+          roles:
+            type: array
+            items:
+              type: string
+            description: Roles granted for this session
+          permissions:
+            type: array
+            items:
+              type: string
+            description: Permissions granted for this session
+      user:
+        description: User information
+        type: object
+        properties:
+          username:
+            type: string
+            description: Username
+          email:
+            type: string
+            format: email
+            description: User email
+          created:
+            type: string
+            format: date-time
+            description: Creation date
+          updated:
+            type: string
+            format: date-time
+            description: Last update date
+          settings:
+            description: User settings
+            type: object
+            properties:
+              debug_info:
+                type: boolean
+                description: Enable debug information
+              reader_settings:
+                description: Reader settings
+                type: object
+                properties:
+                  font:
+                    type: string
+                  font_size:
+                    type: integer
+                  line_height:
+                    type: integer
+    example:
+      {
+        "provider": {
+          "name": "bearer token",
+          "id": "X4bmnMRcnDhQtu5y33qzTp",
+          "application": "internal",
+          "roles": [
+            "scoped_bookmarks_r",
+            "scoped_bookmarks_w"
+          ],
+          "permissions": [
+            "api:bookmarks:collections:read",
+            "api:bookmarks:collections:write",
+            "api:bookmarks:export",
+            "api:bookmarks:read",
+            "api:bookmarks:write",
+            "api:opds:read",
+            "api:profile:read",
+            "api:profile:tokens:delete"
+          ]
+        },
+        "user": {
+          "username": "alice",
+          "email": "alice@localhost",
+          "created": "2023-08-27T13:32:11.704606963Z",
+          "updated": "2023-12-17T09:08:31.909723372Z",
+          "settings": {
+            "debug_info": false,
+            "reader_settings": {
+              "font": "serif",
+              "font_size": 3,
+              "line_height": 3
+            }
+          }
+        }
+      }
