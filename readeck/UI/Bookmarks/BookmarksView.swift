@@ -3,6 +3,8 @@ import SwiftUI
 struct BookmarksView: View {
     @State private var viewModel = BookmarksViewModel()
     @State private var showingAddBookmark = false
+    @State private var scrollOffset: CGFloat = 0
+    @State private var isScrolling = false
     let state: BookmarkState
     
     var body: some View {
@@ -55,16 +57,7 @@ struct BookmarksView: View {
                     }
                 }
             }
-            .navigationTitle(state.displayName)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddBookmark = true
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
+            .navigationTitle(state.displayName)            
             .sheet(isPresented: $showingAddBookmark) {
                 AddBookmarkView()
             }
@@ -87,5 +80,39 @@ struct BookmarksView: View {
                 }
             }
         }
+        .overlay {
+            // Animated FAB Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    
+                    Button(action: {
+                        showingAddBookmark = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(width: 56, height: 56)
+                            .background(Color.accentColor)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
+                            .scaleEffect(isScrolling ? 0.8 : 1.0)
+                            .opacity(isScrolling ? 0.7 : 1.0)
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                }
+            }
+        }
+    }
+}
+
+// Helper für Scroll-Tracking
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }

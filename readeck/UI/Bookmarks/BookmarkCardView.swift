@@ -73,16 +73,26 @@ struct BookmarkCardView: View {
                         .multilineTextAlignment(.leading)
                 }
                 
-                // Meta-Info
-                HStack {
-                    if !bookmark.siteName.isEmpty {
-                        Label(bookmark.siteName, systemImage: "globe")
+                // Meta-Info mit Datum
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        if !bookmark.siteName.isEmpty {
+                            Label(bookmark.siteName, systemImage: "globe")
+                        }
+                        
+                        Spacer()
+                        
+                        if let readingTime = bookmark.readingTime, readingTime > 0 {
+                            Label("\(readingTime) min", systemImage: "clock")
+                        }
                     }
                     
-                    Spacer()
-                    
-                    if let readingTime = bookmark.readingTime, readingTime > 0 {
-                        Label("\(readingTime) min", systemImage: "clock")
+                    // Veröffentlichungsdatum
+                    if let publishedDate = formattedPublishedDate {
+                        HStack {
+                            Label(publishedDate, systemImage: "calendar")
+                            Spacer()
+                        }
                     }
                 }
                 .font(.caption)
@@ -104,6 +114,74 @@ struct BookmarkCardView: View {
         .confirmationDialog("Bookmark Aktionen", isPresented: $showingActionSheet) {
             actionButtons
         }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var formattedPublishedDate: String? {
+        guard let published = bookmark.published, 
+              !published.isEmpty else { 
+            return nil 
+        }
+        
+        // Prüfe auf Unix Epoch (1970-01-01) - bedeutet "kein Datum"
+        if published.contains("1970-01-01") {
+            return nil
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        formatter.timeZone = TimeZone(abbreviation: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        guard let date = formatter.date(from: published) else {
+            // Fallback ohne Millisekunden
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+            guard let fallbackDate = formatter.date(from: published) else {
+                return nil
+            }
+            return formatDate(fallbackDate)
+        }
+        
+        return formatDate(date)
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // Heute
+        if calendar.isDateInToday(date) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return "Heute, \(formatter.string(from: date))"
+        }
+        
+        // Gestern
+        if calendar.isDateInYesterday(date) {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return "Gestern, \(formatter.string(from: date))"
+        }
+        
+        // Diese Woche
+        if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEEE, HH:mm"
+            return formatter.string(from: date)
+        }
+        
+        // Dieses Jahr
+        if calendar.isDate(date, equalTo: now, toGranularity: .year) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "d. MMM, HH:mm"
+            return formatter.string(from: date)
+        }
+        
+        // Andere Jahre
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d. MMM yyyy"
+        return formatter.string(from: date)
     }
     
     private var actionButtons: some View {
