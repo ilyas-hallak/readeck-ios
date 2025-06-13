@@ -4,6 +4,11 @@ struct AddBookmarkView: View {
     @State private var viewModel = AddBookmarkViewModel()
     @Environment(\.dismiss) private var dismiss
     
+    init(prefilledURL: String? = nil, prefilledTitle: String? = nil) {
+        viewModel.title = prefilledTitle ?? ""
+        viewModel.url = prefilledURL ?? ""
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -78,6 +83,7 @@ struct AddBookmarkView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Abbrechen") {
                         dismiss()
+                        viewModel.clearForm()
                     }
                 }
                 
@@ -85,6 +91,7 @@ struct AddBookmarkView: View {
                     Button("Speichern") {
                         Task {
                             await viewModel.createBookmark()
+                            dismiss()
                         }
                     }
                     .disabled(!viewModel.isValid || viewModel.isLoading)
@@ -125,6 +132,9 @@ struct AddBookmarkView: View {
         }
         .onAppear {
             viewModel.checkClipboard()
+        }
+        .onDisappear {
+            viewModel.clearForm()
         }
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 @Observable
 class BookmarksViewModel {
@@ -10,10 +11,40 @@ class BookmarksViewModel {
     var isLoading = false
     var errorMessage: String?
     var currentState: BookmarkState = .unread
-
+    
+    var showingAddBookmarkFromShare = false
+    var shareURL = ""
+    var shareTitle = ""
+    
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-
+        setupNotificationObserver()
+    }
+    
+    private func setupNotificationObserver() {
+        NotificationCenter.default
+            .publisher(for: NSNotification.Name("AddBookmarkFromShare"))
+            .sink { [weak self] notification in
+                self?.handleShareNotification(notification)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleShareNotification(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let url = userInfo["url"] as? String,
+              !url.isEmpty else {
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.shareURL = url
+            self.shareTitle = userInfo["title"] as? String ?? ""
+            self.showingAddBookmarkFromShare = true
+        }
+        
+        print("Received share notification - URL: \(url)")
     }
     
     @MainActor

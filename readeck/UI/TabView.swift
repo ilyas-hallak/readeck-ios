@@ -1,7 +1,7 @@
 import SwiftUI
 import Foundation
 
-enum BookmarkState: String, CaseIterable {
+enum BookmarkState: String, CaseIterable {    
     case unread = "unread"
     case favorite = "favorite"
     case archived = "archived"

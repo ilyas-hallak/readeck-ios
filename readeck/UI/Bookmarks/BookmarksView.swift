@@ -7,6 +7,10 @@ struct BookmarksView: View {
     @State private var isScrolling = false
     let state: BookmarkState
     
+    @State private var showingAddBookmarkFromShare = false
+    @State private var shareURL = ""
+    @State private var shareTitle = ""
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -59,7 +63,7 @@ struct BookmarksView: View {
             }
             .navigationTitle(state.displayName)            
             .sheet(isPresented: $showingAddBookmark) {
-                AddBookmarkView()
+                AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
             .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK", role: .cancel) {
@@ -78,6 +82,9 @@ struct BookmarksView: View {
                         await viewModel.refreshBookmarks()
                     }
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AddBookmarkFromShare"))) { notification in
+                handleShareNotification(notification)
             }
         }
         .overlay {
@@ -106,6 +113,20 @@ struct BookmarksView: View {
                 }
             }
         }
+    }
+    
+    private func handleShareNotification(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let url = userInfo["url"] as? String,
+              !url.isEmpty else {
+            return
+        }
+        
+        shareURL = url
+        shareTitle = userInfo["title"] as? String ?? ""
+        showingAddBookmark = true
+        
+        print("Received share notification - URL: \(url), Title: \(shareTitle)")
     }
 }
 

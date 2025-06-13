@@ -50,8 +50,7 @@ class AddBookmarkViewModel {
             // Optional: Zeige die Server-Nachricht an
             print("Server response: \(message)")
             
-            showSuccessAlert = true
-            
+            clearForm()            
         } catch let error as CreateBookmarkError {
             errorMessage = error.localizedDescription
             showErrorAlert = true
@@ -76,5 +75,11 @@ class AddBookmarkViewModel {
     func pasteFromClipboard() {
         guard let clipboardURL = clipboardURL else { return }
         url = clipboardURL
+    }
+    
+    func clearForm() {
+        url = ""
+        title = ""
+        labelsText = ""
     }
 }
