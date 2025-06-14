@@ -93,13 +93,24 @@ class SettingsViewModel {
     func loadSettings() async {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
-                endpoint = settings.endpoint
-                username = settings.username
-                password = settings.password
+                endpoint = settings.endpoint ?? ""
+                username = settings.username ?? ""
+                password = settings.password ?? ""
                 isLoggedIn = settings.isLoggedIn // Verwendet die neue Hilfsmethode
             }
         } catch {
             errorMessage = "Fehler beim Laden der Einstellungen"
+        }
+    }
+    
+    @MainActor
+    func saveFontSettings() async {
+        do {
+            try await saveSettingsUseCase.execute(
+                selectedFontFamily: selectedFontFamily, selectedFontSize: selectedFontSize
+            )
+        } catch {
+            errorMessage = "Fehler beim Speichern der Font-Einstellungen"
         }
     }
     
@@ -134,7 +145,8 @@ class SettingsViewModel {
         successMessage = nil
         
         do {
-            _ = try await loginUseCase.execute(username: username, password: password)
+            let user = try await loginUseCase.execute(username: username, password: password)
+                        
             isLoggedIn = true
             successMessage = "Erfolgreich angemeldet"
             

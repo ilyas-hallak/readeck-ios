@@ -36,8 +36,8 @@ struct BookmarkDetailView: View {
                     Divider()
                    
                     // Artikel-Inhalt mit WebView
-                    if !viewModel.articleContent.isEmpty {
-                        WebView(htmlContent: viewModel.articleContent) { height in
+                    if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
+                        WebView(htmlContent: viewModel.articleContent, settings: settings) { height in
                             webViewHeight = height
                         }
                         .frame(height: webViewHeight)

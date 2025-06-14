@@ -22,10 +22,6 @@ class AuthRepository: PAuthRepository {
     func getCurrentSettings() async throws -> Settings? {
         return try await settingsRepository.loadSettings()
     }
-    
-    func saveSettings(_ settings: Settings) async throws {
-        try await settingsRepository.saveSettings(settings)
-    }
 }
 
 struct User {

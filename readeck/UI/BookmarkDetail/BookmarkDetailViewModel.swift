@@ -4,6 +4,7 @@ import Foundation
 class BookmarkDetailViewModel {
     private let getBookmarkUseCase: GetBookmarkUseCase
     private let getBookmarkArticleUseCase: GetBookmarkArticleUseCase
+    private let loadSettingsUseCase: LoadSettingsUseCase
     
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -12,11 +13,13 @@ class BookmarkDetailViewModel {
     var isLoading = false
     var isLoadingArticle = false
     var errorMessage: String?
+    var settings: Settings?
     
     init() {
         let factory = DefaultUseCaseFactory.shared
         self.getBookmarkUseCase = factory.makeGetBookmarkUseCase()
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
+        self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
     
     @MainActor
@@ -25,6 +28,7 @@ class BookmarkDetailViewModel {
         errorMessage = nil
         
         do {
+            settings = try await loadSettingsUseCase.execute()            
             bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
             
             // Auch das vollständige Bookmark für readProgress laden

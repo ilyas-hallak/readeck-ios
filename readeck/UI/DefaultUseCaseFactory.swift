@@ -15,8 +15,9 @@ protocol UseCaseFactory {
 class DefaultUseCaseFactory: UseCaseFactory {
     private let tokenProvider = CoreDataTokenProvider()
     private lazy var api: PAPI = API(tokenProvider: tokenProvider)
-    private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: SettingsRepository())
+    private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
+    private let settingsRepository: PSettingsRepository = SettingsRepository()
     
     static let shared = DefaultUseCaseFactory()
     
@@ -39,7 +40,7 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
     
     func makeSaveSettingsUseCase() -> SaveSettingsUseCase {
-        SaveSettingsUseCase(authRepository: authRepository)
+        SaveSettingsUseCase(settingsRepository: settingsRepository)
     }
     
     func makeLoadSettingsUseCase() -> LoadSettingsUseCase {

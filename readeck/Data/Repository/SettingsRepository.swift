@@ -2,10 +2,13 @@ import Foundation
 import CoreData
 
 struct Settings {
-    let endpoint: String
-    let username: String
-    let password: String
-    var token: String?
+    var endpoint: String? = nil
+    var username: String? = nil
+    var password: String? = nil
+    var token: String? = nil
+    
+    var fontFamily: FontFamily? = nil
+    var fontSize: FontSize? = nil
     
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty
@@ -34,19 +37,35 @@ class SettingsRepository: PSettingsRepository {
                 do {
                     // Vorhandene Einstellungen löschen
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    let existingSettings = try context.fetch(fetchRequest)
-                    for setting in existingSettings {
-                        context.delete(setting)
+                    if let existingSettings = try context.fetch(fetchRequest).first {
+                        
+                        if let endpoint = settings.endpoint, !endpoint.isEmpty {
+                            existingSettings.endpoint = endpoint
+                        }
+                        
+                        if let username = settings.username, !username.isEmpty {
+                            existingSettings.username = username
+                        }
+                        
+                        if let password = settings.password, !password.isEmpty {
+                            existingSettings.password = password
+                        }
+                        
+                        if let token = settings.token, !token.isEmpty {
+                            existingSettings.token = token
+                        }
+                                                
+                        if let fontFamily = settings.fontFamily {
+                            existingSettings.fontFamily = fontFamily.rawValue
+                        }
+                        
+                        if let fontSize = settings.fontSize {
+                            existingSettings.fontSize = fontSize.rawValue
+                        }
+                        
+                        try context.save()
                     }
                     
-                    // Neue Einstellungen erstellen
-                    let settingEntity = SettingEntity(context: context)
-                    settingEntity.endpoint = settings.endpoint
-                    settingEntity.username = settings.username
-                    settingEntity.password = settings.password
-                    settingEntity.token = settings.token
-                    
-                    try context.save()
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
@@ -71,7 +90,9 @@ class SettingsRepository: PSettingsRepository {
                             endpoint: settingEntity.endpoint ?? "",
                             username: settingEntity.username ?? "",
                             password: settingEntity.password ?? "",
-                            token: settingEntity.token
+                            token: settingEntity.token,
+                            fontFamily: FontFamily(rawValue: settingEntity.fontFamily ?? FontFamily.system.rawValue),
+                            fontSize: FontSize(rawValue: settingEntity.fontSize ?? FontSize.medium.rawValue)
                         )
                         continuation.resume(returning: settings)
                     } else {

@@ -3,6 +3,7 @@ import WebKit
 
 struct WebView: UIViewRepresentable {
     let htmlContent: String
+    let settings: Settings
     let onHeightChange: (CGFloat) -> Void
     @Environment(\.colorScheme) private var colorScheme
     
@@ -26,6 +27,10 @@ struct WebView: UIViewRepresentable {
         
         let isDarkMode = colorScheme == .dark
         
+        // Font Settings aus Settings-Objekt
+        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontFamily = getFontFamily(from: settings.fontFamily ?? .serif)
+        
         let styledHTML = """
         <html>
         <head>
@@ -42,16 +47,20 @@ struct WebView: UIViewRepresentable {
                     --code-background: \(isDarkMode ? "#1C1C1E" : "#f5f5f5");
                     --code-text: \(isDarkMode ? "#ffffff" : "#000000");
                     --separator-color: \(isDarkMode ? "#38383A" : "#e0e0e0");
+                    
+                    /* Font Settings from Settings */
+                    --base-font-size: \(fontSize)px;
+                    --font-family: \(fontFamily);
                 }
                 
                 body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    font-family: var(--font-family);
                     line-height: 1.8;
                     margin: 0;
                     padding: 16px;
                     background-color: var(--background-color);
                     color: var(--text-color);
-                    font-size: 16px;
+                    font-size: var(--base-font-size);
                     -webkit-text-size-adjust: 100%;
                 }
                 
@@ -60,13 +69,19 @@ struct WebView: UIViewRepresentable {
                     margin-top: 24px;
                     margin-bottom: 12px;
                     font-weight: 600;
+                    font-family: var(--font-family);
                 }
-                h1 { font-size: 24px; }
-                h2 { font-size: 20px; }
-                h3 { font-size: 18px; }
+                h1 { font-size: calc(var(--base-font-size) * 1.5); }
+                h2 { font-size: calc(var(--base-font-size) * 1.25); }
+                h3 { font-size: calc(var(--base-font-size) * 1.125); }
+                h4 { font-size: var(--base-font-size); }
+                h5 { font-size: calc(var(--base-font-size) * 0.875); }
+                h6 { font-size: calc(var(--base-font-size) * 0.75); }
                 
                 p {
                     margin-bottom: 16px;
+                    font-family: var(--font-family);
+                    font-size: var(--base-font-size);
                 }
                 
                 img {
@@ -79,6 +94,7 @@ struct WebView: UIViewRepresentable {
                 a {
                     color: var(--link-color);
                     text-decoration: none;
+                    font-family: var(--font-family);
                 }
                 a:hover {
                     text-decoration: underline;
@@ -93,6 +109,8 @@ struct WebView: UIViewRepresentable {
                     background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)");
                     border-radius: 4px;
                     padding: 12px 16px;
+                    font-family: var(--font-family);
+                    font-size: var(--base-font-size);
                 }
                 
                 code {
@@ -100,8 +118,8 @@ struct WebView: UIViewRepresentable {
                     color: var(--code-text);
                     padding: 2px 6px;
                     border-radius: 4px;
-                    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
-                    font-size: 14px;
+                    font-family: \(settings.fontFamily == .monospace ? "var(--font-family)" : "'SF Mono', Menlo, Monaco, Consolas, monospace");
+                    font-size: calc(var(--base-font-size) * 0.875);
                 }
                 
                 pre {
@@ -110,14 +128,15 @@ struct WebView: UIViewRepresentable {
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
-                    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
-                    font-size: 14px;
+                    font-family: \(settings.fontFamily == .monospace ? "var(--font-family)" : "'SF Mono', Menlo, Monaco, Consolas, monospace");
+                    font-size: calc(var(--base-font-size) * 0.875);
                     border: 1px solid var(--separator-color);
                 }
                 
                 pre code {
                     background-color: transparent;
                     padding: 0;
+                    font-family: inherit;
                 }
                 
                 hr {
@@ -131,6 +150,8 @@ struct WebView: UIViewRepresentable {
                     width: 100%;
                     border-collapse: collapse;
                     margin: 16px 0;
+                    font-family: var(--font-family);
+                    font-size: var(--base-font-size);
                 }
                 
                 th, td {
@@ -147,6 +168,8 @@ struct WebView: UIViewRepresentable {
                 ul, ol {
                     padding-left: 20px;
                     margin-bottom: 16px;
+                    font-family: var(--font-family);
+                    font-size: var(--base-font-size);
                 }
                 
                 li {
@@ -210,6 +233,28 @@ struct WebView: UIViewRepresentable {
     
     func makeCoordinator() -> WebViewCoordinator {
         WebViewCoordinator()
+    }
+    
+    private func getFontSize(from fontSize: FontSize) -> Int {
+        switch fontSize {
+        case .small: return 14
+        case .medium: return 16
+        case .large: return 18
+        case .extraLarge: return 20
+        }
+    }
+
+    private func getFontFamily(from fontFamily: FontFamily) -> String {
+        switch fontFamily {
+        case .system:
+            return "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        case .serif:
+            return "'Times New Roman', Times, 'Liberation Serif', serif"
+        case .sansSerif:
+            return "'Helvetica Neue', Helvetica, Arial, sans-serif"
+        case .monospace:
+            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
+        }
     }
 }
 

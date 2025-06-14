@@ -1,19 +1,36 @@
 import Foundation
 
 class SaveSettingsUseCase {
-    private let authRepository: PAuthRepository
+    private let settingsRepository: PSettingsRepository
     
-    init(authRepository: PAuthRepository) {
-        self.authRepository = authRepository
+    init(settingsRepository: PSettingsRepository) {
+        self.settingsRepository = settingsRepository
     }
     
     func execute(endpoint: String, username: String, password: String) async throws {
-        let settings = Settings(
-            endpoint: endpoint,
-            username: username,
-            password: password,
-            token: nil
+        try await settingsRepository.saveSettings(
+            .init(
+                endpoint: endpoint,
+                username: username,
+                password: password
+            )
         )
-        try await authRepository.saveSettings(settings)
+    }
+    
+    func execute(token: String) async throws {
+        try await settingsRepository.saveSettings(
+            .init(
+                token: token
+            )
+        )
+    }
+    
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {
+        try await settingsRepository.saveSettings(
+            .init(
+                fontFamily: selectedFontFamily,
+                fontSize: selectedFontSize
+            )
+        )
     }
 }

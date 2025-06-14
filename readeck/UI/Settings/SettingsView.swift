@@ -37,6 +37,11 @@ struct SettingsView: View {
                     }
                     .disabled(!viewModel.canLogin || viewModel.isLoading)
                     
+                    Button("Debug-Anmeldung") {
+                        viewModel.username = "admin"
+                        viewModel.password = "Diggah123"
+                    }
+                    
                     if viewModel.isLoggedIn {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
@@ -69,7 +74,7 @@ struct SettingsView: View {
                         ForEach(Theme.allCases, id: \.self) { theme in
                             Text(theme.displayName).tag(theme)
                         }
-                    }
+                     }
                     
                     // Font Settings with Preview
                     VStack(alignment: .leading, spacing: 12) {
@@ -84,13 +89,23 @@ struct SettingsView: View {
                                     }
                                 }
                                 .pickerStyle(MenuPickerStyle())
+                                .onChange(of: viewModel.selectedFontFamily) {
+                                    Task {
+                                        await viewModel.saveFontSettings()
+                                    }
+                                }
                                 
                                 Picker("Schriftgröße", selection: $viewModel.selectedFontSize) {
                                     ForEach(FontSize.allCases, id: \.self) { size in
                                         Text(size.displayName).tag(size)
                                     }
-                                }
+                                }                                
                                 .pickerStyle(SegmentedPickerStyle())
+                                .onChange(of: viewModel.selectedFontSize) {
+                                    Task {
+                                        await viewModel.saveFontSettings()
+                                    }
+                                }
                             }
                             
                             Spacer()
