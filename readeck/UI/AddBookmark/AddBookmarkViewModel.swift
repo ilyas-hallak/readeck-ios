@@ -12,7 +12,7 @@ class AddBookmarkViewModel {
     var isLoading: Bool = false
     var errorMessage: String?
     var showErrorAlert: Bool = false
-    var showSuccessAlert: Bool = false
+    var hasCreated: Bool = false
     var clipboardURL: String?
     
     var isValid: Bool {
@@ -33,6 +33,7 @@ class AddBookmarkViewModel {
         
         isLoading = true
         errorMessage = nil
+        hasCreated = false
         
         do {
             let cleanURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -50,7 +51,8 @@ class AddBookmarkViewModel {
             // Optional: Zeige die Server-Nachricht an
             print("Server response: \(message)")
             
-            clearForm()            
+            clearForm()
+            hasCreated = true
         } catch let error as CreateBookmarkError {
             errorMessage = error.localizedDescription
             showErrorAlert = true

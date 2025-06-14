@@ -1,4 +1,5 @@
 import SwiftUI
+import SafariServices
 
 struct BookmarkDetailView: View {
     let bookmarkId: String
@@ -33,7 +34,7 @@ struct BookmarkDetailView: View {
                     metaInfoSection
                     
                     Divider()
-                    
+                   
                     // Artikel-Inhalt mit WebView
                     if !viewModel.articleContent.isEmpty {
                         WebView(htmlContent: viewModel.articleContent) { height in
@@ -76,9 +77,20 @@ struct BookmarkDetailView: View {
             
             HStack {
                 Image(systemName: "textformat")
-                Text("\(viewModel.bookmarkDetail.wordCount) Wörter • \(viewModel.bookmarkDetail.readingTime) min Lesezeit")
+                Text("\(viewModel.bookmarkDetail.wordCount ?? 0) Wörter • \(viewModel.bookmarkDetail.readingTime ?? 0) min Lesezeit")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+            }
+            
+            HStack {
+                Image(systemName: "safari")
+                Button(action: {
+                    SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)
+                }) {
+                    Text("Original Seite öffnen")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }

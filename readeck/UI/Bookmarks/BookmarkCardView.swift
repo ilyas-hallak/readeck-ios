@@ -1,4 +1,5 @@
 import SwiftUI
+import SafariServices
 
 struct BookmarkCardView: View {
     let bookmark: Bookmark
@@ -6,8 +7,6 @@ struct BookmarkCardView: View {
     let onArchive: (Bookmark) -> Void
     let onDelete: (Bookmark) -> Void
     let onToggleFavorite: (Bookmark) -> Void
-    
-    @State private var showingActionSheet = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -28,35 +27,6 @@ struct BookmarkCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading, spacing: 4) {
-                // Status-Icons und Action-Button
-                HStack {
-                    HStack(spacing: 6) {
-                        if bookmark.isMarked {
-                            IconBadge(systemName: "heart.fill", color: .red)
-                        }
-                        if bookmark.isArchived {
-                            IconBadge(systemName: "archivebox.fill", color: .gray)
-                        }
-                        if bookmark.hasArticle {
-                            IconBadge(systemName: "doc.text.fill", color: .green)
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    // Action Menu Button
-                    Button(action: {
-                        showingActionSheet = true
-                    }) {
-                        Image(systemName: "ellipsis")
-                            .foregroundColor(.secondary)
-                            .padding(8)
-                            .background(Color.gray.opacity(0.1))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                
                 // Titel
                 Text(bookmark.title)
                     .font(.headline)
@@ -64,35 +34,36 @@ struct BookmarkCardView: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
-                // Beschreibung
-                if !bookmark.description.isEmpty {
-                    Text(bookmark.description)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(3)
-                        .multilineTextAlignment(.leading)
-                }
-                
                 // Meta-Info mit Datum
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        if !bookmark.siteName.isEmpty {
-                            Label(bookmark.siteName, systemImage: "globe")
-                        }
                         
-                        Spacer()
+                        // Veröffentlichungsdatum
+                        if let publishedDate = formattedPublishedDate {
+                            HStack {
+                                Label(publishedDate, systemImage: "calendar")
+                                Spacer()
+                            }
+                            
+                            Spacer() // show spacer only if we have the published Date
+                        }
                         
                         if let readingTime = bookmark.readingTime, readingTime > 0 {
                             Label("\(readingTime) min", systemImage: "clock")
                         }
                     }
                     
-                    // Veröffentlichungsdatum
-                    if let publishedDate = formattedPublishedDate {
-                        HStack {
-                            Label(publishedDate, systemImage: "calendar")
-                            Spacer()
+                    HStack {
+                        if !bookmark.siteName.isEmpty {
+                            Label(bookmark.siteName, systemImage: "globe")
                         }
+                    }
+                    HStack {
+                        
+                        Label("Original Seite öffnen", systemImage: "safari")
+                            .onTapGesture {
+                                SafariUtil.openInSafari(url: bookmark.url)
+                            }
                     }
                 }
                 .font(.caption)
@@ -111,16 +82,42 @@ struct BookmarkCardView: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        .confirmationDialog("Bookmark Aktionen", isPresented: $showingActionSheet) {
-            actionButtons
+        // Swipe Actions hinzufügen
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            // Löschen (ganz rechts)
+            Button("Löschen", role: .destructive) {
+                onDelete(bookmark)
+            }
+            .tint(.red)
+            
+            // Favorit (rechts)
+            Button {
+                onToggleFavorite(bookmark)
+            } label: {
+                Label(bookmark.isMarked ? "Entfernen" : "Favorit", 
+                      systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill")
+            }
+            .tint(bookmark.isMarked ? .gray : .pink)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            // Archivieren (links)
+            Button {
+                onArchive(bookmark)
+            } label: {
+                if currentState == .archived {
+                    Label("Wiederherstellen", systemImage: "tray.and.arrow.up")
+                } else {
+                    Label("Archivieren", systemImage: "archivebox")
+                }
+            }
+            .tint(currentState == .archived ? .blue : .orange)
         }
     }
     
     // MARK: - Computed Properties
     
     private var formattedPublishedDate: String? {
-        guard let published = bookmark.published, 
-              !published.isEmpty else { 
+        guard let published = bookmark.published, !published.isEmpty else {
             return nil 
         }
         
@@ -182,33 +179,6 @@ struct BookmarkCardView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "d. MMM yyyy"
         return formatter.string(from: date)
-    }
-    
-    private var actionButtons: some View {
-        Group {
-            // Favorit Toggle
-            Button(bookmark.isMarked ? "Favorit entfernen" : "Als Favorit markieren") {
-                onToggleFavorite(bookmark)
-            }
-            
-            // Archivieren/Dearchivieren basierend auf aktuellem State
-            if currentState == .archived {
-                Button("Aus Archiv entfernen") {
-                    onArchive(bookmark)
-                }
-            } else {
-                Button("Archivieren") {
-                    onArchive(bookmark)
-                }
-            }
-            
-            // Permanent löschen (immer verfügbar)
-            Button("Permanent löschen", role: .destructive) {
-                onDelete(bookmark)
-            }
-            
-            Button("Abbrechen", role: .cancel) { }
-        }
     }
     
     private var imageURL: URL? {
