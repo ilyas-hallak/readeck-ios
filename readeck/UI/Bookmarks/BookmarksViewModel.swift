@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 @Observable
 class BookmarksViewModel {
@@ -17,6 +18,11 @@ class BookmarksViewModel {
     var shareTitle = ""
     
     private var cancellables = Set<AnyCancellable>()
+    
+    // Pagination-Variablen
+    private var limit = 20
+    private var offset = 0
+    private var hasMoreData = true
     
     init() {
         setupNotificationObserver()
@@ -52,12 +58,35 @@ class BookmarksViewModel {
         isLoading = true
         errorMessage = nil
         currentState = state
+        offset = 0 // Offset zurücksetzen
+        hasMoreData = true // Pagination zurücksetzen
 
         do {
-            bookmarks = try await getBooksmarksUseCase.execute(state: state)
+            let newBookmarks = try await getBooksmarksUseCase.execute(state: state, limit: limit, offset: offset)
+            bookmarks = newBookmarks
+            hasMoreData = newBookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
         } catch {
             errorMessage = "Fehler beim Laden der Bookmarks"
-             bookmarks = []
+            bookmarks = []
+        }
+        
+        isLoading = false
+    }
+
+    @MainActor
+    func loadMoreBookmarks() async {
+        guard !isLoading && hasMoreData else { return } // Verhindern, dass mehrfach geladen wird
+        
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            offset += limit // Offset erhöhen
+            let newBookmarks = try await getBooksmarksUseCase.execute(state: currentState, limit: limit, offset: offset)
+            bookmarks.append(contentsOf: newBookmarks) // Neue Bookmarks hinzufügen
+            hasMoreData = newBookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
+        } catch {
+            errorMessage = "Fehler beim Nachladen der Bookmarks"
         }
         
         isLoading = false

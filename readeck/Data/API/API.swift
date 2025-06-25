@@ -10,7 +10,7 @@ import Foundation
 protocol PAPI {
     var tokenProvider: TokenProvider { get }
     func login(username: String, password: String) async throws -> UserDto
-    func getBookmarks(state: BookmarkState?) async throws -> [BookmarkDto]
+    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?) async throws -> [BookmarkDto]
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto
@@ -131,19 +131,37 @@ class API: PAPI {
         return userDto
     }
     
-    func getBookmarks(state: BookmarkState? = nil) async throws -> [BookmarkDto] {
+    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil) async throws -> [BookmarkDto] {
         var endpoint = "/api/bookmarks"
+        var queryItems: [URLQueryItem] = []
         
         // Query-Parameter basierend auf State hinzufügen
         if let state = state {
             switch state {
             case .unread:
-                endpoint += "?is_archived=false&is_marked=false"
+                queryItems.append(URLQueryItem(name: "is_archived", value: "false"))
+                queryItems.append(URLQueryItem(name: "is_marked", value: "false"))
             case .favorite:
-                endpoint += "?is_marked=true"
+                queryItems.append(URLQueryItem(name: "is_marked", value: "true"))
             case .archived:
-                endpoint += "?is_archived=true"
+                queryItems.append(URLQueryItem(name: "is_archived", value: "true"))
             }
+        }
+        
+        if let limit = limit {
+            queryItems.append(URLQueryItem(name: "limit", value: "\(limit)"))
+        }
+        if let offset = offset {
+            queryItems.append(URLQueryItem(name: "offset", value: "\(offset)"))
+        }
+        
+        if let search = search {
+            queryItems.append(URLQueryItem(name: "search", value: search))
+        }
+        
+        if !queryItems.isEmpty {
+            let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
+            endpoint += "?\(queryString)"
         }
         
         return try await makeJSONRequest(

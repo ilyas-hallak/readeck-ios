@@ -1,7 +1,7 @@
 import Foundation
 
 protocol PBookmarksRepository {
-    func fetchBookmarks(state: BookmarkState?) async throws -> [Bookmark]
+    func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?) async throws -> [Bookmark]
     func fetchBookmark(id: String) async throws -> BookmarkDetail
     func fetchBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String
@@ -16,8 +16,8 @@ class BookmarksRepository: PBookmarksRepository {
         self.api = api
     }
     
-    func fetchBookmarks(state: BookmarkState? = nil) async throws -> [Bookmark] {
-        let bookmarkDtos = try await api.getBookmarks(state: state)
+    func fetchBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil) async throws -> [Bookmark] {
+        let bookmarkDtos = try await api.getBookmarks(state: state, limit: limit, offset: offset, search: search)
         return bookmarkDtos.map { $0.toDomain() }
     }
     

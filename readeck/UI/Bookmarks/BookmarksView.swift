@@ -40,6 +40,13 @@ struct BookmarksView: View {
                                         }
                                     }
                                 )
+                                .onAppear {
+                                    if bookmark.id == viewModel.bookmarks.last?.id {
+                                        Task {
+                                            await viewModel.loadMoreBookmarks()
+                                        }
+                                    }
+                                }
                             }
                             .buttonStyle(PlainButtonStyle())
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -60,6 +67,7 @@ struct BookmarksView: View {
                             )
                         }
                     }
+                    
                 }
                 
                 // FAB Button - nur bei "Ungelesen" anzeigen
