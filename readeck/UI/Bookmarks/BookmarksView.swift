@@ -1,3 +1,5 @@
+import Foundation
+import Combine
 import SwiftUI
 
 struct BookmarksView: View {
@@ -6,9 +8,14 @@ struct BookmarksView: View {
     @State private var selectedBookmarkId: String?
     let state: BookmarkState
     
+    @Binding var selectedBookmark: Bookmark?
+    
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
+    
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.verticalSizeClass) var verticalSizeClass
     
     var body: some View {
         NavigationStack {
@@ -19,7 +26,11 @@ struct BookmarksView: View {
                     List {
                         ForEach(viewModel.bookmarks, id: \.id) { bookmark in
                             Button(action: {
-                                selectedBookmarkId = bookmark.id
+                                if UIDevice.isPhone {
+                                    selectedBookmarkId = bookmark.id
+                                } else {
+                                    selectedBookmark = bookmark
+                                }
                             }) {
                                 BookmarkCardView(
                                     bookmark: bookmark,
@@ -105,13 +116,13 @@ struct BookmarksView: View {
             .sheet(isPresented: $showingAddBookmark) {
                 AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
-            .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
+            /*.alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK", role: .cancel) {
                     viewModel.errorMessage = nil
                 }
             } message: {
                 Text(viewModel.errorMessage ?? "")
-            }
+            }*/
             .task {
                 await viewModel.loadBookmarks(state: state)
             }
@@ -123,24 +134,8 @@ struct BookmarksView: View {
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AddBookmarkFromShare"))) { notification in
-                handleShareNotification(notification)
-            }
         }
-    }
-    
-    private func handleShareNotification(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let url = userInfo["url"] as? String,
-              !url.isEmpty else {
-            return
-        }
-        
-        shareURL = url
-        shareTitle = userInfo["title"] as? String ?? ""
-        showingAddBookmark = true
-        
-        print("Received share notification - URL: \(url), Title: \(shareTitle)")
+        .searchable(text: $viewModel.searchQuery, placement: .automatic, prompt: "Search...")        
     }
 }
 

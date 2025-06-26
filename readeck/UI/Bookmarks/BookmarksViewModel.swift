@@ -24,6 +24,14 @@ class BookmarksViewModel {
     private var offset = 0
     private var hasMoreData = true
     
+    var searchQuery: String = "" {
+        didSet {
+            throttleSearch()
+        }
+    }
+    
+    private var searchWorkItem: DispatchWorkItem?
+
     init() {
         setupNotificationObserver()
     }
@@ -53,6 +61,20 @@ class BookmarksViewModel {
         print("Received share notification - URL: \(url)")
     }
     
+    private func throttleSearch() {
+        searchWorkItem?.cancel()               
+        
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            Task {
+                await self.loadBookmarks(state: self.currentState)
+            }
+        }
+        
+        searchWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+    }
+    
     @MainActor
     func loadBookmarks(state: BookmarkState = .unread) async {
         isLoading = true
@@ -62,7 +84,12 @@ class BookmarksViewModel {
         hasMoreData = true // Pagination zurücksetzen
 
         do {
-            let newBookmarks = try await getBooksmarksUseCase.execute(state: state, limit: limit, offset: offset)
+            let newBookmarks = try await getBooksmarksUseCase.execute(
+                state: state,
+                limit: limit,
+                offset: offset,
+                search: searchQuery // Suche integrieren
+            )
             bookmarks = newBookmarks
             hasMoreData = newBookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
         } catch {

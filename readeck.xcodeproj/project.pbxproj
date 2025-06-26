@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5D2B7FB92DFA27A400EBDB2B /* URLShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */ = {isa = PBXBuildFile; productRef = 5D348CC22E0C9F4F00D0AF21 /* netfox */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -133,6 +134,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,6 +222,7 @@
 			);
 			name = readeck;
 			packageProductDependencies = (
+				5D348CC22E0C9F4F00D0AF21 /* netfox */,
 			);
 			productName = readeck;
 			productReference = 5D45F9C82DF858680048D5B8 /* readeck.app */;
@@ -306,6 +309,9 @@
 			);
 			mainGroup = 5D45F9BF2DF858680048D5B8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5D45F9C92DF858680048D5B8 /* Products */;
 			projectDirPath = "";
@@ -790,6 +796,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kasketis/netfox";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.21.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5D348CC22E0C9F4F00D0AF21 /* netfox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */;
+			productName = netfox;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5D45F9C02DF858680048D5B8 /* Project object */;
 }

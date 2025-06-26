@@ -3,4 +3,52 @@
    uuid = "FAD7B3BD-946C-4129-A614-E1823F18EC12"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B67988B8-09FD-461D-A5FA-7D72A318247D"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "readeck/UI/BookmarkDetail/BookmarkDetailViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "39"
+            endingLineNumber = "39"
+            landmarkName = "loadBookmarkDetail(id:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "B67988B8-09FD-461D-A5FA-7D72A318247D - 5494d64ddd867e19"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(6) suspend resume partial function for readeck.BookmarkDetailViewModel.loadBookmarkDetail(id: Swift.String) async -&gt; ()"
+                  moduleName = "readeck.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ilyashallak/Privat/Projects/readeck/readeck/UI/BookmarkDetail/BookmarkDetailViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "39"
+                  endingLineNumber = "39">
+               </Location>
+               <Location
+                  uuid = "B67988B8-09FD-461D-A5FA-7D72A318247D - ac249dd33728018"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(7) suspend resume partial function for readeck.BookmarkDetailViewModel.loadBookmarkDetail(id: Swift.String) async -&gt; ()"
+                  moduleName = "readeck.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ilyashallak/Privat/Projects/readeck/readeck/UI/BookmarkDetail/BookmarkDetailViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "39"
+                  endingLineNumber = "39">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

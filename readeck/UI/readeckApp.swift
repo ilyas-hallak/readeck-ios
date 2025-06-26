@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import netfox
 
 @main
 struct readeckApp: App {
@@ -17,6 +18,11 @@ struct readeckApp: App {
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .onOpenURL { url in
                     handleIncomingURL(url)
+                }
+                .onAppear {
+                    #if DEBUG
+                    NFX.sharedInstance().start()
+                    #endif
                 }
         }
     }
