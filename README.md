@@ -21,20 +21,6 @@ https://codeberg.org/readeck/readeck
 - Xcode 15.0+
 - Swift 5.9+
 
-## Installation
-
-1. Clone the repository:
-```bash
-git clone http://192.168.188.150:3000/admin/ReadKeep.git
-cd ReadKeep
-```
-
-2. Open `readeck.xcodeproj` in Xcode
-
-3. Build and run
-
-4. Configure your readeck server in the app's Settings tab
-
 ## Configuration
 
 After installing the app:
