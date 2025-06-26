@@ -1,4 +1,0 @@
-module OrderedCollections {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/OrderedCollections-tool.build/OrderedCollections-Swift.h"
-    requires objc
-}

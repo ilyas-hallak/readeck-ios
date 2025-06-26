@@ -1,4 +1,0 @@
-module InternalCollectionsUtilities {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/InternalCollectionsUtilities-tool.build/InternalCollectionsUtilities-Swift.h"
-    requires objc
-}

@@ -1,4 +1,0 @@
-module OpenAPIRuntime {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/OpenAPIRuntime.build/OpenAPIRuntime-Swift.h"
-    requires objc
-}

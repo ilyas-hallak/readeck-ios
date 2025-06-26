@@ -1,4 +1,0 @@
-module RealModule {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/RealModule.build/RealModule-Swift.h"
-    requires objc
-}

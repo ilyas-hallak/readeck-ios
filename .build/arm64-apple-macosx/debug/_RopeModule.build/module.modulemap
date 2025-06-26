@@ -1,4 +1,0 @@
-module _RopeModule {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/_RopeModule.build/_RopeModule-Swift.h"
-    requires objc
-}

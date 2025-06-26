@@ -1,4 +1,0 @@
-module ArgumentParser {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/ArgumentParser.build/ArgumentParser-Swift.h"
-    requires objc
-}

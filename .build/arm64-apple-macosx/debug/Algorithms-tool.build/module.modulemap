@@ -1,4 +1,0 @@
-module Algorithms {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/Algorithms-tool.build/Algorithms-Swift.h"
-    requires objc
-}

@@ -1,4 +1,0 @@
-module OpenAPIKit {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/OpenAPIKit-tool.build/OpenAPIKit-Swift.h"
-    requires objc
-}

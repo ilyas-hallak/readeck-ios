@@ -1,4 +1,0 @@
-module DequeModule {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/DequeModule.build/DequeModule-Swift.h"
-    requires objc
-}

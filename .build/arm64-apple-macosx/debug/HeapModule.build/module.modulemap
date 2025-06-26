@@ -1,4 +1,0 @@
-module HeapModule {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/HeapModule.build/HeapModule-Swift.h"
-    requires objc
-}

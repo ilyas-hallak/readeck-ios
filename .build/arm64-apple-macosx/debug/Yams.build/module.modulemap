@@ -1,4 +1,0 @@
-module Yams {
-    header "/Users/ilyashallak/Privat/Projects/readeck/.build/arm64-apple-macosx/debug/Yams.build/Yams-Swift.h"
-    requires objc
-}
