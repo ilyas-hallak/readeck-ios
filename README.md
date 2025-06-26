@@ -1,4 +1,7 @@
-# ReadKeep iOS
+# ReadKeep iOS App
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 
 A native iOS client for [readeck](https://readeck.org) bookmark management.
 
@@ -8,7 +11,6 @@ A native iOS client for [readeck](https://readeck.org) bookmark management.
 - Share Extension for adding URLs from Safari and other apps
 - Swipe actions for quick bookmark management
 - Native iOS design with Dark Mode support
-- Offline sync with Core Data
 
 ## Requirements
 
@@ -62,11 +64,8 @@ The app includes a Share Extension that allows adding bookmarks directly from Sa
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Planned Features
+- [ ] Offline sync with Core Data
 - [ ] Add support for tags
 - [ ] Add support for bookmark filtering and sorting options
 - [ ] Implement search functionality
@@ -78,3 +77,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Support for iPad multitasking
 - [ ] Implement a dark mode toggle in settings
 - [ ] Implement a tutorial for first-time users
+
