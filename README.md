@@ -1,6 +1,6 @@
 # ReadKeep iOS App
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 A native iOS client for [readeck](https://readeck.org) bookmark management.
