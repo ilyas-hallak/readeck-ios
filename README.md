@@ -5,6 +5,9 @@
 
 A native iOS client for [readeck](https://readeck.org) bookmark management.
 
+The official repository is on Codeberg:
+https://codeberg.org/readeck/readeck
+
 ## Features
 
 - Browse and manage bookmarks (Unread, Favorites, Archive)
