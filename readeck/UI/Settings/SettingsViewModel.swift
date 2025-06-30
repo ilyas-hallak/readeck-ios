@@ -59,7 +59,7 @@ class SettingsViewModel {
                 endpoint = settings.endpoint ?? ""
                 username = settings.username ?? ""
                 password = settings.password ?? ""
-                isLoggedIn = settings.isLoggedIn // Verwendet die neue Hilfsmethode
+                isLoggedIn = settings.isLoggedIn
             }
         } catch {
             errorMessage = "Fehler beim Laden der Einstellungen"

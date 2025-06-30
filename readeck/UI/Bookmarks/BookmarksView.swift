@@ -29,7 +29,15 @@ struct BookmarksView: View {
                                 if UIDevice.isPhone {
                                     selectedBookmarkId = bookmark.id
                                 } else {
-                                    selectedBookmark = bookmark
+                                    if selectedBookmark?.id == bookmark.id {
+                                        // Optional: Deselect, um erneutes Auswählen zu ermöglichen
+                                        selectedBookmark = nil
+                                        DispatchQueue.main.async {
+                                            selectedBookmark = bookmark
+                                        }
+                                    } else {
+                                        selectedBookmark = bookmark
+                                    }
                                 }
                             }) {
                                 BookmarkCardView(
@@ -116,6 +124,9 @@ struct BookmarksView: View {
             .sheet(isPresented: $showingAddBookmark) {
                 AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
+            .sheet(isPresented: $viewModel.showingAddBookmarkFromShare, content: {
+                AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
+            })
             /*.alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK", role: .cancel) {
                     viewModel.errorMessage = nil
@@ -123,8 +134,10 @@ struct BookmarksView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }*/
-            .task {
-                await viewModel.loadBookmarks(state: state)
+            .onAppear {
+                Task {
+                    await viewModel.loadBookmarks(state: state)
+                }
             }
             .onChange(of: showingAddBookmark) { oldValue, newValue in
                 // Refresh bookmarks when sheet is dismissed
