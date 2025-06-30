@@ -17,6 +17,17 @@ class SaveSettingsUseCase {
         )
     }
     
+    func execute(endpoint: String, username: String, password: String, hasFinishedSetup: Bool) async throws {
+        try await settingsRepository.saveSettings(
+            .init(
+                endpoint: endpoint,
+                username: username,
+                password: password,
+                hasFinishedSetup: hasFinishedSetup
+            )
+        )
+    }
+    
     func execute(token: String) async throws {
         try await settingsRepository.saveSettings(
             .init(

@@ -34,12 +34,13 @@ class TokenManager {
         }
     }
     
-    func clearToken() async {
+    func clearToken() async throws {
         do {
-            try await settingsRepository.clearSettings()
-            cachedSettings = nil
+            try await settingsRepository.saveToken("")
+            cachedSettings?.token = ""
         } catch {
-            print("Failed to clear settings: \(error)")
+            print("Failed to clear token: \(error)")
+            throw error
         }
     }
 }

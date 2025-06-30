@@ -142,15 +142,3 @@ struct NavigationSplitViewContainer: View {
 #Preview {
     MainTabView()
 }
-
-
-
-extension UIDevice {
-    static var isPad: Bool {
-        return UIDevice.current.userInterfaceIdiom == .pad
-    }
-    
-    static var isPhone: Bool {
-        return UIDevice.current.userInterfaceIdiom == .phone
-    }
-}

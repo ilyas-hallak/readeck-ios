@@ -11,20 +11,36 @@ import netfox
 @main
 struct readeckApp: App {
     let persistenceController = PersistenceController.shared
-
+    @State private var hasFinishedSetup = false
+    
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .onOpenURL { url in
-                    handleIncomingURL(url)
+            Group {
+                if hasFinishedSetup {
+                    MainTabView()
+                        .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                } else {
+                    SettingsContainerView()
                 }
-                .onAppear {
-                    #if DEBUG
-                    NFX.sharedInstance().start()
-                    #endif
-                }
+            }
+            .onOpenURL { url in
+                handleIncomingURL(url)
+            }
+            .onAppear {
+                #if DEBUG
+                NFX.sharedInstance().start()
+                #endif
+                loadSetupStatus()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetupStatusChanged"))) { _ in
+                loadSetupStatus()
+            }
         }
+    }
+    
+    private func loadSetupStatus() {
+        let settingsRepository = SettingsRepository()
+        hasFinishedSetup = settingsRepository.hasFinishedSetup
     }
 
     private func handleIncomingURL(_ url: URL) {

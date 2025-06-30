@@ -5,6 +5,7 @@ struct BookmarkDetailView: View {
     let bookmarkId: String
     @State private var viewModel = BookmarkDetailViewModel()
     @State private var webViewHeight: CGFloat = 300
+    @State private var showingFontSettings = false
     
     var body: some View {
         ScrollView {
@@ -51,6 +52,29 @@ struct BookmarkDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingFontSettings = true
+                }) {
+                    Image(systemName: "textformat")
+                }
+            }
+        }
+        .sheet(isPresented: $showingFontSettings) {
+            NavigationView {
+                FontSettingsView()
+                    .navigationTitle("Schrift-Einstellungen")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Fertig") {
+                                showingFontSettings = false
+                            }
+                        }
+                    }
+            }
+        }
         .task {
             await viewModel.loadBookmarkDetail(id: bookmarkId)
             await viewModel.loadArticleContent(id: bookmarkId)

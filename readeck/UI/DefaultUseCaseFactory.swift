@@ -10,6 +10,7 @@ protocol UseCaseFactory {
     func makeUpdateBookmarkUseCase() -> UpdateBookmarkUseCase
     func makeDeleteBookmarkUseCase() -> DeleteBookmarkUseCase
     func makeCreateBookmarkUseCase() -> CreateBookmarkUseCase
+    func makeLogoutUseCase() -> LogoutUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
@@ -49,6 +50,10 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeUpdateBookmarkUseCase() -> UpdateBookmarkUseCase {
         return UpdateBookmarkUseCase(repository: bookmarksRepository)
+    }
+    
+    func makeLogoutUseCase() -> LogoutUseCase {
+        return LogoutUseCase()
     }
     
     // Nicht mehr nötig - Token wird automatisch geladen

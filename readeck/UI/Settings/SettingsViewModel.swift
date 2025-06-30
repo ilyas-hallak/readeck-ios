@@ -4,9 +4,11 @@ import SwiftUI
 
 @Observable
 class SettingsViewModel {
-    private let loginUseCase: LoginUseCase
+    private let _loginUseCase: LoginUseCase
     private let saveSettingsUseCase: SaveSettingsUseCase
     private let loadSettingsUseCase: LoadSettingsUseCase
+    private let logoutUseCase: LogoutUseCase
+    private let settingsRepository: SettingsRepository
     
     // MARK: - Server Settings
     var endpoint = ""
@@ -37,56 +39,17 @@ class SettingsViewModel {
    var errorMessage: String?
    var successMessage: String?
     
-    // MARK: - Font Settings
-    var selectedFontFamily: FontFamily = .system
-    var selectedFontSize: FontSize = .medium
-
-    // MARK: - Computed Font Properties for Preview
-    var previewTitleFont: Font {
-        switch selectedFontFamily {
-        case .system:
-            return selectedFontSize.systemFont.weight(.semibold)
-        case .serif:
-            return Font.custom("Times New Roman", size: selectedFontSize.size).weight(.semibold)
-        case .sansSerif:
-            return Font.custom("Helvetica Neue", size: selectedFontSize.size).weight(.semibold)
-        case .monospace:
-            return Font.custom("Menlo", size: selectedFontSize.size).weight(.semibold)
-        }
-    }
-    
-    var previewBodyFont: Font {
-        switch selectedFontFamily {
-        case .system:
-            return selectedFontSize.systemFont
-        case .serif:
-            return Font.custom("Times New Roman", size: selectedFontSize.size)
-        case .sansSerif:
-            return Font.custom("Helvetica Neue", size: selectedFontSize.size)
-        case .monospace:
-            return Font.custom("Menlo", size: selectedFontSize.size)
-        }
-    }
-
-    var previewCaptionFont: Font {
-        let captionSize = selectedFontSize.size * 0.85
-        switch selectedFontFamily {
-        case .system:
-            return Font.system(size: captionSize)
-        case .serif:
-            return Font.custom("Times New Roman", size: captionSize)
-        case .sansSerif:
-            return Font.custom("Helvetica Neue", size: captionSize)
-        case .monospace:
-            return Font.custom("Menlo", size: captionSize)
-        }
-    }
-    
     init() {
         let factory = DefaultUseCaseFactory.shared
-        self.loginUseCase = factory.makeLoginUseCase()
+        self._loginUseCase = factory.makeLoginUseCase()
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+        self.logoutUseCase = factory.makeLogoutUseCase()
+        self.settingsRepository = SettingsRepository()
+    }
+    
+    var isSetupMode: Bool {
+        !settingsRepository.hasFinishedSetup
     }
     
     @MainActor
@@ -100,17 +63,6 @@ class SettingsViewModel {
             }
         } catch {
             errorMessage = "Fehler beim Laden der Einstellungen"
-        }
-    }
-    
-    @MainActor
-    func saveFontSettings() async {
-        do {
-            try await saveSettingsUseCase.execute(
-                selectedFontFamily: selectedFontFamily, selectedFontSize: selectedFontSize
-            )
-        } catch {
-            errorMessage = "Fehler beim Speichern der Font-Einstellungen"
         }
     }
     
@@ -145,10 +97,16 @@ class SettingsViewModel {
         successMessage = nil
         
         do {
-            let user = try await loginUseCase.execute(username: username, password: password)
+            let user = try await _loginUseCase.execute(username: username, password: password)
                         
             isLoggedIn = true
             successMessage = "Erfolgreich angemeldet"
+            
+            // Setup als abgeschlossen markieren
+            try await settingsRepository.saveHasFinishedSetup(true)
+            
+            // Notification senden, dass sich der Setup-Status geändert hat
+            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
             
             // Factory-Konfiguration aktualisieren (Token wird automatisch gespeichert)
             await DefaultUseCaseFactory.shared.refreshConfiguration()
@@ -164,13 +122,21 @@ class SettingsViewModel {
     @MainActor
     func logout() async {
         do {
-            // Hier könntest du eine Logout-UseCase hinzufügen
-            // try await logoutUseCase.execute()
+            try await logoutUseCase.execute()
             isLoggedIn = false
             successMessage = "Abgemeldet"
+            
+            // Notification senden, dass sich der Setup-Status geändert hat
+            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+            
         } catch {
             errorMessage = "Fehler beim Abmelden"
         }
+    }
+    
+    func clearMessages() {
+        errorMessage = nil
+        successMessage = nil
     }
     
     var canSave: Bool {
@@ -179,6 +145,11 @@ class SettingsViewModel {
     
     var canLogin: Bool {
         !username.isEmpty && !password.isEmpty
+    }
+    
+    // Expose loginUseCase for testing purposes
+    var loginUseCase: LoginUseCase {
+        return _loginUseCase
     }
 }
 
@@ -194,51 +165,5 @@ enum Theme: String, CaseIterable {
         case .light: return "Hell"
         case .dark: return "Dunkel"
         }
-    }
-}
-
-// MARK: - Font Enums
-enum FontFamily: String, CaseIterable {
-    case system = "system"
-    case serif = "serif"
-    case sansSerif = "sansSerif"
-    case monospace = "monospace"
-    
-    var displayName: String {
-        switch self {
-        case .system: return "System"
-        case .serif: return "Serif"
-        case .sansSerif: return "Sans Serif"
-        case .monospace: return "Monospace"
-        }
-    }
-}
-
-enum FontSize: String, CaseIterable {
-    case small = "small"
-    case medium = "medium"
-    case large = "large"
-    case extraLarge = "extraLarge"
-    
-    var displayName: String {
-        switch self {
-        case .small: return "S"
-        case .medium: return "M"
-        case .large: return "L"
-        case .extraLarge: return "XL"
-        }
-    }
-    
-    var size: CGFloat {
-        switch self {
-        case .small: return 14
-        case .medium: return 16
-        case .large: return 18
-        case .extraLarge: return 20
-        }
-    }
-    
-    var systemFont: Font {
-        return Font.system(size: size)
     }
 }
