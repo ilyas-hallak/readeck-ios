@@ -121,7 +121,6 @@ struct BookmarksView: View {
                 }
             }
         }
-        .navigationTitle(state.displayName)
         .navigationDestination(
             item: Binding<String?>(
                 get: { selectedBookmarkId },
@@ -148,14 +147,14 @@ struct BookmarksView: View {
         }*/
         .onAppear {
             Task {
-                await viewModel.loadBookmarks(state: state)
+                await viewModel.loadBookmarks(state: state, type: type)
             }
         }
         .onChange(of: showingAddBookmark) { oldValue, newValue in
             // Refresh bookmarks when sheet is dismissed
             if oldValue && !newValue {
                 Task {
-                    await viewModel.loadBookmarks(state: state)
+                    await viewModel.loadBookmarks(state: state, type: type)
                 }
             }
         }

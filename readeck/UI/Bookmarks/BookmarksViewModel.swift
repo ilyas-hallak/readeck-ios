@@ -12,7 +12,7 @@ class BookmarksViewModel {
     var isLoading = false
     var errorMessage: String?
     var currentState: BookmarkState = .unread
-    var type = [BookmarkType.article]
+    var currentType = [BookmarkType.article]
     
     var showingAddBookmarkFromShare = false
     var shareURL = ""
@@ -29,7 +29,7 @@ class BookmarksViewModel {
             throttleSearch()
         }
     }
-
+    
     init() {
         setupNotificationObserver()
     }
@@ -60,7 +60,7 @@ class BookmarksViewModel {
     }
     
     private func throttleSearch() {
-        searchWorkItem?.cancel()               
+        searchWorkItem?.cancel()
         
         let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
@@ -74,13 +74,15 @@ class BookmarksViewModel {
     }
     
     @MainActor
-    func loadBookmarks(state: BookmarkState = .unread) async {
+    func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article]) async {
         isLoading = true
         errorMessage = nil
         currentState = state
+        currentType = type
+        
         offset = 0 // Offset zurücksetzen
         hasMoreData = true // Pagination zurücksetzen
-
+        
         do {
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
@@ -98,17 +100,21 @@ class BookmarksViewModel {
         
         isLoading = false
     }
-
+    
     @MainActor
     func loadMoreBookmarks() async {
         guard !isLoading && hasMoreData else { return } // Verhindern, dass mehrfach geladen wird
         
         isLoading = true
         errorMessage = nil
-
+        
         do {
             offset += limit // Offset erhöhen
-            let newBookmarks = try await getBooksmarksUseCase.execute(state: currentState, limit: limit, offset: offset)
+            let newBookmarks = try await getBooksmarksUseCase.execute(
+                state: currentState,
+                limit: limit,
+                offset: offset,
+                type: currentType)
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks) // Neue Bookmarks hinzufügen
             hasMoreData = newBookmarks.bookmarks.count == limit // Prüfen,
         } catch {
@@ -117,7 +123,7 @@ class BookmarksViewModel {
         
         isLoading = false
     }
-
+    
     @MainActor
     func refreshBookmarks() async {
         await loadBookmarks(state: currentState)

@@ -22,18 +22,18 @@ struct PadSidebarView: View {
                             .foregroundColor(selectedTab == tab ? .accentColor : .primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
-                        
-                        if tab == .archived {
-                            Spacer(minLength: 20)
-                        }
-                        
-                        if tab == .pictures {
-                            Spacer(minLength: 30)
-                            Divider()
-                            Spacer()
-                        }
                     }
                     .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
+                    
+                    if tab == .archived {
+                        Spacer(minLength: 20)
+                    }
+                    
+                    if tab == .pictures {
+                        Spacer(minLength: 30)
+                        Divider()
+                        Spacer()
+                    }
                 }
             }
             .listStyle(.sidebar)
@@ -55,26 +55,29 @@ struct PadSidebarView: View {
                 .background(Color(.systemGroupedBackground))
             }
         } content: {
-            switch selectedTab {
-            case .all:
-                BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
-            case .unread:
-                BookmarksView(state: .unread, type: [.article], selectedBookmark: $selectedBookmark)
-            case .favorite:
-                BookmarksView(state: .favorite, type: [.article], selectedBookmark: $selectedBookmark)
-            case .archived:
-                BookmarksView(state: .archived, type: [.article], selectedBookmark: $selectedBookmark)
-            case .settings:
-                SettingsView()
-            case .article:
-                BookmarksView(state: .all, type: [.article], selectedBookmark: $selectedBookmark)
-            case .videos:
-                BookmarksView(state: .all, type: [.video], selectedBookmark: $selectedBookmark)
-            case .pictures:
-                BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark)
-            case .tags:
-                Text("Tags")
+            Group {
+                switch selectedTab {
+                case .all:
+                    BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
+                case .unread:
+                    BookmarksView(state: .unread, type: [.article], selectedBookmark: $selectedBookmark)
+                case .favorite:
+                    BookmarksView(state: .favorite, type: [.article], selectedBookmark: $selectedBookmark)
+                case .archived:
+                    BookmarksView(state: .archived, type: [.article], selectedBookmark: $selectedBookmark)
+                case .settings:
+                    SettingsView()
+                case .article:
+                    BookmarksView(state: .all, type: [.article], selectedBookmark: $selectedBookmark)
+                case .videos:
+                    BookmarksView(state: .all, type: [.video], selectedBookmark: $selectedBookmark)
+                case .pictures:
+                    BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark)
+                case .tags:
+                    Text("Tags")
+                }
             }
+            .navigationTitle(selectedTab.label)
         } detail: {
             if let bookmark = selectedBookmark, selectedTab != .settings {
                 BookmarkDetailView(bookmarkId: bookmark.id)
