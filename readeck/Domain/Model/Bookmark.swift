@@ -1,5 +1,13 @@
 import Foundation
 
+struct BookmarksPage {
+    var bookmarks: [Bookmark]
+    let currentPage: Int?
+    let totalCount: Int?
+    let totalPages: Int?
+    let links: [String]?
+}
+
 struct Bookmark {
     let id: String
     let title: String

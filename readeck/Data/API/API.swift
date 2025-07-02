@@ -10,7 +10,7 @@ import Foundation
 protocol PAPI {
     var tokenProvider: TokenProvider { get }
     func login(username: String, password: String) async throws -> UserDto
-    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?) async throws -> [BookmarkDto]
+    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?) async throws -> BookmarksPageDto
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto
@@ -35,6 +35,46 @@ class API: PAPI {
             cachedBaseURL = url
             return url
         }
+    }
+        
+    private func makeJSONRequestWithHeaders<T: Codable>(
+        endpoint: String,
+        method: HTTPMethod = .GET,
+        body: Data? = nil,
+        responseType: T.Type
+    ) async throws -> (T, HTTPURLResponse) {
+        let baseURL = await self.baseURL
+        let fullEndpoint = endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"
+        
+        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = await tokenProvider.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        if let body = body {
+            request.httpBody = body
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard 200...299 ~= httpResponse.statusCode else {
+            print("Server Error: \(httpResponse.statusCode) - \(String(data: data, encoding: .utf8) ?? "No response body")")
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        
+        let decoded = try JSONDecoder().decode(T.self, from: data)
+        return (decoded, httpResponse)
     }
     
     // Separate Methode für JSON-Requests
@@ -131,7 +171,8 @@ class API: PAPI {
         return userDto
     }
     
-    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil) async throws -> [BookmarkDto] {
+    // Angepasste getBookmarks-Methode mit Header-Auslesen
+    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil) async throws -> BookmarksPageDto {
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
         
@@ -145,6 +186,8 @@ class API: PAPI {
                 queryItems.append(URLQueryItem(name: "is_marked", value: "true"))
             case .archived:
                 queryItems.append(URLQueryItem(name: "is_archived", value: "true"))
+            case .all:
+                break
             }
         }
         
@@ -159,14 +202,36 @@ class API: PAPI {
             queryItems.append(URLQueryItem(name: "search", value: search))
         }
         
+        // type-Parameter als Array von BookmarkType
+        if let type = type, !type.isEmpty {
+            for t in type {
+                queryItems.append(URLQueryItem(name: "type", value: t.rawValue))
+            }
+        }
+        
         if !queryItems.isEmpty {
             let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
             endpoint += "?\(queryString)"
         }
         
-        return try await makeJSONRequest(
+        let (bookmarks, response) = try await makeJSONRequestWithHeaders(
             endpoint: endpoint,
             responseType: [BookmarkDto].self
+        )
+        
+        // Header auslesen
+        let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
+        let totalCount = response.value(forHTTPHeaderField: "Total-Count").flatMap { Int($0) }
+        let totalPages = response.value(forHTTPHeaderField: "Total-Pages").flatMap { Int($0) }
+        let linksHeader = response.value(forHTTPHeaderField: "Link")
+        let links = linksHeader?.components(separatedBy: ",")
+        
+        return BookmarksPageDto(
+            bookmarks: bookmarks,
+            currentPage: currentPage,
+            totalCount: totalCount,
+            totalPages: totalPages,
+            links: links
         )
     }
     

@@ -20,7 +20,8 @@ struct readeckApp: App {
                     MainTabView()
                         .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 } else {
-                    SettingsContainerView()
+                    SettingsServerView()
+                        .padding()
                 }
             }
             .onOpenURL { url in

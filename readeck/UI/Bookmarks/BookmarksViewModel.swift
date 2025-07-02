@@ -8,29 +8,27 @@ class BookmarksViewModel {
     private let updateBookmarkUseCase = DefaultUseCaseFactory.shared.makeUpdateBookmarkUseCase()
     private let deleteBookmarkUseCase = DefaultUseCaseFactory.shared.makeDeleteBookmarkUseCase()
     
-    var bookmarks: [Bookmark] = []
+    var bookmarks: BookmarksPage?
     var isLoading = false
     var errorMessage: String?
     var currentState: BookmarkState = .unread
+    var type = [BookmarkType.article]
     
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
     
     private var cancellables = Set<AnyCancellable>()
-    
-    // Pagination-Variablen
     private var limit = 20
     private var offset = 0
     private var hasMoreData = true
+    private var searchWorkItem: DispatchWorkItem?
     
     var searchQuery: String = "" {
         didSet {
             throttleSearch()
         }
     }
-    
-    private var searchWorkItem: DispatchWorkItem?
 
     init() {
         setupNotificationObserver()
@@ -88,13 +86,14 @@ class BookmarksViewModel {
                 state: state,
                 limit: limit,
                 offset: offset,
-                search: searchQuery // Suche integrieren
+                search: searchQuery,
+                type: type
             )
             bookmarks = newBookmarks
-            hasMoreData = newBookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
+            hasMoreData = newBookmarks.bookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
         } catch {
             errorMessage = "Fehler beim Laden der Bookmarks"
-            bookmarks = []
+            bookmarks = nil
         }
         
         isLoading = false
@@ -110,8 +109,8 @@ class BookmarksViewModel {
         do {
             offset += limit // Offset erhöhen
             let newBookmarks = try await getBooksmarksUseCase.execute(state: currentState, limit: limit, offset: offset)
-            bookmarks.append(contentsOf: newBookmarks) // Neue Bookmarks hinzufügen
-            hasMoreData = newBookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
+            bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks) // Neue Bookmarks hinzufügen
+            hasMoreData = newBookmarks.bookmarks.count == limit // Prüfen,
         } catch {
             errorMessage = "Fehler beim Nachladen der Bookmarks"
         }
@@ -163,7 +162,7 @@ class BookmarksViewModel {
             try await deleteBookmarkUseCase.execute(bookmarkId: bookmark.id)
             
             // Lokal aus der Liste entfernen (optimistische Update)
-            bookmarks.removeAll { $0.id == bookmark.id }
+            bookmarks?.bookmarks.removeAll { $0.id == bookmark.id }
             
         } catch {
             errorMessage = "Fehler beim Löschen des Bookmarks"

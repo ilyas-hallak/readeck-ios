@@ -9,7 +9,7 @@ import SwiftUI
 // SectionHeader wird jetzt zentral importiert
 
 struct SettingsGeneralView: View {
-    @State var viewModel: SettingsViewModel
+    @State private var viewModel = SettingsGeneralViewModel()
     
     var body: some View {
         VStack(spacing: 20) {
@@ -27,10 +27,6 @@ struct SettingsGeneralView: View {
                 }
                 .pickerStyle(.segmented)
             }
-            
-            // Font Settings
-            FontSettingsView()
-                .padding(.vertical, 4)
             
             // Sync Settings
             VStack(alignment: .leading, spacing: 12) {
@@ -118,26 +114,19 @@ struct SettingsGeneralView: View {
             // Save Button
             Button(action: {
                 Task {
-                    await viewModel.saveSettings()
+                    await viewModel.saveGeneralSettings()
                 }
             }) {
                 HStack {
-                    if viewModel.isSaving {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    }
-                    Text(viewModel.isSaving ? "Speichere..." : "Einstellungen speichern")
+                    Text("Einstellungen speichern")
                         .fontWeight(.semibold)
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(viewModel.canSave ? Color.accentColor : Color.gray)
+                .background(Color.accentColor)
                 .foregroundColor(.white)
                 .cornerRadius(10)
             }
-            .disabled(!viewModel.canSave || viewModel.isSaving)
-            
             // Messages
             if let successMessage = viewModel.successMessage {
                 HStack {
@@ -158,9 +147,27 @@ struct SettingsGeneralView: View {
                 }
             }
         }
+        .task {
+            await viewModel.loadGeneralSettings()
+        }
     }
 }
 
+enum Theme: String, CaseIterable {
+    case system = "system"
+    case light = "light"
+    case dark = "dark"
+    
+    var displayName: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Hell"
+        case .dark: return "Dunkel"
+        }
+    }
+}
+
+
 #Preview {
-    SettingsGeneralView(viewModel: SettingsViewModel())
+    SettingsGeneralView()
 } 

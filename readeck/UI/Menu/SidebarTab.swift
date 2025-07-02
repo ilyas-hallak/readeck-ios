@@ -1,3 +1,10 @@
+//
+//  SidebarTab.swift
+//  readeck
+//
+//  Created by Ilyas Hallak on 01.07.25.
+//
+
 enum SidebarTab: Hashable, CaseIterable, Identifiable {
     case all, unread, favorite, archived, settings, article, videos, pictures, tags
     

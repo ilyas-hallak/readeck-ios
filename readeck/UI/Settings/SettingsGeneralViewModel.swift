@@ -37,13 +37,13 @@ class SettingsGeneralViewModel {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 selectedTheme = .system // settings.theme ?? .system
-                autoSyncEnabled = settings.autoSyncEnabled
-                syncInterval = settings.syncInterval
-                enableReaderMode = settings.enableReaderMode
-                openExternalLinksInApp = settings.openExternalLinksInApp
-                autoMarkAsRead = settings.autoMarkAsRead
-                appVersion = settings.appVersion ?? "1.0.0"
-                developerName = settings.developerName ?? "Your Name"
+                autoSyncEnabled = false // settings.autoSyncEnabled
+                // syncInterval = settings.syncInterval
+                // enableReaderMode = settings.enableReaderMode
+                // openExternalLinksInApp = settings.openExternalLinksInApp
+                // autoMarkAsRead = settings.autoMarkAsRead
+                appVersion = "1.0.0"
+                developerName = "Ilyas Hallak"
             }
         } catch {
             errorMessage = "Fehler beim Laden der Einstellungen"
@@ -53,14 +53,17 @@ class SettingsGeneralViewModel {
     @MainActor
     func saveGeneralSettings() async {
         do {
-            try await saveSettingsUseCase.execute(
+            
+            // TODO: add save general settings here
+            /*try await saveSettingsUseCase.execute(
+                token: "",
                 selectedTheme: selectedTheme,
                 autoSyncEnabled: autoSyncEnabled,
                 syncInterval: syncInterval,
                 enableReaderMode: enableReaderMode,
                 openExternalLinksInApp: openExternalLinksInApp,
                 autoMarkAsRead: autoMarkAsRead
-            )
+            )*/
             successMessage = "Einstellungen gespeichert"
         } catch {
             errorMessage = "Fehler beim Speichern der Einstellungen"

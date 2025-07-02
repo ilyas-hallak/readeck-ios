@@ -7,13 +7,14 @@ class GetBookmarksUseCase {
         self.repository = repository
     }
     
-    func execute(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil) async throws -> [Bookmark] {
-        let allBookmarks = try await repository.fetchBookmarks(state: state, limit: limit, offset: offset, search: search)
+    func execute(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil) async throws -> BookmarksPage {
+        var allBookmarks = try await repository.fetchBookmarks(state: state, limit: limit, offset: offset, search: search, type: type)
         
-        // Fallback-Filterung auf Client-Seite falls API keine Query-Parameter unterstützt
         if let state = state {
-            return allBookmarks.filter { bookmark in
+            allBookmarks.bookmarks = allBookmarks.bookmarks.filter { bookmark in
                 switch state {
+                case .all:
+                    return true
                 case .unread:
                     return !bookmark.isArchived && !bookmark.isMarked
                 case .favorite:

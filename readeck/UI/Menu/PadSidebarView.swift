@@ -1,3 +1,12 @@
+//
+//  PadSidebarView.swift
+//  readeck
+//
+//  Created by Ilyas Hallak on 01.07.25.
+//
+
+import SwiftUI
+
 struct PadSidebarView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State private var selectedBookmark: Bookmark?
@@ -14,12 +23,14 @@ struct PadSidebarView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                         
-                        if tab == .article {
-                            Spacer()
+                        if tab == .archived {
+                            Spacer(minLength: 20)
                         }
                         
                         if tab == .pictures {
+                            Spacer(minLength: 30)
                             Divider()
+                            Spacer()
                         }
                     }
                     .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
@@ -46,21 +57,21 @@ struct PadSidebarView: View {
         } content: {
             switch selectedTab {
             case .all:
-                Text("All")
+                BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
             case .unread:
-                BookmarksView(state: .unread, selectedBookmark: $selectedBookmark)
+                BookmarksView(state: .unread, type: [.article], selectedBookmark: $selectedBookmark)
             case .favorite:
-                BookmarksView(state: .favorite, selectedBookmark: $selectedBookmark)
+                BookmarksView(state: .favorite, type: [.article], selectedBookmark: $selectedBookmark)
             case .archived:
-                BookmarksView(state: .archived, selectedBookmark: $selectedBookmark)
+                BookmarksView(state: .archived, type: [.article], selectedBookmark: $selectedBookmark)
             case .settings:
                 SettingsView()
             case .article:
-                Text("Artikel")
+                BookmarksView(state: .all, type: [.article], selectedBookmark: $selectedBookmark)
             case .videos:
-                Text("Videos")
+                BookmarksView(state: .all, type: [.video], selectedBookmark: $selectedBookmark)
             case .pictures:
-                Text("Pictures")
+                BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark)
             case .tags:
                 Text("Tags")
             }

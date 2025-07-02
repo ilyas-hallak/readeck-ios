@@ -1,5 +1,17 @@
 import Foundation
 
+extension BookmarksPageDto {
+    func toDomain() -> BookmarksPage {
+        return BookmarksPage(
+            bookmarks: bookmarks.map { $0.toDomain() },
+            currentPage: currentPage,
+            totalCount: totalCount,
+            totalPages: totalPages,
+            links: links
+        )
+    }
+}
+
 // MARK: - BookmarkDto to Domain Mapping
 extension BookmarkDto {
     func toDomain() -> Bookmark {

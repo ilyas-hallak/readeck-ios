@@ -62,6 +62,34 @@ class SettingsServerViewModel {
     }
     
     @MainActor
+    func testConnection() async -> Bool {
+        guard canLogin else {
+            errorMessage = "Bitte füllen Sie alle Felder aus."
+            return false
+        }
+                
+        clearMessages()
+        
+        do {
+            // Test login without saving settings
+            let _ = try await loginUseCase.execute(
+                username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+                password: password
+            )
+            
+            
+            successMessage = "Verbindung erfolgreich getestet! ✓"
+            
+            return true
+            
+        } catch {
+            errorMessage = "Verbindungstest fehlgeschlagen: \(error.localizedDescription)"
+        }
+        
+        return false
+    }
+    
+    @MainActor
     func login() async {
         isLoading = true
         errorMessage = nil

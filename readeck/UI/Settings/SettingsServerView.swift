@@ -9,7 +9,7 @@ import SwiftUI
 // SectionHeader wird jetzt zentral importiert
 
 struct SettingsServerView: View {
-    @State var viewModel = SettingsViewModel()
+    @State private var viewModel = SettingsServerViewModel()
     @State private var isTesting: Bool = false
     @State private var connectionTestSuccess: Bool = false
     @State private var showingLogoutAlert = false
@@ -188,38 +188,18 @@ struct SettingsServerView: View {
         } message: {
             Text("Möchten Sie sich wirklich abmelden? Dies wird alle Ihre Anmeldedaten löschen und Sie zur Einrichtung zurückführen.")
         }
+        .task {
+            await viewModel.loadServerSettings()
+        }
     }
     
     private func testConnection() async {
-        guard viewModel.canLogin else {
-            viewModel.errorMessage = "Bitte füllen Sie alle Felder aus."
-            return
-        }
-        
         isTesting = true
-        viewModel.clearMessages()
-        connectionTestSuccess = false
-        
-        do {
-            // Test login without saving settings
-            let _ = try await viewModel.loginUseCase.execute(
-                username: viewModel.username.trimmingCharacters(in: .whitespacesAndNewlines),
-                password: viewModel.password
-            )
-            
-            // If we get here, the test was successful
-            connectionTestSuccess = true
-            viewModel.successMessage = "Verbindung erfolgreich getestet! ✓"
-            
-        } catch {
-            connectionTestSuccess = false
-            viewModel.errorMessage = "Verbindungstest fehlgeschlagen: \(error.localizedDescription)"
-        }
-        
+        connectionTestSuccess = await viewModel.testConnection()
         isTesting = false
     }
 }
 
 #Preview {
-    SettingsServerView(viewModel: SettingsViewModel())
+    SettingsServerView()
 }

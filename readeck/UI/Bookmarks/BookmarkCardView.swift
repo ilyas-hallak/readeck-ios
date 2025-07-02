@@ -82,22 +82,11 @@ struct BookmarkCardView: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        // Swipe Actions hinzufügen
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            // Löschen (ganz rechts)
             Button("Löschen", role: .destructive) {
                 onDelete(bookmark)
             }
             .tint(.red)
-            
-            // Favorit (rechts)
-            Button {
-                onToggleFavorite(bookmark)
-            } label: {
-                Label(bookmark.isMarked ? "Entfernen" : "Favorit", 
-                      systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill")
-            }
-            .tint(bookmark.isMarked ? .gray : .pink)
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             // Archivieren (links)
@@ -111,6 +100,14 @@ struct BookmarkCardView: View {
                 }
             }
             .tint(currentState == .archived ? .blue : .orange)
+            
+            Button {
+                onToggleFavorite(bookmark)
+            } label: {
+                Label(bookmark.isMarked ? "Entfernen" : "Favorit",
+                      systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill")
+            }
+            .tint(bookmark.isMarked ? .gray : .pink)
         }
     }
     
@@ -121,7 +118,6 @@ struct BookmarkCardView: View {
             return nil 
         }
         
-        // Prüfe auf Unix Epoch (1970-01-01) - bedeutet "kein Datum"
         if published.contains("1970-01-01") {
             return nil
         }

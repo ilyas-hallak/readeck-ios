@@ -8,31 +8,23 @@
 import SwiftUI
 
 struct SettingsContainerView: View {
-    @State private var viewModel = SettingsViewModel()
-    
     var body: some View {
-        NavigationView {
-            ScrollView {
-                LazyVStack(spacing: 20) {
-                    // Server-Card immer anzeigen
-                    SettingsServerView(viewModel: viewModel)
-                        .cardStyle()
-                    
-                    // Allgemeine Einstellungen nur im normalen Modus anzeigen
-                    if !viewModel.isSetupMode {
-                        SettingsGeneralView(viewModel: viewModel)
-                            .cardStyle()
-                    }
-                }
-                .padding()
-                .background(Color(.systemGroupedBackground))
+        ScrollView {
+            LazyVStack(spacing: 20) {
+                SettingsServerView()
+                    .cardStyle()
+                
+                FontSettingsView()
+                    .cardStyle()
+                
+                SettingsGeneralView()
+                    .cardStyle()
             }
-            .navigationTitle("Einstellungen")
-            .navigationBarTitleDisplayMode(.large)
+            .padding()
+            .background(Color(.systemGroupedBackground))
         }
-        .task {
-            await viewModel.loadSettings()
-        }
+        .navigationTitle("Einstellungen")
+        .navigationBarTitleDisplayMode(.large)
     }
 }
 
