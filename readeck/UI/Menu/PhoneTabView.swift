@@ -8,38 +8,70 @@
 import SwiftUI
 
 struct PhoneTabView: View {
+    private let mainTabs: [SidebarTab] = [.all, .unread, .favorite, .archived]
+    private let moreTabs: [SidebarTab] = [.article, .videos, .pictures, .tags, .settings]
+    
+    @State private var selectedMoreTab: SidebarTab? = nil
+    @State private var selectedTabIndex: Int = 0
+    
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTabIndex) {
+            ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
+                NavigationStack {
+                    tabView(for: tab)
+                }
+                .tabItem {
+                    Label(tab.label, systemImage: tab.systemImage)
+                }
+                .tag(idx)
+            }
             
             NavigationStack {
-                BookmarksView(state: .unread, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
+                List(moreTabs, id: \.self, selection: $selectedMoreTab) { tab in
+                    NavigationLink(tag: tab, selection: $selectedMoreTab) {
+                        tabView(for: tab)
+                            .navigationTitle(tab.label)
+                    } label: {
+                        Label(tab.label, systemImage: tab.systemImage)
+                    }
+                }
+                .navigationTitle("Mehr")
             }
             .tabItem {
-                Label("Alle", systemImage: "list.bullet")
+                Label("Mehr", systemImage: "ellipsis")
             }
-            
-            NavigationStack {
-                BookmarksView(state: .unread, type: [.article], selectedBookmark: .constant(nil))
+            .tag(mainTabs.count)
+            .onAppear {
+                // Wenn der Mehr-Tab aktiv wird und wir in einer Detailansicht sind, zurücksetzen
+                if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
+                    selectedMoreTab = nil
+                }
             }
-            .tabItem {
-                Label("Ungelesen", systemImage: "house")
-            }
-            
-            BookmarksView(state: .favorite, type: [.article], selectedBookmark: .constant(nil))
-                .tabItem {
-                    Label("Favoriten", systemImage: "heart")
-                }
-            
-            BookmarksView(state: .archived, type: [.article], selectedBookmark: .constant(nil))
-                .tabItem {
-                    Label("Archiv", systemImage: "archivebox")
-                }
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
         }
         .accentColor(.accentColor)
+    }
+    
+    @ViewBuilder
+    private func tabView(for tab: SidebarTab) -> some View {
+        switch tab {
+        case .all:
+            BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
+        case .unread:
+            BookmarksView(state: .unread, type: [.article], selectedBookmark: .constant(nil))
+        case .favorite:
+            BookmarksView(state: .favorite, type: [.article], selectedBookmark: .constant(nil))
+        case .archived:
+            BookmarksView(state: .archived, type: [.article], selectedBookmark: .constant(nil))
+        case .settings:
+            SettingsView()
+        case .article:
+            BookmarksView(state: .all, type: [.article], selectedBookmark: .constant(nil))
+        case .videos:
+            BookmarksView(state: .all, type: [.video], selectedBookmark: .constant(nil))
+        case .pictures:
+            BookmarksView(state: .all, type: [.photo], selectedBookmark: .constant(nil))
+        case .tags:
+            Text("Tags")
+        }
     }
 }
