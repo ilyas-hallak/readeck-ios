@@ -23,3 +23,10 @@ class SafariUtil {
         }
     }
 }
+
+struct URLUtil {
+    static func extractDomain(from urlString: String) -> String? {
+        guard let url = URL(string: urlString), let host = url.host else { return nil }
+        return host.replacingOccurrences(of: "www.", with: "")
+    }
+}

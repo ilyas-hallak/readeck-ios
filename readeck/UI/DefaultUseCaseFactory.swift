@@ -11,6 +11,8 @@ protocol UseCaseFactory {
     func makeDeleteBookmarkUseCase() -> DeleteBookmarkUseCase
     func makeCreateBookmarkUseCase() -> CreateBookmarkUseCase
     func makeLogoutUseCase() -> LogoutUseCase
+    func makeSearchBookmarksUseCase() -> SearchBookmarksUseCase
+    func makeSaveServerSettingsUseCase() -> SaveServerSettingsUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
@@ -67,5 +69,13 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeCreateBookmarkUseCase() -> CreateBookmarkUseCase {
         return CreateBookmarkUseCase(repository: bookmarksRepository)
+    }
+
+    func makeSearchBookmarksUseCase() -> SearchBookmarksUseCase {
+        return SearchBookmarksUseCase(repository: bookmarksRepository)
+    }
+
+    func makeSaveServerSettingsUseCase() -> SaveServerSettingsUseCase {
+        return SaveServerSettingsUseCase(repository: SettingsRepository())
     }
 }

@@ -11,10 +11,12 @@ struct PadSidebarView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State private var selectedBookmark: Bookmark?
     
+    private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
+    
     var body: some View {
         NavigationSplitView {
             List {
-                ForEach(SidebarTab.allCases.filter { $0 != .settings }, id: \.self) { tab in
+                ForEach(sidebarTabs, id: \.self) { tab in
                     Button(action: {
                         selectedTab = tab
                     }) {
@@ -26,11 +28,11 @@ struct PadSidebarView: View {
                     .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
                     
                     if tab == .archived {
-                        Spacer(minLength: 20)
+                        Spacer()
                     }
                     
                     if tab == .pictures {
-                        Spacer(minLength: 30)
+                        Spacer()
                         Divider()
                         Spacer()
                     }
@@ -57,6 +59,8 @@ struct PadSidebarView: View {
         } content: {
             Group {
                 switch selectedTab {
+                case .search:
+                    SearchBookmarksView(selectedBookmark: $selectedBookmark)
                 case .all:
                     BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                 case .unread:

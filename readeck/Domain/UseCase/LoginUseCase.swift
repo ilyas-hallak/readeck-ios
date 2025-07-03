@@ -1,4 +1,3 @@
-
 class LoginUseCase {
     private let repository: PAuthRepository
 
@@ -6,7 +5,7 @@ class LoginUseCase {
         self.repository = repository
     }
 
-    func execute(username: String, password: String) async throws -> User {
-        return try await repository.login(username: username, password: password)
+    func execute(endpoint: String, username: String, password: String) async throws -> User {
+        return try await repository.login(endpoint: endpoint, username: username, password: password)
     }
 }

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct PhoneTabView: View {
     private let mainTabs: [SidebarTab] = [.all, .unread, .favorite, .archived]
-    private let moreTabs: [SidebarTab] = [.article, .videos, .pictures, .tags, .settings]
+    private let moreTabs: [SidebarTab] = [.search, .article, .videos, .pictures, .tags, .settings]
     
     @State private var selectedMoreTab: SidebarTab? = nil
     @State private var selectedTabIndex: Int = 0
@@ -42,7 +42,6 @@ struct PhoneTabView: View {
             }
             .tag(mainTabs.count)
             .onAppear {
-                // Wenn der Mehr-Tab aktiv wird und wir in einer Detailansicht sind, zurücksetzen
                 if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
                     selectedMoreTab = nil
                 }
@@ -62,6 +61,8 @@ struct PhoneTabView: View {
             BookmarksView(state: .favorite, type: [.article], selectedBookmark: .constant(nil))
         case .archived:
             BookmarksView(state: .archived, type: [.article], selectedBookmark: .constant(nil))
+        case .search:
+            SearchBookmarksView(selectedBookmark: .constant(nil))
         case .settings:
             SettingsView()
         case .article:

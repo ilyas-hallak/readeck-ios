@@ -2,7 +2,7 @@ import Foundation
 
 protocol TokenProvider {
     func getToken() async -> String?
-    func getEndpoint() async -> String
+    func getEndpoint() async -> String?
     func setToken(_ token: String) async
     func clearToken() async
 }
@@ -29,10 +29,10 @@ class CoreDataTokenProvider: TokenProvider {
         return cachedSettings?.token
     }
     
-    func getEndpoint() async -> String {
+    func getEndpoint() async -> String? {
         await loadSettingsIfNeeded()
         // Basis-URL ohne /api Suffix, da es in der API-Klasse hinzugefügt wird
-        return cachedSettings?.endpoint ?? "https://keep.mnk.any64.de"
+        return cachedSettings?.endpoint
     }
     
     func setToken(_ token: String) async {

@@ -92,8 +92,6 @@ struct BookmarksView: View {
                         )
                     }
                 }
-                .searchable(
-                    text: $viewModel.searchQuery, placement: .automatic, prompt: "Search...")
             }
 
             // FAB Button - nur bei "Ungelesen" anzeigen

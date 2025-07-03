@@ -9,13 +9,14 @@ import Foundation
 
 protocol PAPI {
     var tokenProvider: TokenProvider { get }
-    func login(username: String, password: String) async throws -> UserDto
+    func login(endpoint: String, username: String, password: String) async throws -> UserDto
     func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?) async throws -> BookmarksPageDto
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto
     func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws
     func deleteBookmark(id: String) async throws
+    func searchBookmarks(search: String) async throws -> BookmarksPageDto
 }
 
 class API: PAPI {
@@ -28,10 +29,12 @@ class API: PAPI {
     
     private var baseURL: String {
         get async {
-            if let cached = cachedBaseURL {
+            if let cached = cachedBaseURL, cached.isEmpty == false {
                 return cached
             }
-            let url = await tokenProvider.getEndpoint()
+            guard let url = await tokenProvider.getEndpoint() else {
+                return ""
+            }
             cachedBaseURL = url
             return url
         }
@@ -154,20 +157,25 @@ class API: PAPI {
         return string
     }
     
-    func login(username: String, password: String) async throws -> UserDto {
+    func login(endpoint: String, username: String, password: String) async throws -> UserDto {
         let loginRequest = LoginRequestDto(application: "api doc", username: username, password: password)
         let requestData = try JSONEncoder().encode(loginRequest)
-        
-        let userDto = try await makeJSONRequest(
-            endpoint: "/api/auth",
-            method: .POST,
-            body: requestData,
-            responseType: UserDto.self
-        )
-        
-        // Token automatisch speichern nach erfolgreichem Login
-        await tokenProvider.setToken(userDto.token)
-        
+        guard let url = URL(string: endpoint + "/api/auth") else {
+            throw APIError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = requestData
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        guard 200...299 ~= httpResponse.statusCode else {
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+        let userDto = try JSONDecoder().decode(UserDto.self, from: data)
+        // Token NICHT automatisch speichern, da Settings noch nicht existieren
         return userDto
     }
     
@@ -321,6 +329,26 @@ class API: PAPI {
             print("Server Error: \(httpResponse.statusCode)")
             throw APIError.serverError(httpResponse.statusCode)
         }
+    }
+    
+    func searchBookmarks(search: String) async throws -> BookmarksPageDto {
+        let endpoint = "/api/bookmarks?search=\(search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        let (bookmarks, response) = try await makeJSONRequestWithHeaders(
+            endpoint: endpoint,
+            responseType: [BookmarkDto].self
+        )
+        let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
+        let totalCount = response.value(forHTTPHeaderField: "Total-Count").flatMap { Int($0) }
+        let totalPages = response.value(forHTTPHeaderField: "Total-Pages").flatMap { Int($0) }
+        let linksHeader = response.value(forHTTPHeaderField: "Link")
+        let links = linksHeader?.components(separatedBy: ",")
+        return BookmarksPageDto(
+            bookmarks: bookmarks,
+            currentPage: currentPage,
+            totalCount: totalCount,
+            totalPages: totalPages,
+            links: links
+        )
     }
 }
 

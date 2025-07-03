@@ -28,6 +28,7 @@ protocol PSettingsRepository {
     func saveUsername(_ username: String) async throws
     func savePassword(_ password: String) async throws
     func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws
+    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws 
     var hasFinishedSetup: Bool { get }
 }
 
@@ -162,6 +163,40 @@ class SettingsRepository: PSettingsRepository {
                         }
                     }
                     
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws {
+        let context = coreDataManager.context
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    fetchRequest.fetchLimit = 1
+                    let settingEntities = try context.fetch(fetchRequest)
+                    let settingEntity: SettingEntity
+                    if let existing = settingEntities.first {
+                        settingEntity = existing
+                    } else {
+                        settingEntity = SettingEntity(context: context)
+                    }
+                    settingEntity.endpoint = endpoint
+                    settingEntity.username = username
+                    settingEntity.password = password
+                    settingEntity.token = token
+                    try context.save()
+                    // Wenn ein Token gespeichert wird, Setup als abgeschlossen markieren
+                    if !token.isEmpty {
+                        self.hasFinishedSetup = true
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+                        }
+                    }
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)

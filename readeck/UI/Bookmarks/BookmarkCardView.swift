@@ -15,15 +15,13 @@ struct BookmarkCardView: View {
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
+                    .frame(height: 120)
             } placeholder: {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.2))
-                    .overlay {
-                        Image(systemName: "photo")
-                            .foregroundColor(.gray)
-                    }
+                Image("placeholder")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 120)
             }
-            .frame(height: 120)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading, spacing: 4) {
@@ -60,7 +58,7 @@ struct BookmarkCardView: View {
                     }
                     HStack {
                         
-                        Label("Original Seite öffnen", systemImage: "safari")
+                        Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Seite") + " öffnen", systemImage: "safari")
                             .onTapGesture {
                                 SafariUtil.openInSafari(url: bookmark.url)
                             }

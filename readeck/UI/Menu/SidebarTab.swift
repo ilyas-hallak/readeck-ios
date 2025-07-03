@@ -6,7 +6,7 @@
 //
 
 enum SidebarTab: Hashable, CaseIterable, Identifiable {
-    case all, unread, favorite, archived, settings, article, videos, pictures, tags
+    case search, all, unread, favorite, archived, article, videos, pictures, tags, settings
     
     var id: Self { self }
     
@@ -16,6 +16,7 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
         case .unread: return "Ungelesen"
         case .favorite: return "Favoriten"
         case .archived: return "Archiv"
+        case .search: return "Suche"
         case .settings: return "Einstellungen"
         case .article: return "Artikel"
         case .videos: return "Videos"
@@ -29,6 +30,7 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
         case .unread: return "house"
         case .favorite: return "heart"
         case .archived: return "archivebox"
+        case .search: return "magnifyingglass"
         case .settings: return "gear"
         case .all: return "list.bullet"
         case .article: return "doc.plaintext"

@@ -6,12 +6,9 @@
 //
 
 import SwiftUI
-// SectionHeader wird jetzt zentral importiert
 
 struct SettingsServerView: View {
     @State private var viewModel = SettingsServerViewModel()
-    @State private var isTesting: Bool = false
-    @State private var connectionTestSuccess: Bool = false
     @State private var showingLogoutAlert = false
     
     var body: some View {
@@ -41,7 +38,6 @@ struct SettingsServerView: View {
                         .onChange(of: viewModel.endpoint) {
                             if viewModel.isSetupMode {
                                 viewModel.clearMessages()
-                                connectionTestSuccess = false
                             }
                         }
                 }
@@ -56,7 +52,6 @@ struct SettingsServerView: View {
                         .onChange(of: viewModel.username) {
                             if viewModel.isSetupMode {
                                 viewModel.clearMessages()
-                                connectionTestSuccess = false
                             }
                         }
                 }
@@ -69,7 +64,6 @@ struct SettingsServerView: View {
                         .onChange(of: viewModel.password) {
                             if viewModel.isSetupMode {
                                 viewModel.clearMessages()
-                                connectionTestSuccess = false
                             }
                         }
                 }
@@ -106,34 +100,11 @@ struct SettingsServerView: View {
                 }
             }
             
-            // Action Buttons
             if viewModel.isSetupMode {
                 VStack(spacing: 10) {
                     Button(action: {
                         Task {
-                            await testConnection()
-                        }
-                    }) {
-                        HStack {
-                            if isTesting {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            }
-                            Text(isTesting ? "Teste Verbindung..." : "Verbindung testen")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(viewModel.canLogin ? Color.accentColor : Color.gray)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-                    .disabled(!viewModel.canLogin || isTesting || viewModel.isLoading)
-                    
-                    Button(action: {
-                        Task {
-                            await viewModel.login()
+                            await viewModel.saveServerSettings()
                         }
                     }) {
                         HStack {
@@ -142,17 +113,16 @@ struct SettingsServerView: View {
                                     .scaleEffect(0.8)
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             }
-                            Text(viewModel.isLoading ? "Anmelde..." : (viewModel.isLoggedIn ? "Erneut anmelden" : "Anmelden"))
+                            Text(viewModel.isLoading ? "Speichern..." : (viewModel.isLoggedIn ? "Erneut anmelden & speichern" : "Anmelden & speichern"))
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background((viewModel.canLogin && connectionTestSuccess) ? Color.blue : Color.gray)
+                        .background(viewModel.canLogin ? Color.accentColor : Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                     }
-                    .disabled(!viewModel.canLogin || !connectionTestSuccess || viewModel.isLoading || isTesting)
-                    
+                    .disabled(!viewModel.canLogin || viewModel.isLoading)
                     Button("Debug-Anmeldung") {
                         viewModel.username = "admin"
                         viewModel.password = "Diggah123"
@@ -191,12 +161,6 @@ struct SettingsServerView: View {
         .task {
             await viewModel.loadServerSettings()
         }
-    }
-    
-    private func testConnection() async {
-        isTesting = true
-        connectionTestSuccess = await viewModel.testConnection()
-        isTesting = false
     }
 }
 

@@ -4,11 +4,13 @@ import SwiftUI
 
 @Observable
 class SettingsServerViewModel {
+    
+    // MARK: - Use Cases
+    
     private let loginUseCase: LoginUseCase
     private let logoutUseCase: LogoutUseCase
-    private let saveSettingsUseCase: SaveSettingsUseCase
+    private let saveServerSettingsUseCase: SaveServerSettingsUseCase
     private let loadSettingsUseCase: LoadSettingsUseCase
-    private let settingsRepository: SettingsRepository
     
     // MARK: - Server Settings
     var endpoint = ""
@@ -16,21 +18,25 @@ class SettingsServerViewModel {
     var password = ""
     var isLoading = false
     var isLoggedIn = false
+    
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
+    
+    private var hasFinishedSetup: Bool {
+        SettingsRepository().hasFinishedSetup
+    }
     
     init() {
         let factory = DefaultUseCaseFactory.shared
         self.loginUseCase = factory.makeLoginUseCase()
         self.logoutUseCase = factory.makeLogoutUseCase()
-        self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
+        self.saveServerSettingsUseCase = factory.makeSaveServerSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
-        self.settingsRepository = SettingsRepository()
     }
     
     var isSetupMode: Bool {
-        !settingsRepository.hasFinishedSetup
+        !hasFinishedSetup
     }
     
     @MainActor
@@ -49,63 +55,25 @@ class SettingsServerViewModel {
     
     @MainActor
     func saveServerSettings() async {
-        do {
-            try await saveSettingsUseCase.execute(
-                endpoint: endpoint,
-                username: username,
-                password: password
-            )
-            successMessage = "Server-Einstellungen gespeichert"
-        } catch {
-            errorMessage = "Fehler beim Speichern der Server-Einstellungen"
-        }
-    }
-    
-    @MainActor
-    func testConnection() async -> Bool {
         guard canLogin else {
             errorMessage = "Bitte füllen Sie alle Felder aus."
-            return false
+            return
         }
-                
         clearMessages()
-        
-        do {
-            // Test login without saving settings
-            let _ = try await loginUseCase.execute(
-                username: username.trimmingCharacters(in: .whitespacesAndNewlines),
-                password: password
-            )
-            
-            
-            successMessage = "Verbindung erfolgreich getestet! ✓"
-            
-            return true
-            
-        } catch {
-            errorMessage = "Verbindungstest fehlgeschlagen: \(error.localizedDescription)"
-        }
-        
-        return false
-    }
-    
-    @MainActor
-    func login() async {
         isLoading = true
-        errorMessage = nil
-        successMessage = nil
+        defer { isLoading = false }
         do {
-            let _ = try await loginUseCase.execute(username: username, password: password)
+            let user = try await loginUseCase.execute(endpoint: endpoint, username: username.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
+            try await saveServerSettingsUseCase.execute(endpoint: endpoint, username: username, password: password, token: user.token)
             isLoggedIn = true
-            successMessage = "Erfolgreich angemeldet"
-            try await settingsRepository.saveHasFinishedSetup(true)
+            successMessage = "Server-Einstellungen gespeichert und erfolgreich angemeldet."
+            try await SettingsRepository().saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
             await DefaultUseCaseFactory.shared.refreshConfiguration()
         } catch {
-            errorMessage = "Anmeldung fehlgeschlagen"
+            errorMessage = "Verbindung oder Anmeldung fehlgeschlagen: \(error.localizedDescription)"
             isLoggedIn = false
         }
-        isLoading = false
     }
     
     @MainActor
@@ -125,9 +93,6 @@ class SettingsServerViewModel {
         successMessage = nil
     }
     
-    var canSave: Bool {
-        !endpoint.isEmpty && !username.isEmpty && !password.isEmpty
-    }
     var canLogin: Bool {
         !username.isEmpty && !password.isEmpty
     }

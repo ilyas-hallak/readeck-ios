@@ -55,3 +55,12 @@ struct ImageResource {
     let height: Int
     let width: Int
 }
+
+extension Bookmark: Hashable, Identifiable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    static func == (lhs: Bookmark, rhs: Bookmark) -> Bool {
+        lhs.id == rhs.id
+    }
+}

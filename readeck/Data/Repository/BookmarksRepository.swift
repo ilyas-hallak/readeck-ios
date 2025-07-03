@@ -7,6 +7,7 @@ protocol PBookmarksRepository {
     func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String
     func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws
     func deleteBookmark(id: String) async throws
+    func searchBookmarks(search: String) async throws -> BookmarksPage
 }
 
 class BookmarksRepository: PBookmarksRepository {
@@ -81,6 +82,11 @@ class BookmarksRepository: PBookmarksRepository {
         )
         
         try await api.updateBookmark(id: id, updateRequest: dto)
+    }
+    
+    func searchBookmarks(search: String) async throws -> BookmarksPage {
+        let bookmarkDtos = try await api.searchBookmarks(search: search)
+        return bookmarkDtos.toDomain()
     }
 }
 
