@@ -35,6 +35,9 @@ class LogoutUseCase: LogoutUseCaseProtocol {
         try await settingsRepository.saveUsername("")
         try await settingsRepository.savePassword("")
         
+        KeychainHelper.shared.saveToken("")
+        KeychainHelper.shared.saveEndpoint("")
+        
         // Note: We keep the endpoint for potential re-login
         // but clear the authentication data
         

@@ -77,7 +77,9 @@
 		5DCD48B72DFB44D600AC7FB6 /* Exceptions for "readeck" folder in "URLShare" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Assets.xcassets,
 				Data/CoreData/CoreDataManager.swift,
+				Data/KeychainHelper.swift,
 				Domain/Model/Bookmark.swift,
 				readeck.xcdatamodeld,
 			);
@@ -409,6 +411,7 @@
 		5D2B7FBC2DFA27A400EBDB2B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8J69P655GN;
@@ -437,6 +440,7 @@
 		5D2B7FBD2DFA27A400EBDB2B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8J69P655GN;

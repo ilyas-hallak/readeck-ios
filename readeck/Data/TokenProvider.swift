@@ -11,6 +11,7 @@ class CoreDataTokenProvider: TokenProvider {
     private let settingsRepository = SettingsRepository()
     private var cachedSettings: Settings?
     private var isLoaded = false
+    private let keychainHelper = KeychainHelper.shared
     
     private func loadSettingsIfNeeded() async {
         guard !isLoaded else { return }
@@ -40,6 +41,7 @@ class CoreDataTokenProvider: TokenProvider {
         
         do {
             try await settingsRepository.saveToken(token)
+            saveTokenToKeychain(token: token)
             if cachedSettings != nil {
                 cachedSettings!.token = token
             }
@@ -52,8 +54,19 @@ class CoreDataTokenProvider: TokenProvider {
         do {
             try await settingsRepository.clearSettings()
             cachedSettings = nil
+            saveTokenToKeychain(token: "")
         } catch {
             print("Failed to clear settings: \(error)")
         }
+    }
+    
+    // MARK: - Keychain Support
+    
+    func saveTokenToKeychain(token: String) {
+        keychainHelper.saveToken(token)
+    }
+    
+    func loadTokenFromKeychain() -> String? {
+        keychainHelper.loadToken()
     }
 }
