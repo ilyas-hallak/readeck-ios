@@ -37,17 +37,32 @@ struct BookmarkDetailView: View {
             }
         }
         .sheet(isPresented: $showingFontSettings) {
-            NavigationView {
-                FontSettingsView()
-                    .navigationTitle("Schrift-Einstellungen")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Fertig") {
-                                showingFontSettings = false
-                            }
+            NavigationView {                
+                VStack {
+                    FontSettingsView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                    
+                    Spacer()
+                }
+                .navigationTitle("Schrift-Einstellungen")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Fertig") {
+                            showingFontSettings = false
                         }
                     }
+                }
+            }
+        }
+        .onChange(of: showingFontSettings) { _, isShowing in
+            if !isShowing {
+                // Reload settings when sheet is dismissed
+                Task {
+                    await viewModel.loadBookmarkDetail(id: bookmarkId)
+                }
             }
         }
         .task {

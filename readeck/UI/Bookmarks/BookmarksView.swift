@@ -97,7 +97,7 @@ struct BookmarksView: View {
             }
 
             // FAB Button - nur bei "Ungelesen" anzeigen
-            if state == .unread {
+            if state == .unread || state == .all {
                 VStack {
                     Spacer()
                     HStack {

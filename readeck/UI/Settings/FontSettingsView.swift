@@ -11,7 +11,7 @@ struct FontSettingsView: View {
     @State private var viewModel = FontSettingsViewModel()
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 24) {
             // Header
             HStack(spacing: 8) {
                 Image(systemName: "textformat")
@@ -22,8 +22,6 @@ struct FontSettingsView: View {
                     .font(.title2)
                     .fontWeight(.bold)
             }
-            
-            Spacer()
             
             // Font Family Picker
             HStack(alignment: .firstTextBaseline, spacing: 16) {
@@ -41,8 +39,6 @@ struct FontSettingsView: View {
                     }
                 }
             }
-            
-            Spacer()
             
             VStack(spacing: 16) {
                 
