@@ -34,8 +34,11 @@ struct PhoneTabView: View {
                     } label: {
                         Label(tab.label, systemImage: tab.systemImage)
                     }
+                    .listRowBackground(Color(R.color.bookmark_list_bg))
                 }
                 .navigationTitle("Mehr")
+                .scrollContentBackground(.hidden)
+                .background(Color(R.color.bookmark_list_bg))
             }
             .tabItem {
                 Label("Mehr", systemImage: "ellipsis")

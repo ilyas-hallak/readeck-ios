@@ -2,6 +2,9 @@ import SwiftUI
 import SafariServices
 
 struct BookmarkCardView: View {
+    
+    @Environment(\.colorScheme) var colorScheme
+    
     let bookmark: Bookmark
     let currentState: BookmarkState
     let onArchive: (Bookmark) -> Void
@@ -75,9 +78,9 @@ struct BookmarkCardView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }
-        .background(Color(.systemBackground))
+        .background(Color(R.color.bookmark_list_bg))
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .shadow(color: colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), radius: 2, x: 0, y: 1)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button("Löschen", role: .destructive) {
                 onDelete(bookmark)

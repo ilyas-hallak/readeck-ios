@@ -25,20 +25,28 @@ struct PadSidebarView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                     }
-                    .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
+                    .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
                     
                     if tab == .archived {
                         Spacer()
+                            .listRowBackground(Color(R.color.menu_sidebar_bg))
                     }
                     
                     if tab == .pictures {
-                        Spacer()
-                        Divider()
-                        Spacer()
+                        Group {
+                            Spacer()
+                            Divider()
+                            Spacer()
+                        }
+                        .listRowBackground(Color(R.color.menu_sidebar_bg))
+                            
                     }
                 }
             }
+            .listRowBackground(Color(R.color.menu_sidebar_bg))
+            .background(Color(R.color.menu_sidebar_bg))
             .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
             .safeAreaInset(edge: .bottom, alignment: .center) {
                 VStack(spacing: 0) {
                     Divider()
@@ -51,10 +59,10 @@ struct PadSidebarView: View {
                             .padding(.vertical, 12)
                             .contentShape(Rectangle())
                     }
-                    .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : Color.clear)
+                    .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
                 }
                 .padding(.horizontal, 12)
-                .background(Color(.systemGroupedBackground))
+                .background(Color(R.color.menu_sidebar_bg))
             }
         } content: {
             Group {
@@ -82,6 +90,8 @@ struct PadSidebarView: View {
                 }
             }
             .navigationTitle(selectedTab.label)
+            
+            
         } detail: {
             if let bookmark = selectedBookmark, selectedTab != .settings {
                 BookmarkDetailView(bookmarkId: bookmark.id)
@@ -90,5 +100,6 @@ struct PadSidebarView: View {
                     .foregroundColor(.gray)
             }
         }
+        .background(Color(R.color.menu_sidebar_bg))
     }
 }

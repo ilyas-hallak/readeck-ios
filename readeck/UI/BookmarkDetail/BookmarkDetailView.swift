@@ -210,7 +210,7 @@ struct BookmarkDetailView: View {
                         Text("Bookmark archivieren")
                     }
                     .font(.title3.bold())
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: 40)
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(viewModel.isLoading)

@@ -11,7 +11,7 @@ import netfox
 @main
 struct readeckApp: App {
     let persistenceController = PersistenceController.shared
-    @State private var hasFinishedSetup = false
+    @State private var hasFinishedSetup = true
     
     var body: some Scene {
         WindowGroup {
