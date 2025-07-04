@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		5D2B7FB92DFA27A400EBDB2B /* URLShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */ = {isa = PBXBuildFile; productRef = 5D348CC22E0C9F4F00D0AF21 /* netfox */; };
+		5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 5DA241FA2E17C3B3007531C3 /* RswiftLibrary */; };
+		5DA241FD2E17C3B3007531C3 /* rswift in Frameworks */ = {isa = PBXBuildFile; productRef = 5DA241FC2E17C3B3007531C3 /* rswift */; };
+		5DA242132E17D31A007531C3 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 5DA242122E17D31A007531C3 /* Localizable.xcstrings */; };
+		5DA242142E17D31A007531C3 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 5DA242122E17D31A007531C3 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +68,7 @@
 		5D45F9C82DF858680048D5B8 /* readeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = readeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5DA242122E17D31A007531C3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -137,6 +142,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */,
+				5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */,
+				5DA241FD2E17C3B3007531C3 /* rswift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +167,7 @@
 		5D45F9BF2DF858680048D5B8 = {
 			isa = PBXGroup;
 			children = (
+				5DA242122E17D31A007531C3 /* Localizable.xcstrings */,
 				5D45F9CA2DF858680048D5B8 /* readeck */,
 				5D45F9E12DF8586A0048D5B8 /* readeckTests */,
 				5D45F9EB2DF8586A0048D5B8 /* readeckUITests */,
@@ -217,6 +225,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				5DA241FF2E17C3CE007531C3 /* PBXTargetDependency */,
 				5D2B7FB82DFA27A400EBDB2B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
@@ -225,6 +234,8 @@
 			name = readeck;
 			packageProductDependencies = (
 				5D348CC22E0C9F4F00D0AF21 /* netfox */,
+				5DA241FA2E17C3B3007531C3 /* RswiftLibrary */,
+				5DA241FC2E17C3B3007531C3 /* rswift */,
 			);
 			productName = readeck;
 			productReference = 5D45F9C82DF858680048D5B8 /* readeck.app */;
@@ -308,11 +319,14 @@
 			knownRegions = (
 				en,
 				Base,
+				"fr-CA",
+				de,
 			);
 			mainGroup = 5D45F9BF2DF858680048D5B8;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */,
+				5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5D45F9C92DF858680048D5B8 /* Products */;
@@ -332,6 +346,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5DA242132E17D31A007531C3 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,6 +354,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5DA242142E17D31A007531C3 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -404,6 +420,10 @@
 			isa = PBXTargetDependency;
 			target = 5D45F9C72DF858680048D5B8 /* readeck */;
 			targetProxy = 5D45F9E92DF8586A0048D5B8 /* PBXContainerItemProxy */;
+		};
+		5DA241FF2E17C3CE007531C3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 5DA241FE2E17C3CE007531C3 /* RswiftGenerateInternalResources */;
 		};
 /* End PBXTargetDependency section */
 
@@ -524,6 +544,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -578,6 +599,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
 		};
@@ -596,7 +618,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = readeck/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -639,7 +660,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = readeck/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -816,6 +836,14 @@
 				minimumVersion = 1.21.0;
 			};
 		};
+		5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mac-cain13/R.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.8.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -823,6 +851,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */;
 			productName = netfox;
+		};
+		5DA241FA2E17C3B3007531C3 /* RswiftLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */;
+			productName = RswiftLibrary;
+		};
+		5DA241FC2E17C3B3007531C3 /* rswift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */;
+			productName = rswift;
+		};
+		5DA241FE2E17C3CE007531C3 /* RswiftGenerateInternalResources */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */;
+			productName = "plugin:RswiftGenerateInternalResources";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

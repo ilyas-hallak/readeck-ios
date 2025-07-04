@@ -1,0 +1,290 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "%lld min" : {
+
+    },
+    "%lld Minuten" : {
+
+    },
+    "12 min • Today • example.com" : {
+
+    },
+    "Abbrechen" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Abbrechen"
+          }
+        }
+      }
+    },
+    "Abmelden" : {
+
+    },
+    "Add Item" : {
+
+    },
+    "Anmelden & speichern" : {
+
+    },
+    "Archivieren" : {
+
+    },
+    "Artikel automatisch als gelesen markieren" : {
+
+    },
+    "Automatischer Sync" : {
+
+    },
+    "Benutzername" : {
+
+    },
+    "Bookmark archivieren" : {
+
+    },
+    "Bookmark ist archiviert" : {
+
+    },
+    "Bookmark speichern" : {
+
+    },
+    "Cache leeren" : {
+
+    },
+    "Datenmanagement" : {
+
+    },
+    "Debug-Anmeldung" : {
+
+    },
+    "done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        }
+      }
+    },
+    "Einfügen" : {
+
+    },
+    "Einstellungen" : {
+
+    },
+    "Einstellungen speichern" : {
+
+    },
+    "Einstellungen zurücksetzen" : {
+
+    },
+    "Entfernen" : {
+
+    },
+    "Entwickler: %@" : {
+
+    },
+    "Erfolgreich angemeldet" : {
+
+    },
+    "Erforderlich" : {
+
+    },
+    "Erneut anmelden & speichern" : {
+
+    },
+    "Es wurden noch keine Bookmarks in %@ gefunden." : {
+
+    },
+    "Externe Links in In-App Safari öffnen" : {
+
+    },
+    "Favorit" : {
+
+    },
+    "Fehler" : {
+
+    },
+    "Fertig" : {
+
+    },
+    "Fertig mit Lesen?" : {
+
+    },
+    "font_settings_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrift-Einstellungen"
+          }
+        }
+      }
+    },
+    "Füge einen neuen Link zu deiner Sammlung hinzu" : {
+
+    },
+    "Geben Sie Ihre Readeck-Server-Details ein, um zu beginnen." : {
+
+    },
+    "https://example.com" : {
+
+    },
+    "https://readeck.example.com" : {
+
+    },
+    "Ihr Benutzername" : {
+
+    },
+    "Ihr Passwort" : {
+
+    },
+    "Ihre aktuelle Server-Verbindung und Anmeldedaten." : {
+
+    },
+    "Item at %@" : {
+
+    },
+    "Keine Bookmarks" : {
+
+    },
+    "Keine Bookmarks gefunden." : {
+
+    },
+    "Keine Ergebnisse" : {
+
+    },
+    "Labels" : {
+
+    },
+    "Lade %@..." : {
+
+    },
+    "Lade Artikel..." : {
+
+    },
+    "Leseeinstellungen" : {
+
+    },
+    "Löschen" : {
+
+    },
+    "Mehr" : {
+
+    },
+    "Möchten Sie sich wirklich abmelden? Dies wird alle Ihre Anmeldedaten löschen und Sie zur Einrichtung zurückführen." : {
+
+    },
+    "Neues Bookmark" : {
+
+    },
+    "OK" : {
+
+    },
+    "Optional: Eigener Titel" : {
+
+    },
+    "Passwort" : {
+
+    },
+    "readeck Bookmark Title" : {
+
+    },
+    "Safari Reader Modus" : {
+
+    },
+    "Schließen" : {
+
+    },
+    "Schrift" : {
+
+    },
+    "Schrift-Einstellungen" : {
+
+    },
+    "Schriftart" : {
+
+    },
+    "Schriftgröße" : {
+
+    },
+    "Select a bookmark" : {
+
+    },
+    "Select an item" : {
+
+    },
+    "Server-Endpunkt" : {
+
+    },
+    "Speichern..." : {
+
+    },
+    "Suchbegriff eingeben..." : {
+
+    },
+    "Suche" : {
+
+    },
+    "Suche..." : {
+
+    },
+    "Sync-Einstellungen" : {
+
+    },
+    "Sync-Intervall" : {
+
+    },
+    "Tags" : {
+
+    },
+    "Theme" : {
+
+    },
+    "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog." : {
+
+    },
+    "Titel" : {
+
+    },
+    "Über die App" : {
+
+    },
+    "URL" : {
+
+    },
+    "URL gefunden:" : {
+
+    },
+    "Version %@" : {
+
+    },
+    "Vorschau" : {
+
+    },
+    "Website" : {
+
+    },
+    "Wiederherstellen" : {
+
+    },
+    "Wird gespeichert..." : {
+
+    },
+    "z.B. arbeit, wichtig, später" : {
+
+    },
+    "Zwischenablage" : {
+
+    }
+  },
+  "version" : "1.0"
+}

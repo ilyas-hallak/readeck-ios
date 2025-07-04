@@ -20,6 +20,7 @@ struct BookmarkDetailView: View {
                         Divider().padding(.horizontal)
                         contentSection
                         Spacer(minLength: 40)
+                        archiveSection
                     }
                 }
             }
@@ -189,6 +190,39 @@ struct BookmarkDetailView: View {
             return displayFormatter.string(from: date)
         }
         return dateString
+    }
+    
+    private var archiveSection: some View {
+        VStack(spacing: 12) {
+            Text("Fertig mit Lesen?")
+                .font(.headline)
+                .padding(.top, 24)
+            if viewModel.bookmarkDetail.isArchived {
+                Label("Bookmark ist archiviert", systemImage: "archivebox.fill")
+            } else {
+                Button(action: {
+                    Task {
+                        await viewModel.archiveBookmark(id: bookmarkId)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "archivebox")
+                        Text("Bookmark archivieren")
+                    }
+                    .font(.title3.bold())
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.isLoading)
+            }
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .foregroundColor(.red)
+                    .font(.footnote)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 32)
     }
 }
 

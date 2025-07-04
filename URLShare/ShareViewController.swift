@@ -65,7 +65,7 @@ class ShareViewController: UIViewController {
         // URL Container View
         let urlContainerView = UIView()
         urlContainerView.translatesAutoresizingMaskIntoConstraints = false
-        urlContainerView.backgroundColor = UIColor.white
+        urlContainerView.backgroundColor = UIColor.secondarySystemGroupedBackground
         urlContainerView.layer.cornerRadius = 12
         urlContainerView.layer.shadowColor = UIColor.black.cgColor
         urlContainerView.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -86,7 +86,7 @@ class ShareViewController: UIViewController {
         // Title Container View
         let titleContainerView = UIView()
         titleContainerView.translatesAutoresizingMaskIntoConstraints = false
-        titleContainerView.backgroundColor = UIColor.white
+        titleContainerView.backgroundColor = UIColor.secondarySystemGroupedBackground
         titleContainerView.layer.cornerRadius = 12
         titleContainerView.layer.shadowColor = UIColor.black.cgColor
         titleContainerView.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -97,11 +97,10 @@ class ShareViewController: UIViewController {
         // Title TextField
         titleTextField = UITextField()
         titleTextField?.translatesAutoresizingMaskIntoConstraints = false
-        titleTextField?.placeholder = "Titel eingeben..."
+        titleTextField?.placeholder = "Optionales Titel eingeben..."
         titleTextField?.borderStyle = .none
         titleTextField?.font = UIFont.systemFont(ofSize: 16)
         titleTextField?.backgroundColor = UIColor.clear
-        titleTextField?.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
         titleContainerView.addSubview(titleTextField!)
         
         // Status Label
@@ -120,7 +119,7 @@ class ShareViewController: UIViewController {
         saveButton?.translatesAutoresizingMaskIntoConstraints = false
         saveButton?.setTitle("Bookmark speichern", for: .normal)
         saveButton?.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        saveButton?.backgroundColor = UIColor.white
+        saveButton?.backgroundColor = UIColor.secondarySystemGroupedBackground
         saveButton?.setTitleColor(UIColor(named: "green") ?? UIColor.systemGreen, for: .normal)
         saveButton?.layer.cornerRadius = 16
         saveButton?.layer.shadowColor = UIColor.black.cgColor
@@ -128,11 +127,8 @@ class ShareViewController: UIViewController {
         saveButton?.layer.shadowRadius = 8
         saveButton?.layer.shadowOpacity = 0.2
         saveButton?.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
-        saveButton?.isEnabled = false
-        saveButton?.alpha = 0.6
         view.addSubview(saveButton!)
         
-
         
         // Activity Indicator
         activityIndicator = UIActivityIndicatorView(style: .medium)
@@ -223,7 +219,6 @@ class ShareViewController: UIViewController {
                             if let url = url as? URL {
                                 self?.extractedURL = url.absoluteString
                                 self?.urlLabel?.text = url.absoluteString
-                                self?.updateSaveButtonState()
                             }
                         }
                     }
@@ -235,7 +230,6 @@ class ShareViewController: UIViewController {
                             if let text = text as? String, let url = URL(string: text) {
                                 self?.extractedURL = url.absoluteString
                                 self?.urlLabel?.text = url.absoluteString
-                                self?.updateSaveButtonState()
                             }
                         }
                     }
@@ -245,15 +239,9 @@ class ShareViewController: UIViewController {
     }
     
     // MARK: - Actions
-    @objc private func textFieldDidChange() {
-        updateSaveButtonState()
-    }
     
     @objc private func saveButtonTapped() {
-        guard let title = titleTextField?.text, !title.isEmpty else {
-            showStatus("Bitte geben Sie einen Titel ein.", error: true)
-            return
-        }
+        let title = titleTextField?.text ?? ""
         
         saveButton?.isEnabled = false
         activityIndicator?.startAnimating()
@@ -269,12 +257,6 @@ class ShareViewController: UIViewController {
     
     @objc private func cancelButtonTapped() {
         extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
-    }
-    
-    private func updateSaveButtonState() {
-        let isValid = !(titleTextField?.text?.isEmpty ?? true) && extractedURL != nil
-        saveButton?.isEnabled = isValid
-        saveButton?.alpha = isValid ? 1.0 : 0.6
     }
     
     // MARK: - API Call
@@ -346,7 +328,7 @@ class ShareViewController: UIViewController {
             
             if !error {
                 // Automatically dismiss after success
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
                 }
             }

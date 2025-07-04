@@ -158,28 +158,28 @@ class API: PAPI {
     }
     
     func login(endpoint: String, username: String, password: String) async throws -> UserDto {
+        guard let url = URL(string: endpoint + "/api/auth") else { throw APIError.invalidURL }
+        
         let loginRequest = LoginRequestDto(application: "api doc", username: username, password: password)
         let requestData = try JSONEncoder().encode(loginRequest)
-        guard let url = URL(string: endpoint + "/api/auth") else {
-            throw APIError.invalidURL
-        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = requestData
+
         let (data, response) = try await URLSession.shared.data(for: request)
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
+
         guard 200...299 ~= httpResponse.statusCode else {
             throw APIError.serverError(httpResponse.statusCode)
         }
-        let userDto = try JSONDecoder().decode(UserDto.self, from: data)
-        // Token NICHT automatisch speichern, da Settings noch nicht existieren
-        return userDto
+
+        return try JSONDecoder().decode(UserDto.self, from: data)
     }
     
-    // Angepasste getBookmarks-Methode mit Header-Auslesen
     func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil) async throws -> BookmarksPageDto {
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []

@@ -5,6 +5,7 @@ class BookmarkDetailViewModel {
     private let getBookmarkUseCase: GetBookmarkUseCase
     private let getBookmarkArticleUseCase: GetBookmarkArticleUseCase
     private let loadSettingsUseCase: LoadSettingsUseCase
+    private let updateBookmarkUseCase: UpdateBookmarkUseCase
     
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -20,6 +21,7 @@ class BookmarkDetailViewModel {
         self.getBookmarkUseCase = factory.makeGetBookmarkUseCase()
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+        self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
     }
     
     @MainActor
@@ -30,11 +32,6 @@ class BookmarkDetailViewModel {
         do {
             settings = try await loadSettingsUseCase.execute()            
             bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
-            
-            // Auch das vollständige Bookmark für readProgress laden
-            // (Falls GetBookmarkUseCase nur BookmarkDetail zurückgibt)
-            // Du könntest einen separaten UseCase für das vollständige Bookmark erstellen
-            
         } catch {
             errorMessage = "Fehler beim Laden des Bookmarks"
         }
@@ -57,31 +54,23 @@ class BookmarkDetailViewModel {
     }
     
     private func processArticleContent() {
-        // HTML in Paragraphen aufteilen
         let paragraphs = articleContent
             .components(separatedBy: .newlines)
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         
         articleParagraphs = paragraphs
     }
-}
-
-extension BookmarkDetail {
-    static let empty = BookmarkDetail(
-        id: "",
-        title: "",
-        url: "",
-        description: "",
-        siteName: "",
-        authors: [],
-        created: "",
-        updated: "",
-        wordCount: 0,
-        readingTime: 0,
-        hasArticle: false,
-        isMarked: false,
-        isArchived: false,
-        thumbnailUrl: "",
-        imageUrl: ""
-    )
+    
+    @MainActor
+    func archiveBookmark(id: String) async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await updateBookmarkUseCase.toggleArchive(bookmarkId: id, isArchived: true)
+            bookmarkDetail.isArchived = true
+        } catch {
+            errorMessage = "Fehler beim Archivieren des Bookmarks"
+        }
+        isLoading = false
+    }
 }

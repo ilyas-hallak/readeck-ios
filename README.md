@@ -10,32 +10,23 @@ https://codeberg.org/readeck/readeck
 
 ## Features
 
-- Browse and manage bookmarks (Unread, Favorites, Archive)
+- Browse and manage bookmarks (All, Unread, Favorites, Archive, Article, Videos, Pictures)
 - Share Extension for adding URLs from Safari and other apps
 - Swipe actions for quick bookmark management
 - Native iOS design with Dark Mode support
-
-## Requirements
-
-- iOS 17.0+
-- Xcode 15.0+
-- Swift 5.9+
+- Full iPad Support with Multi-Column Split View
+- Font Customization
+- Article View with Reading Time and Word Count
+- Search functionality
 
 ## Configuration
 
 After installing the app:
 
 1. Open the readeck app
-2. Go to the **Settings** tab
-3. Enter your readeck server URL and credentials
-4. The app will automatically sync your bookmarks
+2. Enter your readeck server URL and credentials
+3. The app will automatically load your bookmarks
 
-## Architecture
-
-- **SwiftUI** for UI
-- **Core Data** for local storage
-- **MVVM** architecture pattern
-- **Repository pattern** for data access
 
 ## Share Extension
 
@@ -43,7 +34,17 @@ The app includes a Share Extension that allows adding bookmarks directly from Sa
 
 1. Share any webpage in Safari
 2. Select "readeck" from the share sheet
-3. The bookmark is automatically added to your collection
+3. Enter a title if you want and hit save
+4. The bookmark is automatically added to your collection
+
+## Planned Features
+- [ ] Add support for bookmark filtering and sorting options
+- [ ] Add support for tags
+- [ ] Offline sync with Core Data
+- [ ] Add support for collection management
+- [ ] Add offline sync capabilities
+- [ ] Add support for custom themes
+
 
 ## Contributing
 
@@ -52,18 +53,4 @@ The app includes a Share Extension that allows adding bookmarks directly from Sa
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## Planned Features
-- [ ] Offline sync with Core Data
-- [ ] Add support for tags
-- [ ] Add support for bookmark filtering and sorting options
-- [ ] Implement search functionality
-- [ ] Add support for collection management
-- [ ] Add support for multiple readeck servers
-- [ ] Add offline sync capabilities
-- [ ] Add support for custom themes
-- [ ] Implement push notifications for new bookmarks
-- [ ] Support for iPad multitasking
-- [ ] Implement a dark mode toggle in settings
-- [ ] Implement a tutorial for first-time users
 

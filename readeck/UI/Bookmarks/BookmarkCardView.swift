@@ -10,14 +10,14 @@ struct BookmarkCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Vorschaubild - verwende image oder thumbnail
             AsyncImage(url: imageURL) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 120)
             } placeholder: {
-                Image("placeholder")
+                
+                Image(R.image.placeholder.name)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 120)
@@ -25,14 +25,12 @@ struct BookmarkCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading, spacing: 4) {
-                // Titel
                 Text(bookmark.title)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
-                // Meta-Info mit Datum
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         
