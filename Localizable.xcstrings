@@ -14,20 +14,27 @@
 
     },
     "Abbrechen" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Abbrechen"
-          }
-        }
-      }
+
     },
     "Abmelden" : {
 
     },
     "Add Item" : {
 
+    },
+    "Aktuelle Labels" : {
+
+    },
+    "all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ale"
+          }
+        }
+      }
     },
     "Anmelden & speichern" : {
 
@@ -61,17 +68,6 @@
     },
     "Debug-Anmeldung" : {
 
-    },
-    "done" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fertig"
-          }
-        }
-      }
     },
     "Einfügen" : {
 
@@ -118,17 +114,6 @@
     "Fertig mit Lesen?" : {
 
     },
-    "font_settings_title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schrift-Einstellungen"
-          }
-        }
-      }
-    },
     "Füge einen neuen Link zu deiner Sammlung hinzu" : {
 
     },
@@ -162,7 +147,19 @@
     "Keine Ergebnisse" : {
 
     },
+    "Keine Labels vorhanden" : {
+
+    },
+    "Key" : {
+      "extractionState" : "manual"
+    },
+    "Label eingeben..." : {
+
+    },
     "Labels" : {
+
+    },
+    "Labels verwalten" : {
 
     },
     "Lade %@..." : {
@@ -184,6 +181,9 @@
 
     },
     "Neues Bookmark" : {
+
+    },
+    "Neues Label hinzufügen" : {
 
     },
     "OK" : {

@@ -73,4 +73,9 @@ class BookmarkDetailViewModel {
         }
         isLoading = false
     }
+    
+    @MainActor
+    func refreshBookmarkDetail(id: String) async {
+        await loadBookmarkDetail(id: id)
+    }
 }

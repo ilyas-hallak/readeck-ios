@@ -6,8 +6,9 @@ struct BookmarkDetailView: View {
     @State private var viewModel = BookmarkDetailViewModel()
     @State private var webViewHeight: CGFloat = 300
     @State private var showingFontSettings = false
+    @State private var showingLabelsSheet = false
     
-    private let headerHeight: CGFloat = 260
+    private let headerHeight: CGFloat = 320
     
     var body: some View {
         GeometryReader { geometry in
@@ -29,10 +30,18 @@ struct BookmarkDetailView: View {
         .navigationBarTitleDisplayMode(.inline)        
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showingFontSettings = true
-                }) {
-                    Image(systemName: "textformat")
+                HStack(spacing: 12) {
+                    Button(action: {
+                        showingLabelsSheet = true
+                    }) {
+                        Image(systemName: "tag")
+                    }
+                    
+                    Button(action: {
+                        showingFontSettings = true
+                    }) {
+                        Image(systemName: "textformat")
+                    }
                 }
             }
         }
@@ -57,11 +66,22 @@ struct BookmarkDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingLabelsSheet) {
+            BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
+        }
         .onChange(of: showingFontSettings) { _, isShowing in
             if !isShowing {
                 // Reload settings when sheet is dismissed
                 Task {
                     await viewModel.loadBookmarkDetail(id: bookmarkId)
+                }
+            }
+        }
+        .onChange(of: showingLabelsSheet) { _, isShowing in
+            if !isShowing {
+                // Reload bookmark detail when labels sheet is dismissed
+                Task {
+                    await viewModel.refreshBookmarkDetail(id: bookmarkId)
                 }
             }
         }
@@ -91,13 +111,22 @@ struct BookmarkDetailView: View {
                             .fill(Color.gray.opacity(0.4))
                             .frame(width: geometry.size.width, height: headerHeight)
                     }
+                    // Gradient overlay für bessere Button-Sichtbarkeit
                     LinearGradient(
-                        gradient: Gradient(colors: [Color.black.opacity(0.6), Color.clear]),
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(1.0),
+                            Color.black.opacity(0.9),
+                            Color.black.opacity(0.7),
+                            Color.black.opacity(0.4),
+                            Color.black.opacity(0.2),
+                            Color.clear
+                        ]),
                         startPoint: .top,
                         endPoint: .bottom
                     )
-                    .frame(height: 120)
+                    .frame(height: 240)
                     .frame(maxWidth: .infinity)
+                    .offset(y: (offset > 0 ? -offset : 0))
                 }
             }
             .frame(height: headerHeight)
@@ -155,6 +184,38 @@ struct BookmarkDetailView: View {
             }
             metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) Wörter • \(viewModel.bookmarkDetail.readingTime ?? 0) min Lesezeit")
+            
+            // Labels section
+            if !viewModel.bookmarkDetail.labels.isEmpty {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "tag")
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(viewModel.bookmarkDetail.labels, id: \.self) { label in
+                                Text(label)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.accentColor.opacity(0.1))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                            }
+                        }
+                        .padding(.trailing, 8)
+                    }
+                }
+            }
+            
             metaRow(icon: "safari") {
                 Button(action: {
                     SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)

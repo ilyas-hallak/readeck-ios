@@ -12,7 +12,7 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
     
     var label: String {
         switch self {
-        case .all: return "Alle"
+        case .all: return "All"
         case .unread: return "Ungelesen"
         case .favorite: return "Favoriten"
         case .archived: return "Archiv"

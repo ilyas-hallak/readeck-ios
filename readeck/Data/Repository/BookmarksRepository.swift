@@ -38,6 +38,7 @@ class BookmarksRepository: PBookmarksRepository {
             hasArticle: bookmarkDetailDto.hasArticle,
             isMarked: bookmarkDetailDto.isMarked,
             isArchived: bookmarkDetailDto.isArchived,
+            labels: bookmarkDetailDto.labels,
             thumbnailUrl: bookmarkDetailDto.resources.thumbnail?.src ?? "",
             imageUrl: bookmarkDetailDto.resources.image?.src ?? ""
         )

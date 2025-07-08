@@ -14,6 +14,7 @@ struct BookmarkDetail {
     let hasArticle: Bool
     let isMarked: Bool
     var isArchived: Bool
+    let labels: [String]
     let thumbnailUrl: String
     let imageUrl: String
 }
@@ -33,6 +34,7 @@ extension BookmarkDetail {
         hasArticle: false,
         isMarked: false,
         isArchived: false,
+        labels: [],
         thumbnailUrl: "",
         imageUrl: ""
     )

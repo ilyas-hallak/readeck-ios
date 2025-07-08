@@ -59,4 +59,12 @@ extension BookmarkUpdateRequest {
     static func updateLabels(_ labels: [String]) -> BookmarkUpdateRequest {
         return BookmarkUpdateRequest(labels: labels)
     }
+    
+    static func addLabels(_ labels: [String]) -> BookmarkUpdateRequest {
+        return BookmarkUpdateRequest(addLabels: labels)
+    }
+    
+    static func removeLabels(_ labels: [String]) -> BookmarkUpdateRequest {
+        return BookmarkUpdateRequest(removeLabels: labels)
+    }
 }

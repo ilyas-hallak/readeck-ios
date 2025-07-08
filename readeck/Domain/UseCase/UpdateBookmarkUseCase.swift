@@ -41,4 +41,14 @@ class UpdateBookmarkUseCase {
         let request = BookmarkUpdateRequest.updateLabels(labels)
         try await execute(bookmarkId: bookmarkId, updateRequest: request)
     }
+    
+    func addLabels(bookmarkId: String, labels: [String]) async throws {
+        let request = BookmarkUpdateRequest.addLabels(labels)
+        try await execute(bookmarkId: bookmarkId, updateRequest: request)
+    }
+    
+    func removeLabels(bookmarkId: String, labels: [String]) async throws {
+        let request = BookmarkUpdateRequest.removeLabels(labels)
+        try await execute(bookmarkId: bookmarkId, updateRequest: request)
+    }
 }

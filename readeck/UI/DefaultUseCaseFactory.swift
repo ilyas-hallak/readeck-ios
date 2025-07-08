@@ -13,6 +13,8 @@ protocol UseCaseFactory {
     func makeLogoutUseCase() -> LogoutUseCase
     func makeSearchBookmarksUseCase() -> SearchBookmarksUseCase
     func makeSaveServerSettingsUseCase() -> SaveServerSettingsUseCase
+    func makeAddLabelsToBookmarkUseCase() -> AddLabelsToBookmarkUseCase
+    func makeRemoveLabelsFromBookmarkUseCase() -> RemoveLabelsFromBookmarkUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
@@ -77,5 +79,13 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeSaveServerSettingsUseCase() -> SaveServerSettingsUseCase {
         return SaveServerSettingsUseCase(repository: SettingsRepository())
+    }
+    
+    func makeAddLabelsToBookmarkUseCase() -> AddLabelsToBookmarkUseCase {
+        return AddLabelsToBookmarkUseCase(repository: bookmarksRepository)
+    }
+    
+    func makeRemoveLabelsFromBookmarkUseCase() -> RemoveLabelsFromBookmarkUseCase {
+        return RemoveLabelsFromBookmarkUseCase(repository: bookmarksRepository)
     }
 }
