@@ -6,6 +6,7 @@ class BookmarkDetailViewModel {
     private let getBookmarkArticleUseCase: GetBookmarkArticleUseCase
     private let loadSettingsUseCase: LoadSettingsUseCase
     private let updateBookmarkUseCase: UpdateBookmarkUseCase
+    private let addTextToSpeechQueueUseCase: AddTextToSpeechQueueUseCase
     
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -22,6 +23,7 @@ class BookmarkDetailViewModel {
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
+        self.addTextToSpeechQueueUseCase = factory.makeAddTextToSpeechQueueUseCase()
     }
     
     @MainActor
@@ -77,5 +79,10 @@ class BookmarkDetailViewModel {
     @MainActor
     func refreshBookmarkDetail(id: String) async {
         await loadBookmarkDetail(id: id)
+    }
+    
+    func addBookmarkToSpeechQueue() {
+        bookmarkDetail.content = articleContent
+        addTextToSpeechQueueUseCase.execute(bookmarkDetail: bookmarkDetail)
     }
 }

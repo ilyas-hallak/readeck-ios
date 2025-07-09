@@ -15,42 +15,49 @@ struct PhoneTabView: View {
     @State private var selectedTabIndex: Int = 0
     
     var body: some View {
-        TabView(selection: $selectedTabIndex) {
-            ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
-                NavigationStack {
-                    tabView(for: tab)
-                }
-                .tabItem {
-                    Label(tab.label, systemImage: tab.systemImage)
-                }
-                .tag(idx)
-            }
-            
-            NavigationStack {
-                List(moreTabs, id: \.self, selection: $selectedMoreTab) { tab in
-                    NavigationLink(tag: tab, selection: $selectedMoreTab) {
+        GlobalPlayerContainerView {
+            TabView(selection: $selectedTabIndex) {
+                ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
+                    NavigationStack {
                         tabView(for: tab)
-                            .navigationTitle(tab.label)
-                    } label: {
+                    }
+                    .tabItem {
                         Label(tab.label, systemImage: tab.systemImage)
                     }
-                    .listRowBackground(Color(R.color.bookmark_list_bg))
+                    .tag(idx)
                 }
-                .navigationTitle("Mehr")
-                .scrollContentBackground(.hidden)
-                .background(Color(R.color.bookmark_list_bg))
-            }
-            .tabItem {
-                Label("Mehr", systemImage: "ellipsis")
-            }
-            .tag(mainTabs.count)
-            .onAppear {
-                if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
-                    selectedMoreTab = nil
+                
+                NavigationStack {
+                    if let selectedTab = selectedMoreTab {
+                        tabView(for: selectedTab)
+                            .navigationTitle(selectedTab.label)
+                    } else {
+                        List(moreTabs, id: \.self, selection: $selectedMoreTab) { tab in
+                            NavigationLink {
+                                tabView(for: tab)
+                                    .navigationTitle(tab.label)
+                            } label: {
+                                Label(tab.label, systemImage: tab.systemImage)
+                            }
+                            .listRowBackground(Color(R.color.bookmark_list_bg))
+                        }
+                        .navigationTitle("Mehr")
+                        .scrollContentBackground(.hidden)
+                        .background(Color(R.color.bookmark_list_bg))
+                    }
+                }
+                .tabItem {
+                    Label("Mehr", systemImage: "ellipsis")
+                }
+                .tag(mainTabs.count)
+                .onAppear {
+                    if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
+                        selectedMoreTab = nil
+                    }
                 }
             }
+            .accentColor(.accentColor)
         }
-        .accentColor(.accentColor)
     }
     
     @ViewBuilder
@@ -75,7 +82,7 @@ struct PhoneTabView: View {
         case .pictures:
             BookmarksView(state: .all, type: [.photo], selectedBookmark: .constant(nil))
         case .tags:
-            Text("Tags")
+            LabelsView()
         }
     }
 }

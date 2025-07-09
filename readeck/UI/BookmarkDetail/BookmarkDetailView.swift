@@ -225,6 +225,16 @@ struct BookmarkDetailView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            
+            metaRow(icon: "speaker.wave.2") {
+                Button(action: {
+                    viewModel.addBookmarkToSpeechQueue()
+                }) {
+                    Text("Artikel vorlesen")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
     }
     

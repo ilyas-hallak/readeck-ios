@@ -16,9 +16,13 @@
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
-		<string>green</string>
+		<string>green2</string>
 		<key>UIImageName</key>
 		<string>readeck</string>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>
