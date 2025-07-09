@@ -71,3 +71,9 @@ extension ImageResourceDto {
         return ImageResource(src: src, height: height, width: width)
     }
 }
+
+extension BookmarkLabelDto {
+    func toDomain() -> BookmarkLabel {
+        return BookmarkLabel(name: self.name, count: self.count, href: self.href)
+    }
+}

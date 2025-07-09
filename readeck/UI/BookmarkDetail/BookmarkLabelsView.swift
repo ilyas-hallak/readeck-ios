@@ -30,6 +30,7 @@ struct BookmarkLabelsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
+                    
                     Button("Abbrechen") {
                         dismiss()
                     }

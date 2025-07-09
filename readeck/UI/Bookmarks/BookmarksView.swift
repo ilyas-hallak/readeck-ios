@@ -15,9 +15,17 @@ struct BookmarksView: View {
     
     let state: BookmarkState
     let type: [BookmarkType]
-
     @Binding var selectedBookmark: Bookmark?
-
+    let tag: String?
+    
+    // MARK: Initializer
+    init(state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
+        self.state = state
+        self.type = type
+        self._selectedBookmark = selectedBookmark
+        self.tag = tag
+    }
+    
     // MARK: Environments
     
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -147,7 +155,7 @@ struct BookmarksView: View {
         }*/
         .onAppear {
             Task {
-                await viewModel.loadBookmarks(state: state, type: type)
+                await viewModel.loadBookmarks(state: state, type: type, tag: tag)
             }
         }
         .onChange(of: showingAddBookmark) { oldValue, newValue in

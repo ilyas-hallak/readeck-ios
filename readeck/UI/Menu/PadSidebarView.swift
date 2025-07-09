@@ -41,7 +41,7 @@ struct PadSidebarView: View {
                         .listRowBackground(Color(R.color.menu_sidebar_bg))
                             
                     }
-                }
+                }                
             }
             .listRowBackground(Color(R.color.menu_sidebar_bg))
             .background(Color(R.color.menu_sidebar_bg))
@@ -86,7 +86,7 @@ struct PadSidebarView: View {
                 case .pictures:
                     BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark)
                 case .tags:
-                    Text("Tags")
+                    LabelsView()
                 }
             }
             .navigationTitle(selectedTab.label)

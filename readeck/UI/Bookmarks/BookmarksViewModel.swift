@@ -13,10 +13,12 @@ class BookmarksViewModel {
     var errorMessage: String?
     var currentState: BookmarkState = .unread
     var currentType = [BookmarkType.article]
+    var currentTag: String? = nil
     
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
+    
     
     private var cancellables = Set<AnyCancellable>()
     private var limit = 20
@@ -74,11 +76,12 @@ class BookmarksViewModel {
     }
     
     @MainActor
-    func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article]) async {
+    func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
         isLoading = true
         errorMessage = nil
         currentState = state
         currentType = type
+        currentTag = tag
         
         offset = 0 // Offset zurücksetzen
         hasMoreData = true // Pagination zurücksetzen
@@ -89,10 +92,11 @@ class BookmarksViewModel {
                 limit: limit,
                 offset: offset,
                 search: searchQuery,
-                type: type
+                type: type,
+                tag: tag
             )
             bookmarks = newBookmarks
-            hasMoreData = newBookmarks.bookmarks.count == limit // Prüfen, ob weitere Daten verfügbar sind
+            hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // Prüfen, ob weitere Daten verfügbar sind
         } catch {
             errorMessage = "Fehler beim Laden der Bookmarks"
             bookmarks = nil
@@ -114,9 +118,10 @@ class BookmarksViewModel {
                 state: currentState,
                 limit: limit,
                 offset: offset,
-                type: currentType)
-            bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks) // Neue Bookmarks hinzufügen
-            hasMoreData = newBookmarks.bookmarks.count == limit // Prüfen,
+                type: currentType,
+                tag: currentTag)
+            bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
+            hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
         } catch {
             errorMessage = "Fehler beim Nachladen der Bookmarks"
         }

@@ -17,6 +17,7 @@ struct BookmarkDetail {
     let labels: [String]
     let thumbnailUrl: String
     let imageUrl: String
+    var content: String?
 }
 
 extension BookmarkDetail {

@@ -15,6 +15,8 @@ protocol UseCaseFactory {
     func makeSaveServerSettingsUseCase() -> SaveServerSettingsUseCase
     func makeAddLabelsToBookmarkUseCase() -> AddLabelsToBookmarkUseCase
     func makeRemoveLabelsFromBookmarkUseCase() -> RemoveLabelsFromBookmarkUseCase
+    func makeGetLabelsUseCase() -> GetLabelsUseCase
+    func makeAddTextToSpeechQueueUseCase() -> AddTextToSpeechQueueUseCase
 }
 
 class DefaultUseCaseFactory: UseCaseFactory {
@@ -87,5 +89,15 @@ class DefaultUseCaseFactory: UseCaseFactory {
     
     func makeRemoveLabelsFromBookmarkUseCase() -> RemoveLabelsFromBookmarkUseCase {
         return RemoveLabelsFromBookmarkUseCase(repository: bookmarksRepository)
+    }
+
+    func makeGetLabelsUseCase() -> GetLabelsUseCase {
+        let api = API(tokenProvider: CoreDataTokenProvider())
+        let labelsRepository = LabelsRepository(api: api)
+        return GetLabelsUseCase(labelsRepository: labelsRepository)
+    }
+    
+    func makeAddTextToSpeechQueueUseCase() -> AddTextToSpeechQueueUseCase {
+        return AddTextToSpeechQueueUseCase()
     }
 }

@@ -7,8 +7,8 @@ class GetBookmarksUseCase {
         self.repository = repository
     }
     
-    func execute(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil) async throws -> BookmarksPage {
-        var allBookmarks = try await repository.fetchBookmarks(state: state, limit: limit, offset: offset, search: search, type: type)
+    func execute(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPage {
+        var allBookmarks = try await repository.fetchBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag)
         
         if let state = state {
             allBookmarks.bookmarks = allBookmarks.bookmarks.filter { bookmark in

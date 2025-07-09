@@ -10,13 +10,14 @@ import Foundation
 protocol PAPI {
     var tokenProvider: TokenProvider { get }
     func login(endpoint: String, username: String, password: String) async throws -> UserDto
-    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?) async throws -> BookmarksPageDto
+    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPageDto
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto
     func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws
     func deleteBookmark(id: String) async throws
     func searchBookmarks(search: String) async throws -> BookmarksPageDto
+    func getBookmarkLabels() async throws -> [BookmarkLabelDto]
 }
 
 class API: PAPI {
@@ -180,12 +181,12 @@ class API: PAPI {
         return try JSONDecoder().decode(UserDto.self, from: data)
     }
     
-    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil) async throws -> BookmarksPageDto {
+    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPageDto {
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
         
         // Query-Parameter basierend auf State hinzufügen
-        if let state = state {
+        if let state {
             switch state {
             case .unread:
                 queryItems.append(URLQueryItem(name: "is_archived", value: "false"))
@@ -199,22 +200,26 @@ class API: PAPI {
             }
         }
         
-        if let limit = limit {
+        if let limit {
             queryItems.append(URLQueryItem(name: "limit", value: "\(limit)"))
         }
-        if let offset = offset {
+        if let offset {
             queryItems.append(URLQueryItem(name: "offset", value: "\(offset)"))
         }
         
-        if let search = search {
+        if let search {
             queryItems.append(URLQueryItem(name: "search", value: search))
         }
         
         // type-Parameter als Array von BookmarkType
-        if let type = type, !type.isEmpty {
+        if let type, !type.isEmpty {
             for t in type {
                 queryItems.append(URLQueryItem(name: "type", value: t.rawValue))
             }
+        }
+        
+        if let tag {
+            queryItems.append(URLQueryItem(name: "labels", value: tag))
         }
         
         if !queryItems.isEmpty {
@@ -348,6 +353,13 @@ class API: PAPI {
             totalCount: totalCount,
             totalPages: totalPages,
             links: links
+        )
+    }
+    
+    func getBookmarkLabels() async throws -> [BookmarkLabelDto] {
+        return try await makeJSONRequest(
+            endpoint: "/api/bookmarks/labels",
+            responseType: [BookmarkLabelDto].self
         )
     }
 }

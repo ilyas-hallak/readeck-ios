@@ -126,7 +126,7 @@ struct SettingsServerView: View {
                     Button("Debug-Anmeldung") {
                         viewModel.username = "admin"
                         viewModel.password = "Diggah123"
-                        viewModel.endpoint = "https://keep.mnk.any64.de"
+                        viewModel.endpoint = "https://readeck.mnk.any64.de"
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
