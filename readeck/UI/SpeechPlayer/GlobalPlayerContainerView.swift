@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GlobalPlayerContainerView<Content: View>: View {
     let content: Content
-    @State private var speechQueue = SpeechQueue.shared
+    @StateObject private var viewModel = SpeechPlayerViewModel()
     
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -13,7 +13,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            if speechQueue.hasItems {
+            if viewModel.hasItems {
                 VStack(spacing: 0) {
                     SpeechPlayerView()
                         .padding(.horizontal, 16)
@@ -26,7 +26,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
                 }
             }
         }
-        .animation(.spring(), value: speechQueue.hasItems)
+        .animation(.spring(), value: viewModel.hasItems)
     }
 }
 

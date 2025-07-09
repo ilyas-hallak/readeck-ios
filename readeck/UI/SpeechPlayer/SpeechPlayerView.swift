@@ -4,8 +4,6 @@ struct SpeechPlayerView: View {
     @State var viewModel = SpeechPlayerViewModel()
     @State private var isExpanded = false
     @State private var dragOffset: CGFloat = 0
-    @State private var speechQueue = SpeechQueue.shared
-    @State private var ttsManager = TTSManager.shared
     
     private let minHeight: CGFloat = 60
     private let maxHeight: CGFloat = 300
@@ -45,13 +43,13 @@ struct SpeechPlayerView: View {
         HStack(spacing: 16) {
             // Play/Pause Button
             Button(action: {
-                if ttsManager.isCurrentlySpeaking() {
+                if viewModel.isSpeaking {
                     viewModel.pause()
                 } else {
                     viewModel.resume()
                 }
             }) {
-                Image(systemName: ttsManager.isCurrentlySpeaking() ? "pause.fill" : "play.fill")
+                Image(systemName: viewModel.isSpeaking ? "pause.fill" : "play.fill")
                     .font(.title2)
                     .foregroundColor(.accentColor)
             }
@@ -64,10 +62,14 @@ struct SpeechPlayerView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
-                if speechQueue.queueCount > 0 {
-                    Text("\(speechQueue.queueCount) Artikel in Queue")
+                if viewModel.queueCount > 0 {
+                    Text("\(viewModel.queueCount) Artikel in Queue")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                }
+            }.onTapGesture {
+                withAnimation(.spring()) {
+                    isExpanded.toggle()
                 }
             }
             
@@ -123,13 +125,13 @@ struct SpeechPlayerView: View {
             // Controls
             HStack(spacing: 24) {
                 Button(action: {
-                    if ttsManager.isCurrentlySpeaking() {
+                    if viewModel.isSpeaking {
                         viewModel.pause()
                     } else {
                         viewModel.resume()
                     }
                 }) {
-                    Image(systemName: ttsManager.isCurrentlySpeaking() ? "pause.fill" : "play.fill")
+                    Image(systemName: viewModel.isSpeaking ? "pause.fill" : "play.fill")
                         .font(.title)
                         .foregroundColor(.accentColor)
                 }
@@ -144,7 +146,7 @@ struct SpeechPlayerView: View {
             }
             
             // Queue List
-            if speechQueue.queueCount == 0 {
+            if viewModel.queueCount == 0 {
                 Text("Keine Artikel in der Queue")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -152,7 +154,7 @@ struct SpeechPlayerView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        ForEach(Array(speechQueue.queueItems.enumerated()), id: \.offset) { index, item in
+                        ForEach(Array(viewModel.queueItems.enumerated()), id: \.offset) { index, item in
                             HStack {
                                 Text("\(index + 1).")
                                     .font(.caption)
