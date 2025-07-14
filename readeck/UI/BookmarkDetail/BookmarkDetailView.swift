@@ -7,6 +7,7 @@ struct BookmarkDetailView: View {
     @State private var webViewHeight: CGFloat = 300
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
+    @EnvironmentObject var playerUIState: PlayerUIState
     
     private let headerHeight: CGFloat = 320
     
@@ -229,6 +230,7 @@ struct BookmarkDetailView: View {
             metaRow(icon: "speaker.wave.2") {
                 Button(action: {
                     viewModel.addBookmarkToSpeechQueue()
+                    playerUIState.showPlayer()
                 }) {
                     Text("Artikel vorlesen")
                         .font(.subheadline)
@@ -238,7 +240,6 @@ struct BookmarkDetailView: View {
         }
     }
     
-    // ViewBuilder für Meta-Infos
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {

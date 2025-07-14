@@ -16,6 +16,7 @@ struct BookmarksView: View {
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
+    @EnvironmentObject var playerUIState: PlayerUIState
     let tag: String?
     
     // MARK: Initializer

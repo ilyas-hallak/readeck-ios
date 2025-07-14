@@ -17,7 +17,7 @@
     "%lld" : {
 
     },
-    "%lld Artikel in Queue" : {
+    "%lld Artikel in der Queue" : {
 
     },
     "%lld min" : {
@@ -29,6 +29,16 @@
     "%lld." : {
 
     },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "12 min • Today • example.com" : {
 
     },
@@ -36,9 +46,6 @@
 
     },
     "Abmelden" : {
-
-    },
-    "Add Item" : {
 
     },
     "Aktuelle Labels" : {
@@ -139,10 +146,16 @@
     "Fertig mit Lesen?" : {
 
     },
+    "Fortschritt: %lld%%" : {
+
+    },
     "Füge einen neuen Link zu deiner Sammlung hinzu" : {
 
     },
     "Geben Sie Ihre Readeck-Server-Details ein, um zu beginnen." : {
+
+    },
+    "Geschwindigkeit" : {
 
     },
     "https://example.com" : {
@@ -158,9 +171,6 @@
 
     },
     "Ihre aktuelle Server-Verbindung und Anmeldedaten." : {
-
-    },
-    "Item at %@" : {
 
     },
     "Keine Artikel in der Queue" : {
@@ -195,6 +205,16 @@
     },
     "Lade Artikel..." : {
 
+    },
+    "Lese %lld/%lld: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lese %1$lld/%2$lld: "
+          }
+        }
+      }
     },
     "Leseeinstellungen" : {
 
@@ -244,10 +264,7 @@
     "Schriftgröße" : {
 
     },
-    "Select a bookmark" : {
-
-    },
-    "Select an item" : {
+    "Select a bookmark or tag" : {
 
     },
     "Server-Endpunkt" : {
@@ -302,6 +319,9 @@
 
     },
     "Website" : {
+
+    },
+    "Weiterhören" : {
 
     },
     "Wiederherstellen" : {

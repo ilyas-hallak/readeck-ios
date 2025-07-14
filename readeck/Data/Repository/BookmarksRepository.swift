@@ -1,15 +1,5 @@
 import Foundation
 
-protocol PBookmarksRepository {
-    func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage
-    func fetchBookmark(id: String) async throws -> BookmarkDetail
-    func fetchBookmarkArticle(id: String) async throws -> String
-    func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String
-    func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws
-    func deleteBookmark(id: String) async throws
-    func searchBookmarks(search: String) async throws -> BookmarksPage
-}
-
 class BookmarksRepository: PBookmarksRepository {
     private var api: PAPI
 
@@ -40,7 +30,8 @@ class BookmarksRepository: PBookmarksRepository {
             isArchived: bookmarkDetailDto.isArchived,
             labels: bookmarkDetailDto.labels,
             thumbnailUrl: bookmarkDetailDto.resources.thumbnail?.src ?? "",
-            imageUrl: bookmarkDetailDto.resources.image?.src ?? ""
+            imageUrl: bookmarkDetailDto.resources.image?.src ?? "",
+            lang: bookmarkDetailDto.lang ?? ""
         )
     }
     

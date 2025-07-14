@@ -14,6 +14,6 @@ class AddTextToSpeechQueueUseCase {
         } else {
             text += bookmarkDetail.description.stripHTML
         }
-        speechQueue.enqueue(text)
+        speechQueue.enqueue(bookmarkDetail.toSpeechQueueItem(text))
     }
 } 

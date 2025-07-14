@@ -32,18 +32,23 @@ struct PhoneTabView: View {
                         tabView(for: selectedTab)
                             .navigationTitle(selectedTab.label)
                     } else {
-                        List(moreTabs, id: \.self, selection: $selectedMoreTab) { tab in
-                            NavigationLink {
-                                tabView(for: tab)
-                                    .navigationTitle(tab.label)
-                            } label: {
-                                Label(tab.label, systemImage: tab.systemImage)
+                        VStack(alignment: .leading) {
+                            List(moreTabs, id: \.self, selection: $selectedMoreTab) { tab in
+                                NavigationLink {
+                                    tabView(for: tab)
+                                        .navigationTitle(tab.label)
+                                } label: {
+                                    Label(tab.label, systemImage: tab.systemImage)
+                                }
+                                .listRowBackground(Color(R.color.bookmark_list_bg))
                             }
-                            .listRowBackground(Color(R.color.bookmark_list_bg))
+                            .navigationTitle("Mehr")
+                            .scrollContentBackground(.hidden)
+                            .background(Color(R.color.bookmark_list_bg))
+                            
+                            PlayerQueueResumeButton()
+                                .padding(.bottom, 16)
                         }
-                        .navigationTitle("Mehr")
-                        .scrollContentBackground(.hidden)
-                        .background(Color(R.color.bookmark_list_bg))
                     }
                 }
                 .tabItem {

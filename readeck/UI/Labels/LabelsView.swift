@@ -15,7 +15,6 @@ struct LabelsView: View {
             } else {
                 List {
                     ForEach(viewModel.labels, id: \.href) { label in
-                        
                         NavigationLink {
                             BookmarksView(state: .all, type: [], selectedBookmark: .constant(nil), tag: label.name)
                                 .navigationTitle("\(label.name) (\(label.count))")

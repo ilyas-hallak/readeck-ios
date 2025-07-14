@@ -4,6 +4,7 @@ import Foundation
 struct MainTabView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State var selectedBookmark: Bookmark?
+    @StateObject private var playerUIState = PlayerUIState()
     
     // sizeClass
     @Environment(\.horizontalSizeClass)
@@ -15,8 +16,10 @@ struct MainTabView: View {
     var body: some View {
         if UIDevice.isPhone {
             PhoneTabView()
+                .environmentObject(playerUIState)
         } else {
             PadSidebarView()
+                .environmentObject(playerUIState)
         }
     }
 }
