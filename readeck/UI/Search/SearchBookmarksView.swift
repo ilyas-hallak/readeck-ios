@@ -45,8 +45,16 @@ struct SearchBookmarksView: View {
             
             if let bookmarks = viewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
                 List(bookmarks) { bookmark in
-                    Button(action: {
-                        
+                    NavigationLink {
+                        BookmarkDetailView(bookmarkId: bookmark.id)
+                    } label: {
+                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in })
+                            .listRowBackground(Color(.systemBackground))
+                            .padding(.vertical, 4)
+                    }
+
+                    
+                    /*Button(action: {
                         if UIDevice.isPhone {
                             selectedBookmarkId = bookmark.id
                         } else {
@@ -66,6 +74,7 @@ struct SearchBookmarksView: View {
                     }
                     .buttonStyle(.plain)
                     .listRowSeparator(.hidden)
+                     */
                 }
                 .listStyle(.plain)
             } else if !viewModel.isLoading && viewModel.bookmarks != nil {

@@ -5,7 +5,7 @@ class KeychainHelper {
     static let shared = KeychainHelper()
     private init() {}
     
-    private static let accessGroup = "8J69P655GN.de.ilyashallak.readeck2"
+    private static let accessGroup = "8J69P655GN.de.ilyashallak.readeck"
     
     @discardableResult
     func saveToken(_ token: String) -> Bool {

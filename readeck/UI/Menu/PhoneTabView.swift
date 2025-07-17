@@ -28,28 +28,28 @@ struct PhoneTabView: View {
                 }
                 
                 NavigationStack {
-                    if let selectedTab = selectedMoreTab {
-                        tabView(for: selectedTab)
-                            .navigationTitle(selectedTab.label)
-                    } else {
-                        VStack(alignment: .leading) {
-                            List(moreTabs, id: \.self, selection: $selectedMoreTab) { tab in
-                                NavigationLink {
-                                    tabView(for: tab)
-                                        .navigationTitle(tab.label)
-                                } label: {
-                                    Label(tab.label, systemImage: tab.systemImage)
+                    List(moreTabs, id: \.self) { tab in
+                        
+                        NavigationLink {
+                            tabView(for: tab)
+                                .navigationTitle(tab.label)
+                                .onDisappear {
+                                    // tags and search handle navigation by own
+                                    if tab != .tags && tab != .search {
+                                        selectedMoreTab = nil
+                                    }
                                 }
-                                .listRowBackground(Color(R.color.bookmark_list_bg))
-                            }
-                            .navigationTitle("Mehr")
-                            .scrollContentBackground(.hidden)
-                            .background(Color(R.color.bookmark_list_bg))
-                            
-                            PlayerQueueResumeButton()
-                                .padding(.bottom, 16)
+                        } label: {
+                            Label(tab.label, systemImage: tab.systemImage)
                         }
+                        .listRowBackground(Color(R.color.bookmark_list_bg))
                     }
+                    .navigationTitle("Mehr")
+                    .scrollContentBackground(.hidden)
+                    .background(Color(R.color.bookmark_list_bg))
+                    
+                    PlayerQueueResumeButton()
+                        .padding(.bottom, 16)
                 }
                 .tabItem {
                     Label("Mehr", systemImage: "ellipsis")

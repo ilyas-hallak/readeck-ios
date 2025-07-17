@@ -62,6 +62,9 @@
         }
       }
     },
+    "Als Favorit markieren" : {
+
+    },
     "Anmelden & speichern" : {
 
     },
@@ -81,9 +84,6 @@
 
     },
     "Bookmark archivieren" : {
-
-    },
-    "Bookmark ist archiviert" : {
 
     },
     "Bookmark speichern" : {
@@ -286,9 +286,6 @@
 
     },
     "Sync-Intervall" : {
-
-    },
-    "Tags" : {
 
     },
     "Theme" : {

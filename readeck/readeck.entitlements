@@ -8,7 +8,7 @@
 	<true/>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)de.ilyashallak.readeck2</string>
+		<string>$(AppIdentifierPrefix)de.ilyashallak.readeck</string>
 	</array>
 </dict>
 </plist>

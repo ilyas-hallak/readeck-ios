@@ -12,7 +12,7 @@ struct BookmarkDetail {
     let wordCount: Int?
     let readingTime: Int?
     let hasArticle: Bool
-    let isMarked: Bool
+    var isMarked: Bool
     var isArchived: Bool
     let labels: [String]
     let thumbnailUrl: String

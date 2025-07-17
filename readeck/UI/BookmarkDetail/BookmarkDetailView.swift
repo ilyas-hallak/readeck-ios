@@ -16,13 +16,17 @@ struct BookmarkDetailView: View {
             ScrollView {
                 ZStack(alignment: .top) {
                     headerView(geometry: geometry)
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .center, spacing: 16) {
                         Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
                         titleSection
                         Divider().padding(.horizontal)
                         contentSection
                         Spacer(minLength: 40)
-                        archiveSection
+                        if viewModel.isLoadingArticle == false {
+                            archiveSection
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                .animation(.easeInOut, value: viewModel.articleContent)
+                        }
                     }
                 }
             }
@@ -152,11 +156,14 @@ struct BookmarkDetailView: View {
     private var contentSection: some View {
         if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
             WebView(htmlContent: viewModel.articleContent, settings: settings) { height in
-                webViewHeight = height
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    webViewHeight = height
+                }
             }
             .frame(height: webViewHeight)
             .cornerRadius(14)
             .padding(.horizontal)
+            .animation(.easeInOut, value: webViewHeight)
         } else if viewModel.isLoadingArticle {
             ProgressView("Lade Artikel...")
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -174,7 +181,7 @@ struct BookmarkDetailView: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.horizontal)
-            .padding(.top, 32)
+            .padding(.top, 4)
         }
     }
     
@@ -280,13 +287,29 @@ struct BookmarkDetailView: View {
     }
     
     private var archiveSection: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .center, spacing: 12) {
             Text("Fertig mit Lesen?")
                 .font(.headline)
                 .padding(.top, 24)
-            if viewModel.bookmarkDetail.isArchived {
-                Label("Bookmark ist archiviert", systemImage: "archivebox.fill")
-            } else {
+            VStack(alignment: .center, spacing: 16) {
+                Button(action: {
+                    Task {
+                        await viewModel.toggleFavorite(id: bookmarkId)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: viewModel.bookmarkDetail.isMarked ? "star.fill" : "star")
+                            .foregroundColor(viewModel.bookmarkDetail.isMarked ? .yellow : .gray)
+                        Text(viewModel.bookmarkDetail.isMarked ? "Favorit" : "Als Favorit markieren")
+                    }
+                    .font(.title3.bold())
+                    .frame(maxHeight: 60)
+                    .padding(10)
+                }
+                .buttonStyle(.bordered)
+                .disabled(viewModel.isLoading)
+                
+                // Archivieren-Button
                 Button(action: {
                     Task {
                         await viewModel.archiveBookmark(id: bookmarkId)
@@ -297,7 +320,8 @@ struct BookmarkDetailView: View {
                         Text("Bookmark archivieren")
                     }
                     .font(.title3.bold())
-                    .frame(maxWidth: .infinity, maxHeight: 40)
+                    .frame(maxHeight: 60)
+                    .padding(10)
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(viewModel.isLoading)

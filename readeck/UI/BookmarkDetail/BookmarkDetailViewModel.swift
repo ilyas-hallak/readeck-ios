@@ -13,7 +13,7 @@ class BookmarkDetailViewModel {
     var articleParagraphs: [String] = []
     var bookmark: Bookmark? = nil
     var isLoading = false
-    var isLoadingArticle = false
+    var isLoadingArticle = true
     var errorMessage: String?
     var settings: Settings?
     
@@ -84,5 +84,19 @@ class BookmarkDetailViewModel {
     func addBookmarkToSpeechQueue() {
         bookmarkDetail.content = articleContent
         addTextToSpeechQueueUseCase.execute(bookmarkDetail: bookmarkDetail)
+    }
+    
+    @MainActor
+    func toggleFavorite(id: String) async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let newValue = !bookmarkDetail.isMarked
+            try await updateBookmarkUseCase.toggleFavorite(bookmarkId: id, isMarked: newValue)
+            bookmarkDetail.isMarked = newValue
+        } catch {
+            errorMessage = "Fehler beim Aktualisieren des Favoriten-Status"
+        }
+        isLoading = false
     }
 }
