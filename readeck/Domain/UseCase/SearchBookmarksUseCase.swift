@@ -1,6 +1,10 @@
 import Foundation
 
-class SearchBookmarksUseCase {
+protocol PSearchBookmarksUseCase {
+    func execute(search: String) async throws -> BookmarksPage
+}
+
+class SearchBookmarksUseCase: PSearchBookmarksUseCase {
     private let repository: PBookmarksRepository
     
     init(repository: PBookmarksRepository) {

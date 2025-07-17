@@ -1,6 +1,10 @@
 import Foundation
 
-class LoadSettingsUseCase {
+protocol PLoadSettingsUseCase {
+    func execute() async throws -> Settings?
+}
+
+class LoadSettingsUseCase: PLoadSettingsUseCase {
     private let authRepository: PAuthRepository
     
     init(authRepository: PAuthRepository) {

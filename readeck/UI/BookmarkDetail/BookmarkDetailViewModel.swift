@@ -2,11 +2,11 @@ import Foundation
 
 @Observable
 class BookmarkDetailViewModel {
-    private let getBookmarkUseCase: GetBookmarkUseCase
-    private let getBookmarkArticleUseCase: GetBookmarkArticleUseCase
-    private let loadSettingsUseCase: LoadSettingsUseCase
-    private let updateBookmarkUseCase: UpdateBookmarkUseCase
-    private let addTextToSpeechQueueUseCase: AddTextToSpeechQueueUseCase
+    private let getBookmarkUseCase: PGetBookmarkUseCase
+    private let getBookmarkArticleUseCase: PGetBookmarkArticleUseCase
+    private let loadSettingsUseCase: PLoadSettingsUseCase
+    private let updateBookmarkUseCase: PUpdateBookmarkUseCase
+    private let addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase
     
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -17,8 +17,7 @@ class BookmarkDetailViewModel {
     var errorMessage: String?
     var settings: Settings?
     
-    init() {
-        let factory = DefaultUseCaseFactory.shared
+    init(_  factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.getBookmarkUseCase = factory.makeGetBookmarkUseCase()
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()

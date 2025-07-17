@@ -1,6 +1,10 @@
 import Foundation
 
-class GetBookmarkUseCase {
+protocol PGetBookmarkUseCase {
+    func execute(id: String) async throws -> BookmarkDetail
+}
+
+class GetBookmarkUseCase: PGetBookmarkUseCase {
     private let repository: PBookmarksRepository
 
     init(repository: PBookmarksRepository) {

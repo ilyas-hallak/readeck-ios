@@ -7,11 +7,11 @@
 
 import Foundation
 
-protocol LogoutUseCaseProtocol {
+protocol PLogoutUseCase {
     func execute() async throws
 }
 
-class LogoutUseCase: LogoutUseCaseProtocol {
+class LogoutUseCase: PLogoutUseCase {
     private let settingsRepository: SettingsRepository
     private let tokenManager: TokenManager
     

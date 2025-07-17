@@ -1,6 +1,10 @@
 import Foundation
 
-class GetLabelsUseCase {
+protocol PGetLabelsUseCase {
+    func execute() async throws -> [BookmarkLabel]
+}
+
+class GetLabelsUseCase: PGetLabelsUseCase {
     private let labelsRepository: PLabelsRepository
     
     init(labelsRepository: PLabelsRepository) {

@@ -1,6 +1,10 @@
 import Foundation
 
-class AddTextToSpeechQueueUseCase {
+protocol PAddTextToSpeechQueueUseCase {
+    func execute(bookmarkDetail: BookmarkDetail)
+}
+
+class AddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
     private let speechQueue: SpeechQueue
 
     init(speechQueue: SpeechQueue = .shared) {

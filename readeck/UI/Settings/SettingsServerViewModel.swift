@@ -7,10 +7,10 @@ class SettingsServerViewModel {
     
     // MARK: - Use Cases
     
-    private let loginUseCase: LoginUseCase
-    private let logoutUseCase: LogoutUseCase
-    private let saveServerSettingsUseCase: SaveServerSettingsUseCase
-    private let loadSettingsUseCase: LoadSettingsUseCase
+    private let loginUseCase: PLoginUseCase
+    private let logoutUseCase: PLogoutUseCase
+    private let saveServerSettingsUseCase: PSaveServerSettingsUseCase
+    private let loadSettingsUseCase: PLoadSettingsUseCase
     
     // MARK: - Server Settings
     var endpoint = ""
@@ -27,8 +27,7 @@ class SettingsServerViewModel {
         SettingsRepository().hasFinishedSetup
     }
     
-    init() {
-        let factory = DefaultUseCaseFactory.shared
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.loginUseCase = factory.makeLoginUseCase()
         self.logoutUseCase = factory.makeLogoutUseCase()
         self.saveServerSettingsUseCase = factory.makeSaveServerSettingsUseCase()
@@ -69,7 +68,6 @@ class SettingsServerViewModel {
             successMessage = "Server-Einstellungen gespeichert und erfolgreich angemeldet."
             try await SettingsRepository().saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
-            await DefaultUseCaseFactory.shared.refreshConfiguration()
         } catch {
             errorMessage = "Verbindung oder Anmeldung fehlgeschlagen: \(error.localizedDescription)"
             isLoggedIn = false

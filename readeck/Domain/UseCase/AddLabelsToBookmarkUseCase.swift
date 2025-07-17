@@ -1,6 +1,11 @@
 import Foundation
 
-class AddLabelsToBookmarkUseCase {
+protocol PAddLabelsToBookmarkUseCase {
+    func execute(bookmarkId: String, labels: [String]) async throws
+    func execute(bookmarkId: String, label: String) async throws
+}
+
+class AddLabelsToBookmarkUseCase: PAddLabelsToBookmarkUseCase {
     private let repository: PBookmarksRepository
     
     init(repository: PBookmarksRepository) {

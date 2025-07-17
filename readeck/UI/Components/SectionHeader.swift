@@ -15,3 +15,7 @@ struct SectionHeader: View {
         }
     }
 } 
+
+#Preview {
+    SectionHeader(title: "hello", icon: "person.circle")
+}

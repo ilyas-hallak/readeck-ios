@@ -1,6 +1,18 @@
 import Foundation
 
-class UpdateBookmarkUseCase {
+protocol PUpdateBookmarkUseCase {
+    func execute(bookmarkId: String, updateRequest: BookmarkUpdateRequest) async throws
+    func toggleArchive(bookmarkId: String, isArchived: Bool) async throws
+    func toggleFavorite(bookmarkId: String, isMarked: Bool) async throws
+    func markAsDeleted(bookmarkId: String) async throws
+    func updateReadProgress(bookmarkId: String, progress: Int, anchor: String?) async throws
+    func updateTitle(bookmarkId: String, title: String) async throws
+    func updateLabels(bookmarkId: String, labels: [String]) async throws
+    func addLabels(bookmarkId: String, labels: [String]) async throws
+    func removeLabels(bookmarkId: String, labels: [String]) async throws
+}
+
+class UpdateBookmarkUseCase: PUpdateBookmarkUseCase {
     private let repository: PBookmarksRepository
     
     init(repository: PBookmarksRepository) {

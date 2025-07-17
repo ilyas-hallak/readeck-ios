@@ -4,9 +4,9 @@ import SwiftUI
 
 @Observable
 class BookmarksViewModel {
-    private let getBooksmarksUseCase = DefaultUseCaseFactory.shared.makeGetBookmarksUseCase()
-    private let updateBookmarkUseCase = DefaultUseCaseFactory.shared.makeUpdateBookmarkUseCase()
-    private let deleteBookmarkUseCase = DefaultUseCaseFactory.shared.makeDeleteBookmarkUseCase()
+    private let getBooksmarksUseCase: PGetBookmarksUseCase = DefaultUseCaseFactory.shared.makeGetBookmarksUseCase()
+    private let updateBookmarkUseCase: PUpdateBookmarkUseCase = DefaultUseCaseFactory.shared.makeUpdateBookmarkUseCase()
+    private let deleteBookmarkUseCase: PDeleteBookmarkUseCase = DefaultUseCaseFactory.shared.makeDeleteBookmarkUseCase()
     
     var bookmarks: BookmarksPage?
     var isLoading = false
@@ -118,6 +118,7 @@ class BookmarksViewModel {
                 state: currentState,
                 limit: limit,
                 offset: offset,
+                search: nil,
                 type: currentType,
                 tag: currentTag)
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)

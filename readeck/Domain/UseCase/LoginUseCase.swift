@@ -1,4 +1,9 @@
-class LoginUseCase {
+
+protocol PLoginUseCase {
+    func execute(endpoint: String, username: String, password: String) async throws -> User
+}
+
+class LoginUseCase: PLoginUseCase {
     private let repository: PAuthRepository
 
     init(repository: PAuthRepository) {

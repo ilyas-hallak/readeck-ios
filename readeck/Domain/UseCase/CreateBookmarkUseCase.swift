@@ -1,6 +1,14 @@
 import Foundation
 
-class CreateBookmarkUseCase {
+protocol PCreateBookmarkUseCase {
+    func execute(createRequest: CreateBookmarkRequest) async throws -> String
+    func createFromURL(_ url: String) async throws -> String
+    func createFromURLWithTitle(_ url: String, title: String) async throws -> String
+    func createFromURLWithLabels(_ url: String, labels: [String]) async throws -> String
+    func createFromClipboard() async throws -> String?
+}
+
+class CreateBookmarkUseCase: PCreateBookmarkUseCase {
     private let repository: PBookmarksRepository
     
     init(repository: PBookmarksRepository) {

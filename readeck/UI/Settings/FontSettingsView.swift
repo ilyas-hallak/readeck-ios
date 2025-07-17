@@ -8,7 +8,11 @@
 import SwiftUI
 
 struct FontSettingsView: View {
-    @State private var viewModel = FontSettingsViewModel()
+    @State private var viewModel: FontSettingsViewModel
+    
+    init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
+        self.viewModel = viewModel
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -96,5 +100,7 @@ struct FontSettingsView: View {
 }
 
 #Preview {
-    FontSettingsView()
-} 
+    FontSettingsView(viewModel: .init(
+        factory: MockUseCaseFactory())
+    )
+}

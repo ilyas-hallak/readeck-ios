@@ -11,8 +11,8 @@ import SwiftUI
 
 @Observable
 class FontSettingsViewModel {
-    private let saveSettingsUseCase: SaveSettingsUseCase
-    private let loadSettingsUseCase: LoadSettingsUseCase
+    private let saveSettingsUseCase: PSaveSettingsUseCase
+    private let loadSettingsUseCase: PLoadSettingsUseCase
     
     // MARK: - Font Settings
     var selectedFontFamily: FontFamily = .system
@@ -63,8 +63,7 @@ class FontSettingsViewModel {
         }
     }
     
-    init() {
-        let factory = DefaultUseCaseFactory.shared
+    init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }

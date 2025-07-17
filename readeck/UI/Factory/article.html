@@ -1,0 +1,135 @@
+<section>
+    <h3 id=""><strong> </strong></h3><h2 id="hn.CeDL.why-swiftdata-should-be-isolated">Why SwiftData Should Be Isolated</h2><p>While <strong>SwiftData</strong> provides a smooth developer experience thanks to its macro-based integration and built-in support for <code>@Model</code>, <code>@Query</code>, and <code>@Environment(\.modelContext)</code>, it introduces a major architectural concern:<strong> tight coupling between persistence and the UI layer</strong>.</p><p>When you embed SwiftData directly into your views or view models, you violate clean architecture principles like <strong>separation of concerns</strong> and <strong>dependency inversion</strong>. This makes your code:</p><ul><li><strong>Hard to test:</strong> mocking SwiftData becomes complex or even impossible</li><li><strong>Difficult to swap:</strong> migrating to another persistence mechanism (e.g., in-memory storage for previews or tests) becomes painful</li><li><strong>Less maintainable:</strong> UI logic becomes tightly bound to storage details</li></ul><p>To preserve the <strong>testability</strong>, <strong>flexibility</strong>, and <strong>scalability</strong> of your app, it’s critical to <strong>isolate SwiftData behind an abstraction</strong>.</p>
+
+<p>
+In this tutorial, we’ll focus on how to achieve this isolation by applying SOLID principles, with a special emphasis on the Dependency Inversion Principle. We’ll show how to decouple SwiftData from the view and the view model, making your app cleaner, safer, and future-proof, ensuring your app&#39;s scalability.
+</p>
+
+<blockquote>View the full source code on GitHub: <a href="https://github.com/belkhadir/SwiftDataApp/?ref=swiftorbit.io" rel="nofollow noopener noreferrer">https://github.com/belkhadir/SwiftDataApp/</a></blockquote><h2 id="hn.CeDL.defining-the-boundaries">Defining the Boundaries</h2><p>The example you&#39;ll see shortly is intentionally simple. The goal is clarity, so you can follow along easily and fully grasp the key concepts. But before diving into the code, let&#39;s understand what we mean by <strong>boundaries</strong>, as clearly defined by Uncle Bob (Robert C. Martin):</p>
+
+<blockquote>
+<p>“Those boundaries separate software elements from one another, and restrict those on one side from knowing about those on the other.”</p>
+
+</blockquote>
+
+<figure id=""><img src="https://readeck.mnk.any64.de/bm/3Z/3ZPaYQx6tgL2wG8ZMBFzdq/_resources/MVrFafkXKxjHRUR68PpRnp.png" alt="" loading="lazy" id="" width="838" height="658"/><figcaption id=""><span id="">Figure 1: Diagram from </span><i id=""><em id="">Clean Architecture</em></i><span id=""> by Robert C. Martin showing the separation between business rules and database access</span></figcaption></figure><p>In our app, when a user taps the “+” button, we add a new Person. The <strong>UI layer</strong> should neither know nor care about <strong>how or where</strong> the Person is saved. Its sole responsibility is straightforward: <strong>display a list of persons</strong>.</p><p>Using something like @Query directly within our SwiftUI views violates these boundaries. Doing so tightly couples the UI to the persistence mechanism (in our case, SwiftData). This breaks the fundamental principle of <strong>Single Responsibility</strong>, as our views now know too much specific detail about data storage and retrieval.</p><p>In the following sections, we’ll show how to respect these boundaries by carefully isolating the persistence logic from the UI, ensuring each layer remains focused, clean, and maintainable.</p><h2 id="hn.CeDL.abstracting-the-persistence-layer">Abstracting the Persistence Layer</h2><p>First, let’s clearly outline our requirements. Our app needs to perform three main actions:</p><ol><li><strong>Add a new person</strong></li><li><strong>Fetch all persons</strong></li><li><strong>Delete a specific person</strong></li></ol><p>To ensure these operations are not directly tied to any specific storage framework (like SwiftData), we encapsulate them inside a <strong>protocol</strong>. We’ll name this protocol PersonDataStore:</p><pre><code>public protocol PersonDataStore {
+func fetchAll() throws -&gt; [Person]
+func save(_ person: Person) throws
+func delete(_ person: Person) throws
+}
+</code></pre>
+<p>Next, we define our primary <strong>entity</strong>, Person, as a simple struct. Notice it doesn’t depend on SwiftData or any other framework:</p><pre><code>public struct Person: Identifiable {
+public var id: UUID = UUID()
+public let name: String
+
+public init(name: String) {
+self.name = name
+}
+}
+</code></pre>
+<p>These definitions (PersonDataStore and Person) become the core of our domain, forming a stable abstraction for persistence that other layers can depend upon.</p><h2 id="hn.CeDL.implementing-swiftdata-in-the-infra-layer">Implementing SwiftData in the Infra Layer</h2><p>Now that we have our Domain layer clearly defined, let’s implement the persistence logic using <strong>SwiftData</strong>. We’ll encapsulate the concrete implementation in a dedicated framework called SwiftDataInfra.</p><h3 id="hn.CeDL.defining-the-local-model">Defining the Local Model</h3><p>First, we define a local model called LocalePerson. You might wonder why we create a separate model rather than directly using our domain Person entity. The reason is simple:</p><ul><li>LocalePerson serves as a <strong>SwiftData-specific </strong>model that interacts directly with the SwiftData framework.</li><li>It remains <strong>internal</strong> and <strong>isolated</strong> within the infrastructure layer, never exposed to the outside layers, preserving architectural boundaries.</li></ul><pre><code>import SwiftData
+
+@Model
+final class LocalePerson: Identifiable {
+@Attribute(.unique) var name: String
+
+init(name: String) {
+self.name = name
+}
+}
+</code></pre>
+<p>Note that we annotate it with <code>@Model</code> and specify <code>@Attribute(.unique)</code> on the name property, signaling to SwiftData that each person’s name must be unique.</p><h3 id="hn.CeDL.implementing-the-persistence-logic">Implementing the Persistence Logic</h3><p>To implement persistence operations (fetch, save, delete), we’ll use SwiftData’s ModelContext. We’ll inject this context directly into our infrastructure class (SwiftDataPersonDataStore) via constructor injection:</p><pre><code>import Foundation
+import SwiftData
+import SwiftDataDomain
+
+public final class SwiftDataPersonDataStore {
+private let modelContext: ModelContext
+
+public init(modelContext: ModelContext) {
+self.modelContext = modelContext
+}
+}
+</code></pre>
+<h3 id="hn.CeDL.conforming-to-persondatastore">Conforming to PersonDataStore</h3><p>Our infrastructure class will now conform to our domain protocol <code>PersonDataStore</code>. Here’s how each operation is implemented:</p><p><strong>1. Fetching all persons:</strong></p><pre><code>public func fetchAll() throws -&gt; [Person] {
+let request = FetchDescriptor&lt;LocalePerson&gt;(sortBy: [SortDescriptor(\.name)])
+let results = try modelContext.fetch(request)
+
+return results.map { Person(name: $0.name) }
+}
+</code></pre>
+<ul><li>We use a <code>FetchDescriptor</code> to define our query, sorting persons by their name.</li><li>We map each <code>LocalePerson</code> (infra model) to a plain <code>Person</code> entity (domain model), maintaining isolation from SwiftData specifics.</li></ul><p><strong>2. Saving a person:</strong></p><pre><code>public func save(_ person: Person) throws {
+let localPerson = LocalePerson(name: person.name)
+
+modelContext.insert(localPerson)
+try modelContext.save()
+}
+</code></pre>
+<ul><li>We create a new <code>LocalePerson</code> instance.</li><li>We insert this instance into SwiftData’s context, then explicitly save the changes.</li></ul><p><strong>3. Deleting a person:</strong></p><pre><code>public func delete(_ person: Person) throws {
+let request = FetchDescriptor&lt;LocalePerson&gt;(sortBy: [SortDescriptor(\.name)])
+let results = try modelContext.fetch(request)
+guard let localPerson = results.first else { return }
+
+modelContext.delete(localPerson)
+try modelContext.save()
+}
+</code></pre>
+<ul><li>We fetch the corresponding LocalePerson.</li><li>We delete the fetched object and save the context.</li><li>(Note: For a robust production app, you’d typically want to match using unique identifiers rather than just picking the first result.)</li></ul><h2 id="hn.CeDL.viewmodel-that-doesn%E2%80%99t-know-about-swiftdata">ViewModel That Doesn’t Know About SwiftData</h2><p>Our ViewModel is placed in a separate framework called <strong>SwiftDataPresentation</strong>, which depends <strong>only</strong> on the Domain layer (SwiftDataDomain). Crucially, this ViewModel knows <strong>nothing</strong> about SwiftData specifics or any persistence details. Its sole responsibility is managing UI state and interactions, displaying persons when the view appears, and handling the addition or deletion of persons through user actions.</p><figure id=""><img src="https://readeck.mnk.any64.de/bm/3Z/3ZPaYQx6tgL2wG8ZMBFzdq/_resources/4vML2Vj2nCR6cC4T8B6nAo.png" alt="" loading="lazy" id="" width="1206" height="2622"/><figcaption id=""><span id="">SwiftUI list view displaying people added using a modular SwiftData architecture, with a clean decoupled ViewModel.</span></figcaption></figure><p>Here’s the ViewModel implementation, highlighting dependency injection clearly:</p><pre><code>public final class PersonViewModel {
+// Dependency injected through initializer
+private let personDataStore: PersonDataStore
+
+// UI state management using ViewState
+public private(set) var viewState: ViewState&lt;[Person]&gt; = .idle
+
+public init(personDataStore: PersonDataStore) {
+self.personDataStore = personDataStore
+}
+}
+</code></pre>
+<h3 id="hn.CeDL.explanation-of-the-injection-and-usage">Explanation of the Injection and Usage</h3><ul><li><strong>Constructor Injection</strong>:<ul><li>The <code>PersonDataStore</code> is injected into the <code>PersonViewModel</code> through its initializer.</li></ul></li><ul><li>By depending only on the <code>PersonDataStore</code> protocol, the ViewModel remains <strong>agnostic</strong> about which persistence implementation it’s using (SwiftData, Core Data, or even an in-memory store for testing purposes).</li></ul><li><strong>How <code>PersonDataStore</code> is Used</strong>:<ul><li><strong>Loading Data (onAppear)</strong>:</li></ul></li></ul><pre><code>public func onAppear() {
+viewState = .loaded(allPersons())
+}
+</code></pre>
+<ul><ul><li><strong>Adding a New Person</strong>:</li></ul></ul><pre><code>public func addPerson(_ person: Person) {
+perform { try personDataStore.save(person) }
+}
+</code></pre>
+<p>The ViewModel delegates saving the new person to the injected store, without knowing how or where it happens.</p><ul><ul><li><strong>Deleting a Person</strong>:</li></ul></ul><pre><code>public func deletePerson(at offsets: IndexSet) {
+switch viewState {
+case .loaded(let people) where !people.isEmpty:
+for index in offsets {
+    let person = people[index]
+    perform { try personDataStore.delete(person) }
+}
+default:
+break
+}
+}
+</code></pre>
+<p>Similarly, deletion is entirely delegated to the injected store, keeping persistence details completely hidden from the ViewModel.</p><h2 id="hn.CeDL.composing-the-app-without-breaking-boundaries">Composing the App Without Breaking Boundaries</h2><p>Now that we&#39;ve built clearly defined layers, Domain, Infrastructure, and Presentation, it&#39;s time to tie everything together into our application. But there&#39;s one important rule: the way we compose our application <strong>shouldn&#39;t compromise our carefully crafted boundaries</strong>.</p><figure id=""><img src="https://readeck.mnk.any64.de/bm/3Z/3ZPaYQx6tgL2wG8ZMBFzdq/_resources/4vBMiXQ2JzCa5Miuce63wa.png" alt="" loading="lazy" id="" width="1280" height="758"/><figcaption id=""><i id=""><em id="">Clean architecture dependency graph for a SwiftUI app using SwiftData, showing separated App, Presentation, Domain, and Infra layers</em></i></figcaption></figure><h3 id="hn.CeDL.application-composition-swiftdataappapp">Application Composition (SwiftDataAppApp)</h3><p>Our application&#39;s entry point, SwiftDataAppApp, acts as the composition root. It has full knowledge of every module, enabling it to wire dependencies together without letting those details leak into the inner layers:</p><pre><code>import SwiftUI
+import SwiftData
+import SwiftDataInfra
+import SwiftDataPresentation
+
+@main
+struct SwiftDataAppApp: App {
+let container: ModelContainer
+
+init() {
+// Creating our SwiftData ModelContainer through a factory method.
+do {
+    container = try SwiftDataInfraContainerFactory.makeContainer()
+} catch {
+    fatalError(&#34;Failed to initialize ModelContainer: \(error)&#34;)
+}
+}
+
+var body: some Scene {
+WindowGroup {
+    // Constructing the view with dependencies injected.
+    ListPersonViewContructionView.construct(container: container)
+}
+}
+}
+</code></pre>
+<h2 id="hn.CeDL.benefits-of-this-isolation">Benefits of This Isolation</h2><p>By encapsulating SwiftData logic within the Infrastructure layer and adhering strictly to the PersonDataStore protocol, we’ve achieved a powerful separation:</p><ul><li><strong>The Presentation Layer</strong> and <strong>Domain Layer</strong> remain entirely unaware of SwiftData.</li><li>Our code becomes significantly more <strong>testable</strong> and <strong>maintainable</strong>.</li><li>We’re free to <strong>change or replace SwiftData</strong> without affecting the rest of the app.</li></ul><h2 id="hn.CeDL.references-and-further-reading"><strong> References and Further Reading</strong></h2><ul><li><strong>Clean Architecture (Robert C. Martin)</strong><br/><a href="https://books.apple.com/us/book/clean-architecture/id1315522850?ref=swiftorbit.io" rel="nofollow noopener noreferrer">https://books.apple.com/us/book/clean-architecture/id1315522850</a></li><li><strong>Essential Developer – iOS Development &amp; Architecture Courses</strong><br/><a href="https://www.essentialdeveloper.com/?ref=swiftorbit.io" rel="nofollow noopener noreferrer">https://www.essentialdeveloper.com</a></li><li><strong>Apple Documentation: SwiftData</strong><br/><a href="https://developer.apple.com/documentation/SwiftData?ref=swiftorbit.io" rel="nofollow noopener noreferrer">https://developer.apple.com/documentation/SwiftData</a></li></ul>
+</section>

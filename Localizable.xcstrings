@@ -80,9 +80,6 @@
     "Automatischer Sync" : {
 
     },
-    "Benutzername" : {
-
-    },
     "Bookmark archivieren" : {
 
     },
@@ -164,12 +161,6 @@
     "https://readeck.example.com" : {
 
     },
-    "Ihr Benutzername" : {
-
-    },
-    "Ihr Passwort" : {
-
-    },
     "Ihre aktuelle Server-Verbindung und Anmeldedaten." : {
 
     },
@@ -240,7 +231,7 @@
     "Optional: Eigener Titel" : {
 
     },
-    "Passwort" : {
+    "Password" : {
 
     },
     "readeck Bookmark Title" : {
@@ -306,6 +297,9 @@
     "URL gefunden:" : {
 
     },
+    "Username" : {
+
+    },
     "Version %@" : {
 
     },
@@ -325,6 +319,12 @@
 
     },
     "Wird gespeichert..." : {
+
+    },
+    "Your Password" : {
+
+    },
+    "Your Username" : {
 
     },
     "z.B. arbeit, wichtig, später" : {

@@ -3,13 +3,21 @@ import SafariServices
 
 struct BookmarkDetailView: View {
     let bookmarkId: String
-    @State private var viewModel = BookmarkDetailViewModel()
+    @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: CGFloat = 300
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @EnvironmentObject var playerUIState: PlayerUIState
     
     private let headerHeight: CGFloat = 320
+    
+    init(bookmarkId: String, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel(), webViewHeight: CGFloat = 300, showingFontSettings: Bool = false, showingLabelsSheet: Bool = false, playerUIState: PlayerUIState = .init()) {
+        self.bookmarkId = bookmarkId
+        self.viewModel = viewModel
+        self.webViewHeight = webViewHeight
+        self.showingFontSettings = showingFontSettings
+        self.showingLabelsSheet = showingLabelsSheet
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -156,7 +164,7 @@ struct BookmarkDetailView: View {
     private var contentSection: some View {
         if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
             WebView(htmlContent: viewModel.articleContent, settings: settings) { height in
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.easeInOut(duration: 0.1)) {
                     webViewHeight = height
                 }
             }
@@ -181,7 +189,7 @@ struct BookmarkDetailView: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.horizontal)
-            .padding(.top, 4)
+            .padding(.top, 0)
         }
     }
     
@@ -339,6 +347,11 @@ struct BookmarkDetailView: View {
 
 #Preview {
     NavigationView {
-        BookmarkDetailView(bookmarkId: "sample-id")
+        BookmarkDetailView(bookmarkId: "123",
+                           viewModel: .init(MockUseCaseFactory()),
+                           webViewHeight: 300,
+                           showingFontSettings: false,
+                           showingLabelsSheet: false,
+                           playerUIState: .init())
     }
 }

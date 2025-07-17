@@ -11,6 +11,11 @@ struct SettingsServerView: View {
     @State private var viewModel = SettingsServerViewModel()
     @State private var showingLogoutAlert = false
     
+    init(viewModel: SettingsServerViewModel = SettingsServerViewModel(), showingLogoutAlert: Bool = false) {
+        self.viewModel = viewModel
+        self.showingLogoutAlert = showingLogoutAlert
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
             SectionHeader(title: viewModel.isSetupMode ? "Server-Einstellungen" : "Server-Verbindung", icon: "server.rack")
@@ -42,9 +47,9 @@ struct SettingsServerView: View {
                         }
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Benutzername")
+                    Text("Username")
                         .font(.headline)
-                    TextField("Ihr Benutzername", text: $viewModel.username)
+                    TextField("Your Username", text: $viewModel.username)
                         .textFieldStyle(.roundedBorder)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
@@ -56,9 +61,9 @@ struct SettingsServerView: View {
                         }
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Passwort")
+                    Text("Password")
                         .font(.headline)
-                    SecureField("Ihr Passwort", text: $viewModel.password)
+                    SecureField("Your Password", text: $viewModel.password)
                         .textFieldStyle(.roundedBorder)
                         .disabled(!viewModel.isSetupMode)
                         .onChange(of: viewModel.password) {
@@ -90,6 +95,7 @@ struct SettingsServerView: View {
                         .font(.caption)
                 }
             }
+            
             if let successMessage = viewModel.successMessage {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
@@ -165,5 +171,7 @@ struct SettingsServerView: View {
 }
 
 #Preview {
-    SettingsServerView()
+    SettingsServerView(viewModel: .init(
+        MockUseCaseFactory()
+    ))
 }

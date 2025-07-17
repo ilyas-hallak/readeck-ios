@@ -1,6 +1,11 @@
 import Foundation
 
-class RemoveLabelsFromBookmarkUseCase {
+protocol PRemoveLabelsFromBookmarkUseCase {
+    func execute(bookmarkId: String, labels: [String]) async throws
+    func execute(bookmarkId: String, label: String) async throws
+}
+
+class RemoveLabelsFromBookmarkUseCase: PRemoveLabelsFromBookmarkUseCase {
     private let repository: PBookmarksRepository
     
     init(repository: PBookmarksRepository) {

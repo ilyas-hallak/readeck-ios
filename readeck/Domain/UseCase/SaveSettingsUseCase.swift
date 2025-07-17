@@ -1,6 +1,13 @@
 import Foundation
 
-class SaveSettingsUseCase {
+protocol PSaveSettingsUseCase {
+    func execute(endpoint: String, username: String, password: String) async throws
+    func execute(endpoint: String, username: String, password: String, hasFinishedSetup: Bool) async throws
+    func execute(token: String) async throws
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws
+}
+
+class SaveSettingsUseCase: PSaveSettingsUseCase {
     private let settingsRepository: PSettingsRepository
     
     init(settingsRepository: PSettingsRepository) {

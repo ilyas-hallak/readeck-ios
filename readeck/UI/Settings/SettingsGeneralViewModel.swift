@@ -4,8 +4,8 @@ import SwiftUI
 
 @Observable
 class SettingsGeneralViewModel {
-    private let saveSettingsUseCase: SaveSettingsUseCase
-    private let loadSettingsUseCase: LoadSettingsUseCase
+    private let saveSettingsUseCase: PSaveSettingsUseCase
+    private let loadSettingsUseCase: PLoadSettingsUseCase
     
     // MARK: - UI Settings
     var selectedTheme: Theme = .system
@@ -26,8 +26,7 @@ class SettingsGeneralViewModel {
     // func clearCache() async {}
     // func resetSettings() async {}
     
-    init() {
-        let factory = DefaultUseCaseFactory.shared
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }

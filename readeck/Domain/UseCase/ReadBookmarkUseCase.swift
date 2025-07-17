@@ -1,6 +1,10 @@
 import Foundation
 
-class ReadBookmarkUseCase {
+protocol PReadBookmarkUseCase {
+    func execute(bookmarkDetail: BookmarkDetail)
+}
+
+class ReadBookmarkUseCase: PReadBookmarkUseCase {
     private let addToSpeechQueue: AddTextToSpeechQueueUseCase
 
     init(addToSpeechQueue: AddTextToSpeechQueueUseCase = AddTextToSpeechQueueUseCase()) {

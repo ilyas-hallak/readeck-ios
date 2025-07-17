@@ -1,6 +1,10 @@
 import Foundation
 
-class DeleteBookmarkUseCase {
+protocol PDeleteBookmarkUseCase {
+    func execute(bookmarkId: String) async throws
+}
+
+class DeleteBookmarkUseCase: PDeleteBookmarkUseCase {
     private let repository: PBookmarksRepository
     
     init(repository: PBookmarksRepository) {

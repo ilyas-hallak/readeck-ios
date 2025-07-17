@@ -9,7 +9,11 @@ import SwiftUI
 // SectionHeader wird jetzt zentral importiert
 
 struct SettingsGeneralView: View {
-    @State private var viewModel = SettingsGeneralViewModel()
+    @State private var viewModel: SettingsGeneralViewModel        
+    
+    init(viewModel: SettingsGeneralViewModel = SettingsGeneralViewModel()) {
+        self.viewModel = viewModel
+    }
     
     var body: some View {
         VStack(spacing: 20) {
@@ -169,5 +173,7 @@ enum Theme: String, CaseIterable {
 
 
 #Preview {
-    SettingsGeneralView()
-} 
+    SettingsGeneralView(viewModel: .init(
+        MockUseCaseFactory()
+    ))
+}
