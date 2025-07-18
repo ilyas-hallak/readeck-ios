@@ -129,15 +129,6 @@ struct SettingsServerView: View {
                         .cornerRadius(10)
                     }
                     .disabled(!viewModel.canLogin || viewModel.isLoading)
-                    #if DEBUG
-                    Button("Debug-Anmeldung") {
-                        viewModel.username = "admin"
-                        viewModel.password = "Diggah123"
-                        viewModel.endpoint = "https://readeck.mnk.any64.de"
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    #endif
                 }
             } else {
                 Button(action: {
