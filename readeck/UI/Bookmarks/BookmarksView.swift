@@ -6,7 +6,7 @@ struct BookmarksView: View {
 
     // MARK: States
     
-    @State private var viewModel = BookmarksViewModel()
+    @State private var viewModel: BookmarksViewModel
     @State private var showingAddBookmark = false
     @State private var selectedBookmarkId: String?
     @State private var showingAddBookmarkFromShare = false
@@ -20,11 +20,12 @@ struct BookmarksView: View {
     let tag: String?
     
     // MARK: Initializer
-    init(state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
+    init(viewModel: BookmarksViewModel = .init(), state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
         self.state = state
         self.type = type
         self._selectedBookmark = selectedBookmark
         self.tag = tag
+        self.viewModel = viewModel
     }
     
     // MARK: Environments
@@ -147,13 +148,6 @@ struct BookmarksView: View {
                 AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
         )
-        /*.alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("OK", role: .cancel) {
-                viewModel.errorMessage = nil
-            }
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }*/
         .onAppear {
             Task {
                 await viewModel.loadBookmarks(state: state, type: type, tag: tag)
@@ -170,7 +164,11 @@ struct BookmarksView: View {
     }
 }
 
-// String Identifiable Extension für navigationDestination
-extension String: Identifiable {
-    public var id: String { self }
+#Preview {
+    BookmarksView(
+        viewModel: .init(MockUseCaseFactory()),
+        state: .archived,
+        type: [.article],
+        selectedBookmark: .constant(nil),
+        tag: nil)
 }

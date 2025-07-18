@@ -113,7 +113,9 @@ class MockReadBookmarkUseCase: PReadBookmarkUseCase {
 
 class MockGetBookmarksUseCase: PGetBookmarksUseCase {
     func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage {
-        BookmarksPage(bookmarks: [], currentPage: 1, totalCount: 0, totalPages: 1, links: nil)
+        BookmarksPage(bookmarks: [
+            Bookmark.mock
+        ], currentPage: 1, totalCount: 0, totalPages: 1, links: nil)
     }
 }
 
@@ -175,4 +177,10 @@ class MockSaveServerSettingsUseCase: PSaveServerSettingsUseCase {
 
 class MockAddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
     func execute(bookmarkDetail: BookmarkDetail) {}
+}
+
+fileprivate extension Bookmark {
+    static let mock: Bookmark = .init(
+        id: "123", title: "title", url: "https://example.com", href: "https://example.com", description: "description", authors: ["Tom"], created: "", published: "", updated: "", siteName: "example.com", site: "https://example.com", readingTime: 2, wordCount: 20, hasArticle: true, isArchived: false, isDeleted: false, isMarked: true, labels: ["Test"], lang: "EN", loaded: false, readProgress: 0, documentType: "", state: 0, textDirection: "ltr", type: "", resources: .init(article: nil, icon: nil, image: nil, log: nil, props: nil, thumbnail: nil)
+    )
 }

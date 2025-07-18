@@ -129,6 +129,7 @@ struct SettingsServerView: View {
                         .cornerRadius(10)
                     }
                     .disabled(!viewModel.canLogin || viewModel.isLoading)
+                    #if DEBUG
                     Button("Debug-Anmeldung") {
                         viewModel.username = "admin"
                         viewModel.password = "Diggah123"
@@ -136,6 +137,7 @@ struct SettingsServerView: View {
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    #endif
                 }
             } else {
                 Button(action: {

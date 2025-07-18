@@ -4,9 +4,9 @@ import SwiftUI
 
 @Observable
 class BookmarksViewModel {
-    private let getBooksmarksUseCase: PGetBookmarksUseCase = DefaultUseCaseFactory.shared.makeGetBookmarksUseCase()
-    private let updateBookmarkUseCase: PUpdateBookmarkUseCase = DefaultUseCaseFactory.shared.makeUpdateBookmarkUseCase()
-    private let deleteBookmarkUseCase: PDeleteBookmarkUseCase = DefaultUseCaseFactory.shared.makeDeleteBookmarkUseCase()
+    private let getBooksmarksUseCase: PGetBookmarksUseCase
+    private let updateBookmarkUseCase: PUpdateBookmarkUseCase
+    private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     
     var bookmarks: BookmarksPage?
     var isLoading = false
@@ -32,7 +32,11 @@ class BookmarksViewModel {
         }
     }
     
-    init() {
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+        getBooksmarksUseCase = factory.makeGetBookmarksUseCase()
+        updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
+        deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
+        
         setupNotificationObserver()
     }
     

@@ -8,6 +8,12 @@ A native iOS client for [readeck](https://readeck.org) bookmark management.
 The official repository is on Codeberg:
 https://codeberg.org/readeck/readeck
 
+## TestFlight Beta Access
+
+A public TestFlight beta for the Readeck iOS app will be available soon.
+
+If you are interested in joining the internal beta, please contact me directly at mooonki:matrix.org.
+
 ## Features
 
 - Browse and manage bookmarks (All, Unread, Favorites, Archive, Article, Videos, Pictures)
@@ -27,6 +33,7 @@ After installing the app:
 2. Enter your readeck server URL and credentials
 3. The app will automatically load your bookmarks
 
+Notice: Local Network Addresses are supported. If you use external Domains, you need to add a HTTPS Certificate to your readeck server. Apple does not allow to use HTTP on iOS for external domains in release versions. If you want to use HTTP, you are free to use the beta version of the app, where the HTTP is supported.
 
 ## Share Extension
 
@@ -37,13 +44,9 @@ The app includes a Share Extension that allows adding bookmarks directly from Sa
 3. Enter a title if you want and hit save
 4. The bookmark is automatically added to your collection
 
-## Planned Features
-- [ ] Add support for bookmark filtering and sorting options
-- [ ] Add support for tags
-- [ ] Offline sync with Core Data
-- [ ] Add support for collection management
-- [ ] Add offline sync capabilities
-- [ ] Add support for custom themes
+## Versions
+
+[see Changelog](./CHANGELOG.md)
 
 
 ## Contributing
