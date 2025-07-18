@@ -10,7 +10,7 @@ struct LabelsView: View {
             if viewModel.isLoading {
                 ProgressView()
             } else if let errorMessage = viewModel.errorMessage {
-                Text("Fehler: \(errorMessage)")
+                Text("Error: \(errorMessage)")
                     .foregroundColor(.red)
             } else {
                 List {

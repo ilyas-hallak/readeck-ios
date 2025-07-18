@@ -26,11 +26,11 @@ struct AddBookmarkView: View {
                                 .font(.system(size: 48))
                                 .foregroundColor(.accentColor)
                             
-                            Text("Neues Bookmark")
+                            Text("New Bookmark")
                                 .font(.title2)
                                 .fontWeight(.semibold)
                             
-                            Text("Füge einen neuen Link zu deiner Sammlung hinzu")
+                            Text("Add a new link to your collection")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -48,7 +48,7 @@ struct AddBookmarkView: View {
                                     
                                     Spacer()
                                     
-                                    Text("Erforderlich")
+                                    Text("Required")
                                         .font(.caption)
                                         .foregroundColor(.red)
                                 }
@@ -62,11 +62,11 @@ struct AddBookmarkView: View {
                             
                             // Title Field
                             VStack(alignment: .leading, spacing: 8) {
-                                Label("Titel", systemImage: "note.text")
+                                Label("Title", systemImage: "note.text")
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                 
-                                TextField("Optional: Eigener Titel", text: $viewModel.title)
+                                TextField("Optional: Custom title", text: $viewModel.title)
                                     .textFieldStyle(CustomTextFieldStyle())
                             }
                             
@@ -76,7 +76,7 @@ struct AddBookmarkView: View {
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                 
-                                TextField("z.B. arbeit, wichtig, später", text: $viewModel.labelsText)
+                                TextField("e.g. work, important, later", text: $viewModel.labelsText)
                                     .textFieldStyle(CustomTextFieldStyle())
                                 
                                 // Labels Preview
@@ -102,13 +102,13 @@ struct AddBookmarkView: View {
                             // Clipboard Section
                             if viewModel.clipboardURL != nil {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Label("Zwischenablage", systemImage: "doc.on.clipboard")
+                                    Label("Clipboard", systemImage: "doc.on.clipboard")
                                         .font(.headline)
                                         .foregroundColor(.primary)
                                     
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text("URL gefunden:")
+                                            Text("URL found:")
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
                                             
@@ -120,7 +120,7 @@ struct AddBookmarkView: View {
                                         
                                         Spacer()
                                         
-                                        Button("Einfügen") {
+                                        Button("Paste") {
                                             viewModel.pasteFromClipboard()
                                         }
                                         .buttonStyle(SecondaryButtonStyle())
@@ -133,7 +133,7 @@ struct AddBookmarkView: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        Spacer(minLength: 100) // Platz für Button
+                        Spacer(minLength: 100) // Space for button
                     }
                 }
                 
@@ -160,7 +160,7 @@ struct AddBookmarkView: View {
                                     Image(systemName: "bookmark.fill")
                                 }
                                 
-                                Text(viewModel.isLoading ? "Wird gespeichert..." : "Bookmark speichern")
+                                Text(viewModel.isLoading ? "Saving..." : "Save bookmark")
                                     .fontWeight(.semibold)
                             }
                             .frame(maxWidth: .infinity)
@@ -172,7 +172,7 @@ struct AddBookmarkView: View {
                         .disabled(!viewModel.isValid || viewModel.isLoading)
                         
                         // Cancel Button
-                        Button("Abbrechen") {
+                        Button("Cancel") {
                             dismiss()
                             viewModel.clearForm()
                         }
@@ -186,17 +186,17 @@ struct AddBookmarkView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Schließen") {
+                    Button("Close") {
                         dismiss()
                         viewModel.clearForm()
                     }
                     .foregroundColor(.secondary)
                 }
             }
-            .alert("Fehler", isPresented: $viewModel.showErrorAlert) {
+            .alert("Error", isPresented: $viewModel.showErrorAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(viewModel.errorMessage ?? "Unbekannter Fehler")
+                Text(viewModel.errorMessage ?? "Unknown error")
             }
         }
         .onAppear {

@@ -22,16 +22,16 @@ struct FontSettingsView: View {
                     .font(.title2)
                     .foregroundColor(.accentColor)
                 
-                Text("Schrift")
+                Text("Font")
                     .font(.title2)
                     .fontWeight(.bold)
             }
             
             // Font Family Picker
             HStack(alignment: .firstTextBaseline, spacing: 16) {
-                Text("Schriftart")
+                Text("Font family")
                     .font(.headline)
-                Picker("Schriftart", selection: $viewModel.selectedFontFamily) {
+                Picker("Font family", selection: $viewModel.selectedFontFamily) {
                     ForEach(FontFamily.allCases, id: \.self) { family in
                         Text(family.displayName).tag(family)
                     }
@@ -48,9 +48,9 @@ struct FontSettingsView: View {
                 
                 // Font Size Picker
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Schriftgröße")
+                    Text("Font size")
                         .font(.headline)
-                    Picker("Schriftgröße", selection: $viewModel.selectedFontSize) {
+                    Picker("Font size", selection: $viewModel.selectedFontSize) {
                         ForEach(FontSize.allCases, id: \.self) { size in
                             Text(size.displayName).tag(size)
                         }
@@ -65,7 +65,7 @@ struct FontSettingsView: View {
                 
                 // Font Preview
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Vorschau")
+                    Text("Preview")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     

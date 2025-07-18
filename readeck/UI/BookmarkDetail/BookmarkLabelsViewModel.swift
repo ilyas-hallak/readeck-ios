@@ -29,7 +29,7 @@ class BookmarkLabelsViewModel {
             errorMessage = error.localizedDescription
             showErrorAlert = true
         } catch {
-            errorMessage = "Fehler beim Hinzufügen der Labels"
+            errorMessage = "Error adding labels"
             showErrorAlert = true
         }
         
@@ -58,7 +58,7 @@ class BookmarkLabelsViewModel {
             errorMessage = error.localizedDescription
             showErrorAlert = true
         } catch {
-            errorMessage = "Fehler beim Entfernen der Labels"
+            errorMessage = "Error removing labels"
             showErrorAlert = true
         }
         

@@ -22,7 +22,9 @@ class SettingsGeneralViewModel {
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
-    // MARK: - Data Management (Platzhalter)
+    
+    // MARK: - Data Management (Placeholder)
+
     // func clearCache() async {}
     // func resetSettings() async {}
     
@@ -45,7 +47,7 @@ class SettingsGeneralViewModel {
                 developerName = "Ilyas Hallak"
             }
         } catch {
-            errorMessage = "Fehler beim Laden der Einstellungen"
+            errorMessage = "Error loading settings"
         }
     }
     
@@ -63,9 +65,9 @@ class SettingsGeneralViewModel {
                 openExternalLinksInApp: openExternalLinksInApp,
                 autoMarkAsRead: autoMarkAsRead
             )*/
-            successMessage = "Einstellungen gespeichert"
+            successMessage = "Settings saved"
         } catch {
-            errorMessage = "Fehler beim Speichern der Einstellungen"
+            errorMessage = "Error saving settings"
         }
     }
     

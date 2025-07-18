@@ -44,7 +44,7 @@ struct PhoneTabView: View {
                         }
                         .listRowBackground(Color(R.color.bookmark_list_bg))
                     }
-                    .navigationTitle("Mehr")
+                    .navigationTitle("More")
                     .scrollContentBackground(.hidden)
                     .background(Color(R.color.bookmark_list_bg))
                     
@@ -52,7 +52,7 @@ struct PhoneTabView: View {
                         .padding(.bottom, 16)
                 }
                 .tabItem {
-                    Label("Mehr", systemImage: "ellipsis")
+                    Label("More", systemImage: "ellipsis")
                 }
                 .tag(mainTabs.count)
                 .onAppear {

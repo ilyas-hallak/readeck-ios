@@ -23,7 +23,7 @@ struct SettingsContainerView: View {
             .padding()
             .background(Color(.systemGroupedBackground))
         }
-        .navigationTitle("Einstellungen")
+        .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
     }
 }

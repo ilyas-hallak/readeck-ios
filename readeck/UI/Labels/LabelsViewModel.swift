@@ -16,7 +16,7 @@ class LabelsViewModel {
         do {
             labels = try await getLabelsUseCase.execute()
         } catch  {
-            errorMessage = "Fehler beim Laden der Labels"
+            errorMessage = "Error loading labels"
         }
         isLoading = false
     }

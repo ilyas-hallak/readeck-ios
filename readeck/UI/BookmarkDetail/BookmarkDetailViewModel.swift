@@ -34,7 +34,7 @@ class BookmarkDetailViewModel {
             settings = try await loadSettingsUseCase.execute()            
             bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
         } catch {
-            errorMessage = "Fehler beim Laden des Bookmarks"
+            errorMessage = "Error loading bookmark"
         }
         
         isLoading = false
@@ -48,7 +48,7 @@ class BookmarkDetailViewModel {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
         } catch {
-            errorMessage = "Fehler beim Laden des Artikels"
+            errorMessage = "Error loading article"
         }
         
         isLoadingArticle = false
@@ -70,7 +70,7 @@ class BookmarkDetailViewModel {
             try await updateBookmarkUseCase.toggleArchive(bookmarkId: id, isArchived: true)
             bookmarkDetail.isArchived = true
         } catch {
-            errorMessage = "Fehler beim Archivieren des Bookmarks"
+            errorMessage = "Error archiving bookmark"
         }
         isLoading = false
     }
@@ -94,7 +94,7 @@ class BookmarkDetailViewModel {
             try await updateBookmarkUseCase.toggleFavorite(bookmarkId: id, isMarked: newValue)
             bookmarkDetail.isMarked = newValue
         } catch {
-            errorMessage = "Fehler beim Aktualisieren des Favoriten-Status"
+            errorMessage = "Error updating favorite status"
         }
         isLoading = false
     }

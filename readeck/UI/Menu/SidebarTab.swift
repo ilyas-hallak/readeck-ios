@@ -13,14 +13,14 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .all: return "All"
-        case .unread: return "Ungelesen"
-        case .favorite: return "Favoriten"
-        case .archived: return "Archiv"
-        case .search: return "Suche"
-        case .settings: return "Einstellungen"
-        case .article: return "Artikel"
+        case .unread: return "Unread"
+        case .favorite: return "Favorites"
+        case .archived: return "Archive"
+        case .search: return "Search"
+        case .settings: return "Settings"
+        case .article: return "Articles"
         case .videos: return "Videos"
-        case .pictures: return "Bilder"
+        case .pictures: return "Pictures"
         case .tags: return "Tags"
         }
     }

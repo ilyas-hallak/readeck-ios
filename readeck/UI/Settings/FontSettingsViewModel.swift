@@ -76,7 +76,7 @@ class FontSettingsViewModel {
                 selectedFontSize = settings.fontSize ?? .medium
             }
         } catch {
-            errorMessage = "Fehler beim Laden der Schrift-Einstellungen"
+            errorMessage = "Error loading font settings"
         }
     }
     
@@ -87,9 +87,9 @@ class FontSettingsViewModel {
                 selectedFontFamily: selectedFontFamily, 
                 selectedFontSize: selectedFontSize
             )
-            successMessage = "Schrift-Einstellungen gespeichert"
+            successMessage = "Font settings saved"
         } catch {
-            errorMessage = "Fehler beim Speichern der Schrift-Einstellungen"
+            errorMessage = "Error saving font settings"
         }
     }
     

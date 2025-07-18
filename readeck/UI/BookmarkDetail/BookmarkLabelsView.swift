@@ -26,37 +26,37 @@ struct BookmarkLabelsView: View {
             }
             .padding()
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Labels verwalten")
+            .navigationTitle("Manage Labels")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     
-                    Button("Abbrechen") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Fertig") {
+                    Button("Done") {
                         dismiss()
                     }
                 }
             }
-            .alert("Fehler", isPresented: $viewModel.showErrorAlert) {
+            .alert("Error", isPresented: $viewModel.showErrorAlert) {
                 Button("OK") { }
             } message: {
-                Text(viewModel.errorMessage ?? "Unbekannter Fehler")
+                Text(viewModel.errorMessage ?? "Unknown error")
             }
         }
     }
     
     private var addLabelSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Neues Label hinzufügen")
+            Text("Add new label")
                 .font(.headline)
                 .foregroundColor(.primary)
             
             HStack(spacing: 12) {
-                TextField("Label eingeben...", text: $viewModel.newLabelText)
+                TextField("Enter label...", text: $viewModel.newLabelText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .onSubmit {
                         Task {
@@ -91,7 +91,7 @@ struct BookmarkLabelsView: View {
     private var currentLabelsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Aktuelle Labels")
+                Text("Current labels")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
@@ -108,7 +108,7 @@ struct BookmarkLabelsView: View {
                     Image(systemName: "tag")
                         .font(.title2)
                         .foregroundColor(.secondary)
-                    Text("Keine Labels vorhanden")
+                    Text("No labels available")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }

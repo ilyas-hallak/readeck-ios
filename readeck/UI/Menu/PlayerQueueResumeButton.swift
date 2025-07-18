@@ -13,10 +13,10 @@ struct PlayerQueueResumeButton: View {
             }) {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Vorlese-Queue")
+                        Text("Read-aloud Queue")
                             .font(.caption2)
                             .foregroundColor(.secondary)
-                        Text("\(queue.queueItems.count) Artikel in der Queue")
+                        Text("\(queue.queueItems.count) articles in the queue")
                             .font(.subheadline)
                             .foregroundColor(.primary)
                     }
@@ -25,7 +25,7 @@ struct PlayerQueueResumeButton: View {
                         playerViewModel.resume()
                         playerUIState.showPlayer()
                     }) {
-                        Text("Weiterhören")
+                        Text("Resume listening")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .padding(.horizontal, 14)
@@ -48,4 +48,4 @@ struct PlayerQueueResumeButton: View {
             .animation(.spring(), value: queue.hasItems)
         }
     }
-} 
+}

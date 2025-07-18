@@ -48,7 +48,7 @@ class AddBookmarkViewModel {
             
             let message = try await createBookmarkUseCase.execute(createRequest: request)
             
-            // Optional: Zeige die Server-Nachricht an
+            // Optional: Show the server message
             print("Server response: \(message)")
             
             clearForm()
@@ -57,7 +57,7 @@ class AddBookmarkViewModel {
             errorMessage = error.localizedDescription
             showErrorAlert = true
         } catch {
-            errorMessage = "Fehler beim Erstellen des Bookmarks"
+            errorMessage = "Error creating bookmark"
             showErrorAlert = true
         }
         

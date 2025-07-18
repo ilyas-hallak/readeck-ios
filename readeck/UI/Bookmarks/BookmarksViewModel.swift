@@ -61,8 +61,6 @@ class BookmarksViewModel {
             self.shareTitle = userInfo["title"] as? String ?? ""
             self.showingAddBookmarkFromShare = true
         }
-        
-        print("Received share notification - URL: \(url)")
     }
     
     private func throttleSearch() {
@@ -87,8 +85,8 @@ class BookmarksViewModel {
         currentType = type
         currentTag = tag
         
-        offset = 0 // Offset zurücksetzen
-        hasMoreData = true // Pagination zurücksetzen
+        offset = 0
+        hasMoreData = true
         
         do {
             let newBookmarks = try await getBooksmarksUseCase.execute(
@@ -100,9 +98,9 @@ class BookmarksViewModel {
                 tag: tag
             )
             bookmarks = newBookmarks
-            hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // Prüfen, ob weitere Daten verfügbar sind
+            hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
         } catch {
-            errorMessage = "Fehler beim Laden der Bookmarks"
+            errorMessage = "Error loading bookmarks"
             bookmarks = nil
         }
         
@@ -111,13 +109,13 @@ class BookmarksViewModel {
     
     @MainActor
     func loadMoreBookmarks() async {
-        guard !isLoading && hasMoreData else { return } // Verhindern, dass mehrfach geladen wird
+        guard !isLoading && hasMoreData else { return } // prevent multiple loads
         
         isLoading = true
         errorMessage = nil
         
         do {
-            offset += limit // Offset erhöhen
+            offset += limit // inc. offset
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: currentState,
                 limit: limit,
@@ -128,7 +126,7 @@ class BookmarksViewModel {
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
         } catch {
-            errorMessage = "Fehler beim Nachladen der Bookmarks"
+            errorMessage = "Error loading more bookmarks"
         }
         
         isLoading = false
@@ -147,11 +145,10 @@ class BookmarksViewModel {
                 isArchived: !bookmark.isArchived
             )
             
-            // Liste aktualisieren
             await loadBookmarks(state: currentState)
             
         } catch {
-            errorMessage = "Fehler beim Archivieren des Bookmarks"
+            errorMessage = "Error archiving bookmark"
         }
     }
     
@@ -163,26 +160,21 @@ class BookmarksViewModel {
                 isMarked: !bookmark.isMarked
             )
             
-            // Liste aktualisieren
             await loadBookmarks(state: currentState)
             
         } catch {
-            errorMessage = "Fehler beim Markieren des Bookmarks"
+            errorMessage = "Error marking bookmark"
         }
     }
     
     @MainActor
     func deleteBookmark(bookmark: Bookmark) async {
         do {
-            // Echtes Löschen über API statt nur als gelöscht markieren
             try await deleteBookmarkUseCase.execute(bookmarkId: bookmark.id)
-            
-            // Lokal aus der Liste entfernen (optimistische Update)
             bookmarks?.bookmarks.removeAll { $0.id == bookmark.id }
             
         } catch {
-            errorMessage = "Fehler beim Löschen des Bookmarks"
-            // Bei Fehler die Liste neu laden, um konsistenten Zustand zu haben
+            errorMessage = "Error deleting bookmark"
             await loadBookmarks(state: currentState)
         }
     }

@@ -37,7 +37,7 @@ struct BookmarkCardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         
-                        // Veröffentlichungsdatum
+                        // Published date
                         if let publishedDate = formattedPublishedDate {
                             HStack {
                                 Label(publishedDate, systemImage: "calendar")
@@ -59,7 +59,7 @@ struct BookmarkCardView: View {
                     }
                     HStack {
                         
-                        Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Seite") + " öffnen", systemImage: "safari")
+                        Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Site") + " open", systemImage: "safari")
                             .onTapGesture {
                                 SafariUtil.openInSafari(url: bookmark.url)
                             }
@@ -68,7 +68,7 @@ struct BookmarkCardView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 
-                // Progress Bar für Lesefortschritt
+                // Progress Bar for reading progress
                 if bookmark.readProgress > 0 {
                     ProgressView(value: Double(bookmark.readProgress), total: 100)
                         .progressViewStyle(LinearProgressViewStyle())
@@ -82,20 +82,20 @@ struct BookmarkCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), radius: 2, x: 0, y: 1)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button("Löschen", role: .destructive) {
+            Button("Delete", role: .destructive) {
                 onDelete(bookmark)
             }
             .tint(.red)
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            // Archivieren (links)
+            // Archive (left)
             Button {
                 onArchive(bookmark)
             } label: {
                 if currentState == .archived {
-                    Label("Wiederherstellen", systemImage: "tray.and.arrow.up")
+                    Label("Restore", systemImage: "tray.and.arrow.up")
                 } else {
-                    Label("Archivieren", systemImage: "archivebox")
+                    Label("Archive", systemImage: "archivebox")
                 }
             }
             .tint(currentState == .archived ? .blue : .orange)
@@ -103,7 +103,7 @@ struct BookmarkCardView: View {
             Button {
                 onToggleFavorite(bookmark)
             } label: {
-                Label(bookmark.isMarked ? "Entfernen" : "Favorit",
+                Label(bookmark.isMarked ? "Remove" : "Favorite",
                       systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill")
             }
             .tint(bookmark.isMarked ? .gray : .pink)
@@ -127,7 +127,7 @@ struct BookmarkCardView: View {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         
         guard let date = formatter.date(from: published) else {
-            // Fallback ohne Millisekunden
+            // Fallback without milliseconds
             formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
             guard let fallbackDate = formatter.date(from: published) else {
                 return nil
@@ -142,42 +142,42 @@ struct BookmarkCardView: View {
         let now = Date()
         let calendar = Calendar.current
         
-        // Heute
+        // Today
         if calendar.isDateInToday(date) {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
-            return "Heute, \(formatter.string(from: date))"
+            return "Today, \(formatter.string(from: date))"
         }
         
-        // Gestern
+        // Yesterday
         if calendar.isDateInYesterday(date) {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
-            return "Gestern, \(formatter.string(from: date))"
+            return "Yesterday, \(formatter.string(from: date))"
         }
         
-        // Diese Woche
+        // This week
         if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE, HH:mm"
             return formatter.string(from: date)
         }
         
-        // Dieses Jahr
+        // This year
         if calendar.isDate(date, equalTo: now, toGranularity: .year) {
             let formatter = DateFormatter()
             formatter.dateFormat = "d. MMM, HH:mm"
             return formatter.string(from: date)
         }
         
-        // Andere Jahre
+        // Other years
         let formatter = DateFormatter()
         formatter.dateFormat = "d. MMM yyyy"
         return formatter.string(from: date)
     }
     
     private var imageURL: URL? {
-        // Bevorzuge image, dann thumbnail, dann icon
+        // Prioritize image, then thumbnail, then icon
         if let imageUrl = bookmark.resources.image?.src {
             return URL(string: imageUrl)
         } else if let thumbnailUrl = bookmark.resources.thumbnail?.src {

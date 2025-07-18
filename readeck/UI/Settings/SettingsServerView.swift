@@ -128,7 +128,7 @@ struct SettingsServerView: View {
                         .foregroundColor(.white)
                         .cornerRadius(10)
                     }
-                    .disabled(!viewModel.canLogin || viewModel.isLoading)
+                    .disabled(!viewModel.canLogin || viewModel.isLoading)                    
                 }
             } else {
                 Button(action: {

@@ -48,14 +48,14 @@ class SettingsServerViewModel {
                 isLoggedIn = settings.isLoggedIn
             }
         } catch {
-            errorMessage = "Fehler beim Laden der Einstellungen"
+            errorMessage = "Error loading settings"
         }
     }
     
     @MainActor
     func saveServerSettings() async {
         guard canLogin else {
-            errorMessage = "Bitte füllen Sie alle Felder aus."
+            errorMessage = "Please fill in all fields."
             return
         }
         clearMessages()
@@ -65,11 +65,11 @@ class SettingsServerViewModel {
             let user = try await loginUseCase.execute(endpoint: endpoint, username: username.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
             try await saveServerSettingsUseCase.execute(endpoint: endpoint, username: username, password: password, token: user.token)
             isLoggedIn = true
-            successMessage = "Server-Einstellungen gespeichert und erfolgreich angemeldet."
+            successMessage = "Server settings saved and successfully logged in."
             try await SettingsRepository().saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
         } catch {
-            errorMessage = "Verbindung oder Anmeldung fehlgeschlagen: \(error.localizedDescription)"
+            errorMessage = "Connection or login failed: \(error.localizedDescription)"
             isLoggedIn = false
         }
     }
@@ -79,10 +79,10 @@ class SettingsServerViewModel {
         do {
             try await logoutUseCase.execute()
             isLoggedIn = false
-            successMessage = "Abgemeldet"
+            successMessage = "Logged out"
             NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
         } catch {
-            errorMessage = "Fehler beim Abmelden"
+            errorMessage = "Error logging out"
         }
     }
     

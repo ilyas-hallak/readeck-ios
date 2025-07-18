@@ -59,7 +59,7 @@ private struct CollapsedPlayerBar: View {
                     .foregroundColor(.accentColor)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(viewModel.currentText.isEmpty ? "Keine Wiedergabe" : viewModel.currentText)
+                Text(viewModel.currentText.isEmpty ? "No playback" : viewModel.currentText)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(1)
@@ -114,7 +114,7 @@ private struct ExpandedPlayerView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Text("Vorlese-Queue")
+                Text("Read-aloud Queue")
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
@@ -126,13 +126,13 @@ private struct ExpandedPlayerView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
-            // Fortschrittsbalken für aktuellen Artikel
+            // progress bar for current article
             if viewModel.articleProgress > 0 && viewModel.articleProgress < 1 {
                 VStack(spacing: 4) {
                     ProgressView(value: viewModel.articleProgress)
                         .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
                     HStack {
-                        Text("Fortschritt: \(Int(viewModel.articleProgress * 100))%")
+                        Text("Progress: \(Int(viewModel.articleProgress * 100))%")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                         Spacer()
@@ -148,7 +148,7 @@ private struct ExpandedPlayerView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "text.line.first.and.arrowtriangle.forward")
                         .foregroundColor(.accentColor)
-                    Text("Lese \(viewModel.currentUtteranceIndex + 1)/\(viewModel.queueCount): ")
+                    Text("Reading \(viewModel.currentUtteranceIndex + 1)/\(viewModel.queueCount): ")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text(viewModel.queueItems[safe: viewModel.currentUtteranceIndex]?.title ?? "")
@@ -195,7 +195,7 @@ private struct PlayerControls: View {
             }
             HStack {
                 Spacer()
-                Picker("Geschwindigkeit", selection: Binding(
+                Picker("Speed", selection: Binding(
                     get: { viewModel.rate },
                     set: { viewModel.setRate($0) }
                 )) {
@@ -240,7 +240,7 @@ private struct PlayerRate: View {
             HStack {
                 Image(systemName: "speedometer")
                     .foregroundColor(.accentColor)
-                Picker("Geschwindigkeit", selection: Binding(
+                Picker("Speed", selection: Binding(
                     get: { viewModel.rate },
                     set: { viewModel.setRate($0) }
                 )) {
@@ -260,7 +260,7 @@ private struct PlayerQueueList: View {
     @ObservedObject var viewModel: SpeechPlayerViewModel
     var body: some View {
         if viewModel.queueCount == 0 {
-            Text("Keine Artikel in der Queue")
+            Text("No articles in the queue")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .padding()

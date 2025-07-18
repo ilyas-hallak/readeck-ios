@@ -68,11 +68,11 @@ struct BookmarkDetailView: View {
                     
                     Spacer()
                 }
-                .navigationTitle("Schrift-Einstellungen")
+                .navigationTitle("Font Settings")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Fertig") {
+                        Button("Done") {
                             showingFontSettings = false
                         }
                     }
@@ -173,7 +173,7 @@ struct BookmarkDetailView: View {
             .padding(.horizontal)
             .animation(.easeInOut, value: webViewHeight)
         } else if viewModel.isLoadingArticle {
-            ProgressView("Lade Artikel...")
+            ProgressView("Loading article...")
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
         } else {
@@ -182,7 +182,7 @@ struct BookmarkDetailView: View {
             }) {
                 HStack {
                     Image(systemName: "safari")
-                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Original Seite") + " öffnen")
+                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
                 }
                 .font(.title3.bold())
                 .frame(maxWidth: .infinity)
@@ -196,10 +196,10 @@ struct BookmarkDetailView: View {
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
-                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Autor:innen: " : "Autor: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Authors: " : "Author: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
             }
             metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
-            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) Wörter • \(viewModel.bookmarkDetail.readingTime ?? 0) min Lesezeit")
+            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
             
             // Labels section
             if !viewModel.bookmarkDetail.labels.isEmpty {
@@ -236,7 +236,7 @@ struct BookmarkDetailView: View {
                 Button(action: {
                     SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)
                 }) {
-                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Original Seite") + " öffnen")
+                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -247,7 +247,7 @@ struct BookmarkDetailView: View {
                     viewModel.addBookmarkToSpeechQueue()
                     playerUIState.showPlayer()
                 }) {
-                    Text("Artikel vorlesen")
+                    Text("Read article aloud")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -296,7 +296,7 @@ struct BookmarkDetailView: View {
     
     private var archiveSection: some View {
         VStack(alignment: .center, spacing: 12) {
-            Text("Fertig mit Lesen?")
+            Text("Finished reading?")
                 .font(.headline)
                 .padding(.top, 24)
             VStack(alignment: .center, spacing: 16) {
@@ -308,7 +308,7 @@ struct BookmarkDetailView: View {
                     HStack {
                         Image(systemName: viewModel.bookmarkDetail.isMarked ? "star.fill" : "star")
                             .foregroundColor(viewModel.bookmarkDetail.isMarked ? .yellow : .gray)
-                        Text(viewModel.bookmarkDetail.isMarked ? "Favorit" : "Als Favorit markieren")
+                        Text(viewModel.bookmarkDetail.isMarked ? "Favorite" : "Mark as favorite")
                     }
                     .font(.title3.bold())
                     .frame(maxHeight: 60)
@@ -325,7 +325,7 @@ struct BookmarkDetailView: View {
                 }) {
                     HStack {
                         Image(systemName: "archivebox")
-                        Text("Bookmark archivieren")
+                        Text("Archive bookmark")
                     }
                     .font(.title3.bold())
                     .frame(maxHeight: 60)

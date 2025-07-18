@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-// SectionHeader wird jetzt zentral importiert
 
 struct SettingsGeneralView: View {
     @State private var viewModel: SettingsGeneralViewModel        
@@ -17,7 +16,7 @@ struct SettingsGeneralView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: "Allgemeine Einstellungen", icon: "gear")
+            SectionHeader(title: "General Settings", icon: "gear")
                 .padding(.bottom, 4)
             
             // Theme
@@ -34,34 +33,34 @@ struct SettingsGeneralView: View {
             
             // Sync Settings
             VStack(alignment: .leading, spacing: 12) {
-                Text("Sync-Einstellungen")
+                Text("Sync Settings")
                     .font(.headline)
-                Toggle("Automatischer Sync", isOn: $viewModel.autoSyncEnabled)
+                Toggle("Automatic sync", isOn: $viewModel.autoSyncEnabled)
                     .toggleStyle(SwitchToggleStyle())
                 if viewModel.autoSyncEnabled {
                     HStack {
-                        Text("Sync-Intervall")
+                        Text("Sync interval")
                         Spacer()
-                        Stepper("\(viewModel.syncInterval) Minuten", value: $viewModel.syncInterval, in: 1...60)
+                        Stepper("\(viewModel.syncInterval) minutes", value: $viewModel.syncInterval, in: 1...60)
                     }
                 }
             }
             
             // Reading Settings
             VStack(alignment: .leading, spacing: 12) {
-                Text("Leseeinstellungen")
+                Text("Reading Settings")
                     .font(.headline)
-                Toggle("Safari Reader Modus", isOn: $viewModel.enableReaderMode)
+                Toggle("Safari Reader Mode", isOn: $viewModel.enableReaderMode)
                     .toggleStyle(SwitchToggleStyle())
-                Toggle("Externe Links in In-App Safari öffnen", isOn: $viewModel.openExternalLinksInApp)
+                Toggle("Open external links in in-app Safari", isOn: $viewModel.openExternalLinksInApp)
                     .toggleStyle(SwitchToggleStyle())
-                Toggle("Artikel automatisch als gelesen markieren", isOn: $viewModel.autoMarkAsRead)
+                Toggle("Automatically mark articles as read", isOn: $viewModel.autoMarkAsRead)
                     .toggleStyle(SwitchToggleStyle())
             }
             
             // Data Management
             VStack(alignment: .leading, spacing: 12) {
-                Text("Datenmanagement")
+                Text("Data Management")
                     .font(.headline)
                 Button(role: .destructive) {
                     Task {
@@ -71,7 +70,7 @@ struct SettingsGeneralView: View {
                     HStack {
                         Image(systemName: "trash")
                             .foregroundColor(.red)
-                        Text("Cache leeren")
+                        Text("Clear cache")
                             .foregroundColor(.red)
                         Spacer()
                     }
@@ -84,7 +83,7 @@ struct SettingsGeneralView: View {
                     HStack {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(.red)
-                        Text("Einstellungen zurücksetzen")
+                        Text("Reset settings")
                             .foregroundColor(.red)
                         Spacer()
                     }
@@ -93,7 +92,7 @@ struct SettingsGeneralView: View {
             
             // App Info
             VStack(alignment: .leading, spacing: 12) {
-                Text("Über die App")
+                Text("About the App")
                     .font(.headline)
                 HStack {
                     Image(systemName: "info.circle")
@@ -104,7 +103,7 @@ struct SettingsGeneralView: View {
                 HStack {
                     Image(systemName: "person.crop.circle")
                         .foregroundColor(.secondary)
-                    Text("Entwickler: \(viewModel.developerName)")
+                    Text("Developer: \(viewModel.developerName)")
                     Spacer()
                 }
                 HStack {
@@ -122,7 +121,7 @@ struct SettingsGeneralView: View {
                 }
             }) {
                 HStack {
-                    Text("Einstellungen speichern")
+                    Text("Save settings")
                         .fontWeight(.semibold)
                 }
                 .frame(maxWidth: .infinity)
@@ -165,8 +164,8 @@ enum Theme: String, CaseIterable {
     var displayName: String {
         switch self {
         case .system: return "System"
-        case .light: return "Hell"
-        case .dark: return "Dunkel"
+        case .light: return "Light"
+        case .dark: return "Dark"
         }
     }
 }

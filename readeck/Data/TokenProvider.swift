@@ -14,7 +14,7 @@ class CoreDataTokenProvider: TokenProvider {
     private let keychainHelper = KeychainHelper.shared
     
     private func loadSettingsIfNeeded() async {
-        guard !isLoaded else { return }
+        guard isLoaded == false || cachedSettings == nil else { return }
         
         do {
             cachedSettings = try await settingsRepository.loadSettings()

@@ -19,7 +19,14 @@ struct BookmarksView: View {
     @EnvironmentObject var playerUIState: PlayerUIState
     let tag: String?
     
+    
+    // MARK: Environments
+    
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+    
     // MARK: Initializer
+    
     init(viewModel: BookmarksViewModel = .init(), state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
         self.state = state
         self.type = type
@@ -27,16 +34,11 @@ struct BookmarksView: View {
         self.tag = tag
         self.viewModel = viewModel
     }
-    
-    // MARK: Environments
-    
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    @Environment(\.verticalSizeClass) var verticalSizeClass
 
     var body: some View {
         ZStack {
             if viewModel.isLoading && viewModel.bookmarks?.bookmarks.isEmpty == true {
-                ProgressView("Lade \(state.displayName)...")
+                ProgressView("Loading \(state.displayName)...")
             } else {
                 List {
                     ForEach(viewModel.bookmarks?.bookmarks ?? [], id: \.id) { bookmark in
@@ -96,17 +98,17 @@ struct BookmarksView: View {
                 .overlay {
                     if viewModel.bookmarks?.bookmarks.isEmpty == true && !viewModel.isLoading {
                         ContentUnavailableView(
-                            "Keine Bookmarks",
+                            "No bookmarks",
                             systemImage: "bookmark",
                             description: Text(
-                                "Es wurden noch keine Bookmarks in \(state.displayName.lowercased()) gefunden."
+                                "No bookmarks found in \(state.displayName.lowercased())."
                             )
                         )
                     }
                 }
             }
 
-            // FAB Button - nur bei "Ungelesen" anzeigen
+            // FAB Button - only show for "Unread"
             if state == .unread || state == .all {
                 VStack {
                     Spacer()

@@ -17,13 +17,13 @@
     "%lld" : {
 
     },
-    "%lld Artikel in der Queue" : {
+    "%lld articles in the queue" : {
 
     },
     "%lld min" : {
 
     },
-    "%lld Minuten" : {
+    "%lld minutes" : {
 
     },
     "%lld." : {
@@ -48,6 +48,12 @@
     "Abmelden" : {
 
     },
+    "About the App" : {
+
+    },
+    "Add a new link to your collection" : {
+
+    },
     "Aktuelle Labels" : {
 
     },
@@ -62,97 +68,85 @@
         }
       }
     },
-    "Als Favorit markieren" : {
-
-    },
     "Anmelden & speichern" : {
 
     },
-    "Archivieren" : {
+    "Archive" : {
 
     },
-    "Artikel automatisch als gelesen markieren" : {
+    "Archive bookmark" : {
 
     },
-    "Artikel vorlesen" : {
+    "Automatic sync" : {
 
     },
-    "Automatischer Sync" : {
+    "Automatically mark articles as read" : {
 
     },
-    "Bookmark archivieren" : {
+    "Cancel" : {
 
     },
-    "Bookmark speichern" : {
+    "Clear cache" : {
 
     },
-    "Cache leeren" : {
+    "Clipboard" : {
 
     },
-    "Datenmanagement" : {
+    "Close" : {
 
     },
-    "Debug-Anmeldung" : {
+    "Data Management" : {
 
     },
-    "Einfügen" : {
+    "Delete" : {
 
     },
-    "Einstellungen" : {
+    "Developer: %@" : {
 
     },
-    "Einstellungen speichern" : {
+    "Done" : {
 
     },
-    "Einstellungen zurücksetzen" : {
-
-    },
-    "Entfernen" : {
-
-    },
-    "Entwickler: %@" : {
+    "e.g. work, important, later" : {
 
     },
     "Erfolgreich angemeldet" : {
 
     },
-    "Erforderlich" : {
-
-    },
     "Erneut anmelden & speichern" : {
 
     },
-    "Es wurden noch keine Bookmarks in %@ gefunden." : {
+    "Error" : {
 
     },
-    "Externe Links in In-App Safari öffnen" : {
+    "Error: %@" : {
 
     },
-    "Favorit" : {
+    "Favorite" : {
 
     },
     "Fehler" : {
 
     },
-    "Fehler: %@" : {
-
-    },
     "Fertig" : {
 
     },
-    "Fertig mit Lesen?" : {
+    "Finished reading?" : {
 
     },
-    "Fortschritt: %lld%%" : {
+    "Font" : {
 
     },
-    "Füge einen neuen Link zu deiner Sammlung hinzu" : {
+    "Font family" : {
+
+    },
+    "Font Settings" : {
+
+    },
+    "Font size" : {
 
     },
     "Geben Sie Ihre Readeck-Server-Details ein, um zu beginnen." : {
-
-    },
-    "Geschwindigkeit" : {
 
     },
     "https://example.com" : {
@@ -162,12 +156,6 @@
 
     },
     "Ihre aktuelle Server-Verbindung und Anmeldedaten." : {
-
-    },
-    "Keine Artikel in der Queue" : {
-
-    },
-    "Keine Bookmarks" : {
 
     },
     "Keine Bookmarks gefunden." : {
@@ -191,74 +179,116 @@
     "Labels verwalten" : {
 
     },
-    "Lade %@..." : {
+    "Loading %@..." : {
 
     },
-    "Lade Artikel..." : {
+    "Loading article..." : {
 
     },
-    "Lese %lld/%lld: " : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Lese %1$lld/%2$lld: "
-          }
-        }
-      }
-    },
-    "Leseeinstellungen" : {
-
-    },
-    "Löschen" : {
-
-    },
-    "Mehr" : {
+    "Mark as favorite" : {
 
     },
     "Möchten Sie sich wirklich abmelden? Dies wird alle Ihre Anmeldedaten löschen und Sie zur Einrichtung zurückführen." : {
 
     },
-    "Neues Bookmark" : {
+    "More" : {
 
     },
     "Neues Label hinzufügen" : {
 
     },
+    "New Bookmark" : {
+
+    },
+    "No articles in the queue" : {
+
+    },
+    "No bookmarks" : {
+
+    },
+    "No bookmarks found in %@." : {
+
+    },
     "OK" : {
 
     },
-    "Optional: Eigener Titel" : {
+    "Open external links in in-app Safari" : {
+
+    },
+    "Optional: Custom title" : {
 
     },
     "Password" : {
 
     },
+    "Paste" : {
+
+    },
+    "Preview" : {
+
+    },
+    "Progress: %lld%%" : {
+
+    },
+    "Read article aloud" : {
+
+    },
+    "Read-aloud Queue" : {
+
+    },
     "readeck Bookmark Title" : {
 
     },
-    "Safari Reader Modus" : {
+    "Reading %lld/%lld: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reading %1$lld/%2$lld: "
+          }
+        }
+      }
+    },
+    "Reading Settings" : {
 
     },
-    "Schließen" : {
+    "Remove" : {
 
     },
-    "Schrift" : {
+    "Required" : {
 
     },
-    "Schrift-Einstellungen" : {
+    "Reset settings" : {
 
     },
-    "Schriftart" : {
+    "Restore" : {
 
     },
-    "Schriftgröße" : {
+    "Resume listening" : {
+
+    },
+    "Safari Reader Mode" : {
+
+    },
+    "Save bookmark" : {
+
+    },
+    "Save settings" : {
+
+    },
+    "Saving..." : {
 
     },
     "Select a bookmark or tag" : {
 
     },
     "Server-Endpunkt" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Speed" : {
 
     },
     "Speichern..." : {
@@ -273,10 +303,10 @@
     "Suche..." : {
 
     },
-    "Sync-Einstellungen" : {
+    "Sync interval" : {
 
     },
-    "Sync-Intervall" : {
+    "Sync Settings" : {
 
     },
     "Theme" : {
@@ -285,16 +315,13 @@
     "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog." : {
 
     },
-    "Titel" : {
-
-    },
-    "Über die App" : {
+    "Title" : {
 
     },
     "URL" : {
 
     },
-    "URL gefunden:" : {
+    "URL found:" : {
 
     },
     "Username" : {
@@ -303,34 +330,13 @@
     "Version %@" : {
 
     },
-    "Vorlese-Queue" : {
-
-    },
-    "Vorschau" : {
-
-    },
     "Website" : {
-
-    },
-    "Weiterhören" : {
-
-    },
-    "Wiederherstellen" : {
-
-    },
-    "Wird gespeichert..." : {
 
     },
     "Your Password" : {
 
     },
     "Your Username" : {
-
-    },
-    "z.B. arbeit, wichtig, später" : {
-
-    },
-    "Zwischenablage" : {
 
     }
   },

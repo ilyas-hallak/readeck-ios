@@ -14,13 +14,13 @@ enum BookmarkState: String, CaseIterable {
     var displayName: String {
         switch self {
         case .all:
-            return "Alle"
+            return "All"
         case .unread:
-            return "Ungelesen"
+            return "Unread"
         case .favorite:
-            return "Favoriten"
+            return "Favorites"
         case .archived:
-            return "Archiv"
+            return "Archive"
         }
     }
     
