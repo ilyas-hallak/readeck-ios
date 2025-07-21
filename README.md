@@ -10,7 +10,17 @@ https://codeberg.org/readeck/readeck
 
 ## TestFlight Beta Access
 
-A public TestFlight beta for the Readeck iOS app will be available soon.
+You can now join the public TestFlight beta for the Readeck iOS app:
+
+[Join the Readeck Beta on TestFlight](https://testflight.apple.com/join/cV55mKsR)
+
+To participate, simply install TestFlight from the App Store and open the link above on your iPhone, iPad, or Mac. This early version lets you explore all core features before the official release. Your feedback is incredibly valuable and will help shape the final app.
+
+What to test:
+- See the feature list below for an overview of what you can try out.
+- For details and recent changes, please refer to the release notes in TestFlight or the [Changelog](./CHANGELOG.md).
+
+Please report any bugs, crashes, or suggestions directly through TestFlight, or email me at ilhallak@gmail.com. Thank you for helping make Readeck better!
 
 If you are interested in joining the internal beta, please contact me directly at mooonki:matrix.org.
 
