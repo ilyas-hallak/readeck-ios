@@ -10,6 +10,7 @@ struct Settings {
     var fontFamily: FontFamily? = nil
     var fontSize: FontSize? = nil
     var hasFinishedSetup: Bool = false
+    var enableTTS: Bool? = nil
     
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty
@@ -69,6 +70,9 @@ class SettingsRepository: PSettingsRepository {
                         if let fontSize = settings.fontSize {
                             existingSettings.fontSize = fontSize.rawValue
                         }
+                        if let enableTTS = settings.enableTTS {
+                            existingSettings.enableTTS = enableTTS
+                        }
                         
                         try context.save()
                     }
@@ -99,7 +103,8 @@ class SettingsRepository: PSettingsRepository {
                             password: settingEntity.password ?? "",
                             token: settingEntity.token,
                             fontFamily: FontFamily(rawValue: settingEntity.fontFamily ?? FontFamily.system.rawValue),
-                            fontSize: FontSize(rawValue: settingEntity.fontSize ?? FontSize.medium.rawValue)
+                            fontSize: FontSize(rawValue: settingEntity.fontSize ?? FontSize.medium.rawValue),
+                            enableTTS: settingEntity.enableTTS
                         )
                         continuation.resume(returning: settings)
                     } else {

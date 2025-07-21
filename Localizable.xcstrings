@@ -42,19 +42,13 @@
     "12 min • Today • example.com" : {
 
     },
-    "Abbrechen" : {
-
-    },
-    "Abmelden" : {
-
-    },
-    "About the App" : {
+    "Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly." : {
 
     },
     "Add a new link to your collection" : {
 
     },
-    "Aktuelle Labels" : {
+    "Add new label" : {
 
     },
     "all" : {
@@ -68,13 +62,13 @@
         }
       }
     },
-    "Anmelden & speichern" : {
-
-    },
     "Archive" : {
 
     },
     "Archive bookmark" : {
+
+    },
+    "Are you sure you want to log out? This will delete all your login credentials and return you to setup." : {
 
     },
     "Automatic sync" : {
@@ -95,13 +89,16 @@
     "Close" : {
 
     },
+    "Current labels" : {
+
+    },
     "Data Management" : {
 
     },
     "Delete" : {
 
     },
-    "Developer: %@" : {
+    "Developer: Ilyas Hallak" : {
 
     },
     "Done" : {
@@ -110,10 +107,10 @@
     "e.g. work, important, later" : {
 
     },
-    "Erfolgreich angemeldet" : {
+    "Enter label..." : {
 
     },
-    "Erneut anmelden & speichern" : {
+    "Enter your Readeck server details to get started." : {
 
     },
     "Error" : {
@@ -123,12 +120,6 @@
 
     },
     "Favorite" : {
-
-    },
-    "Fehler" : {
-
-    },
-    "Fertig" : {
 
     },
     "Finished reading?" : {
@@ -146,7 +137,10 @@
     "Font size" : {
 
     },
-    "Geben Sie Ihre Readeck-Server-Details ein, um zu beginnen." : {
+    "From Bremen with 💚" : {
+
+    },
+    "General" : {
 
     },
     "https://example.com" : {
@@ -155,28 +149,16 @@
     "https://readeck.example.com" : {
 
     },
-    "Ihre aktuelle Server-Verbindung und Anmeldedaten." : {
-
-    },
     "Keine Bookmarks gefunden." : {
 
     },
     "Keine Ergebnisse" : {
 
     },
-    "Keine Labels vorhanden" : {
-
-    },
     "Key" : {
       "extractionState" : "manual"
     },
-    "Label eingeben..." : {
-
-    },
     "Labels" : {
-
-    },
-    "Labels verwalten" : {
 
     },
     "Loading %@..." : {
@@ -185,16 +167,19 @@
     "Loading article..." : {
 
     },
+    "Login & Save" : {
+
+    },
+    "Logout" : {
+
+    },
+    "Manage Labels" : {
+
+    },
     "Mark as favorite" : {
 
     },
-    "Möchten Sie sich wirklich abmelden? Dies wird alle Ihre Anmeldedaten löschen und Sie zur Einrichtung zurückführen." : {
-
-    },
     "More" : {
-
-    },
-    "Neues Label hinzufügen" : {
 
     },
     "New Bookmark" : {
@@ -207,6 +192,9 @@
 
     },
     "No bookmarks found in %@." : {
+
+    },
+    "No labels available" : {
 
     },
     "OK" : {
@@ -228,6 +216,12 @@
 
     },
     "Progress: %lld%%" : {
+
+    },
+    "Re-login & Save" : {
+
+    },
+    "Read Aloud Feature" : {
 
     },
     "Read article aloud" : {
@@ -273,16 +267,13 @@
     "Save bookmark" : {
 
     },
-    "Save settings" : {
-
-    },
     "Saving..." : {
 
     },
     "Select a bookmark or tag" : {
 
     },
-    "Server-Endpunkt" : {
+    "Server Endpoint" : {
 
     },
     "Settings" : {
@@ -291,7 +282,7 @@
     "Speed" : {
 
     },
-    "Speichern..." : {
+    "Successfully logged in" : {
 
     },
     "Suchbegriff eingeben..." : {
@@ -330,7 +321,7 @@
     "Version %@" : {
 
     },
-    "Website" : {
+    "Your current server connection and login credentials." : {
 
     },
     "Your Password" : {

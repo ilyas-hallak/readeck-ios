@@ -12,7 +12,9 @@ struct PhoneTabView: View {
     private let moreTabs: [SidebarTab] = [.search, .article, .videos, .pictures, .tags, .settings]
     
     @State private var selectedMoreTab: SidebarTab? = nil
-    @State private var selectedTabIndex: Int = 0
+    @State private var selectedTabIndex: Int = 1
+    
+    @EnvironmentObject var appSettings: AppSettings
     
     var body: some View {
         GlobalPlayerContainerView {
@@ -48,8 +50,10 @@ struct PhoneTabView: View {
                     .scrollContentBackground(.hidden)
                     .background(Color(R.color.bookmark_list_bg))
                     
-                    PlayerQueueResumeButton()
-                        .padding(.bottom, 16)
+                    if appSettings.enableTTS {
+                        PlayerQueueResumeButton()
+                            .padding(.top, 16)
+                    }
                 }
                 .tabItem {
                     Label("More", systemImage: "ellipsis")
@@ -87,7 +91,7 @@ struct PhoneTabView: View {
         case .pictures:
             BookmarksView(state: .all, type: [.photo], selectedBookmark: .constant(nil))
         case .tags:
-            LabelsView()
+            LabelsView(selectedTag: .constant(nil))
         }
     }
 }

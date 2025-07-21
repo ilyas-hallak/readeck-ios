@@ -34,7 +34,7 @@ class ShareViewController: UIViewController {
         view.backgroundColor = UIColor(named: "green") ?? UIColor.systemGroupedBackground
         
         // Add cancel button
-        let cancelButton = UIBarButtonItem(title: "Abbrechen", style: .plain, target: self, action: #selector(cancelButtonTapped))
+        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(cancelButtonTapped))
         cancelButton.tintColor = UIColor.white
         navigationItem.leftBarButtonItem = cancelButton
         
@@ -54,13 +54,11 @@ class ShareViewController: UIViewController {
         // Add custom cancel button
         let customCancelButton = UIButton(type: .system)
         customCancelButton.translatesAutoresizingMaskIntoConstraints = false
-        customCancelButton.setTitle("Abbrechen", for: .normal)
+        customCancelButton.setTitle("Cancel", for: .normal)
         customCancelButton.setTitleColor(UIColor.white, for: .normal)
         customCancelButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         customCancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
         view.addSubview(customCancelButton)
-        
-
         
         // URL Container View
         let urlContainerView = UIView()
@@ -79,7 +77,7 @@ class ShareViewController: UIViewController {
         urlLabel?.font = UIFont.systemFont(ofSize: 15, weight: .medium)
         urlLabel?.textColor = UIColor.label
         urlLabel?.numberOfLines = 0
-        urlLabel?.text = "URL wird geladen..."
+        urlLabel?.text = "Loading URL..."
         urlLabel?.textAlignment = .left
         urlContainerView.addSubview(urlLabel!)
         
@@ -97,7 +95,7 @@ class ShareViewController: UIViewController {
         // Title TextField
         titleTextField = UITextField()
         titleTextField?.translatesAutoresizingMaskIntoConstraints = false
-        titleTextField?.placeholder = "Optionales Titel eingeben..."
+        titleTextField?.placeholder = "Enter an optional title..."
         titleTextField?.borderStyle = .none
         titleTextField?.font = UIFont.systemFont(ofSize: 16)
         titleTextField?.backgroundColor = UIColor.clear
@@ -114,13 +112,22 @@ class ShareViewController: UIViewController {
         statusLabel?.layer.masksToBounds = true
         view.addSubview(statusLabel!)
         
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        
         // Save Button
         saveButton = UIButton(type: .system)
         saveButton?.translatesAutoresizingMaskIntoConstraints = false
-        saveButton?.setTitle("Bookmark speichern", for: .normal)
+        saveButton?.setTitle("Save Bookmark", for: .normal)
         saveButton?.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        saveButton?.backgroundColor = UIColor.secondarySystemGroupedBackground
-        saveButton?.setTitleColor(UIColor(named: "green") ?? UIColor.systemGreen, for: .normal)
+        
+        if isDarkMode {
+            saveButton?.backgroundColor = UIColor(named: "green")
+            saveButton?.layer.borderColor = UIColor(named: "green")?.cgColor
+        } else {
+            saveButton?.backgroundColor = .accent
+            saveButton?.setTitleColor(UIColor(named: "green") ?? UIColor.systemGreen, for: .normal)
+        }
+        
         saveButton?.layer.cornerRadius = 16
         saveButton?.layer.shadowColor = UIColor.black.cgColor
         saveButton?.layer.shadowOffset = CGSize(width: 0, height: 4)
@@ -128,7 +135,6 @@ class ShareViewController: UIViewController {
         saveButton?.layer.shadowOpacity = 0.2
         saveButton?.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
         view.addSubview(saveButton!)
-        
         
         // Activity Indicator
         activityIndicator = UIActivityIndicatorView(style: .medium)
@@ -262,29 +268,29 @@ class ShareViewController: UIViewController {
     // MARK: - API Call
     private func addBookmarkViaAPI(title: String) async {
         guard let url = extractedURL, !url.isEmpty else {
-            showStatus("Keine URL gefunden.", error: true)
+            showStatus("No URL found.", error: true)
             return
         }
         
         // Token und Endpoint aus KeychainHelper
         guard let token = KeychainHelper.shared.loadToken() else {
-            showStatus("Kein Token gefunden. Bitte in der Haupt-App einloggen.", error: true)
+            showStatus("No token found. Please log in via the main app.", error: true)
             return
         }
         
         guard let endpoint = KeychainHelper.shared.loadEndpoint(), !endpoint.isEmpty else {
-            showStatus("Kein Server-Endpunkt gefunden.", error: true)
+            showStatus("No server endpoint found.", error: true)
             return
         }
         
         let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: [])
         guard let requestData = try? JSONEncoder().encode(requestDto) else {
-            showStatus("Fehler beim Kodieren der Anfrage.", error: true)
+            showStatus("Failed to encode request.", error: true)
             return
         }
         
         guard let apiUrl = URL(string: endpoint + "/api/bookmarks") else {
-            showStatus("Ungültiger Server-Endpunkt.", error: true)
+            showStatus("Invalid server endpoint.", error: true)
             return
         }
         
@@ -298,24 +304,24 @@ class ShareViewController: UIViewController {
             let (data, response) = try await URLSession.shared.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                showStatus("Ungültige Server-Antwort.", error: true)
+                showStatus("Invalid server response.", error: true)
                 return
             }
             
             guard 200...299 ~= httpResponse.statusCode else {
-                let msg = String(data: data, encoding: .utf8) ?? "Unbekannter Fehler"
-                showStatus("Serverfehler: \(httpResponse.statusCode)\n\(msg)", error: true)
+                let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+                showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", error: true)
                 return
             }
             
             // Optional: Response parsen
             if let resp = try? JSONDecoder().decode(CreateBookmarkResponseDto.self, from: data) {
-                showStatus("Gespeichert: \(resp.message)", error: false)
+                showStatus("Saved: \(resp.message)", error: false)
             } else {
-                showStatus("Lesezeichen gespeichert!", error: false)
+                showStatus("Bookmark saved!", error: false)
             }
         } catch {
-            showStatus("Netzwerkfehler: \(error.localizedDescription)", error: true)
+            showStatus("Network error: \(error.localizedDescription)", error: true)
         }
     }
     
@@ -336,7 +342,7 @@ class ShareViewController: UIViewController {
     }
         
     
-    // MARK: - DTOs (kopiert)
+    // MARK: - DTOs (copied)
     private struct CreateBookmarkRequestDto: Codable {
         let labels: [String]?
         let title: String?

@@ -8,6 +8,7 @@ struct BookmarkDetailView: View {
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @EnvironmentObject var playerUIState: PlayerUIState
+    @EnvironmentObject var appSettings: AppSettings
     
     private let headerHeight: CGFloat = 320
     
@@ -242,14 +243,16 @@ struct BookmarkDetailView: View {
                 }
             }
             
-            metaRow(icon: "speaker.wave.2") {
-                Button(action: {
-                    viewModel.addBookmarkToSpeechQueue()
-                    playerUIState.showPlayer()
-                }) {
-                    Text("Read article aloud")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+            if appSettings.enableTTS {
+                metaRow(icon: "speaker.wave.2") {
+                    Button(action: {
+                        viewModel.addBookmarkToSpeechQueue()
+                        playerUIState.showPlayer()
+                    }) {
+                        Text("Read article aloud")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }

@@ -2,8 +2,9 @@ import Foundation
 import Combine
 
 class SpeechPlayerViewModel: ObservableObject {
-    private let ttsManager: TTSManager
-    private let speechQueue: SpeechQueue
+    private var ttsManager: TTSManager? = nil
+    private var speechQueue: SpeechQueue? = nil
+    private let loadSettingsUseCase: PLoadSettingsUseCase
     private var cancellables = Set<AnyCancellable>()
     
     @Published var isSpeaking: Bool = false
@@ -18,79 +19,86 @@ class SpeechPlayerViewModel: ObservableObject {
     @Published var volume: Float = 1.0
     @Published var rate: Float = 0.5
     
-    init(ttsManager: TTSManager = .shared, speechQueue: SpeechQueue = .shared) {
-        self.ttsManager = ttsManager
-        self.speechQueue = speechQueue
-        setupBindings()
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {        
+        loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+    }
+    
+    func setup() async {
+        let settings = try? await loadSettingsUseCase.execute()
+        if settings?.enableTTS == true {
+            self.ttsManager = .shared
+            self.speechQueue = .shared
+            setupBindings()
+        }
     }
     
     private func setupBindings() {
         // TTSManager bindings
-        ttsManager.$isSpeaking
+        ttsManager?.$isSpeaking
             .assign(to: \.isSpeaking, on: self)
             .store(in: &cancellables)
         
-        ttsManager.$currentUtterance
+        ttsManager?.$currentUtterance
             .assign(to: \.currentText, on: self)
             .store(in: &cancellables)
         
         // SpeechQueue bindings
-        speechQueue.$queueItems
+        speechQueue?.$queueItems
             .assign(to: \.queueItems, on: self)
             .store(in: &cancellables)
         
-        speechQueue.$queueItems
+        speechQueue?.$queueItems
             .map { $0.count }
             .assign(to: \.queueCount, on: self)
             .store(in: &cancellables)
         
-        speechQueue.$hasItems
+        speechQueue?.$hasItems
             .assign(to: \.hasItems, on: self)
             .store(in: &cancellables)
         
         // TTS Progress bindings
-        ttsManager.$progress
+        ttsManager?.$progress
             .assign(to: \.progress, on: self)
             .store(in: &cancellables)
         
-        ttsManager.$currentUtteranceIndex
+        ttsManager?.$currentUtteranceIndex
             .assign(to: \.currentUtteranceIndex, on: self)
             .store(in: &cancellables)
         
-        ttsManager.$totalUtterances
+        ttsManager?.$totalUtterances
             .assign(to: \.totalUtterances, on: self)
             .store(in: &cancellables)
         
-        ttsManager.$articleProgress
+        ttsManager?.$articleProgress
             .assign(to: \.articleProgress, on: self)
             .store(in: &cancellables)
         
-        ttsManager.$volume
+        ttsManager?.$volume
             .assign(to: \.volume, on: self)
             .store(in: &cancellables)
         
-        ttsManager.$rate
+        ttsManager?.$rate
             .assign(to: \.rate, on: self)
             .store(in: &cancellables)
     }
     
     func setVolume(_ newVolume: Float) {
-        ttsManager.setVolume(newVolume)
+        ttsManager?.setVolume(newVolume)
     }
     
     func setRate(_ newRate: Float) {
-        ttsManager.setRate(newRate)
+        ttsManager?.setRate(newRate)
     }
     
     func pause() {
-        ttsManager.pause()
+        ttsManager?.pause()
     }
     
     func resume() {
-        ttsManager.resume()
+        ttsManager?.resume()
     }
     
     func stop() {
-        ttsManager.stop()
+        ttsManager?.stop()
     }
 } 

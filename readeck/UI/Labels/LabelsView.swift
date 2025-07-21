@@ -2,8 +2,12 @@ import SwiftUI
 
 struct LabelsView: View {
     @State var viewModel = LabelsViewModel()
-    @State private var selectedTag: String? = nil
-    @State private var selectedBookmark: Bookmark? = nil
+    @Binding var selectedTag: BookmarkLabel?
+    
+    init(viewModel: LabelsViewModel = LabelsViewModel(), selectedTag: Binding<BookmarkLabel?>) {
+        self.viewModel = viewModel
+        self._selectedTag = selectedTag
+    }
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -15,15 +19,21 @@ struct LabelsView: View {
             } else {
                 List {
                     ForEach(viewModel.labels, id: \.href) { label in
-                        NavigationLink {
-                            BookmarksView(state: .all, type: [], selectedBookmark: .constant(nil), tag: label.name)
-                                .navigationTitle("\(label.name) (\(label.count))")
-                        } label: {
-                            HStack {
-                                Text(label.name)
-                                Spacer()
-                                Text("\(label.count)")
-                                    .foregroundColor(.secondary)
+                        if UIDevice.isPhone {
+                            NavigationLink {
+                                BookmarksView(state: .all, type: [], selectedBookmark: .constant(nil), tag: label.name)
+                                    .navigationTitle("\(label.name) (\(label.count))")
+                            } label: {
+                                ButtonLabel(label)
+                            }
+                        } else {
+                            Button {
+                                selectedTag = nil
+                                DispatchQueue.main.async {
+                                    selectedTag = label
+                                }
+                            } label: {
+                                ButtonLabel(label)
                             }
                         }
                     }
@@ -36,4 +46,14 @@ struct LabelsView: View {
             }
         }
     }
-} 
+    
+    @ViewBuilder
+    private func ButtonLabel(_ label: BookmarkLabel) -> some View {
+        HStack {
+            Text(label.name)
+            Spacer()
+            Text("\(label.count)")
+                .foregroundColor(.secondary)
+        }
+    }
+}

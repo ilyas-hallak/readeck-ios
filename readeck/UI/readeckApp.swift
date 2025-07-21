@@ -10,34 +10,42 @@ import netfox
 
 @main
 struct readeckApp: App {
-    let persistenceController = PersistenceController.shared
     @State private var hasFinishedSetup = true
-    
+    @StateObject private var appSettings = AppSettings()
+
     var body: some Scene {
         WindowGroup {
             Group {
                 if hasFinishedSetup {
                     MainTabView()
-                        .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 } else {
                     SettingsServerView()
                         .padding()
                 }
             }
+            .environmentObject(appSettings)
             .onAppear {
                 #if DEBUG
                 NFX.sharedInstance().start()
                 #endif
-                loadSetupStatus()
+                Task {
+                    await loadSetupStatus()
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetupStatusChanged"))) { _ in
-                loadSetupStatus()
+                Task {
+                    await loadSetupStatus()
+                }
             }
         }
     }
-    
-    private func loadSetupStatus() {
+
+    private func loadSetupStatus() async {
         let settingsRepository = SettingsRepository()
         hasFinishedSetup = settingsRepository.hasFinishedSetup
+        let settings = try? await settingsRepository.loadSettings()
+        await MainActor.run {
+            appSettings.settings = settings
+        }
     }
 }

@@ -31,6 +31,21 @@ struct SettingsGeneralView: View {
                 .pickerStyle(.segmented)
             }
             
+            VStack(alignment: .leading, spacing: 12) {
+                Text("General")
+                    .font(.headline)
+                Toggle("Read Aloud Feature", isOn: $viewModel.enableTTS)
+                    .toggleStyle(.switch)
+                    .onChange(of: viewModel.enableTTS) {
+                        Task {
+                            await viewModel.saveGeneralSettings()
+                        }
+                    }
+                Text("Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.")
+                    .font(.footnote)
+            }
+            
+            #if DEBUG
             // Sync Settings
             VStack(alignment: .leading, spacing: 12) {
                 Text("Sync Settings")
@@ -90,46 +105,6 @@ struct SettingsGeneralView: View {
                 }
             }
             
-            // App Info
-            VStack(alignment: .leading, spacing: 12) {
-                Text("About the App")
-                    .font(.headline)
-                HStack {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(.secondary)
-                    Text("Version \(viewModel.appVersion)")
-                    Spacer()
-                }
-                HStack {
-                    Image(systemName: "person.crop.circle")
-                        .foregroundColor(.secondary)
-                    Text("Developer: \(viewModel.developerName)")
-                    Spacer()
-                }
-                HStack {
-                    Image(systemName: "globe")
-                        .foregroundColor(.secondary)
-                    Link("Website", destination: URL(string: "https://example.com")!)
-                    Spacer()
-                }
-            }
-            
-            // Save Button
-            Button(action: {
-                Task {
-                    await viewModel.saveGeneralSettings()
-                }
-            }) {
-                HStack {
-                    Text("Save settings")
-                        .fontWeight(.semibold)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-            }
             // Messages
             if let successMessage = viewModel.successMessage {
                 HStack {
@@ -149,27 +124,14 @@ struct SettingsGeneralView: View {
                         .font(.caption)
                 }
             }
+            #endif
+            
         }
         .task {
             await viewModel.loadGeneralSettings()
         }
     }
 }
-
-enum Theme: String, CaseIterable {
-    case system = "system"
-    case light = "light"
-    case dark = "dark"
-    
-    var displayName: String {
-        switch self {
-        case .system: return "System"
-        case .light: return "Light"
-        case .dark: return "Dark"
-        }
-    }
-}
-
 
 #Preview {
     SettingsGeneralView(viewModel: .init(

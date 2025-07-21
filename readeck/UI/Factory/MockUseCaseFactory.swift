@@ -136,6 +136,7 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(endpoint: String, username: String, password: String, hasFinishedSetup: Bool) async throws {}
     func execute(token: String) async throws {}
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {}
+    func execute(enableTTS: Bool) async throws {}
 }
 
 class MockGetBookmarkUseCase: PGetBookmarkUseCase {

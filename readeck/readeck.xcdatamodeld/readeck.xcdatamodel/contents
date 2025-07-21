@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-    </entity>
     <entity name="SettingEntity" representedClassName="SettingEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="enableTTS" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="endpoint" optional="YES" attributeType="String"/>
         <attribute name="fontFamily" optional="YES" attributeType="String"/>
         <attribute name="fontSize" optional="YES" attributeType="String"/>

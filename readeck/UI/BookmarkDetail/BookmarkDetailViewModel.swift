@@ -6,7 +6,7 @@ class BookmarkDetailViewModel {
     private let getBookmarkArticleUseCase: PGetBookmarkArticleUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
-    private let addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase
+    private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -17,12 +17,14 @@ class BookmarkDetailViewModel {
     var errorMessage: String?
     var settings: Settings?
     
+    private var factory: UseCaseFactory?
+    
     init(_  factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.getBookmarkUseCase = factory.makeGetBookmarkUseCase()
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
-        self.addTextToSpeechQueueUseCase = factory.makeAddTextToSpeechQueueUseCase()
+        self.factory = factory
     }
     
     @MainActor
@@ -33,6 +35,9 @@ class BookmarkDetailViewModel {
         do {
             settings = try await loadSettingsUseCase.execute()            
             bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
+            if settings?.enableTTS == true {
+                self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
+            }
         } catch {
             errorMessage = "Error loading bookmark"
         }
@@ -82,7 +87,7 @@ class BookmarkDetailViewModel {
     
     func addBookmarkToSpeechQueue() {
         bookmarkDetail.content = articleContent
-        addTextToSpeechQueueUseCase.execute(bookmarkDetail: bookmarkDetail)
+        addTextToSpeechQueueUseCase?.execute(bookmarkDetail: bookmarkDetail)
     }
     
     @MainActor

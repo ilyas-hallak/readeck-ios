@@ -18,12 +18,12 @@ struct SettingsServerView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: viewModel.isSetupMode ? "Server-Einstellungen" : "Server-Verbindung", icon: "server.rack")
+            SectionHeader(title: viewModel.isSetupMode ? "Server Settings" : "Server Connection", icon: "server.rack")
                 .padding(.bottom, 4)
             
             Text(viewModel.isSetupMode ?
-                 "Geben Sie Ihre Readeck-Server-Details ein, um zu beginnen." :
-                 "Ihre aktuelle Server-Verbindung und Anmeldedaten.")
+                 "Enter your Readeck server details to get started." :
+                 "Your current server connection and login credentials.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -32,7 +32,7 @@ struct SettingsServerView: View {
             // Form
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Server-Endpunkt")
+                    Text("Server Endpoint")
                         .font(.headline)
                     TextField("https://readeck.example.com", text: $viewModel.endpoint)
                         .textFieldStyle(.roundedBorder)
@@ -79,7 +79,7 @@ struct SettingsServerView: View {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                    Text("Erfolgreich angemeldet")
+                    Text("Successfully logged in")
                         .foregroundColor(.green)
                         .font(.caption)
                 }
@@ -119,7 +119,7 @@ struct SettingsServerView: View {
                                     .scaleEffect(0.8)
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             }
-                            Text(viewModel.isLoading ? "Speichern..." : (viewModel.isLoggedIn ? "Erneut anmelden & speichern" : "Anmelden & speichern"))
+                            Text(viewModel.isLoading ? "Saving..." : (viewModel.isLoggedIn ? "Re-login & Save" : "Login & Save"))
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity)
@@ -136,7 +136,7 @@ struct SettingsServerView: View {
                 }) {
                     HStack {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
-                        Text("Abmelden")
+                        Text("Logout")
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
@@ -147,15 +147,15 @@ struct SettingsServerView: View {
                 }
             }
         }
-        .alert("Abmelden", isPresented: $showingLogoutAlert) {
-            Button("Abbrechen", role: .cancel) { }
-            Button("Abmelden", role: .destructive) {
+        .alert("Logout", isPresented: $showingLogoutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Logout", role: .destructive) {
                 Task {
                     await viewModel.logout()
                 }
             }
         } message: {
-            Text("Möchten Sie sich wirklich abmelden? Dies wird alle Ihre Anmeldedaten löschen und Sie zur Einrichtung zurückführen.")
+            Text("Are you sure you want to log out? This will delete all your login credentials and return you to setup.")
         }
         .task {
             await viewModel.loadServerSettings()

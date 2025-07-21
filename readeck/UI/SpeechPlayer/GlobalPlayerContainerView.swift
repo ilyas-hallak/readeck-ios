@@ -4,6 +4,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
     let content: Content
     @StateObject private var viewModel = SpeechPlayerViewModel()
     @EnvironmentObject var playerUIState: PlayerUIState
+    @EnvironmentObject var appSettings: AppSettings
 
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -14,7 +15,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            if viewModel.hasItems && playerUIState.isPlayerVisible {
+            if appSettings.enableTTS && viewModel.hasItems && playerUIState.isPlayerVisible {
                 VStack(spacing: 0) {
                     SpeechPlayerView(onClose: { playerUIState.hidePlayer() })
                         .padding(.horizontal, 16)

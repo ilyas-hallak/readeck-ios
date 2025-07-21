@@ -14,20 +14,17 @@ class SettingsGeneralViewModel {
     var syncInterval: Int = 15
     // MARK: - Reading Settings
     var enableReaderMode: Bool = false
+    var enableTTS: Bool = false
     var openExternalLinksInApp: Bool = true
     var autoMarkAsRead: Bool = false
-    // MARK: - App Info
-    var appVersion: String = "1.0.0"
-    var developerName: String = "Your Name"
+    
     // MARK: - Messages
+    
     var errorMessage: String?
     var successMessage: String?
     
     // MARK: - Data Management (Placeholder)
 
-    // func clearCache() async {}
-    // func resetSettings() async {}
-    
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
@@ -37,14 +34,9 @@ class SettingsGeneralViewModel {
     func loadGeneralSettings() async {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
-                selectedTheme = .system // settings.theme ?? .system
-                autoSyncEnabled = false // settings.autoSyncEnabled
-                // syncInterval = settings.syncInterval
-                // enableReaderMode = settings.enableReaderMode
-                // openExternalLinksInApp = settings.openExternalLinksInApp
-                // autoMarkAsRead = settings.autoMarkAsRead
-                appVersion = "1.0.0"
-                developerName = "Ilyas Hallak"
+                enableTTS = settings.enableTTS ?? false
+                selectedTheme = .system
+                autoSyncEnabled = false
             }
         } catch {
             errorMessage = "Error loading settings"
@@ -54,17 +46,7 @@ class SettingsGeneralViewModel {
     @MainActor
     func saveGeneralSettings() async {
         do {
-            
-            // TODO: add save general settings here
-            /*try await saveSettingsUseCase.execute(
-                token: "",
-                selectedTheme: selectedTheme,
-                autoSyncEnabled: autoSyncEnabled,
-                syncInterval: syncInterval,
-                enableReaderMode: enableReaderMode,
-                openExternalLinksInApp: openExternalLinksInApp,
-                autoMarkAsRead: autoMarkAsRead
-            )*/
+            try await saveSettingsUseCase.execute(enableTTS: enableTTS)
             successMessage = "Settings saved"
         } catch {
             errorMessage = "Error saving settings"

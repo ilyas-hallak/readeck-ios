@@ -12,6 +12,7 @@ struct PadSidebarView: View {
     @State private var selectedBookmark: Bookmark?
     @State private var selectedTag: BookmarkLabel?
     @EnvironmentObject var playerUIState: PlayerUIState
+    @EnvironmentObject var appSettings: AppSettings
     
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
     
@@ -53,8 +54,11 @@ struct PadSidebarView: View {
                             .contentShape(Rectangle())
                     }
                     .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
-                    PlayerQueueResumeButton()
-                        .padding(.top, 8)
+                    
+                    if appSettings.enableTTS {
+                        PlayerQueueResumeButton()
+                            .padding(.top, 8)
+                    }
                 }
                 .padding(.horizontal, 12)
                 .background(Color(R.color.menu_sidebar_bg))
@@ -82,7 +86,16 @@ struct PadSidebarView: View {
                     case .pictures:
                         BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark)
                     case .tags:
-                        LabelsView()
+                        NavigationStack {
+                            LabelsView(selectedTag: $selectedTag)
+                                .navigationDestination(item: $selectedTag) { label in
+                                    BookmarksView(state: .all, type: [], selectedBookmark: $selectedBookmark, tag: label.name)
+                                        .navigationTitle("\(label.name) (\(label.count))")
+                                        .onDisappear {
+                                            selectedTag = nil
+                                        }
+                                }
+                        }
                     }
                 }
                 .navigationTitle(selectedTab.label)
@@ -90,7 +103,7 @@ struct PadSidebarView: View {
         } detail: {
             if let bookmark = selectedBookmark, selectedTab != .settings {
                 BookmarkDetailView(bookmarkId: bookmark.id)
-            } else {
+            } else if selectedTab == .settings {
                 Text(selectedTab == .settings ? "" : "Select a bookmark or tag")
                     .foregroundColor(.gray)
             }

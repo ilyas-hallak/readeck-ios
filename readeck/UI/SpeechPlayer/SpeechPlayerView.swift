@@ -38,6 +38,11 @@ struct SpeechPlayerView: View {
                     }
                 }
         )
+        .onAppear() {
+            Task {
+                await viewModel.setup()
+            }
+        }
     }
 }
 
