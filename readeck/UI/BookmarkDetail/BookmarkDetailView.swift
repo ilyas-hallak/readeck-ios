@@ -1,5 +1,15 @@
 import SwiftUI
 import SafariServices
+import Combine
+
+// PreferenceKey for logging scroll offset
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    typealias Value = CGFloat
+    static var defaultValue = CGFloat.zero
+    static func reduce(value: inout Value, nextValue: () -> Value) {
+        value += nextValue()
+    }
+}
 
 struct BookmarkDetailView: View {
     let bookmarkId: String
@@ -7,8 +17,13 @@ struct BookmarkDetailView: View {
     @State private var webViewHeight: CGFloat = 300
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
+    @State private var showDismissButton = false
+    @State private var readingProgress: Double = 0.0
+    // contentHeight entfernt, webViewHeight wird verwendet
+    @State private var scrollViewHeight: CGFloat = 1
     @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
+    @Environment(\.dismiss) private var dismiss
     
     private let headerHeight: CGFloat = 320
     
@@ -21,25 +36,80 @@ struct BookmarkDetailView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                ZStack(alignment: .top) {
-                    headerView(geometry: geometry)
-                    VStack(alignment: .center, spacing: 16) {
-                        Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
-                        titleSection
-                        Divider().padding(.horizontal)
-                        contentSection
-                        Spacer(minLength: 40)
-                        if viewModel.isLoadingArticle == false {
-                            archiveSection
-                                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                .animation(.easeInOut, value: viewModel.articleContent)
+        VStack(spacing: 0) {
+            ProgressView(value: readingProgress)
+                .progressViewStyle(LinearProgressViewStyle())
+                .frame(height: 3)
+            GeometryReader { outerGeo in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Track scroll offset at the top
+                        GeometryReader { geo in
+                            Color.clear
+                                .preference(key: ScrollOffsetPreferenceKey.self, value: geo.frame(in: .named("scroll")).minY)
                         }
+                        .frame(height: 0)
+                        ZStack(alignment: .top) {
+                            headerView(geometry: outerGeo)
+                            VStack(alignment: .center, spacing: 16) {
+                                Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                                titleSection
+                                Divider().padding(.horizontal)
+                                if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
+                                    WebView(htmlContent: viewModel.articleContent, settings: settings, onHeightChange: { height in
+                                        webViewHeight = height
+                                    })
+                                    .frame(height: webViewHeight)
+                                    .cornerRadius(14)
+                                    .padding(.horizontal)
+                                    .animation(.easeInOut, value: webViewHeight)
+                                } else if viewModel.isLoadingArticle {
+                                    ProgressView("Loading article...")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding()
+                                } else {
+                                    Button(action: {
+                                        SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "safari")
+                                            Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
+                                        }
+                                        .font(.title3.bold())
+                                        .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .padding(.horizontal)
+                                    .padding(.top, 0)
+                                }
+                                Spacer(minLength: 40)
+                                if viewModel.isLoadingArticle == false {
+                                    archiveSection
+                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                        .animation(.easeInOut, value: viewModel.articleContent)
+                                }
+                            }
+                        }
+                        // Kein GeometryReader am Ende nötig
                     }
                 }
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                    scrollViewHeight = outerGeo.size.height
+                    print("offset:", offset)
+                    print("webViewHeight:", webViewHeight)
+                    print("scrollViewHeight:", scrollViewHeight)
+                    let maxOffset = webViewHeight - scrollViewHeight
+                    print("maxOffset:", maxOffset)
+                    // Am Anfang: offset = 0, am Ende: offset = -maxOffset
+                    let rawProgress = -offset / (maxOffset != 0 ? maxOffset : 1)
+                    print("rawProgress:", rawProgress)
+                    let progress = min(max(rawProgress, 0), 1)
+                    print("progress:", progress)
+                    readingProgress = progress
+                }
+                .ignoresSafeArea(edges: .top)
             }
-            .ignoresSafeArea(edges: .top)
         }
         .navigationBarTitleDisplayMode(.inline)        
         .toolbar {
@@ -320,22 +390,36 @@ struct BookmarkDetailView: View {
                 .buttonStyle(.bordered)
                 .disabled(viewModel.isLoading)
                 
-                // Archivieren-Button
+                // Archive button
                 Button(action: {
                     Task {
                         await viewModel.archiveBookmark(id: bookmarkId)
+                        if viewModel.bookmarkDetail.isArchived {
+                            showDismissButton = true
+                        }
                     }
                 }) {
                     HStack {
-                        Image(systemName: "archivebox")
-                        Text("Archive bookmark")
+                        Image(systemName: viewModel.bookmarkDetail.isArchived ? "checkmark.circle.fill" : "archivebox")
+                            .foregroundColor(viewModel.bookmarkDetail.isArchived ? .green : .primary)
+                        Text(viewModel.bookmarkDetail.isArchived ? "Archived" : "Archive bookmark")
                     }
                     .font(.title3.bold())
                     .frame(maxHeight: 60)
                     .padding(10)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(viewModel.isLoading)
+                .disabled(viewModel.isLoading || viewModel.bookmarkDetail.isArchived)
+            }
+            if showDismissButton {
+                Button(action: {
+                    dismiss()
+                }) {
+                    Label("Go Back", systemImage: "arrow.backward.circle")
+                        .font(.title3.bold())
+                        .padding(.top, 8)
+                }
+                .id("goBackButton")
             }
             if let error = viewModel.errorMessage {
                 Text(error)

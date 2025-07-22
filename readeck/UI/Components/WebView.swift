@@ -5,18 +5,21 @@ struct WebView: UIViewRepresentable {
     let htmlContent: String
     let settings: Settings
     let onHeightChange: (CGFloat) -> Void
+    var onScroll: ((Double) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
-        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.isScrollEnabled = true
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
         
         // Message Handler hier einmalig hinzufügen
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
+        webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
         context.coordinator.onHeightChange = onHeightChange
+        context.coordinator.onScroll = onScroll
         
         return webView
     }
@@ -24,6 +27,7 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         // Nur den HTML-Inhalt laden, keine Handler-Konfiguration
         context.coordinator.onHeightChange = onHeightChange
+        context.coordinator.onScroll = onScroll
         
         let isDarkMode = colorScheme == .dark
         
@@ -210,6 +214,8 @@ struct WebView: UIViewRepresentable {
         <body>
             \(htmlContent)
             <script>
+                console.log('Script loaded!');
+                alert('Script loaded!');
                 function updateHeight() {
                     const height = document.body.scrollHeight;
                     window.webkit.messageHandlers.heightUpdate.postMessage(height);
@@ -223,6 +229,14 @@ struct WebView: UIViewRepresentable {
                 // Höhe bei Bild-Ladevorgängen aktualisieren
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', updateHeight);
+                });
+                // Scroll progress reporting
+                window.addEventListener('scroll', function() {
+                    var scrollTop = window.scrollY || document.documentElement.scrollTop;
+                    var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                    var progress = docHeight > 0 ? scrollTop / docHeight : 0;
+                    window.webkit.messageHandlers.scrollProgress.postMessage(progress);
+                    console.log('Scroll event fired, progress:', progress);
                 });
             </script>
         </body>
@@ -260,6 +274,7 @@ struct WebView: UIViewRepresentable {
 
 class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     var onHeightChange: ((CGFloat) -> Void)?
+    var onScroll: ((Double) -> Void)?
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
@@ -274,8 +289,15 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
+            print("[WebView] heightUpdate received: \(height)")
             DispatchQueue.main.async {
                 self.onHeightChange?(height)
+            }
+        }
+        if message.name == "scrollProgress", let progress = message.body as? Double {
+            print("[WebView] scrollProgress received: \(progress)")
+            DispatchQueue.main.async {
+                self.onScroll?(progress)
             }
         }
     }
