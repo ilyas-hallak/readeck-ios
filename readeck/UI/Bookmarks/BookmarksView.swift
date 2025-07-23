@@ -12,13 +12,13 @@ struct BookmarksView: View {
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
+    @State private var bookmarkToDelete: Bookmark? = nil
     
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
     @EnvironmentObject var playerUIState: PlayerUIState
     let tag: String?
-    
     
     // MARK: Environments
     
@@ -65,9 +65,7 @@ struct BookmarksView: View {
                                     }
                                 },
                                 onDelete: { bookmark in
-                                    Task {
-                                        await viewModel.deleteBookmark(bookmark: bookmark)
-                                    }
+                                    bookmarkToDelete = bookmark
                                 },
                                 onToggleFavorite: { bookmark in
                                     Task {
@@ -150,6 +148,18 @@ struct BookmarksView: View {
                 AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
         )
+        .alert(item: $bookmarkToDelete) { bookmark in
+            Alert(
+                title: Text("Delete Bookmark"),
+                message: Text("Are you sure you want to delete this bookmark? This action cannot be undone."),
+                primaryButton: .destructive(Text("Delete")) {
+                    Task {
+                        await viewModel.deleteBookmark(bookmark: bookmark)
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
         .onAppear {
             Task {
                 await viewModel.loadBookmarks(state: state, type: type, tag: tag)

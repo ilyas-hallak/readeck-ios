@@ -28,7 +28,7 @@ struct BookmarkCardView: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
-                if bookmark.readProgress > 0 {
+                if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {
                     ZStack {
                         Circle()
                             .fill(Color(.systemBackground))

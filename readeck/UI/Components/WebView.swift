@@ -11,7 +11,7 @@ struct WebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
-        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.isScrollEnabled = false
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
         
@@ -214,17 +214,13 @@ struct WebView: UIViewRepresentable {
         <body>
             \(htmlContent)
             <script>
-                console.log('Script loaded!');
-                alert('Script loaded!');
                 function updateHeight() {
                     const height = document.body.scrollHeight;
                     window.webkit.messageHandlers.heightUpdate.postMessage(height);
                 }
                 
                 window.addEventListener('load', updateHeight);
-                setTimeout(updateHeight, 100);
                 setTimeout(updateHeight, 500);
-                setTimeout(updateHeight, 1000);
                 
                 // Höhe bei Bild-Ladevorgängen aktualisieren
                 document.querySelectorAll('img').forEach(img => {
@@ -236,7 +232,6 @@ struct WebView: UIViewRepresentable {
                     var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
                     var progress = docHeight > 0 ? scrollTop / docHeight : 0;
                     window.webkit.messageHandlers.scrollProgress.postMessage(progress);
-                    console.log('Scroll event fired, progress:', progress);
                 });
             </script>
         </body>
@@ -290,7 +285,10 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
             DispatchQueue.main.async {
-                self.onHeightChange?(height)
+                if self.hasHeightUpdate == false {
+                    self.onHeightChange?(height)
+                    self.hasHeightUpdate = true
+                }
             }
         }
         if message.name == "scrollProgress", let progress = message.body as? Double {
@@ -299,4 +297,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             }
         }
     }
+    
+    var hasHeightUpdate: Bool = false
 }

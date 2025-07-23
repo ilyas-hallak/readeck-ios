@@ -48,7 +48,7 @@ struct BookmarkDetailView: View {
                         .frame(height: 0)
                         ZStack(alignment: .top) {
                             headerView(geometry: outerGeo)
-                            VStack(alignment: .center, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 16) {
                                 Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
                                 titleSection
                                 Divider().padding(.horizontal)
@@ -57,7 +57,9 @@ struct BookmarkDetailView: View {
                                 }
                                 if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
                                     WebView(htmlContent: viewModel.articleContent, settings: settings, onHeightChange: { height in
-                                        webViewHeight = height
+                                        if webViewHeight != height {
+                                            webViewHeight = height
+                                        }
                                     })
                                     .frame(height: webViewHeight)
                                     .cornerRadius(14)
@@ -82,11 +84,14 @@ struct BookmarkDetailView: View {
                                     .padding(.horizontal)
                                     .padding(.top, 0)
                                 }
-                                Spacer(minLength: 40)
+                                
                                 if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                                    archiveSection
-                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                        .animation(.easeInOut, value: viewModel.articleContent)
+                                    VStack(alignment: .center) {
+                                        archiveSection
+                                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                            .animation(.easeInOut, value: viewModel.articleContent)
+                                    }
+                                    .frame(maxWidth: .infinity)
                                 }
                             }
                         }
@@ -358,7 +363,7 @@ struct BookmarkDetailView: View {
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
             displayFormatter.timeStyle = .short
-            displayFormatter.locale = Locale(identifier: "de_DE")
+            displayFormatter.locale = .autoupdatingCurrent
             return displayFormatter.string(from: date)
         }
         return dateString
@@ -417,13 +422,11 @@ struct BookmarkDetailView: View {
     @ViewBuilder
     func JumpButton() -> some View {
         Button(action: {            
-            if #available(iOS 17.0, *) {
-                let maxOffset = webViewHeight - scrollViewHeight
-                let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    scrollPosition = ScrollPosition(y: offset)      
-                    showJumpToProgressButton = false          
-                }
+            let maxOffset = webViewHeight - scrollViewHeight
+            let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                scrollPosition = ScrollPosition(y: offset)
+                showJumpToProgressButton = false
             }
         }) {
             Text("Jump to last read position (\(viewModel.readProgress)%)")

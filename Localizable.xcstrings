@@ -71,6 +71,9 @@
     "Archive bookmark" : {
 
     },
+    "Are you sure you want to delete this bookmark? This action cannot be undone." : {
+
+    },
     "Are you sure you want to log out? This will delete all your login credentials and return you to setup." : {
 
     },
@@ -99,6 +102,9 @@
 
     },
     "Delete" : {
+
+    },
+    "Delete Bookmark" : {
 
     },
     "Developer: Ilyas Hallak" : {
