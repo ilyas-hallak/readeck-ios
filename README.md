@@ -24,7 +24,7 @@ Please report any bugs, crashes, or suggestions directly through TestFlight, or 
 
 If you are interested in joining the internal beta, please contact me directly at mooonki:matrix.org.
 
-## Features
+## Core Features
 
 - Browse and manage bookmarks (All, Unread, Favorites, Archive, Article, Videos, Pictures)
 - Share Extension for adding URLs from Safari and other apps
@@ -34,6 +34,7 @@ If you are interested in joining the internal beta, please contact me directly a
 - Font Customization
 - Article View with Reading Time and Word Count
 - Search functionality
+- Support for reading progress
 
 ## Configuration
 

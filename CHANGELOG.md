@@ -14,6 +14,7 @@ All changes to this project will be documented in this file.
 - Article View with Reading Time and Word Count
 - Search functionality
 - Support for tags
+- Support for reading progress
 
 ## [Unreleased]
 ### Planned Features
