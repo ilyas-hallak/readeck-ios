@@ -289,20 +289,14 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
-            print("[WebView] heightUpdate received: \(height)")
             DispatchQueue.main.async {
                 self.onHeightChange?(height)
             }
         }
         if message.name == "scrollProgress", let progress = message.body as? Double {
-            print("[WebView] scrollProgress received: \(progress)")
             DispatchQueue.main.async {
                 self.onScroll?(progress)
             }
         }
-    }
-    
-    deinit {
-        // Der Message Handler wird automatisch mit der WebView entfernt
     }
 }

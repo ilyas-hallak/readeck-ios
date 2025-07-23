@@ -2,25 +2,22 @@ import SwiftUI
 import SafariServices
 import Combine
 
-// PreferenceKey for logging scroll offset
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    typealias Value = CGFloat
-    static var defaultValue = CGFloat.zero
-    static func reduce(value: inout Value, nextValue: () -> Value) {
-        value += nextValue()
-    }
-}
-
 struct BookmarkDetailView: View {
     let bookmarkId: String
+    
+    // MARK: - States
+    
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: CGFloat = 300
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
-    @State private var showDismissButton = false
     @State private var readingProgress: Double = 0.0
-    // contentHeight entfernt, webViewHeight wird verwendet
     @State private var scrollViewHeight: CGFloat = 1
+    @State private var showJumpToProgressButton: Bool = false
+    @State private var scrollPosition = ScrollPosition(edge: .top)
+    
+    // MARK: - Envs
+    
     @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
@@ -43,10 +40,10 @@ struct BookmarkDetailView: View {
             GeometryReader { outerGeo in
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Track scroll offset at the top
                         GeometryReader { geo in
                             Color.clear
-                                .preference(key: ScrollOffsetPreferenceKey.self, value: geo.frame(in: .named("scroll")).minY)
+                                .preference(key: ScrollOffsetPreferenceKey.self,
+                                             value: geo.frame(in: .named("scroll")).minY)
                         }
                         .frame(height: 0)
                         ZStack(alignment: .top) {
@@ -55,6 +52,9 @@ struct BookmarkDetailView: View {
                                 Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
                                 titleSection
                                 Divider().padding(.horizontal)
+                                if showJumpToProgressButton {
+                                    JumpButton()
+                                }
                                 if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
                                     WebView(htmlContent: viewModel.articleContent, settings: settings, onHeightChange: { height in
                                         webViewHeight = height
@@ -83,32 +83,26 @@ struct BookmarkDetailView: View {
                                     .padding(.top, 0)
                                 }
                                 Spacer(minLength: 40)
-                                if viewModel.isLoadingArticle == false {
+                                if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
                                     archiveSection
                                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                                         .animation(.easeInOut, value: viewModel.articleContent)
                                 }
                             }
                         }
-                        // Kein GeometryReader am Ende nötig
                     }
                 }
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
                     scrollViewHeight = outerGeo.size.height
-                    print("offset:", offset)
-                    print("webViewHeight:", webViewHeight)
-                    print("scrollViewHeight:", scrollViewHeight)
                     let maxOffset = webViewHeight - scrollViewHeight
-                    print("maxOffset:", maxOffset)
-                    // Am Anfang: offset = 0, am Ende: offset = -maxOffset
                     let rawProgress = -offset / (maxOffset != 0 ? maxOffset : 1)
-                    print("rawProgress:", rawProgress)
                     let progress = min(max(rawProgress, 0), 1)
-                    print("progress:", progress)
-                    readingProgress = progress
+                    readingProgress = progress                    
+                    viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                 }
                 .ignoresSafeArea(edges: .top)
+                .scrollPosition($scrollPosition)
             }
         }
         .navigationBarTitleDisplayMode(.inline)        
@@ -168,6 +162,9 @@ struct BookmarkDetailView: View {
                     await viewModel.refreshBookmarkDetail(id: bookmarkId)
                 }
             }
+        }
+        .onChange(of: viewModel.readProgress) { _, progress in
+            showJumpToProgressButton = progress > 0 && progress < 100
         }
         .task {
             await viewModel.loadBookmarkDetail(id: bookmarkId)
@@ -393,33 +390,19 @@ struct BookmarkDetailView: View {
                 // Archive button
                 Button(action: {
                     Task {
-                        await viewModel.archiveBookmark(id: bookmarkId)
-                        if viewModel.bookmarkDetail.isArchived {
-                            showDismissButton = true
-                        }
+                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: !viewModel.bookmarkDetail.isArchived)
                     }
                 }) {
                     HStack {
-                        Image(systemName: viewModel.bookmarkDetail.isArchived ? "checkmark.circle.fill" : "archivebox")
-                            .foregroundColor(viewModel.bookmarkDetail.isArchived ? .green : .primary)
-                        Text(viewModel.bookmarkDetail.isArchived ? "Archived" : "Archive bookmark")
+                        Image(systemName: viewModel.bookmarkDetail.isArchived ? "checkmark.circle" : "archivebox")
+                        Text(viewModel.bookmarkDetail.isArchived ? "Unarchive Bookmark" : "Archive bookmark")
                     }
                     .font(.title3.bold())
                     .frame(maxHeight: 60)
                     .padding(10)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(viewModel.isLoading || viewModel.bookmarkDetail.isArchived)
-            }
-            if showDismissButton {
-                Button(action: {
-                    dismiss()
-                }) {
-                    Label("Go Back", systemImage: "arrow.backward.circle")
-                        .font(.title3.bold())
-                        .padding(.top, 8)
-                }
-                .id("goBackButton")
+                .disabled(viewModel.isLoading)
             }
             if let error = viewModel.errorMessage {
                 Text(error)
@@ -429,6 +412,36 @@ struct BookmarkDetailView: View {
         }
         .padding(.horizontal)
         .padding(.bottom, 32)
+    }
+    
+    @ViewBuilder
+    func JumpButton() -> some View {
+        Button(action: {            
+            if #available(iOS 17.0, *) {
+                let maxOffset = webViewHeight - scrollViewHeight
+                let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    scrollPosition = ScrollPosition(y: offset)      
+                    showJumpToProgressButton = false          
+                }
+            }
+        }) {
+            Text("Jump to last read position (\(viewModel.readProgress)%)")
+                .font(.subheadline)
+                .padding(8)
+                .frame(maxWidth: .infinity)
+        }
+        .background(Color.accentColor.opacity(0.15))
+        .cornerRadius(8)
+        .padding([.top, .horizontal])
+    }
+}
+
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    typealias Value = CGFloat
+    static var defaultValue = CGFloat.zero
+    static func reduce(value: inout Value, nextValue: () -> Value) {
+        value += nextValue()
     }
 }
 

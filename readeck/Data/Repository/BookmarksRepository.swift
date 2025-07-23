@@ -31,7 +31,8 @@ class BookmarksRepository: PBookmarksRepository {
             labels: bookmarkDetailDto.labels,
             thumbnailUrl: bookmarkDetailDto.resources.thumbnail?.src ?? "",
             imageUrl: bookmarkDetailDto.resources.image?.src ?? "",
-            lang: bookmarkDetailDto.lang ?? ""
+            lang: bookmarkDetailDto.lang ?? "",
+            readProgress: bookmarkDetailDto.readProgress
         )
     }
     

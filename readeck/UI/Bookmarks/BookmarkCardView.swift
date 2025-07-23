@@ -13,19 +13,46 @@ struct BookmarkCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            AsyncImage(url: imageURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
-            } placeholder: {
+            ZStack(alignment: .bottomTrailing) {
+                AsyncImage(url: imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 120)
+                } placeholder: {
+                    
+                    Image(R.image.placeholder.name)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 120)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8))
                 
-                Image(R.image.placeholder.name)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
+                if bookmark.readProgress > 0 {
+                    ZStack {
+                        Circle()
+                            .fill(Color(.systemBackground))
+                            .frame(width: 36, height: 36)
+                        Circle()
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 4)
+                            .frame(width: 32, height: 32)
+                        Circle()
+                            .trim(from: 0, to: CGFloat(bookmark.readProgress) / 100)
+                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 32, height: 32)
+                        HStack(alignment: .firstTextBaseline, spacing: 0) {
+                            Text("\(bookmark.readProgress)")
+                                .font(.caption2)
+                                .bold()
+                            Text("%")
+                                .font(.system(size: 8))
+                                .baselineOffset(2)
+                        }
+                    }
+                    .padding(8)
+                }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(bookmark.title)
@@ -58,7 +85,6 @@ struct BookmarkCardView: View {
                         }
                     }
                     HStack {
-                        
                         Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Site") + " open", systemImage: "safari")
                             .onTapGesture {
                                 SafariUtil.openInSafari(url: bookmark.url)
@@ -68,12 +94,6 @@ struct BookmarkCardView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 
-                // Progress Bar for reading progress
-                if bookmark.readProgress > 0 {
-                    ProgressView(value: Double(bookmark.readProgress), total: 100)
-                        .progressViewStyle(LinearProgressViewStyle())
-                        .frame(height: 4)
-                }
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
@@ -203,3 +223,12 @@ struct IconBadge: View {
     }
 }
 
+#Preview {
+    BookmarkCardView(bookmark: .mock, currentState: .all) { _ in
+        
+    } onDelete: { _ in
+        
+    } onToggleFavorite: { _ in
+        
+    }
+}

@@ -19,6 +19,7 @@ struct BookmarkDetail {
     let imageUrl: String
     let lang: String
     var content: String?
+    let readProgress: Int?
 }
 
 extension BookmarkDetail {
@@ -39,6 +40,7 @@ extension BookmarkDetail {
         labels: [],
         thumbnailUrl: "",
         imageUrl: "",
-        lang: ""
+        lang: "",
+        readProgress: 0
     )
 } 

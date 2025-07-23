@@ -34,7 +34,7 @@ struct BookmarkUpdateRequest {
     }
 }
 
-// Convenience Initializers für häufige Aktionen
+
 extension BookmarkUpdateRequest {
     static func archive(_ isArchived: Bool) -> BookmarkUpdateRequest {
         return BookmarkUpdateRequest(isArchived: isArchived)

@@ -141,7 +141,7 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
 
 class MockGetBookmarkUseCase: PGetBookmarkUseCase {
     func execute(id: String) async throws -> BookmarkDetail {
-        BookmarkDetail(id: "123", title: "Test", url: "https://www.google.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 100, hasArticle: true, isMarked: false, isArchived: false, labels: ["Test"], thumbnailUrl: "https://picsum.photos/30/30", imageUrl: "https://picsum.photos/400/400", lang: "en")
+        BookmarkDetail(id: "123", title: "Test", url: "https://www.google.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 100, hasArticle: true, isMarked: false, isArchived: false, labels: ["Test"], thumbnailUrl: "https://picsum.photos/30/30", imageUrl: "https://picsum.photos/400/400", lang: "en", readProgress: 0)
     }
 }
 
@@ -180,7 +180,7 @@ class MockAddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
     func execute(bookmarkDetail: BookmarkDetail) {}
 }
 
-fileprivate extension Bookmark {
+extension Bookmark {
     static let mock: Bookmark = .init(
         id: "123", title: "title", url: "https://example.com", href: "https://example.com", description: "description", authors: ["Tom"], created: "", published: "", updated: "", siteName: "example.com", site: "https://example.com", readingTime: 2, wordCount: 20, hasArticle: true, isArchived: false, isDeleted: false, isMarked: true, labels: ["Test"], lang: "EN", loaded: false, readProgress: 0, documentType: "", state: 0, textDirection: "ltr", type: "", resources: .init(article: nil, icon: nil, image: nil, log: nil, props: nil, thumbnail: nil)
     )

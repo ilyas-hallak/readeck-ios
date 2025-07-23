@@ -4,6 +4,9 @@
     "" : {
 
     },
+    "%" : {
+
+    },
     "%@ (%lld)" : {
       "localizations" : {
         "en" : {
@@ -66,9 +69,6 @@
 
     },
     "Archive bookmark" : {
-
-    },
-    "Archived" : {
 
     },
     "Are you sure you want to log out? This will delete all your login credentials and return you to setup." : {
@@ -149,13 +149,13 @@
     "General" : {
 
     },
-    "Go Back" : {
-
-    },
     "https://example.com" : {
 
     },
     "https://readeck.example.com" : {
+
+    },
+    "Jump to last read position (%lld%%)" : {
 
     },
     "Keine Bookmarks gefunden." : {
@@ -319,6 +319,9 @@
 
     },
     "Title" : {
+
+    },
+    "Unarchive Bookmark" : {
 
     },
     "URL" : {

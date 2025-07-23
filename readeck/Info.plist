@@ -25,7 +25,7 @@
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
-		<string>green2</string>
+		<string>splashBg</string>
 		<key>UIImageName</key>
 		<string>readeck</string>
 	</dict>
