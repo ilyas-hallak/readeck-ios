@@ -2,8 +2,9 @@ import Foundation
 
 @Observable
 class BookmarkLabelsViewModel {
-    private let addLabelsUseCase = DefaultUseCaseFactory.shared.makeAddLabelsToBookmarkUseCase()
-    private let removeLabelsUseCase = DefaultUseCaseFactory.shared.makeRemoveLabelsFromBookmarkUseCase()
+    private let addLabelsUseCase: PAddLabelsToBookmarkUseCase
+    private let removeLabelsUseCase: PRemoveLabelsFromBookmarkUseCase
+    private let getLabelsUseCase: PGetLabelsUseCase
     
     var isLoading = false
     var errorMessage: String?
@@ -11,8 +12,38 @@ class BookmarkLabelsViewModel {
     var currentLabels: [String] = []
     var newLabelText = ""
     
-    init(initialLabels: [String] = []) {
+    
+    var allLabels: [BookmarkLabel] = [] {
+        didSet {
+            let pageSize = Constants.Labels.pageSize
+            labelPages = stride(from: 0, to: allLabels.count, by: pageSize).map {
+                Array(allLabels[$0..<min($0 + pageSize, allLabels.count)])
+            }
+        }
+    }
+    
+    var labelPages: [[BookmarkLabel]] = []
+    
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared, initialLabels: [String] = []) {
         self.currentLabels = initialLabels
+        
+        self.addLabelsUseCase = factory.makeAddLabelsToBookmarkUseCase()
+        self.removeLabelsUseCase = factory.makeRemoveLabelsFromBookmarkUseCase()
+        self.getLabelsUseCase = factory.makeGetLabelsUseCase()
+        
+    }
+    
+    @MainActor
+    func loadAllLabels() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let labels = try await getLabelsUseCase.execute()
+            allLabels = labels
+        } catch {
+            errorMessage = "failed to load labels"
+            showErrorAlert = true
+        }
     }
     
     @MainActor

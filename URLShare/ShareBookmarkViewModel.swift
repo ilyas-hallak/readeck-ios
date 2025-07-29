@@ -52,7 +52,7 @@ class ShareBookmarkViewModel: ObservableObject {
             let loaded = await SimpleAPI.getBookmarkLabels { [weak self] message, error in
                 self?.statusMessage = (message, error, error ? "❌" : "✅")
             } ?? []
-            let sorted = loaded.prefix(10).sorted { $0.count > $1.count }
+            let sorted = loaded.sorted { $0.count > $1.count }
             await MainActor.run {
                 self.labels = Array(sorted)
             }

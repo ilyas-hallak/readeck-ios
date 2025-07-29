@@ -49,11 +49,53 @@ struct ShareBookmarkView: View {
             
             // Label Grid
             if !viewModel.labels.isEmpty {
-                LabelGridView(labels: viewModel.labels, selected: $viewModel.selectedLabels)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Select labels")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    let pageSize = Constants.Labels.pageSize
+                    let pages = stride(from: 0, to: viewModel.labels.count, by: pageSize).map {
+                        Array(viewModel.labels[$0..<min($0 + pageSize, viewModel.labels.count)])
+                    }
+                    
+                    TabView {
+                        ForEach(Array(pages.enumerated()), id: \.offset) { pageIndex, labelsPage in
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
+                                ForEach(labelsPage, id: \.name) { label in
+                                    UnifiedLabelChip(
+                                        label: label.name,
+                                        isSelected: viewModel.selectedLabels.contains(label.name),
+                                        isRemovable: false,
+                                        onTap: {
+                                            if viewModel.selectedLabels.contains(label.name) {
+                                                viewModel.selectedLabels.remove(label.name)
+                                            } else {
+                                                viewModel.selectedLabels.insert(label.name)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .top)
+                            .padding(.horizontal)
+                        }
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                    .frame(height: 180)
+                    .padding(.top, -20)
+                }
                     .padding(.top, 32)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 100)
+                    .frame(minHeight: 100)                
             }
+
+            ManualTagEntryView(
+                labels: viewModel.labels,
+                selectedLabels: $viewModel.selectedLabels
+            )
+            .padding(.top, 12)
+            .padding(.horizontal, 16)
+
             // Status
             if let status = viewModel.statusMessage {
                 Text(status.emoji + " " + status.text)
@@ -89,33 +131,45 @@ struct ShareBookmarkView: View {
     }
 }
 
-struct LabelGridView: View {
+struct ManualTagEntryView: View {
     let labels: [BookmarkLabelDto]
-    @Binding var selected: Set<String>
-    private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+    @Binding var selectedLabels: Set<String>
+    @State private var manualTag: String = ""
+    @State private var error: String? = nil
+    
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(labels.prefix(15), id: \ .name) { label in
-                Button(action: {
-                    if selected.contains(label.name) {
-                        selected.remove(label.name)
-                    } else {
-                        selected.insert(label.name)
-                    }
-                }) {
-                    Text(label.name)
-                        .font(.system(size: 14, weight: .medium))
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity)
-                        .background(selected.contains(label.name) ? Color.accentColor.opacity(0.2) : Color(.secondarySystemGroupedBackground))
-                        .foregroundColor(.primary)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(selected.contains(label.name) ? Color.accentColor : Color.clear, lineWidth: 1)
-                        )
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                TextField("Add new tag...", text: $manualTag)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                Button(action: addTag) {
+                    Text("Add")
+                        .font(.system(size: 15, weight: .semibold))
                 }
+                .disabled(manualTag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+            if let error = error {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+        }
+    }
+    
+    private func addTag() {
+        let trimmed = manualTag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let lowercased = trimmed.lowercased()
+        let allExisting = Set(labels.map { $0.name.lowercased() })
+        let allSelected = Set(selectedLabels.map { $0.lowercased() })
+        if allExisting.contains(lowercased) || allSelected.contains(lowercased) {
+            error = "Tag already exists."
+        } else {
+            selectedLabels.insert(trimmed)
+            manualTag = ""
+            error = nil
         }
     }
 } 

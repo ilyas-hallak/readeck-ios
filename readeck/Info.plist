@@ -25,9 +25,9 @@
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
-		<string>splashBg</string>
+		<string>splashBackground</string>
 		<key>UIImageName</key>
-		<string>readeck</string>
+		<string>splash</string>
 	</dict>
 </dict>
 </plist>
