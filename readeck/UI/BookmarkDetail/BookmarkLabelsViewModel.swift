@@ -7,22 +7,30 @@ class BookmarkLabelsViewModel {
     private let getLabelsUseCase: PGetLabelsUseCase
     
     var isLoading = false
+    var isInitialLoading = false
     var errorMessage: String?
     var showErrorAlert = false
-    var currentLabels: [String] = []
+    var currentLabels: [String] = [] {
+        didSet {
+            calculatePages()
+        }
+    }
     var newLabelText = ""
-    
     
     var allLabels: [BookmarkLabel] = [] {
         didSet {
-            let pageSize = Constants.Labels.pageSize
-            labelPages = stride(from: 0, to: allLabels.count, by: pageSize).map {
-                Array(allLabels[$0..<min($0 + pageSize, allLabels.count)])
-            }
+            calculatePages()
         }
     }
     
     var labelPages: [[BookmarkLabel]] = []
+    
+    // Computed property for available labels (excluding current labels)
+    var availableLabels: [BookmarkLabel] {
+        return allLabels.filter { currentLabels.contains($0.name) == false }
+    }
+    
+    var availableLabelPages: [[BookmarkLabel]] = []
     
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared, initialLabels: [String] = []) {
         self.currentLabels = initialLabels
@@ -35,8 +43,8 @@ class BookmarkLabelsViewModel {
     
     @MainActor
     func loadAllLabels() async {
-        isLoading = true
-        defer { isLoading = false }
+        isInitialLoading = true
+        defer { isInitialLoading = false }
         do {
             let labels = try await getLabelsUseCase.execute()
             allLabels = labels
@@ -44,6 +52,8 @@ class BookmarkLabelsViewModel {
             errorMessage = "failed to load labels"
             showErrorAlert = true
         }
+        
+        calculatePages()
     }
     
     @MainActor
@@ -52,10 +62,10 @@ class BookmarkLabelsViewModel {
         errorMessage = nil
         
         do {
-            try await addLabelsUseCase.execute(bookmarkId: bookmarkId, labels: labels)
-            // Update local labels
             currentLabels.append(contentsOf: labels)
             currentLabels = Array(Set(currentLabels)) // Remove duplicates
+
+            try await addLabelsUseCase.execute(bookmarkId: bookmarkId, labels: labels)
         } catch let error as BookmarkUpdateError {
             errorMessage = error.localizedDescription
             showErrorAlert = true
@@ -65,6 +75,7 @@ class BookmarkLabelsViewModel {
         }
         
         isLoading = false
+        calculatePages()
     }
     
     @MainActor
@@ -94,6 +105,7 @@ class BookmarkLabelsViewModel {
         }
         
         isLoading = false
+        calculatePages()
     }
     
     @MainActor
@@ -109,9 +121,35 @@ class BookmarkLabelsViewModel {
         } else {
             await addLabel(to: bookmarkId, label: label)
         }
+        
+        calculatePages()
     }
     
     func updateLabels(_ labels: [String]) {
         currentLabels = labels
     }
-} 
+    
+    private func calculatePages() {
+        let pageSize = Constants.Labels.pageSize
+        
+        // Calculate pages for all labels
+        if allLabels.count <= pageSize {
+            labelPages = [allLabels]
+        } else {
+            // Normal pagination for larger datasets
+            labelPages = stride(from: 0, to: allLabels.count, by: pageSize).map {
+                Array(allLabels[$0..<min($0 + pageSize, allLabels.count)])
+            }
+        }
+        
+        // Calculate pages for available labels (excluding current labels)
+        if availableLabels.count <= pageSize {
+            availableLabelPages = [availableLabels]
+        } else {
+            // Normal pagination for larger datasets
+            availableLabelPages = stride(from: 0, to: availableLabels.count, by: pageSize).map {
+                Array(availableLabels[$0..<min($0 + pageSize, availableLabels.count)])
+            }
+        }
+    }
+}

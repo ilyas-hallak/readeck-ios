@@ -42,21 +42,48 @@ struct BookmarkLabelsView: View {
                 .padding(.horizontal)
                 
                 // All available labels
-                if !viewModel.allLabels.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("All available tags")
-                            .font(.headline)
-                            .padding(.horizontal)
-                        
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("All available tags")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    if viewModel.isInitialLoading {
+                        // Loading state
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                                .padding(.vertical, 40)
+                            Text("Loading tags...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 180)
+                    } else if viewModel.allLabels.isEmpty {
+                        // Empty state
+                        VStack {
+                            Image(systemName: "tag")
+                                .font(.system(size: 40))
+                                .foregroundColor(.secondary)
+                                .padding(.vertical, 20)
+                            Text("No tags available")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 180)
+                    } else {
+                        // Content state
                         TabView {
-                            ForEach(Array(viewModel.labelPages.enumerated()), id: \ .offset) { pageIndex, labelsPage in
+                            ForEach(Array(viewModel.availableLabelPages.enumerated()), id: \.offset) { pageIndex, labelsPage in
                                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
-                                    ForEach(labelsPage.filter { !viewModel.currentLabels.contains($0.name) }, id: \ .id) { label in
+                                    ForEach(labelsPage, id: \.id) { label in
                                         UnifiedLabelChip(
                                             label: label.name,
                                             isSelected: viewModel.currentLabels.contains(label.name),
                                             isRemovable: false,
                                             onTap: {
+                                                print("addLabelsUseCase")
                                                 Task {
                                                     await viewModel.toggleLabel(for: bookmarkId, label: label.name)
                                                 }
@@ -68,7 +95,7 @@ struct BookmarkLabelsView: View {
                                 .padding(.horizontal)
                             }
                         }
-                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                        .tabViewStyle(.page(indexDisplayMode: viewModel.availableLabelPages.count > 1 ? .automatic : .never))
                         .frame(height: 180)
                         .padding(.top, -20)
                     }
@@ -77,7 +104,7 @@ struct BookmarkLabelsView: View {
                 // Current labels
                 if !viewModel.currentLabels.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Current labels")
+                        Text("Current tags")
                             .font(.headline)
                             .padding(.horizontal)
                         

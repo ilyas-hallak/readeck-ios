@@ -49,7 +49,10 @@ class BookmarkDetailViewModel {
         do {
             settings = try await loadSettingsUseCase.execute()            
             bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
-            readProgress = bookmarkDetail.readProgress ?? 0
+            
+            // Always take the higher value between server and local progress
+            let serverProgress = bookmarkDetail.readProgress ?? 0
+            readProgress = max(readProgress, serverProgress)
             
             if settings?.enableTTS == true {
                 self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
@@ -121,10 +124,13 @@ class BookmarkDetailViewModel {
     }
     
     func updateReadProgress(id: String, progress: Int, anchor: String?) async {        
-        do {
-            try await updateBookmarkUseCase.updateReadProgress(bookmarkId: id, progress: progress, anchor: anchor)
-        } catch {            
-            // ignore error in this case
+        // Only update if the new progress is higher than current
+        if progress > readProgress {
+            do {
+                try await updateBookmarkUseCase.updateReadProgress(bookmarkId: id, progress: progress, anchor: anchor)
+            } catch {            
+                // ignore error in this case
+            }
         }
     }
     

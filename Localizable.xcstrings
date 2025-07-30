@@ -101,7 +101,7 @@
     "Close" : {
 
     },
-    "Current labels" : {
+    "Current tags" : {
 
     },
     "Data Management" : {
@@ -188,6 +188,9 @@
     "Loading article..." : {
 
     },
+    "Loading tags..." : {
+
+    },
     "Login & Save" : {
 
     },
@@ -213,6 +216,9 @@
 
     },
     "No bookmarks found in %@." : {
+
+    },
+    "No tags available" : {
 
     },
     "OK" : {
