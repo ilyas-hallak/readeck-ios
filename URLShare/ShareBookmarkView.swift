@@ -54,7 +54,7 @@ struct ShareBookmarkView: View {
                     .toolbar {
                         ToolbarItemGroup(placement: .keyboard) {
                             Spacer()
-                            Button("Fertig") {
+                            Button("Done") {
                                 dismissKeyboard()
                             }
                         }
@@ -224,7 +224,7 @@ struct ManualTagEntryView: View {
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
-                        Button("Fertig") {
+                        Button("Done") {
                             dismissKeyboard()
                         }
                     }
