@@ -35,7 +35,7 @@ class SettingsGeneralViewModel {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 enableTTS = settings.enableTTS ?? false
-                selectedTheme = .system
+                selectedTheme = settings.theme ?? .system
                 autoSyncEnabled = false
             }
         } catch {
@@ -47,7 +47,12 @@ class SettingsGeneralViewModel {
     func saveGeneralSettings() async {
         do {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
+            try await saveSettingsUseCase.execute(theme: selectedTheme)
+            
             successMessage = "Settings saved"
+            
+            // send notification to apply settings to the app
+            NotificationCenter.default.post(name: NSNotification.Name("SettingsChanged"), object: nil)
         } catch {
             errorMessage = "Error saving settings"
         }

@@ -34,43 +34,61 @@ struct SettingsServerView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Server Endpoint")
                         .font(.headline)
-                    TextField("https://readeck.example.com", text: $viewModel.endpoint)
-                        .textFieldStyle(.roundedBorder)
-                        .keyboardType(.URL)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .disabled(!viewModel.isSetupMode)
-                        .onChange(of: viewModel.endpoint) {
-                            if viewModel.isSetupMode {
+                    if viewModel.isSetupMode {
+                        TextField("https://readeck.example.com", text: $viewModel.endpoint)
+                            .textFieldStyle(.roundedBorder)
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .onChange(of: viewModel.endpoint) {
                                 viewModel.clearMessages()
                             }
+                    } else {
+                        HStack {
+                            Image(systemName: "server.rack")
+                                .foregroundColor(.accentColor)
+                            Text(viewModel.endpoint.isEmpty ? "Not set" : viewModel.endpoint)
+                                .foregroundColor(viewModel.endpoint.isEmpty ? .secondary : .primary)
+                            Spacer()
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                    }
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Username")
                         .font(.headline)
-                    TextField("Your Username", text: $viewModel.username)
-                        .textFieldStyle(.roundedBorder)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .disabled(!viewModel.isSetupMode)
-                        .onChange(of: viewModel.username) {
-                            if viewModel.isSetupMode {
+                    if viewModel.isSetupMode {
+                        TextField("Your Username", text: $viewModel.username)
+                            .textFieldStyle(.roundedBorder)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .onChange(of: viewModel.username) {
                                 viewModel.clearMessages()
                             }
+                    } else {
+                        HStack {
+                            Image(systemName: "person.circle.fill")
+                                .foregroundColor(.accentColor)
+                            Text(viewModel.username.isEmpty ? "Not set" : viewModel.username)
+                                .foregroundColor(viewModel.username.isEmpty ? .secondary : .primary)
+                            Spacer()
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                    }
                 }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Password")
-                        .font(.headline)
-                    SecureField("Your Password", text: $viewModel.password)
-                        .textFieldStyle(.roundedBorder)
-                        .disabled(!viewModel.isSetupMode)
-                        .onChange(of: viewModel.password) {
-                            if viewModel.isSetupMode {
+                if viewModel.isSetupMode {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Password")
+                            .font(.headline)
+                        
+                        SecureField("Your Password", text: $viewModel.password)
+                            .textFieldStyle(.roundedBorder)
+                            .onChange(of: viewModel.password) {
                                 viewModel.clearMessages()
                             }
-                        }
+                    }
                 }
             }
             

@@ -16,6 +16,11 @@ class BookmarkLabelsViewModel {
         }
     }
     var newLabelText = ""
+    var searchText = "" {
+        didSet {
+            calculatePages()
+        }
+    }
     
     var allLabels: [BookmarkLabel] = [] {
         didSet {
@@ -28,6 +33,15 @@ class BookmarkLabelsViewModel {
     // Computed property for available labels (excluding current labels)
     var availableLabels: [BookmarkLabel] {
         return allLabels.filter { currentLabels.contains($0.name) == false }
+    }
+    
+    // Computed property for filtered labels based on search text
+    var filteredLabels: [BookmarkLabel] {
+        if searchText.isEmpty {
+            return availableLabels
+        } else {
+            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
     }
     
     var availableLabelPages: [[BookmarkLabel]] = []
@@ -85,6 +99,7 @@ class BookmarkLabelsViewModel {
         
         await addLabels(to: bookmarkId, labels: [trimmedLabel])
         newLabelText = ""
+        searchText = ""
     }
     
     @MainActor
@@ -142,13 +157,14 @@ class BookmarkLabelsViewModel {
             }
         }
         
-        // Calculate pages for available labels (excluding current labels)
-        if availableLabels.count <= pageSize {
-            availableLabelPages = [availableLabels]
+        // Calculate pages for filtered labels (search results or available labels)
+        let labelsToShow = searchText.isEmpty ? availableLabels : filteredLabels
+        if labelsToShow.count <= pageSize {
+            availableLabelPages = [labelsToShow]
         } else {
             // Normal pagination for larger datasets
-            availableLabelPages = stride(from: 0, to: availableLabels.count, by: pageSize).map {
-                Array(availableLabels[$0..<min($0 + pageSize, availableLabels.count)])
+            availableLabelPages = stride(from: 0, to: labelsToShow.count, by: pageSize).map {
+                Array(labelsToShow[$0..<min($0 + pageSize, labelsToShow.count)])
             }
         }
     }

@@ -9,7 +9,35 @@ class ShareBookmarkViewModel: ObservableObject {
     @Published var selectedLabels: Set<String> = []
     @Published var statusMessage: (text: String, isError: Bool, emoji: String)? = nil
     @Published var isSaving: Bool = false
-    private weak var extensionContext: NSExtensionContext?
+    @Published var searchText: String = ""
+    let extensionContext: NSExtensionContext?
+    
+    // Computed properties for pagination
+    var availableLabels: [BookmarkLabelDto] {
+        return labels.filter { !selectedLabels.contains($0.name) }
+    }
+    
+    // Computed property for filtered labels based on search text
+    var filteredLabels: [BookmarkLabelDto] {
+        if searchText.isEmpty {
+            return availableLabels
+        } else {
+            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+    
+    var availableLabelPages: [[BookmarkLabelDto]] {
+        let pageSize = Constants.Labels.pageSize
+        let labelsToShow = searchText.isEmpty ? availableLabels : filteredLabels
+        
+        if labelsToShow.count <= pageSize {
+            return [labelsToShow]
+        } else {
+            return stride(from: 0, to: labelsToShow.count, by: pageSize).map {
+                Array(labelsToShow[$0..<min($0 + pageSize, labelsToShow.count)])
+            }
+        }
+    }
     
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext

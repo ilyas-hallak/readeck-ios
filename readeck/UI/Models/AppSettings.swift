@@ -22,6 +22,10 @@ class AppSettings: ObservableObject {
     var enableTTS: Bool {
         settings?.enableTTS ?? false
     }
+    
+    var theme: Theme {
+        settings?.theme ?? .system
+    }
 
     init(settings: Settings? = nil) {
         self.settings = settings

@@ -18,19 +18,21 @@ struct SettingsContainerView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
-                SettingsServerView()
-                    .cardStyle()
-                
                 FontSettingsView()
                     .cardStyle()
                 
                 SettingsGeneralView()
+                    .cardStyle()
+                
+                SettingsServerView()
                     .cardStyle()
             }
             .padding()
             .background(Color(.systemGroupedBackground))
             
             AppInfo()
+            
+            Spacer()
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Settings")

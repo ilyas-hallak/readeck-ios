@@ -270,6 +270,7 @@ struct WebView: UIViewRepresentable {
 class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
+    var hasHeightUpdate: Bool = false
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
@@ -297,6 +298,4 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             }
         }
     }
-    
-    var hasHeightUpdate: Bool = false
 }

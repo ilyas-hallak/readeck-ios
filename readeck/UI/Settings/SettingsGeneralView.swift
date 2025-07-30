@@ -29,6 +29,11 @@ struct SettingsGeneralView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: viewModel.selectedTheme) {
+                    Task {
+                        await viewModel.saveGeneralSettings()
+                    }
+                }
             }
             
             VStack(alignment: .leading, spacing: 12) {

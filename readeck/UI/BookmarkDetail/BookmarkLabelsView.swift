@@ -16,35 +16,69 @@ struct BookmarkLabelsView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 12) {
-                // Add new label
-                HStack(spacing: 12) {
-                    TextField("Enter label...", text: $viewModel.newLabelText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .onSubmit {
-                            Task {
-                                await viewModel.addLabel(to: bookmarkId, label: viewModel.newLabelText)
+                // Add new label with search functionality
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
+                        TextField("Search or add new tag...", text: $viewModel.searchText)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .onSubmit {
+                                Task {
+                                    await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
+                                }
                             }
+                        
+                        Button(action: {
+                            Task {
+                                await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
+                            }
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .frame(width: 32, height: 32)
                         }
-                    
-                    Button(action: {
-                        Task {
-                            await viewModel.addLabel(to: bookmarkId, label: viewModel.newLabelText)
-                        }
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .frame(width: 32, height: 32)
+                        .disabled(viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoading)
+                        .foregroundColor(.accentColor)
                     }
-                    .disabled(viewModel.newLabelText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoading)
-                    .foregroundColor(.accentColor)
+                    
+                    // Show custom tag suggestion if search text doesn't match existing tags
+                    if !viewModel.searchText.isEmpty && !viewModel.filteredLabels.contains(where: { $0.name.lowercased() == viewModel.searchText.lowercased() }) {
+                        HStack {
+                            Text("Add new tag:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(viewModel.searchText)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            Spacer()
+                            Button("Add") {
+                                Task {
+                                    await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundColor(.accentColor)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.accentColor.opacity(0.1))
+                        .cornerRadius(6)
+                    }
                 }
                 .padding(.horizontal)
                 
                 // All available labels
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("All available tags")
-                        .font(.headline)
-                        .padding(.horizontal)
+                    HStack {
+                        Text(viewModel.searchText.isEmpty ? "All available tags" : "Search results")
+                            .font(.headline)
+                        if !viewModel.searchText.isEmpty {
+                            Text("(\(viewModel.filteredLabels.count) found)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal)
                     
                     if viewModel.isInitialLoading {
                         // Loading state
@@ -58,14 +92,14 @@ struct BookmarkLabelsView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 180)
-                    } else if viewModel.allLabels.isEmpty {
+                    } else if viewModel.availableLabelPages.isEmpty {
                         // Empty state
                         VStack {
-                            Image(systemName: "tag")
+                            Image(systemName: viewModel.searchText.isEmpty ? "tag" : "magnifyingglass")
                                 .font(.system(size: 40))
                                 .foregroundColor(.secondary)
                                 .padding(.vertical, 20)
-                            Text("No tags available")
+                            Text(viewModel.searchText.isEmpty ? "No tags available" : "No tags found")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }

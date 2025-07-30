@@ -24,6 +24,7 @@ struct readeckApp: App {
                 }
             }
             .environmentObject(appSettings)
+            .preferredColorScheme(appSettings.theme.colorScheme)
             .onAppear {
                 #if DEBUG
                 NFX.sharedInstance().start()
@@ -33,6 +34,11 @@ struct readeckApp: App {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetupStatusChanged"))) { _ in
+                Task {
+                    await loadSetupStatus()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SettingsChanged"))) { _ in
                 Task {
                     await loadSetupStatus()
                 }
