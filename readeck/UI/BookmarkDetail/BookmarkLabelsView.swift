@@ -11,7 +11,6 @@ struct BookmarkLabelsView: View {
         
         UIPageControl.appearance().currentPageIndicatorTintColor = UIColor(Color.primary)
         UIPageControl.appearance().pageIndicatorTintColor = UIColor(Color.primary).withAlphaComponent(0.2)
-
     }
     
     var body: some View {

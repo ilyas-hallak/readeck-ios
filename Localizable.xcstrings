@@ -51,9 +51,6 @@
     "Add" : {
 
     },
-    "Add a new link to your collection" : {
-
-    },
     "Add new tag..." : {
 
     },
@@ -93,9 +90,6 @@
 
     },
     "Clear cache" : {
-
-    },
-    "Clipboard" : {
 
     },
     "Close" : {
@@ -182,7 +176,7 @@
     "Labels" : {
 
     },
-    "Loading %@..." : {
+    "Loading %@" : {
 
     },
     "Loading article..." : {
@@ -234,6 +228,9 @@
 
     },
     "Paste" : {
+
+    },
+    "Please wait while we fetch your bookmarks..." : {
 
     },
     "Preview" : {
@@ -345,7 +342,7 @@
     "URL" : {
 
     },
-    "URL found:" : {
+    "URL in clipboard:" : {
 
     },
     "Username" : {

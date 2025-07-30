@@ -38,7 +38,31 @@ struct BookmarksView: View {
     var body: some View {
         ZStack {
             if viewModel.isLoading && viewModel.bookmarks?.bookmarks.isEmpty == true {
-                ProgressView("Loading \(state.displayName)...")
+                VStack(spacing: 20) {
+                    Spacer()
+                    
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.3)
+                            .tint(.accentColor)
+                        
+                        VStack(spacing: 8) {
+                            Text("Loading \(state.displayName)")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Text("Please wait while we fetch your bookmarks...")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .padding(.horizontal, 40)
+                    
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(R.color.bookmark_list_bg))
             } else {
                 List {
                     ForEach(viewModel.bookmarks?.bookmarks ?? [], id: \.id) { bookmark in
@@ -169,7 +193,10 @@ struct BookmarksView: View {
             // Refresh bookmarks when sheet is dismissed
             if oldValue && !newValue {
                 Task {
-                    await viewModel.loadBookmarks(state: state, type: type)
+                    // Wait a bit for the server to process the new bookmark
+                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                    
+                    await viewModel.refreshBookmarks()
                 }
             }
         }

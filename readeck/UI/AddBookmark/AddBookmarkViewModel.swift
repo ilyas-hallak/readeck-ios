@@ -14,6 +14,7 @@ class AddBookmarkViewModel {
     var showErrorAlert: Bool = false
     var hasCreated: Bool = false
     var clipboardURL: String?
+    var showClipboardButton: Bool = false
     
     var isValid: Bool {
         !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
@@ -68,20 +69,35 @@ class AddBookmarkViewModel {
         guard let clipboardString = UIPasteboard.general.string,
               URL(string: clipboardString) != nil else {
             clipboardURL = nil
+            showClipboardButton = false
             return
         }
         
-        clipboardURL = clipboardString
+        // Only show clipboard button if the URL is different from current URL
+        let currentURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        if clipboardString != currentURL {
+            clipboardURL = clipboardString
+            showClipboardButton = true
+        } else {
+            showClipboardButton = false
+        }
     }
     
     func pasteFromClipboard() {
         guard let clipboardURL = clipboardURL else { return }
         url = clipboardURL
+        showClipboardButton = false
+    }
+    
+    func dismissClipboard() {
+        showClipboardButton = false
     }
     
     func clearForm() {
         url = ""
         title = ""
         labelsText = ""
+        clipboardURL = nil
+        showClipboardButton = false
     }
 }

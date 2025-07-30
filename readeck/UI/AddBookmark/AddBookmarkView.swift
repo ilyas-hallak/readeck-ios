@@ -19,24 +19,7 @@ struct AddBookmarkView: View {
             VStack(spacing: 0) {
                 // Scrollable Form Content
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // Header
-                        VStack(spacing: 8) {
-                            Image(systemName: "bookmark.circle.fill")
-                                .font(.system(size: 48))
-                                .foregroundColor(.accentColor)
-                            
-                            Text("New Bookmark")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                            
-                            Text("Add a new link to your collection")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.top, 20)
-                        
+                    VStack(spacing: 20) {
                         // Form Fields
                         VStack(spacing: 20) {
                             // URL Field
@@ -58,6 +41,46 @@ struct AddBookmarkView: View {
                                     .keyboardType(.URL)
                                     .autocapitalization(.none)
                                     .autocorrectionDisabled()
+                                    .onChange(of: viewModel.url) { _, _ in
+                                        viewModel.checkClipboard()
+                                    }
+                                
+                                // Clipboard Button
+                                if viewModel.showClipboardButton {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("URL in clipboard:")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            
+                                            Text(viewModel.clipboardURL ?? "")
+                                                .font(.subheadline)
+                                                .lineLimit(1)
+                                                .truncationMode(.middle)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        HStack(spacing: 8) {
+                                            Button("Paste") {
+                                                viewModel.pasteFromClipboard()
+                                            }
+                                            .buttonStyle(SecondaryButtonStyle())
+                                            
+                                            Button(action: {
+                                                viewModel.dismissClipboard()
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color(.systemGray6))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                                }
                             }
                             
                             // Title Field
@@ -96,38 +119,6 @@ struct AddBookmarkView: View {
                                         }
                                     }
                                     .padding(.top, 8)
-                                }
-                            }
-                            
-                            // Clipboard Section
-                            if viewModel.clipboardURL != nil {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Label("Clipboard", systemImage: "doc.on.clipboard")
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-                                    
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text("URL found:")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                            
-                                            Text(viewModel.clipboardURL ?? "")
-                                                .font(.subheadline)
-                                                .lineLimit(2)
-                                                .truncationMode(.middle)
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        Button("Paste") {
-                                            viewModel.pasteFromClipboard()
-                                        }
-                                        .buttonStyle(SecondaryButtonStyle())
-                                    }
-                                    .padding()
-                                    .background(Color(.systemGray6))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
                         }
@@ -183,6 +174,7 @@ struct AddBookmarkView: View {
                 }
                 .background(Color(.systemBackground))
             }
+            .navigationTitle("New Bookmark")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -190,7 +182,6 @@ struct AddBookmarkView: View {
                         dismiss()
                         viewModel.clearForm()
                     }
-                    .foregroundColor(.secondary)
                 }
             }
             .alert("Error", isPresented: $viewModel.showErrorAlert) {
