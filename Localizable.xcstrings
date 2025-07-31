@@ -54,7 +54,7 @@
     "Add" : {
 
     },
-    "Add custom tag:" : {
+    "Add new tag:" : {
 
     },
     "all" : {
@@ -72,6 +72,9 @@
 
     },
     "All labels selected" : {
+
+    },
+    "All tags selected" : {
 
     },
     "Archive" : {
@@ -93,6 +96,9 @@
 
     },
     "Available labels" : {
+
+    },
+    "Available tags" : {
 
     },
     "Cancel" : {
@@ -122,9 +128,6 @@
     "Done" : {
 
     },
-    "e.g. work, important, later" : {
-
-    },
     "Enter an optional title..." : {
 
     },
@@ -138,9 +141,6 @@
 
     },
     "Favorite" : {
-
-    },
-    "Fertig" : {
 
     },
     "Finished reading?" : {
@@ -181,9 +181,6 @@
     },
     "Key" : {
       "extractionState" : "manual"
-    },
-    "Labels" : {
-
     },
     "Loading %@" : {
 
@@ -282,9 +279,6 @@
     "Remove" : {
 
     },
-    "Required" : {
-
-    },
     "Reset settings" : {
 
     },
@@ -351,13 +345,7 @@
     "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog." : {
 
     },
-    "Title" : {
-
-    },
     "Unarchive Bookmark" : {
-
-    },
-    "URL" : {
 
     },
     "URL in clipboard:" : {

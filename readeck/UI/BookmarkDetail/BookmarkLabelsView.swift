@@ -18,27 +18,13 @@ struct BookmarkLabelsView: View {
             VStack(spacing: 12) {
                 // Add new label with search functionality
                 VStack(spacing: 8) {
-                    HStack(spacing: 12) {
-                        TextField("Search or add new tag...", text: $viewModel.searchText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .onSubmit {
-                                Task {
-                                    await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
-                                }
-                            }
-                        
-                        Button(action: {
+                    TextField("Search or add new tag...", text: $viewModel.searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onSubmit {
                             Task {
                                 await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
                             }
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .frame(width: 32, height: 32)
                         }
-                        .disabled(viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoading)
-                        .foregroundColor(.accentColor)
-                    }
                     
                     // Show custom tag suggestion if search text doesn't match existing tags
                     if !viewModel.searchText.isEmpty && !viewModel.filteredLabels.contains(where: { $0.name.lowercased() == viewModel.searchText.lowercased() }) {
@@ -50,18 +36,25 @@ struct BookmarkLabelsView: View {
                                 .font(.caption)
                                 .fontWeight(.medium)
                             Spacer()
-                            Button("Add") {
+                            Button(action: {
                                 Task {
                                     await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
                                 }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.caption)
+                                    Text("Add")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
                             }
-                            .font(.caption)
                             .foregroundColor(.accentColor)
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 12)
                         .background(Color.accentColor.opacity(0.1))
-                        .cornerRadius(6)
+                        .cornerRadius(10)
                     }
                 }
                 .padding(.horizontal)

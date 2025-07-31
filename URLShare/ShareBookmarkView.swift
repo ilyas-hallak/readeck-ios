@@ -221,14 +221,6 @@ struct ManualTagEntryView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") {
-                            dismissKeyboard()
-                        }
-                    }
-                }
                 .onSubmit {
                     addCustomTag()
                 }

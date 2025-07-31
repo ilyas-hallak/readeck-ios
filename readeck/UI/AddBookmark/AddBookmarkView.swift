@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct AddBookmarkView: View {
     @State private var viewModel = AddBookmarkViewModel()
@@ -24,18 +25,6 @@ struct AddBookmarkView: View {
                         VStack(spacing: 20) {
                             // URL Field
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Label("URL", systemImage: "link")
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-                                    
-                                    Spacer()
-                                    
-                                    Text("Required")
-                                        .font(.caption)
-                                        .foregroundColor(.red)
-                                }
-                                
                                 TextField("https://example.com", text: $viewModel.url)
                                     .textFieldStyle(CustomTextFieldStyle())
                                     .keyboardType(.URL)
@@ -45,7 +34,7 @@ struct AddBookmarkView: View {
                                         viewModel.checkClipboard()
                                     }
                                 
-                                // Clipboard Button
+                                // Clipboard Button - only show if we have a URL in clipboard
                                 if viewModel.showClipboardButton {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
@@ -85,37 +74,128 @@ struct AddBookmarkView: View {
                             
                             // Title Field
                             VStack(alignment: .leading, spacing: 8) {
-                                Label("Title", systemImage: "note.text")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                
                                 TextField("Optional: Custom title", text: $viewModel.title)
                                     .textFieldStyle(CustomTextFieldStyle())
                             }
                             
                             // Labels Field
                             VStack(alignment: .leading, spacing: 8) {
-                                Label("Labels", systemImage: "tag")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                
-                                TextField("e.g. work, important, later", text: $viewModel.labelsText)
+                                // Search field for tags
+                                TextField("Search or add new tag...", text: $viewModel.searchText)
                                     .textFieldStyle(CustomTextFieldStyle())
+                                    .onSubmit {
+                                        viewModel.addCustomTag()
+                                    }
                                 
-                                // Labels Preview
-                                if !viewModel.parsedLabels.isEmpty {
-                                    LazyVGrid(columns: [
-                                        GridItem(.adaptive(minimum: 80))
-                                    ], spacing: 8) {
-                                        ForEach(viewModel.parsedLabels, id: \.self) { label in
-                                            Text(label)
-                                                .font(.caption)
+                                // Show custom tag suggestion if search text doesn't match existing tags
+                                if !viewModel.searchText.isEmpty && !viewModel.allLabels.contains(where: { $0.name.lowercased() == viewModel.searchText.lowercased() }) && !viewModel.selectedLabels.contains(viewModel.searchText) {
+                                    HStack {
+                                        Text("Add new tag:")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Text(viewModel.searchText)
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                        Spacer()
+                                        Button(action: {
+                                            viewModel.addCustomTag()
+                                        }) {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "plus.circle.fill")
+                                                    .font(.caption)
+                                                Text("Add")
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                            }
+                                        }
+                                        .foregroundColor(.accentColor)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 12)
+                                    .background(Color.accentColor.opacity(0.1))
+                                    .cornerRadius(10)
+                                }
+                                
+                                // Available labels
+                                if !viewModel.allLabels.isEmpty {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Text(viewModel.searchText.isEmpty ? "Available tags" : "Search results")
+                                                .font(.subheadline)
                                                 .fontWeight(.medium)
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 6)
-                                                .background(Color.accentColor.opacity(0.1))
-                                                .foregroundColor(.accentColor)
-                                                .clipShape(Capsule())
+                                            if !viewModel.searchText.isEmpty {
+                                                Text("(\(viewModel.filteredLabels.count) found)")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            Spacer()
+                                        }
+                                        
+                                        if viewModel.isLabelsLoading {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .padding(.vertical, 20)
+                                        } else if viewModel.availableLabels.isEmpty {
+                                            VStack {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.system(size: 24))
+                                                    .foregroundColor(.green)
+                                                Text("All tags selected")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 20)
+                                        } else {
+                                            // Use pagination from ViewModel
+                                            TabView {
+                                                ForEach(Array(viewModel.availableLabelPages.enumerated()), id: \.offset) { pageIndex, labelsPage in
+                                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
+                                                        ForEach(labelsPage, id: \.id) { label in
+                                                            UnifiedLabelChip(
+                                                                label: label.name,
+                                                                isSelected: viewModel.selectedLabels.contains(label.name),
+                                                                isRemovable: false,
+                                                                onTap: {
+                                                                    viewModel.toggleLabel(label.name)
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .top)
+                                                    .padding(.horizontal)
+                                                }
+                                            }
+                                            .tabViewStyle(.page(indexDisplayMode: viewModel.availableLabelPages.count > 1 ? .automatic : .never))
+                                            .frame(height: 180)
+                                            .padding(.top, -20)
+                                        }
+                                    }
+                                    .padding(.top, 8)
+                                }
+                                
+                                // Selected labels
+                                if !viewModel.selectedLabels.isEmpty {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Selected tags")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                        
+                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
+                                            ForEach(Array(viewModel.selectedLabels), id: \.self) { label in
+                                                UnifiedLabelChip(
+                                                    label: label,
+                                                    isSelected: false,
+                                                    isRemovable: true,
+                                                    onTap: {
+                                                        // No action for selected labels
+                                                    },
+                                                    onRemove: {
+                                                        viewModel.removeLabel(label)
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                     .padding(.top, 8)
@@ -124,14 +204,12 @@ struct AddBookmarkView: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        Spacer(minLength: 100) // Space for button
+                        Spacer(minLength: 120) // Space for button
                     }
                 }
                 
                 // Bottom Action Area
                 VStack(spacing: 16) {
-                    Divider()
-                    
                     VStack(spacing: 12) {
                         // Save Button
                         Button(action: {
@@ -160,14 +238,7 @@ struct AddBookmarkView: View {
                             .foregroundColor(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .disabled(!viewModel.isValid || viewModel.isLoading)
-                        
-                        // Cancel Button
-                        Button("Cancel") {
-                            dismiss()
-                            viewModel.clearForm()
-                        }
-                        .foregroundColor(.secondary)
+                        .disabled(!viewModel.isValid || viewModel.isLoading)                                                
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
@@ -189,9 +260,21 @@ struct AddBookmarkView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                }
+            }
+            .ignoresSafeArea(.keyboard)
         }
         .onAppear {
             viewModel.checkClipboard()
+        }
+        .task {
+            await viewModel.loadAllLabels()
         }
         .onDisappear {
             viewModel.clearForm()
