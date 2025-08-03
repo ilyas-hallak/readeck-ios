@@ -68,12 +68,6 @@
         }
       }
     },
-    "All available tags" : {
-
-    },
-    "All labels selected" : {
-
-    },
     "All tags selected" : {
 
     },
@@ -95,9 +89,6 @@
     "Automatically mark articles as read" : {
 
     },
-    "Available labels" : {
-
-    },
     "Available tags" : {
 
     },
@@ -108,9 +99,6 @@
 
     },
     "Close" : {
-
-    },
-    "Current tags" : {
 
     },
     "Data Management" : {
@@ -188,9 +176,6 @@
     "Loading article..." : {
 
     },
-    "Loading tags..." : {
-
-    },
     "Login & Save" : {
 
     },
@@ -216,12 +201,6 @@
 
     },
     "No bookmarks found in %@." : {
-
-    },
-    "No tags available" : {
-
-    },
-    "No tags found" : {
 
     },
     "OK" : {

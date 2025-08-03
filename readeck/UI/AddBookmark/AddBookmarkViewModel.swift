@@ -3,25 +3,37 @@ import UIKit
 
 @Observable
 class AddBookmarkViewModel {
+    
+    // MARK: - Dependencies
+
     private let createBookmarkUseCase = DefaultUseCaseFactory.shared.makeCreateBookmarkUseCase()
     private let getLabelsUseCase = DefaultUseCaseFactory.shared.makeGetLabelsUseCase()
     
+    // MARK: - Form Data
     var url: String = ""
     var title: String = ""
     var labelsText: String = ""
     
-    // Tag functionality
+    // MARK: - Labels/Tags Management
+
     var allLabels: [BookmarkLabel] = []
     var selectedLabels: Set<String> = []
     var searchText: String = ""
     var isLabelsLoading: Bool = false
     
+    // MARK: - UI State
+
     var isLoading: Bool = false
     var errorMessage: String?
     var showErrorAlert: Bool = false
     var hasCreated: Bool = false
+    
+    // MARK: - Clipboard Management
+    
     var clipboardURL: String?
     var showClipboardButton: Bool = false
+    
+    // MARK: - Computed Properties
     
     var isValid: Bool {
         !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
@@ -35,7 +47,6 @@ class AddBookmarkViewModel {
             .filter { !$0.isEmpty }
     }
     
-    // Computed properties for tag functionality
     var availableLabels: [BookmarkLabel] {
         return allLabels.filter { !selectedLabels.contains($0.name) }
     }
@@ -60,6 +71,8 @@ class AddBookmarkViewModel {
             }
         }
     }
+    
+    // MARK: - Labels Management
     
     @MainActor
     func loadAllLabels() async {
@@ -108,6 +121,8 @@ class AddBookmarkViewModel {
         selectedLabels.remove(label)
     }
     
+    // MARK: - Bookmark Creation
+    
     @MainActor
     func createBookmark() async {
         guard isValid else { return }
@@ -145,6 +160,8 @@ class AddBookmarkViewModel {
         isLoading = false
     }
     
+    // MARK: - Clipboard Management
+    
     func checkClipboard() {
         guard let clipboardString = UIPasteboard.general.string,
               URL(string: clipboardString) != nil else {
@@ -172,6 +189,8 @@ class AddBookmarkViewModel {
     func dismissClipboard() {
         showClipboardButton = false
     }
+    
+    // MARK: - Form Management
     
     func clearForm() {
         url = ""

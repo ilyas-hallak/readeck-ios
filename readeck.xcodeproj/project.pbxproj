@@ -85,9 +85,12 @@
 				Data/CoreData/CoreDataManager.swift,
 				Data/KeychainHelper.swift,
 				Domain/Model/Bookmark.swift,
+				Domain/Model/BookmarkLabel.swift,
 				readeck.xcdatamodeld,
 				Splash.storyboard,
 				UI/Components/Constants.swift,
+				UI/Components/CustomTextFieldStyle.swift,
+				UI/Components/TagManagementView.swift,
 				UI/Components/UnifiedLabelChip.swift,
 			);
 			target = 5D2B7FAE2DFA27A400EBDB2B /* URLShare */;
@@ -620,7 +623,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -664,7 +667,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
