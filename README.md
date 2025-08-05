@@ -2,11 +2,21 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
 A native iOS client for [readeck](https://readeck.org) bookmark management.
 
 The official repository is on Codeberg:
 https://codeberg.org/readeck/readeck
+
+## Screenshots
+
+<p align="center">  
+  <img src="screenshots/main.webp" height="400" alt="Main View">
+  <img src="screenshots/detail.webp" height="400" alt="Detail View">
+  <img src="screenshots/new.webp" height="400" alt="Add Bookmark">
+  <img src="screenshots/more.webp" height="400" alt="More Options">
+  <img src="screenshots/share.webp" height="400" alt="Share Extension">  
+  <img src="screenshots/ipad.webp" height="400" alt="iPad View">
+</p>
 
 ## TestFlight Beta Access
 
