@@ -93,18 +93,18 @@ struct TagManagementView: View {
            !selectedLabelsSet.contains(searchText.wrappedValue) {
             HStack {
                 Text("Add new tag:")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
                 Text(searchText.wrappedValue)
-                    .font(.caption)
+                    .font(.subheadline)
                     .fontWeight(.medium)
                 Spacer()
                 Button(action: onAddCustomTag) {
                     HStack(spacing: 6) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                         Text("Add")
-                            .font(.caption)
+                            .font(.subheadline)
                             .fontWeight(.medium)
                     }
                 }

@@ -16,7 +16,6 @@ struct BookmarkLabelsView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 12) {
-                searchSection
                 availableLabelsSection
                 Spacer()
             }
@@ -53,59 +52,7 @@ struct BookmarkLabelsView: View {
     
     // MARK: - View Components
     
-    @ViewBuilder
-    private var searchSection: some View {
-        VStack(spacing: 8) {
-            searchField
-            customTagSuggestion
-        }
-        .padding(.horizontal)
-    }
     
-    @ViewBuilder
-    private var searchField: some View {
-        TextField("Search or add new tag...", text: $viewModel.searchText)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .onSubmit {
-                Task {
-                    await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
-                }
-            }
-    }
-    
-    @ViewBuilder
-    private var customTagSuggestion: some View {
-        if !viewModel.searchText.isEmpty && 
-           !viewModel.filteredLabels.contains(where: { $0.name.lowercased() == viewModel.searchText.lowercased() }) {
-            HStack {
-                Text("Add new tag:")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(viewModel.searchText)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                Spacer()
-                Button(action: {
-                    Task {
-                        await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
-                    }
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.caption)
-                        Text("Add")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                }
-                .foregroundColor(.accentColor)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .background(Color.accentColor.opacity(0.1))
-            .cornerRadius(10)
-        }
-    }
     
     @ViewBuilder
     private var availableLabelsSection: some View {
@@ -132,6 +79,7 @@ struct BookmarkLabelsView: View {
                 }
             }
         )
+        .padding(.horizontal)
     }
 }
 
