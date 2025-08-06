@@ -15,6 +15,7 @@ struct BookmarkDetailView: View {
     @State private var scrollViewHeight: CGFloat = 1
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
+    @State private var showingImageViewer = false
     
     // MARK: - Envs
     
@@ -152,6 +153,9 @@ struct BookmarkDetailView: View {
         .sheet(isPresented: $showingLabelsSheet) {
             BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
         }
+        .sheet(isPresented: $showingImageViewer) {
+            ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
+        }
         .onChange(of: showingFontSettings) { _, isShowing in
             if !isShowing {
                 // Reload settings when sheet is dismissed
@@ -213,10 +217,41 @@ struct BookmarkDetailView: View {
                     .frame(height: 240)
                     .frame(maxWidth: .infinity)
                     .offset(y: (offset > 0 ? -offset : 0))
+                    
+                    // Tap area and zoom icon
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showingImageViewer = true
+                            }) {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.black.opacity(0.6))
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                            }
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                        }
+                    }
+                    .frame(height: headerHeight + (offset > 0 ? offset : 0))
+                    .offset(y: (offset > 0 ? -offset : 0))
                 }
             }
             .frame(height: headerHeight)
             .ignoresSafeArea(edges: .top)
+            .onTapGesture {
+                showingImageViewer = true
+            }
         }
     }
     
