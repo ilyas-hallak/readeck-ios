@@ -3,7 +3,7 @@ import SwiftUI
 struct ShareBookmarkView: View {
     @ObservedObject var viewModel: ShareBookmarkViewModel
     @State private var keyboardHeight: CGFloat = 0
-    @State private var shouldScrollToTitle = false
+    @FocusState private var focusedField: AddBookmarkFieldFocus?
     
     private func dismissKeyboard() {
         NotificationCenter.default.post(name: NSNotification.Name("DismissKeyboard"), object: nil)
@@ -17,19 +17,20 @@ struct ShareBookmarkView: View {
                         logoSection
                         urlSection
                         tagManagementSection
+                            .id(AddBookmarkFieldFocus.labels)
                         titleSection
-                            .id("titleField")
+                            .id(AddBookmarkFieldFocus.title)
                         statusSection
                         Spacer(minLength: 100) // Space for button
                     }
                 }
-                .padding(.bottom, keyboardHeight / 2)                
-                .onChange(of: shouldScrollToTitle) { shouldScroll, _ in
-                    if shouldScroll {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            proxy.scrollTo("titleField", anchor: .center)
+                .padding(.bottom, max(0, keyboardHeight - 120))                
+                .onChange(of: focusedField) { newField, _ in
+                    guard let field = newField else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            proxy.scrollTo(field, anchor: .center)
                         }
-                        shouldScrollToTitle = false
                     }
                 }
             }
@@ -39,25 +40,21 @@ struct ShareBookmarkView: View {
         .background(Color(.systemGroupedBackground))
         .onAppear { viewModel.onAppear() }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .background(
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    // Fallback for extensions: tap anywhere to dismiss keyboard
-                    dismissKeyboard()
-                }
-        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            dismissKeyboard()
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                keyboardHeight = keyboardFrame.height
-                // Scroll to title field when keyboard appears
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    shouldScrollToTitle = true
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    keyboardHeight = keyboardFrame.height
                 }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-            keyboardHeight = 0
+            withAnimation(.easeInOut(duration: 0.3)) {
+                keyboardHeight = 0
+            }
         }
     }
     
@@ -103,6 +100,7 @@ struct ShareBookmarkView: View {
             .padding(.horizontal, 4)
             .frame(maxWidth: 420)
             .frame(maxWidth: .infinity, alignment: .center)
+            .focused($focusedField, equals: .title)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -123,6 +121,7 @@ struct ShareBookmarkView: View {
                 isLabelsLoading: false,
                 availableLabelPages: convertToBookmarkLabelPages(viewModel.availableLabelPages),
                 filteredLabels: convertToBookmarkLabels(viewModel.filteredLabels),
+                searchFieldFocus: $focusedField,
                 onAddCustomTag: {
                     addCustomTag()
                 },
@@ -176,7 +175,6 @@ struct ShareBookmarkView: View {
         .padding(.top, 16)
         .padding(.bottom, 32)
         .disabled(viewModel.isSaving)
-        .background(Color(.systemGroupedBackground))
     }
     
     // MARK: - Helper Functions
