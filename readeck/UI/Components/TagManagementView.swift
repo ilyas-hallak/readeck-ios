@@ -173,13 +173,13 @@ struct TagManagementView: View {
                         )
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.horizontal)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: availableLabelPages.count > 1 ? .automatic : .never))
         .frame(height: 180)
-        .padding(.top, -20)
+        .padding(.top, 10)
     }
     
     @ViewBuilder
