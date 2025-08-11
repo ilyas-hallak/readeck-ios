@@ -29,9 +29,6 @@
     "%lld min" : {
 
     },
-    "%lld minutes" : {
-
-    },
     "%lld." : {
 
     },
@@ -83,25 +80,13 @@
     "Are you sure you want to log out? This will delete all your login credentials and return you to setup." : {
 
     },
-    "Automatic sync" : {
-
-    },
-    "Automatically mark articles as read" : {
-
-    },
     "Available tags" : {
 
     },
     "Cancel" : {
 
     },
-    "Clear cache" : {
-
-    },
     "Close" : {
-
-    },
-    "Data Management" : {
 
     },
     "Delete" : {
@@ -206,9 +191,6 @@
     "OK" : {
 
     },
-    "Open external links in in-app Safari" : {
-
-    },
     "Optional: Custom title" : {
 
     },
@@ -252,22 +234,13 @@
         }
       }
     },
-    "Reading Settings" : {
-
-    },
     "Remove" : {
-
-    },
-    "Reset settings" : {
 
     },
     "Restore" : {
 
     },
     "Resume listening" : {
-
-    },
-    "Safari Reader Mode" : {
 
     },
     "Save bookmark" : {
@@ -310,12 +283,6 @@
 
     },
     "Successfully logged in" : {
-
-    },
-    "Sync interval" : {
-
-    },
-    "Sync Settings" : {
 
     },
     "Theme" : {
