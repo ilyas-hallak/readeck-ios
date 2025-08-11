@@ -4,6 +4,7 @@ import Combine
 
 struct BookmarkDetailView: View {
     let bookmarkId: String
+    let namespace: Namespace.ID?
     
     // MARK: - States
     
@@ -25,8 +26,9 @@ struct BookmarkDetailView: View {
     
     private let headerHeight: CGFloat = 320
     
-    init(bookmarkId: String, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel(), webViewHeight: CGFloat = 300, showingFontSettings: Bool = false, showingLabelsSheet: Bool = false, playerUIState: PlayerUIState = .init()) {
+    init(bookmarkId: String, namespace: Namespace.ID? = nil, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel(), webViewHeight: CGFloat = 300, showingFontSettings: Bool = false, showingLabelsSheet: Bool = false, playerUIState: PlayerUIState = .init()) {
         self.bookmarkId = bookmarkId
+        self.namespace = namespace
         self.viewModel = viewModel
         self.webViewHeight = webViewHeight
         self.showingFontSettings = showingFontSettings
@@ -190,17 +192,23 @@ struct BookmarkDetailView: View {
                 let offset = geo.frame(in: .global).minY
                 ZStack(alignment: .top) {
                     AsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl)) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: geometry.size.width, height: headerHeight + (offset > 0 ? offset : 0))
-                            .clipped()
-                            .offset(y: (offset > 0 ? -offset : 0))
-                    } placeholder: {
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.4))
-                            .frame(width: geometry.size.width, height: headerHeight)
-                    }
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: headerHeight + (offset > 0 ? offset : 0))
+                        .clipped()
+                        .offset(y: (offset > 0 ? -offset : 0))
+                        .if(namespace != nil) { view in
+                            view.matchedGeometryEffect(id: "image-\(viewModel.bookmarkDetail.id)", in: namespace!)
+                        }
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.4))
+                        .frame(width: geometry.size.width, height: headerHeight)
+                        .if(namespace != nil) { view in
+                            view.matchedGeometryEffect(id: "image-\(viewModel.bookmarkDetail.id)", in: namespace!)
+                        }
+                }
                     // Gradient overlay für bessere Button-Sichtbarkeit
                     LinearGradient(
                         gradient: Gradient(colors: [

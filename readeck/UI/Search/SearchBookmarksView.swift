@@ -5,13 +5,15 @@ struct SearchBookmarksView: View {
     @FocusState private var searchFieldIsFocused: Bool
     @State private var selectedBookmarkId: String?
     @Binding var selectedBookmark: Bookmark?
+    @Namespace private var namespace
+    @State private var isFirstAppearance = true
     
     var body: some View {
         VStack(spacing: 0) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
-                TextField("Suchbegriff eingeben...", text: $viewModel.searchQuery)
+                TextField("Search...", text: $viewModel.searchQuery)
                     .focused($searchFieldIsFocused)
                     .textFieldStyle(PlainTextFieldStyle())
                     .autocapitalization(.none)
@@ -33,7 +35,7 @@ struct SearchBookmarksView: View {
             .padding([.horizontal, .top])
             
             if viewModel.isLoading {
-                ProgressView("Suche...")
+                ProgressView("Searching...")
                     .padding()
             }
             
@@ -45,16 +47,7 @@ struct SearchBookmarksView: View {
             
             if let bookmarks = viewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
                 List(bookmarks) { bookmark in
-                    NavigationLink {
-                        BookmarkDetailView(bookmarkId: bookmark.id)
-                    } label: {
-                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in })
-                            .listRowBackground(Color(.systemBackground))
-                            .padding(.vertical, 4)
-                    }
-
-                    
-                    /*Button(action: {
+                    Button(action: {
                         if UIDevice.isPhone {
                             selectedBookmarkId = bookmark.id
                         } else {
@@ -68,21 +61,44 @@ struct SearchBookmarksView: View {
                             }
                         }
                     }) {
-                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in })
-                            .listRowBackground(Color(.systemBackground))
-                            .padding(.vertical, 4)
+                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in }, namespace: namespace)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PlainButtonStyle())
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     .listRowSeparator(.hidden)
-                     */
+                    .listRowBackground(Color(R.color.bookmark_list_bg))
                 }
                 .listStyle(.plain)
+                .background(Color(R.color.bookmark_list_bg))
+                .scrollContentBackground(.hidden)
+                .simultaneousGesture(
+                    DragGesture()
+                        .onChanged { _ in
+                            searchFieldIsFocused = false
+                        }
+                )
             } else if !viewModel.isLoading && viewModel.bookmarks != nil {
-                ContentUnavailableView("Keine Ergebnisse", systemImage: "magnifyingglass", description: Text("Keine Bookmarks gefunden."))
+                ContentUnavailableView("No results", systemImage: "magnifyingglass", description: Text("No bookmarks found."))
                     .padding()
             }
             Spacer()
         }
-        .navigationTitle("Suche")
+        .background(Color(R.color.bookmark_list_bg))
+        .navigationTitle("Search")
+        .navigationDestination(
+            item: Binding<String?>(
+                get: { selectedBookmarkId },
+                set: { selectedBookmarkId = $0 }
+            )
+        ) { bookmarkId in
+            BookmarkDetailView(bookmarkId: bookmarkId, namespace: namespace)
+                .navigationTransition(.zoom(sourceID: bookmarkId, in: namespace))
+        }
+        .onAppear {
+            if isFirstAppearance {
+                searchFieldIsFocused = true
+                isFirstAppearance = false
+            }
+        }
     }
 }

@@ -1,6 +1,16 @@
 import SwiftUI
 import SafariServices
 
+extension View {
+    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
 struct BookmarkCardView: View {
     
     @Environment(\.colorScheme) var colorScheme
@@ -10,6 +20,7 @@ struct BookmarkCardView: View {
     let onArchive: (Bookmark) -> Void
     let onDelete: (Bookmark) -> Void
     let onToggleFavorite: (Bookmark) -> Void
+    let namespace: Namespace.ID?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -27,6 +38,9 @@ struct BookmarkCardView: View {
                         .frame(height: 120)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .if(namespace != nil) { view in
+                    view.matchedGeometryEffect(id: "image-\(bookmark.id)", in: namespace!)
+                }
                 
                 if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {
                     ZStack {
@@ -223,12 +237,3 @@ struct IconBadge: View {
     }
 }
 
-#Preview {
-    BookmarkCardView(bookmark: .mock, currentState: .all) { _ in
-        
-    } onDelete: { _ in
-        
-    } onToggleFavorite: { _ in
-        
-    }
-}

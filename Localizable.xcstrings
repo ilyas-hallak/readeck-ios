@@ -161,12 +161,6 @@
     "Jump to last read position (%lld%%)" : {
 
     },
-    "Keine Bookmarks gefunden." : {
-
-    },
-    "Keine Ergebnisse" : {
-
-    },
     "Key" : {
       "extractionState" : "manual"
     },
@@ -201,6 +195,12 @@
 
     },
     "No bookmarks found in %@." : {
+
+    },
+    "No bookmarks found." : {
+
+    },
+    "No results" : {
 
     },
     "OK" : {
@@ -279,10 +279,19 @@
     "Saving..." : {
 
     },
+    "Search" : {
+
+    },
     "Search or add new tag..." : {
 
     },
     "Search results" : {
+
+    },
+    "Search..." : {
+
+    },
+    "Searching..." : {
 
     },
     "Select a bookmark or tag" : {
@@ -301,15 +310,6 @@
 
     },
     "Successfully logged in" : {
-
-    },
-    "Suchbegriff eingeben..." : {
-
-    },
-    "Suche" : {
-
-    },
-    "Suche..." : {
 
     },
     "Sync interval" : {

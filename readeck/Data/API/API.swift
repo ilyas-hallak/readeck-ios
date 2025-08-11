@@ -342,11 +342,13 @@ class API: PAPI {
             endpoint: endpoint,
             responseType: [BookmarkDto].self
         )
+        
         let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
         let totalCount = response.value(forHTTPHeaderField: "Total-Count").flatMap { Int($0) }
         let totalPages = response.value(forHTTPHeaderField: "Total-Pages").flatMap { Int($0) }
         let linksHeader = response.value(forHTTPHeaderField: "Link")
         let links = linksHeader?.components(separatedBy: ",")
+        
         return BookmarksPageDto(
             bookmarks: bookmarks,
             currentPage: currentPage,

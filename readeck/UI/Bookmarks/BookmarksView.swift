@@ -4,6 +4,8 @@ import SwiftUI
 
 struct BookmarksView: View {
 
+    @Namespace private var namespace
+    
     // MARK: States
     
     @State private var viewModel: BookmarksViewModel
@@ -95,7 +97,8 @@ struct BookmarksView: View {
                                     Task {
                                         await viewModel.toggleFavorite(bookmark: bookmark)
                                     }
-                                }
+                                },
+                                namespace: namespace
                             )
                             .onAppear {
                                 if bookmark.id == viewModel.bookmarks?.bookmarks.last?.id {
@@ -109,6 +112,7 @@ struct BookmarksView: View {
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color(R.color.bookmark_list_bg))
+                        .matchedTransitionSource(id: bookmark.id, in: namespace)
                     }
                 }
                 .listStyle(.plain)
@@ -161,7 +165,8 @@ struct BookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId)
+            BookmarkDetailView(bookmarkId: bookmarkId, namespace: namespace)
+                .navigationTransition(.zoom(sourceID: bookmarkId, in: namespace))
         }
         .sheet(isPresented: $showingAddBookmark) {
             AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)

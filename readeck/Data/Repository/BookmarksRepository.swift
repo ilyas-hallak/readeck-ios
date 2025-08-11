@@ -78,7 +78,6 @@ class BookmarksRepository: PBookmarksRepository {
     }
     
     func searchBookmarks(search: String) async throws -> BookmarksPage {
-        let bookmarkDtos = try await api.searchBookmarks(search: search)
-        return bookmarkDtos.toDomain()
+        try await api.searchBookmarks(search: search).toDomain()
     }
 }
