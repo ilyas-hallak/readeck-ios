@@ -26,7 +26,30 @@
     "%lld articles in the queue" : {
 
     },
+    "%lld bookmark%@ synced successfully" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld bookmark%2$@ synced successfully"
+          }
+        }
+      }
+    },
+    "%lld bookmark%@ waiting for sync" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld bookmark%2$@ waiting for sync"
+          }
+        }
+      }
+    },
     "%lld min" : {
+
+    },
+    "%lld minutes" : {
 
     },
     "%lld." : {
@@ -80,13 +103,25 @@
     "Are you sure you want to log out? This will delete all your login credentials and return you to setup." : {
 
     },
+    "Automatic sync" : {
+
+    },
+    "Automatically mark articles as read" : {
+
+    },
     "Available tags" : {
 
     },
     "Cancel" : {
 
     },
+    "Clear cache" : {
+
+    },
     "Close" : {
+
+    },
+    "Data Management" : {
 
     },
     "Delete" : {
@@ -191,6 +226,9 @@
     "OK" : {
 
     },
+    "Open external links in in-app Safari" : {
+
+    },
     "Optional: Custom title" : {
 
     },
@@ -234,13 +272,22 @@
         }
       }
     },
+    "Reading Settings" : {
+
+    },
     "Remove" : {
+
+    },
+    "Reset settings" : {
 
     },
     "Restore" : {
 
     },
     "Resume listening" : {
+
+    },
+    "Safari Reader Mode" : {
 
     },
     "Save bookmark" : {
@@ -276,6 +323,9 @@
     "Server Endpoint" : {
 
     },
+    "Server not reachable - saving locally" : {
+
+    },
     "Settings" : {
 
     },
@@ -283,6 +333,15 @@
 
     },
     "Successfully logged in" : {
+
+    },
+    "Sync interval" : {
+
+    },
+    "Sync Settings" : {
+
+    },
+    "Syncing with server..." : {
 
     },
     "Theme" : {

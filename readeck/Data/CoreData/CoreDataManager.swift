@@ -8,6 +8,15 @@ class CoreDataManager {
     
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "readeck")
+        
+        // Use App Group container for shared access with extensions
+        let storeURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.readeck.app")?.appendingPathComponent("readeck.sqlite")
+        
+        if let storeURL = storeURL {
+            let storeDescription = NSPersistentStoreDescription(url: storeURL)
+            container.persistentStoreDescriptions = [storeDescription]
+        }
+        
         container.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Core Data error: \(error)")

@@ -13,59 +13,119 @@ struct PhoneTabView: View {
     
     @State private var selectedMoreTab: SidebarTab? = nil
     @State private var selectedTabIndex: Int = 1
+    @StateObject private var syncManager = OfflineSyncManager.shared
+    @State private var phoneTabLocalBookmarkCount = 0
     
     @EnvironmentObject var appSettings: AppSettings
     
     var body: some View {
         GlobalPlayerContainerView {
             TabView(selection: $selectedTabIndex) {
-                ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
-                    NavigationStack {
-                        tabView(for: tab)
-                    }
-                    .tabItem {
-                        Label(tab.label, systemImage: tab.systemImage)
-                    }
-                    .tag(idx)
-                }
-                
-                NavigationStack {
-                    List(moreTabs, id: \.self) { tab in
-                        
-                        NavigationLink {
-                            tabView(for: tab)
-                                .navigationTitle(tab.label)
-                                .onDisappear {
-                                    // tags and search handle navigation by own
-                                    if tab != .tags && tab != .search {
-                                        selectedMoreTab = nil
-                                    }
-                                }
-                        } label: {
-                            Label(tab.label, systemImage: tab.systemImage)
-                        }
-                        .listRowBackground(Color(R.color.bookmark_list_bg))
-                    }
-                    .navigationTitle("More")
-                    .scrollContentBackground(.hidden)
-                    .background(Color(R.color.bookmark_list_bg))
-                    
-                    if appSettings.enableTTS {
-                        PlayerQueueResumeButton()
-                            .padding(.top, 16)
-                    }
-                }
-                .tabItem {
-                    Label("More", systemImage: "ellipsis")
-                }
-                .tag(mainTabs.count)
-                .onAppear {
-                    if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
-                        selectedMoreTab = nil
+                mainTabsContent
+                moreTabContent
+            }
+            .accentColor(.accentColor)
+            .onAppear {
+                updateLocalBookmarkCount()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                updateLocalBookmarkCount()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                updateLocalBookmarkCount()
+            }
+            .onChange(of: syncManager.isSyncing) {
+                if !syncManager.isSyncing {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        updateLocalBookmarkCount()
                     }
                 }
             }
-            .accentColor(.accentColor)
+        }
+    }
+    
+    private func updateLocalBookmarkCount() {
+        let count = syncManager.getOfflineBookmarksCount()
+        DispatchQueue.main.async {
+            self.phoneTabLocalBookmarkCount = count
+        }
+    }
+    
+    
+    // MARK: - Tab Content
+    
+    @ViewBuilder
+    private var mainTabsContent: some View {
+        ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
+            NavigationStack {
+                tabView(for: tab)
+            }
+            .tabItem {
+                Label(tab.label, systemImage: tab.systemImage)
+            }
+            .tag(idx)
+        }
+    }
+    
+    @ViewBuilder
+    private var moreTabContent: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                moreTabsList
+                moreTabsFooter
+            }
+        }
+        .tabItem {
+            Label("More", systemImage: "ellipsis")
+        }
+        .badge(phoneTabLocalBookmarkCount > 0 ? phoneTabLocalBookmarkCount : 0)
+        .tag(mainTabs.count)
+        .onAppear {
+            if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
+                selectedMoreTab = nil
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var moreTabsList: some View {
+        List {
+            ForEach(moreTabs, id: \.self) { tab in
+                NavigationLink {
+                    tabView(for: tab)
+                        .navigationTitle(tab.label)
+                        .onDisappear {
+                            // tags and search handle navigation by own
+                            if tab != .tags && tab != .search {
+                                selectedMoreTab = nil
+                            }
+                        }
+                } label: {
+                    Label(tab.label, systemImage: tab.systemImage)
+                }
+                .listRowBackground(Color(R.color.bookmark_list_bg))
+            }
+            
+            if phoneTabLocalBookmarkCount > 0 {
+                Section {
+                    VStack {
+                        LocalBookmarksSyncView(bookmarkCount: phoneTabLocalBookmarkCount)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                }
+            }
+        }
+        .navigationTitle("More")
+        .scrollContentBackground(.hidden)
+        .background(Color(R.color.bookmark_list_bg))
+    }
+    
+    @ViewBuilder
+    private var moreTabsFooter: some View {
+        if appSettings.enableTTS {
+            PlayerQueueResumeButton()
+                .padding(.top, 16)
         }
     }
     

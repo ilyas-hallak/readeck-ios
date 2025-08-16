@@ -1,5 +1,55 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ArticleURLEntity" representedClassName="ArticleURLEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="tags" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="url" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="BookmarkEntity" representedClassName="BookmarkEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authors" optional="YES" attributeType="String"/>
+        <attribute name="created" optional="YES" attributeType="String"/>
+        <attribute name="desc" optional="YES" attributeType="String"/>
+        <attribute name="documentType" optional="YES" attributeType="String"/>
+        <attribute name="hasArticle" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="hasDeleted" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="href" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="isArchived" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="isMarked" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="lang" optional="YES" attributeType="String"/>
+        <attribute name="loaded" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="published" optional="YES" attributeType="String"/>
+        <attribute name="readingTime" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="readProgress" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="site" optional="YES" attributeType="String"/>
+        <attribute name="siteName" optional="YES" attributeType="String"/>
+        <attribute name="state" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="textDirection" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="update" optional="YES" attributeType="String"/>
+        <attribute name="url" optional="YES" attributeType="String"/>
+        <attribute name="wordCount" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="resources" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BookmarkResourcesEntity"/>
+    </entity>
+    <entity name="BookmarkResourcesEntity" representedClassName="BookmarkResourcesEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String"/>
+        <relationship name="article" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ResourceEntity"/>
+        <relationship name="icon" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ImageResourceEntity"/>
+        <relationship name="image" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ImageResourceEntity"/>
+        <relationship name="log" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ResourceEntity"/>
+        <relationship name="props" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ResourceEntity"/>
+        <relationship name="thumbnail" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ImageResourceEntity"/>
+    </entity>
+    <entity name="ImageResourceEntity" representedClassName="ImageResourceEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="height" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="src" optional="YES" attributeType="String"/>
+        <attribute name="width" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="ResourceEntity" representedClassName="ResourceEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="src" optional="YES" attributeType="String"/>
+    </entity>
     <entity name="SettingEntity" representedClassName="SettingEntity" syncable="YES" codeGenerationType="class">
         <attribute name="enableTTS" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="endpoint" optional="YES" attributeType="String"/>
@@ -9,5 +59,8 @@
         <attribute name="theme" optional="YES" attributeType="String"/>
         <attribute name="token" optional="YES" attributeType="String"/>
         <attribute name="username" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="TagEntity" representedClassName="TagEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="name" optional="YES" attributeType="String"/>
     </entity>
 </model>

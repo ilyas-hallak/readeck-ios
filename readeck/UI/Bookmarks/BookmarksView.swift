@@ -39,7 +39,7 @@ struct BookmarksView: View {
 
     var body: some View {
         ZStack {
-            if viewModel.isLoading && viewModel.bookmarks?.bookmarks.isEmpty == true {
+                if viewModel.isLoading && viewModel.bookmarks?.bookmarks.isEmpty == true {
                 VStack(spacing: 20) {
                     Spacer()
                     

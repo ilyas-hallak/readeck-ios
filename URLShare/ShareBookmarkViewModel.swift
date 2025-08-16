@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+import CoreData
 
 class ShareBookmarkViewModel: ObservableObject {
     @Published var url: String?
@@ -10,6 +11,7 @@ class ShareBookmarkViewModel: ObservableObject {
     @Published var statusMessage: (text: String, isError: Bool, emoji: String)? = nil
     @Published var isSaving: Bool = false
     @Published var searchText: String = ""
+    @Published var isServerReachable: Bool = true
     let extensionContext: NSExtensionContext?
     
     // Computed properties for pagination
@@ -27,7 +29,7 @@ class ShareBookmarkViewModel: ObservableObject {
     }
     
     var availableLabelPages: [[BookmarkLabelDto]] {
-        let pageSize = Constants.Labels.pageSize
+        let pageSize = 12 // Extension can't access Constants.Labels.pageSize
         let labelsToShow = searchText.isEmpty ? availableLabels : filteredLabels
         
         if labelsToShow.count <= pageSize {
@@ -45,7 +47,12 @@ class ShareBookmarkViewModel: ObservableObject {
     }
     
     func onAppear() {
+        checkServerReachability()
         loadLabels()
+    }
+    
+    private func checkServerReachability() {
+        isServerReachable = ServerConnectivity.isServerReachableSync()
     }
     
     private func extractSharedContent() {
@@ -77,12 +84,30 @@ class ShareBookmarkViewModel: ObservableObject {
     
     func loadLabels() {
         Task {
-            let loaded = await SimpleAPI.getBookmarkLabels { [weak self] message, error in
-                self?.statusMessage = (message, error, error ? "❌" : "✅")
-            } ?? []
-            let sorted = loaded.sorted { $0.count > $1.count }
-            await MainActor.run {
-                self.labels = Array(sorted)
+            // Check if server is reachable
+            let serverReachable = ServerConnectivity.isServerReachableSync()
+            print("DEBUG: Server reachable: \(serverReachable)")
+            
+            if serverReachable {
+                // Load from API
+                let loaded = await SimpleAPI.getBookmarkLabels { [weak self] message, error in
+                    self?.statusMessage = (message, error, error ? "❌" : "✅")
+                } ?? []
+                let sorted = loaded.sorted { $0.count > $1.count }
+                await MainActor.run {
+                    self.labels = Array(sorted)
+                    print("DEBUG: Loaded \(loaded.count) labels from API")
+                }
+            } else {
+                // Load from local database
+                let localTags = OfflineBookmarkManager.shared.getTags()
+                let localLabels = localTags.enumerated().map { index, tagName in 
+                    BookmarkLabelDto(name: tagName, count: 0, href: "local://\(index)")
+                }
+                    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                await MainActor.run {
+                    self.labels = localLabels
+                }
             }
         }
     }
@@ -93,14 +118,38 @@ class ShareBookmarkViewModel: ObservableObject {
             return
         }
         isSaving = true
-        Task {
-            await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels)) { [weak self] message, error in
-                self?.statusMessage = (message, error, error ? "❌" : "✅")
-                self?.isSaving = false
-                if !error {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+        
+        // Check server connectivity
+        if ServerConnectivity.isServerReachableSync() {
+            // Online - try to save via API
+            Task {
+                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels)) { [weak self] message, error in
+                    self?.statusMessage = (message, error, error ? "❌" : "✅")
+                    self?.isSaving = false
+                    if !error {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                        }
                     }
+                }
+            }
+        } else {
+            // Server not reachable - save locally
+            let success = OfflineBookmarkManager.shared.saveOfflineBookmark(
+                url: url,
+                title: title,
+                tags: Array(selectedLabels)
+            )
+            
+            DispatchQueue.main.async {
+                self.isSaving = false
+                if success {
+                    self.statusMessage = ("Server not reachable. Saved locally and will sync later.", false, "🏠")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                    }
+                } else {
+                    self.statusMessage = ("Failed to save locally.", true, "❌")
                 }
             }
         }

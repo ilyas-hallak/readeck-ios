@@ -15,6 +15,7 @@ struct ShareBookmarkView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         logoSection
+                        serverStatusSection
                         urlSection
                         tagManagementSection
                             .id(AddBookmarkFieldFocus.labels)
@@ -71,6 +72,26 @@ struct ShareBookmarkView: View {
     }
     
     @ViewBuilder
+    private var serverStatusSection: some View {
+        if !viewModel.isServerReachable {
+            HStack(spacing: 8) {
+                Image(systemName: "wifi.exclamationmark")
+                    .foregroundColor(.orange)
+                Text("Server not reachable - saving locally")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+            .padding(.top, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.orange.opacity(0.1))
+            .cornerRadius(8)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+        }
+    }
+    
+    @ViewBuilder
     private var urlSection: some View {
         if let url = viewModel.url {
             HStack(spacing: 8) {
@@ -113,7 +134,7 @@ struct ShareBookmarkView: View {
     
     @ViewBuilder
     private var tagManagementSection: some View {
-        if !viewModel.labels.isEmpty {
+        if !viewModel.labels.isEmpty || !viewModel.isServerReachable {
             TagManagementView(
                 allLabels: convertToBookmarkLabels(viewModel.labels),
                 selectedLabels: viewModel.selectedLabels,
