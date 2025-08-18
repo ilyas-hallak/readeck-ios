@@ -92,17 +92,6 @@ struct SettingsServerView: View {
                 }
             }
             
-            // Connection Status
-            if viewModel.isLoggedIn {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Successfully logged in")
-                        .foregroundColor(.green)
-                        .font(.caption)
-                }
-            }
-            
             // Messages
             if let errorMessage = viewModel.errorMessage {
                 HStack {

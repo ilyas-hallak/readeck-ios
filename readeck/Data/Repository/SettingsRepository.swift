@@ -37,51 +37,49 @@ protocol PSettingsRepository {
 class SettingsRepository: PSettingsRepository {
     private let coreDataManager = CoreDataManager.shared
     private let userDefault = UserDefaults.standard
+    private let keychainHelper = KeychainHelper.shared
     
     func saveSettings(_ settings: Settings) async throws {
+        // Save credentials to keychain
+        if let endpoint = settings.endpoint, !endpoint.isEmpty {
+            keychainHelper.saveEndpoint(endpoint)
+        }
+        if let username = settings.username, !username.isEmpty {
+            keychainHelper.saveUsername(username)
+        }
+        if let password = settings.password, !password.isEmpty {
+            keychainHelper.savePassword(password)
+        }
+        if let token = settings.token, !token.isEmpty {
+            keychainHelper.saveToken(token)
+        }
+        
+        // Save UI preferences to Core Data
         let context = coreDataManager.context
         
         return try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
-                    // Vorhandene Einstellungen löschen
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    if let existingSettings = try context.fetch(fetchRequest).first {
-                        
-                        if let endpoint = settings.endpoint, !endpoint.isEmpty {
-                            existingSettings.endpoint = endpoint
-                        }
-                        
-                        if let username = settings.username, !username.isEmpty {
-                            existingSettings.username = username
-                        }
-                        
-                        if let password = settings.password, !password.isEmpty {
-                            existingSettings.password = password
-                        }
-                        
-                        if let token = settings.token, !token.isEmpty {
-                            existingSettings.token = token
-                        }
-                                                
-                        if let fontFamily = settings.fontFamily {
-                            existingSettings.fontFamily = fontFamily.rawValue
-                        }
-                        
-                        if let fontSize = settings.fontSize {
-                            existingSettings.fontSize = fontSize.rawValue
-                        }
-                        if let enableTTS = settings.enableTTS {
-                            existingSettings.enableTTS = enableTTS
-                        }
-                        
-                        if let theme = settings.theme {
-                            existingSettings.theme = theme.rawValue
-                        }
-                        
-                        try context.save()
+                    let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
+                    
+                    if let fontFamily = settings.fontFamily {
+                        existingSettings.fontFamily = fontFamily.rawValue
                     }
                     
+                    if let fontSize = settings.fontSize {
+                        existingSettings.fontSize = fontSize.rawValue
+                    }
+                    
+                    if let enableTTS = settings.enableTTS {
+                        existingSettings.enableTTS = enableTTS
+                    }
+                    
+                    if let theme = settings.theme {
+                        existingSettings.theme = theme.rawValue
+                    }
+                    
+                    try context.save()
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
@@ -100,22 +98,26 @@ class SettingsRepository: PSettingsRepository {
                     fetchRequest.fetchLimit = 1
                     
                     let settingEntities = try context.fetch(fetchRequest)
+                    let settingEntity = settingEntities.first
                     
-                    if let settingEntity = settingEntities.first {
-                        let settings = Settings(
-                            endpoint: settingEntity.endpoint ?? "",
-                            username: settingEntity.username ?? "",
-                            password: settingEntity.password ?? "",
-                            token: settingEntity.token,
-                            fontFamily: FontFamily(rawValue: settingEntity.fontFamily ?? FontFamily.system.rawValue),
-                            fontSize: FontSize(rawValue: settingEntity.fontSize ?? FontSize.medium.rawValue),
-                            enableTTS: settingEntity.enableTTS,
-                            theme: Theme(rawValue: settingEntity.theme ?? Theme.system.rawValue)
-                        )
-                        continuation.resume(returning: settings)
-                    } else {
-                        continuation.resume(returning: nil)
-                    }
+                    // Load credentials from keychain only
+                    let endpoint = self.keychainHelper.loadEndpoint()
+                    let username = self.keychainHelper.loadUsername()
+                    let password = self.keychainHelper.loadPassword()
+                    let token = self.keychainHelper.loadToken()
+                    
+                    // Load UI preferences from Core Data
+                    let settings = Settings(
+                        endpoint: endpoint,
+                        username: username,
+                        password: password,
+                        token: token,
+                        fontFamily: FontFamily(rawValue: settingEntity?.fontFamily ?? FontFamily.system.rawValue),
+                        fontSize: FontSize(rawValue: settingEntity?.fontSize ?? FontSize.medium.rawValue),
+                        enableTTS: settingEntity?.enableTTS,
+                        theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue)
+                    )
+                    continuation.resume(returning: settings)
                 } catch {
                     continuation.resume(throwing: error)
                 }
@@ -124,6 +126,10 @@ class SettingsRepository: PSettingsRepository {
     }
     
     func clearSettings() async throws {
+        // Clear credentials from keychain
+        keychainHelper.clearCredentials()
+        
+        // Also clear from Core Data
         let context = coreDataManager.context
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -146,128 +152,39 @@ class SettingsRepository: PSettingsRepository {
     }
     
     func saveToken(_ token: String) async throws {
-        let context = coreDataManager.context
+        // Save to keychain only
+        keychainHelper.saveToken(token)
         
-        return try await withCheckedThrowingContinuation { continuation in
-            context.perform {
-                do {
-                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    fetchRequest.fetchLimit = 1
-                    
-                    let settingEntities = try context.fetch(fetchRequest)
-                    
-                    if let settingEntity = settingEntities.first {
-                        settingEntity.token = token
-                    } else {
-                        let settingEntity = SettingEntity(context: context)
-                        settingEntity.token = token
-                    }
-                    
-                    try context.save()
-                    
-                    // Wenn ein Token gespeichert wird, Setup als abgeschlossen markieren
-                    if !token.isEmpty {
-                        self.hasFinishedSetup = true
-                        // Notification senden, dass sich der Setup-Status geändert hat
-                        DispatchQueue.main.async {
-                            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
-                        }
-                    }
-                    
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+        // Wenn ein Token gespeichert wird, Setup als abgeschlossen markieren
+        if !token.isEmpty {
+            self.hasFinishedSetup = true
+            // Notification senden, dass sich der Setup-Status geändert hat
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
             }
         }
     }
     
     func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws {
-        let context = coreDataManager.context
-        return try await withCheckedThrowingContinuation { continuation in
-            context.perform {
-                do {
-                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    fetchRequest.fetchLimit = 1
-                    let settingEntities = try context.fetch(fetchRequest)
-                    let settingEntity: SettingEntity
-                    if let existing = settingEntities.first {
-                        settingEntity = existing
-                    } else {
-                        settingEntity = SettingEntity(context: context)
-                    }
-                    settingEntity.endpoint = endpoint
-                    settingEntity.username = username
-                    settingEntity.password = password
-                    settingEntity.token = token
-                    try context.save()
-                    // Wenn ein Token gespeichert wird, Setup als abgeschlossen markieren
-                    if !token.isEmpty {
-                        self.hasFinishedSetup = true
-                        DispatchQueue.main.async {
-                            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
-                        }
-                    }
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+        keychainHelper.saveEndpoint(endpoint)
+        keychainHelper.saveUsername(username)
+        keychainHelper.savePassword(password)
+        keychainHelper.saveToken(token)
+        
+        if !token.isEmpty {
+            self.hasFinishedSetup = true
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
             }
         }
     }
     
     func saveUsername(_ username: String) async throws {
-        let context = coreDataManager.context
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            context.perform {
-                do {
-                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    fetchRequest.fetchLimit = 1
-                    
-                    let settingEntities = try context.fetch(fetchRequest)
-                    
-                    if let settingEntity = settingEntities.first {
-                        settingEntity.username = username
-                    } else {
-                        let settingEntity = SettingEntity(context: context)
-                        settingEntity.username = username
-                    }
-                    
-                    try context.save()
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
+        keychainHelper.saveUsername(username)
     }
     
     func savePassword(_ password: String) async throws {
-        let context = coreDataManager.context
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            context.perform {
-                do {
-                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    fetchRequest.fetchLimit = 1
-                    
-                    let settingEntities = try context.fetch(fetchRequest)
-                    
-                    if let settingEntity = settingEntities.first {
-                        settingEntity.password = password
-                    } else {
-                        let settingEntity = SettingEntity(context: context)
-                        settingEntity.password = password
-                    }
-                    
-                    try context.save()
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
+        keychainHelper.savePassword(password)
     }
     
     func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws {

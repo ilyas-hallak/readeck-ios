@@ -23,8 +23,9 @@ protocol PAPI {
 class API: PAPI {
     let tokenProvider: TokenProvider
     private var cachedBaseURL: String?
+    private let logger = Logger.network
     
-    init(tokenProvider: TokenProvider = CoreDataTokenProvider()) {
+    init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
         self.tokenProvider = tokenProvider
     }
     
@@ -73,7 +74,6 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
-            print("Server Error: \(httpResponse.statusCode) - \(String(data: data, encoding: .utf8) ?? "No response body")")
             throw APIError.serverError(httpResponse.statusCode)
         }
         
@@ -114,7 +114,6 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
-            print("Server Error: \(httpResponse.statusCode) - \(String(data: data, encoding: .utf8) ?? "No response body")")
             throw APIError.serverError(httpResponse.statusCode)
         }
         
@@ -159,7 +158,11 @@ class API: PAPI {
     }
     
     func login(endpoint: String, username: String, password: String) async throws -> UserDto {
-        guard let url = URL(string: endpoint + "/api/auth") else { throw APIError.invalidURL }
+        logger.info("Attempting login for user: \(username) at endpoint: \(endpoint)")
+        guard let url = URL(string: endpoint + "/api/auth") else { 
+            logger.error("Invalid URL for login endpoint: \(endpoint)")
+            throw APIError.invalidURL 
+        }
         
         let loginRequest = LoginRequestDto(application: "api doc", username: username, password: password)
         let requestData = try JSONEncoder().encode(loginRequest)
@@ -168,20 +171,27 @@ class API: PAPI {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = requestData
 
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString)
+        
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for login request")
             throw APIError.invalidResponse
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
+            logger.logNetworkError(method: "POST", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
 
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.info("Login successful for user: \(username)")
         return try JSONDecoder().decode(UserDto.self, from: data)
     }
     
     func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPageDto {
+        logger.debug("Fetching bookmarks with state: \(state?.rawValue ?? "all"), limit: \(limit ?? 0), offset: \(offset ?? 0)")
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
         
@@ -227,10 +237,15 @@ class API: PAPI {
             endpoint += "?\(queryString)"
         }
         
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + (endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"))
+        
         let (bookmarks, response) = try await makeJSONRequestWithHeaders(
             endpoint: endpoint,
             responseType: [BookmarkDto].self
         )
+        
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + (endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"), statusCode: response.statusCode)
+        logger.info("Fetched \(bookmarks.count) bookmarks")
         
         // Header auslesen
         let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
@@ -249,38 +264,60 @@ class API: PAPI {
     }
     
     func getBookmark(id: String) async throws -> BookmarkDetailDto {
-        return try await makeJSONRequest(
-            endpoint: "/api/bookmarks/\(id)",
+        logger.debug("Fetching bookmark: \(id)")
+        let endpoint = "/api/bookmarks/\(id)"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+        
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
             responseType: BookmarkDetailDto.self
         )
+        
+        logger.info("Successfully fetched bookmark: \(id)")
+        return result
     }
     
     // Artikel als String laden statt als JSON
     func getBookmarkArticle(id: String) async throws -> String {
-        return try await makeStringRequest(
-            endpoint: "/api/bookmarks/\(id)/article"
+        logger.debug("Fetching article for bookmark: \(id)")
+        let endpoint = "/api/bookmarks/\(id)/article"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+        
+        let result = try await makeStringRequest(
+            endpoint: endpoint
         )
+        
+        logger.info("Successfully fetched article for bookmark: \(id)")
+        return result
     }
     
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto {
+        logger.info("Creating bookmark for URL: \(createRequest.url)")
         let requestData = try JSONEncoder().encode(createRequest)
+        let endpoint = "/api/bookmarks"
+        logger.logNetworkRequest(method: "POST", url: await self.baseURL + endpoint)
         
-        return try await makeJSONRequest(
-            endpoint: "/api/bookmarks",
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
             method: .POST,
             body: requestData,
             responseType: CreateBookmarkResponseDto.self
         )
+        
+        logger.info("Successfully created bookmark: \(result.status)")
+        return result
     }
     
     func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws {
+        logger.info("Updating bookmark: \(id)")
         let requestData = try JSONEncoder().encode(updateRequest)
         
-        // PATCH Request ohne Response-Body erwarten
+        // Use makeJSONRequest but ignore the response since PATCH returns no body
         let baseURL = await self.baseURL
         let fullEndpoint = "/api/bookmarks/\(id)"
         
         guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
+            logger.error("Invalid URL: \(baseURL)\(fullEndpoint)")
             throw APIError.invalidURL
         }
         
@@ -295,24 +332,32 @@ class API: PAPI {
         
         request.httpBody = requestData
         
+        logger.logNetworkRequest(method: "PATCH", url: url.absoluteString)
+        
         let (_, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for PATCH \(url.absoluteString)")
             throw APIError.invalidResponse
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
-            print("Server Error: \(httpResponse.statusCode)")
+            logger.logNetworkError(method: "PATCH", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
+        
+        logger.logNetworkRequest(method: "PATCH", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.info("Successfully updated bookmark: \(id)")
     }
     
     func deleteBookmark(id: String) async throws {
-        // DELETE Request ohne Response-Body erwarten
+        logger.info("Deleting bookmark: \(id)")
+        
         let baseURL = await self.baseURL
         let fullEndpoint = "/api/bookmarks/\(id)"
         
         guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
+            logger.error("Invalid URL: \(baseURL)\(fullEndpoint)")
             throw APIError.invalidURL
         }
         
@@ -324,24 +369,36 @@ class API: PAPI {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
+        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString)
+        
         let (_, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for DELETE \(url.absoluteString)")
             throw APIError.invalidResponse
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
-            print("Server Error: \(httpResponse.statusCode)")
+            logger.logNetworkError(method: "DELETE", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
+        
+        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.info("Successfully deleted bookmark: \(id)")
     }
     
     func searchBookmarks(search: String) async throws -> BookmarksPageDto {
+        logger.debug("Searching bookmarks with query: \(search)")
         let endpoint = "/api/bookmarks?search=\(search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+        
         let (bookmarks, response) = try await makeJSONRequestWithHeaders(
             endpoint: endpoint,
             responseType: [BookmarkDto].self
         )
+        
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint, statusCode: response.statusCode)
+        logger.info("Found \(bookmarks.count) bookmarks matching search: \(search)")
         
         let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
         let totalCount = response.value(forHTTPHeaderField: "Total-Count").flatMap { Int($0) }
@@ -359,10 +416,17 @@ class API: PAPI {
     }
     
     func getBookmarkLabels() async throws -> [BookmarkLabelDto] {
-        return try await makeJSONRequest(
-            endpoint: "/api/bookmarks/labels",
+        logger.debug("Fetching bookmark labels")
+        let endpoint = "/api/bookmarks/labels"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+        
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
             responseType: [BookmarkLabelDto].self
         )
+        
+        logger.info("Successfully fetched \(result.count) bookmark labels")
+        return result
     }
 }
 

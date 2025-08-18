@@ -25,6 +25,33 @@ class KeychainHelper {
         loadString(forKey: "readeck_endpoint")
     }
     
+    @discardableResult
+    func saveUsername(_ username: String) -> Bool {
+        saveString(username, forKey: "readeck_username")
+    }
+    
+    func loadUsername() -> String? {
+        loadString(forKey: "readeck_username")
+    }
+    
+    @discardableResult
+    func savePassword(_ password: String) -> Bool {
+        saveString(password, forKey: "readeck_password")
+    }
+    
+    func loadPassword() -> String? {
+        loadString(forKey: "readeck_password")
+    }
+    
+    @discardableResult
+    func clearCredentials() -> Bool {
+        let tokenCleared = saveString("", forKey: "readeck_token")
+        let endpointCleared = saveString("", forKey: "readeck_endpoint")
+        let usernameCleared = saveString("", forKey: "readeck_username")
+        let passwordCleared = saveString("", forKey: "readeck_password")
+        return tokenCleared && endpointCleared && usernameCleared && passwordCleared
+    }
+    
     // MARK: - Private generic helpers
     @discardableResult
     private func saveString(_ value: String, forKey key: String) -> Bool {

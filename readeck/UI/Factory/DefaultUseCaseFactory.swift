@@ -17,12 +17,13 @@ protocol UseCaseFactory {
     func makeRemoveLabelsFromBookmarkUseCase() -> PRemoveLabelsFromBookmarkUseCase
     func makeGetLabelsUseCase() -> PGetLabelsUseCase
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase
+    func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase
 }
 
 
 
 class DefaultUseCaseFactory: UseCaseFactory {
-    private let tokenProvider = CoreDataTokenProvider()
+    private let tokenProvider = KeychainTokenProvider()
     private lazy var api: PAPI = API(tokenProvider: tokenProvider)
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
@@ -89,12 +90,16 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeGetLabelsUseCase() -> PGetLabelsUseCase {
-        let api = API(tokenProvider: CoreDataTokenProvider())
+        let api = API(tokenProvider: KeychainTokenProvider())
         let labelsRepository = LabelsRepository(api: api)
         return GetLabelsUseCase(labelsRepository: labelsRepository)
     }
     
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase {
         return AddTextToSpeechQueueUseCase()
+    }
+    
+    func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase {
+        return OfflineBookmarkSyncUseCase()
     }
 }

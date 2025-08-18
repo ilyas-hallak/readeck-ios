@@ -1,8 +1,11 @@
 import Foundation
 
 class SimpleAPI {
+    private static let logger = Logger.network
+    
     // MARK: - API Methods
     static func addBookmark(title: String, url: String, labels: [String]? = nil, showStatus: @escaping (String, Bool) -> Void) async {
+        logger.info("Adding bookmark: \(url)")
         guard let token = KeychainHelper.shared.loadToken() else {
             showStatus("No token found. Please log in via the main app.", true)
             return
@@ -28,25 +31,35 @@ class SimpleAPI {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
+                logger.error("Invalid server response for bookmark creation")
                 showStatus("Invalid server response.", true)
                 return
             }
+            
+            logger.logNetworkRequest(method: "POST", url: "/api/bookmarks", statusCode: httpResponse.statusCode)
+            
             guard 200...299 ~= httpResponse.statusCode else {
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+                logger.error("Server error \(httpResponse.statusCode): \(msg)")
                 showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
                 return
             }
+            
             if let resp = try? JSONDecoder().decode(CreateBookmarkResponseDto.self, from: data) {
+                logger.info("Bookmark created successfully: \(resp.message)")
                 showStatus("Saved: \(resp.message)", false)
             } else {
+                logger.info("Bookmark created successfully")
                 showStatus("Bookmark saved!", false)
             }
         } catch {
+            logger.logNetworkError(method: "POST", url: "/api/bookmarks", error: error)
             showStatus("Network error: \(error.localizedDescription)", true)
         }
     }
     
     static func getBookmarkLabels(showStatus: @escaping (String, Bool) -> Void) async -> [BookmarkLabelDto]? {
+        logger.info("Fetching bookmark labels")
         guard let token = KeychainHelper.shared.loadToken() else {
             showStatus("No token found. Please log in via the main app.", true)
             return nil
@@ -66,17 +79,25 @@ class SimpleAPI {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
+                logger.error("Invalid server response for labels request")
                 showStatus("Invalid server response.", true)
                 return nil
             }
+            
+            logger.logNetworkRequest(method: "GET", url: "/api/bookmarks/labels", statusCode: httpResponse.statusCode)
+            
             guard 200...299 ~= httpResponse.statusCode else {
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+                logger.error("Server error \(httpResponse.statusCode): \(msg)")
                 showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
                 return nil
             }
+            
             let labels = try JSONDecoder().decode([BookmarkLabelDto].self, from: data)
+            logger.info("Successfully fetched \(labels.count) bookmark labels")
             return labels
         } catch {
+            logger.logNetworkError(method: "GET", url: "/api/bookmarks/labels", error: error)
             showStatus("Network error: \(error.localizedDescription)", true)
             return nil
         }

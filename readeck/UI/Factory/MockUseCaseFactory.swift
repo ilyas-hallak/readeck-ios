@@ -6,8 +6,13 @@
 //
 
 import Foundation
+import Combine
 
 class MockUseCaseFactory: UseCaseFactory {
+    func makeOfflineBookmarkSyncUseCase() -> any POfflineBookmarkSyncUseCase {
+        MockOfflineBookmarkSyncUseCase()
+    }
+    
     func makeLoginUseCase() -> any PLoginUseCase {
         MockLoginUserCase()
     }
@@ -179,6 +184,24 @@ class MockSaveServerSettingsUseCase: PSaveServerSettingsUseCase {
 
 class MockAddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
     func execute(bookmarkDetail: BookmarkDetail) {}
+}
+
+class MockOfflineBookmarkSyncUseCase: POfflineBookmarkSyncUseCase {
+    var isSyncing: AnyPublisher<Bool, Never> {
+        Just(false).eraseToAnyPublisher()
+    }
+    
+    var syncStatus: AnyPublisher<String?, Never> {
+        Just(nil).eraseToAnyPublisher()
+    }
+    
+    func getOfflineBookmarksCount() -> Int {
+        return 0
+    }
+    
+    func syncOfflineBookmarks() async {
+        // Mock implementation - do nothing
+    }
 }
 
 extension Bookmark {

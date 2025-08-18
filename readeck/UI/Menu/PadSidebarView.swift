@@ -13,6 +13,7 @@ struct PadSidebarView: View {
     @State private var selectedTag: BookmarkLabel?
     @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
+    @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
     
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
     
@@ -35,6 +36,20 @@ struct PadSidebarView: View {
                     if tab == .archived {
                         Spacer()
                             .listRowBackground(Color(R.color.menu_sidebar_bg))
+                    }
+                }
+                
+                if case .idle = offlineBookmarksViewModel.state {
+                    // Don't show anything for idle state
+                } else {
+                    Section {
+                        VStack {
+                            LocalBookmarksSyncView(state: offlineBookmarksViewModel.state) {
+                                await offlineBookmarksViewModel.syncOfflineBookmarks()
+                            }
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
                     }
                 }
             }

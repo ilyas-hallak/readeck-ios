@@ -13,8 +13,5 @@ class SaveServerSettingsUseCase: PSaveServerSettingsUseCase {
     
     func execute(endpoint: String, username: String, password: String, token: String) async throws {
         try await repository.saveServerSettings(endpoint: endpoint, username: username, password: password, token: token)
-        KeychainHelper.shared.saveToken(token)
-        KeychainHelper.shared.saveEndpoint(endpoint)
-        print("token saved", KeychainHelper.shared.loadToken())
     }
 } 

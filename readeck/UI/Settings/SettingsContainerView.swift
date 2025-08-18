@@ -26,6 +26,11 @@ struct SettingsContainerView: View {
                 
                 SettingsServerView()
                     .cardStyle()
+                
+                // Debug-only Logging Configuration
+                if Bundle.main.isDebugBuild {
+                    debugSettingsSection
+                }
             }
             .padding()
             .background(Color(.systemGroupedBackground))
@@ -37,6 +42,52 @@ struct SettingsContainerView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
+    }
+    
+    @ViewBuilder
+    private var debugSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "ant.fill")
+                    .foregroundColor(.orange)
+                Text("Debug Settings")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+                Text("DEBUG BUILD")
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.2))
+                    .foregroundColor(.orange)
+                    .clipShape(Capsule())
+            }
+            
+            NavigationLink {
+                LoggingConfigurationView()
+            } label: {
+                HStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .foregroundColor(.blue)
+                        .frame(width: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Logging Configuration")
+                            .foregroundColor(.primary)
+                        Text("Configure log levels and categories")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .cardStyle()
     }
     
     @ViewBuilder

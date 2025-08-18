@@ -13,8 +13,7 @@ struct PhoneTabView: View {
     
     @State private var selectedMoreTab: SidebarTab? = nil
     @State private var selectedTabIndex: Int = 1
-    @StateObject private var syncManager = OfflineSyncManager.shared
-    @State private var phoneTabLocalBookmarkCount = 0
+    @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
     
     @EnvironmentObject var appSettings: AppSettings
     
@@ -25,31 +24,9 @@ struct PhoneTabView: View {
                 moreTabContent
             }
             .accentColor(.accentColor)
-            .onAppear {
-                updateLocalBookmarkCount()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                updateLocalBookmarkCount()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                updateLocalBookmarkCount()
-            }
-            .onChange(of: syncManager.isSyncing) {
-                if !syncManager.isSyncing {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        updateLocalBookmarkCount()
-                    }
-                }
-            }
         }
     }
     
-    private func updateLocalBookmarkCount() {
-        let count = syncManager.getOfflineBookmarksCount()
-        DispatchQueue.main.async {
-            self.phoneTabLocalBookmarkCount = count
-        }
-    }
     
     
     // MARK: - Tab Content
@@ -78,7 +55,7 @@ struct PhoneTabView: View {
         .tabItem {
             Label("More", systemImage: "ellipsis")
         }
-        .badge(phoneTabLocalBookmarkCount > 0 ? phoneTabLocalBookmarkCount : 0)
+        .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
         .tag(mainTabs.count)
         .onAppear {
             if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
@@ -106,10 +83,14 @@ struct PhoneTabView: View {
                 .listRowBackground(Color(R.color.bookmark_list_bg))
             }
             
-            if phoneTabLocalBookmarkCount > 0 {
+            if case .idle = offlineBookmarksViewModel.state {
+                // Don't show anything for idle state
+            } else {
                 Section {
                     VStack {
-                        LocalBookmarksSyncView(bookmarkCount: phoneTabLocalBookmarkCount)
+                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state) {
+                            await offlineBookmarksViewModel.syncOfflineBookmarks()
+                        }
                     }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())

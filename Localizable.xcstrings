@@ -115,13 +115,34 @@
     "Cancel" : {
 
     },
+    "Category-specific Levels" : {
+
+    },
+    "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." : {
+
+    },
     "Clear cache" : {
 
     },
     "Close" : {
 
     },
+    "Configure log levels and categories" : {
+
+    },
+    "Critical" : {
+
+    },
     "Data Management" : {
+
+    },
+    "Debug" : {
+
+    },
+    "DEBUG BUILD" : {
+
+    },
+    "Debug Settings" : {
 
     },
     "Delete" : {
@@ -172,10 +193,25 @@
     "General" : {
 
     },
+    "Global Level" : {
+
+    },
+    "Global Minimum Level" : {
+
+    },
+    "Global Settings" : {
+
+    },
     "https://example.com" : {
 
     },
     "https://readeck.example.com" : {
+
+    },
+    "Include Source Location" : {
+
+    },
+    "Info" : {
 
     },
     "Jump to last read position (%lld%%)" : {
@@ -184,16 +220,25 @@
     "Key" : {
       "extractionState" : "manual"
     },
+    "Level for %@" : {
+
+    },
     "Loading %@" : {
 
     },
     "Loading article..." : {
 
     },
+    "Logging Configuration" : {
+
+    },
     "Login & Save" : {
 
     },
     "Logout" : {
+
+    },
+    "Logs below this level will be filtered out globally" : {
 
     },
     "Manage Labels" : {
@@ -221,6 +266,9 @@
 
     },
     "No results" : {
+
+    },
+    "Notice" : {
 
     },
     "OK" : {
@@ -278,7 +326,13 @@
     "Remove" : {
 
     },
+    "Reset" : {
+
+    },
     "Reset settings" : {
+
+    },
+    "Reset to Defaults" : {
 
     },
     "Restore" : {
@@ -329,10 +383,13 @@
     "Settings" : {
 
     },
-    "Speed" : {
+    "Show Performance Logs" : {
 
     },
-    "Successfully logged in" : {
+    "Show Timestamps" : {
+
+    },
+    "Speed" : {
 
     },
     "Sync interval" : {
@@ -360,6 +417,9 @@
 
     },
     "Version %@" : {
+
+    },
+    "Warning" : {
 
     },
     "Your current server connection and login credentials." : {

@@ -248,3 +248,15 @@ extension Dictionary {
     }
 }
 
+// MARK: - Debug Build Detection
+
+extension Bundle {
+    var isDebugBuild: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+}
+
