@@ -12,36 +12,40 @@ class BookmarkLabelsViewModel {
     var showErrorAlert = false
     var currentLabels: [String] = [] {
         didSet {
-            calculatePages()
+            if oldValue != currentLabels {
+                calculatePages()
+            }
         }
     }
     var newLabelText = ""
     var searchText = "" {
         didSet {
-            calculatePages()
+            if oldValue != searchText {
+                calculatePages()
+            }
         }
     }
     
     var allLabels: [BookmarkLabel] = [] {
         didSet {
-            calculatePages()
+            if oldValue != allLabels {
+                calculatePages()
+            }
         }
     }
     
     var labelPages: [[BookmarkLabel]] = []
     
-    // Computed property for available labels (excluding current labels)
+    // Cached properties to avoid recomputation
+    private var _availableLabels: [BookmarkLabel] = []
+    private var _filteredLabels: [BookmarkLabel] = []
+    
     var availableLabels: [BookmarkLabel] {
-        return allLabels.filter { currentLabels.contains($0.name) == false }
+        return _availableLabels
     }
     
-    // Computed property for filtered labels based on search text
     var filteredLabels: [BookmarkLabel] {
-        if searchText.isEmpty {
-            return availableLabels
-        } else {
-            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
+        return _filteredLabels
     }
     
     var availableLabelPages: [[BookmarkLabel]] = []
@@ -76,8 +80,8 @@ class BookmarkLabelsViewModel {
         errorMessage = nil
         
         do {
-            currentLabels.append(contentsOf: labels)
-            currentLabels = Array(Set(currentLabels)) // Remove duplicates
+            let uniqueLabels = Set(currentLabels + labels)
+            currentLabels = currentLabels.filter { uniqueLabels.contains($0) } + labels.filter { !currentLabels.contains($0) }
 
             try await addLabelsUseCase.execute(bookmarkId: bookmarkId, labels: labels)
         } catch let error as BookmarkUpdateError {
@@ -89,7 +93,6 @@ class BookmarkLabelsViewModel {
         }
         
         isLoading = false
-        calculatePages()
     }
     
     @MainActor
@@ -120,7 +123,6 @@ class BookmarkLabelsViewModel {
         }
         
         isLoading = false
-        calculatePages()
     }
     
     @MainActor
@@ -136,8 +138,6 @@ class BookmarkLabelsViewModel {
         } else {
             await addLabel(to: bookmarkId, label: label)
         }
-        
-        calculatePages()
     }
     
     func updateLabels(_ labels: [String]) {
@@ -147,24 +147,31 @@ class BookmarkLabelsViewModel {
     private func calculatePages() {
         let pageSize = Constants.Labels.pageSize
         
+        // Update cached available labels
+        _availableLabels = allLabels.filter { !currentLabels.contains($0.name) }
+        
+        // Update cached filtered labels
+        if searchText.isEmpty {
+            _filteredLabels = _availableLabels
+        } else {
+            _filteredLabels = _availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+        
         // Calculate pages for all labels
         if allLabels.count <= pageSize {
             labelPages = [allLabels]
         } else {
-            // Normal pagination for larger datasets
             labelPages = stride(from: 0, to: allLabels.count, by: pageSize).map {
                 Array(allLabels[$0..<min($0 + pageSize, allLabels.count)])
             }
         }
         
-        // Calculate pages for filtered labels (search results or available labels)
-        let labelsToShow = searchText.isEmpty ? availableLabels : filteredLabels
-        if labelsToShow.count <= pageSize {
-            availableLabelPages = [labelsToShow]
+        // Calculate pages for filtered labels
+        if _filteredLabels.count <= pageSize {
+            availableLabelPages = [_filteredLabels]
         } else {
-            // Normal pagination for larger datasets
-            availableLabelPages = stride(from: 0, to: labelsToShow.count, by: pageSize).map {
-                Array(labelsToShow[$0..<min($0 + pageSize, labelsToShow.count)])
+            availableLabelPages = stride(from: 0, to: _filteredLabels.count, by: pageSize).map {
+                Array(_filteredLabels[$0..<min($0 + pageSize, _filteredLabels.count)])
             }
         }
     }

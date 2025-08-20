@@ -191,7 +191,7 @@ struct TagManagementView: View {
                     .fontWeight(.medium)
                 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
-                    ForEach(Array(selectedLabelsSet), id: \.self) { label in
+                    ForEach(selectedLabelsSet.sorted(), id: \.self) { label in
                         UnifiedLabelChip(
                             label: label,
                             isSelected: false,

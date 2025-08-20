@@ -49,9 +49,6 @@
     "%lld min" : {
 
     },
-    "%lld minutes" : {
-
-    },
     "%lld." : {
 
     },
@@ -103,12 +100,6 @@
     "Are you sure you want to log out? This will delete all your login credentials and return you to setup." : {
 
     },
-    "Automatic sync" : {
-
-    },
-    "Automatically mark articles as read" : {
-
-    },
     "Available tags" : {
 
     },
@@ -121,9 +112,6 @@
     "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." : {
 
     },
-    "Clear cache" : {
-
-    },
     "Close" : {
 
     },
@@ -131,9 +119,6 @@
 
     },
     "Critical" : {
-
-    },
-    "Data Management" : {
 
     },
     "Debug" : {
@@ -274,9 +259,6 @@
     "OK" : {
 
     },
-    "Open external links in in-app Safari" : {
-
-    },
     "Optional: Custom title" : {
 
     },
@@ -320,16 +302,10 @@
         }
       }
     },
-    "Reading Settings" : {
-
-    },
     "Remove" : {
 
     },
     "Reset" : {
-
-    },
-    "Reset settings" : {
 
     },
     "Reset to Defaults" : {
@@ -339,9 +315,6 @@
 
     },
     "Resume listening" : {
-
-    },
-    "Safari Reader Mode" : {
 
     },
     "Save bookmark" : {
@@ -392,12 +365,6 @@
     "Speed" : {
 
     },
-    "Sync interval" : {
-
-    },
-    "Sync Settings" : {
-
-    },
     "Syncing with server..." : {
 
     },
@@ -405,6 +372,12 @@
 
     },
     "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog." : {
+
+    },
+    "Try Again" : {
+
+    },
+    "Unable to load bookmarks" : {
 
     },
     "Unarchive Bookmark" : {

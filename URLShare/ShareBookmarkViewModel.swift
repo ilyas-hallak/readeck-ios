@@ -103,12 +103,10 @@ class ShareBookmarkViewModel: ObservableObject {
         let measurement = PerformanceMeasurement(operation: "loadLabels", logger: logger)
         logger.debug("Starting to load labels")
         Task {
-            // Check if server is reachable
             let serverReachable = ServerConnectivity.isServerReachableSync()
             logger.debug("Server reachable for labels: \(serverReachable)")
             
             if serverReachable {
-                // Load from API
                 let loaded = await SimpleAPI.getBookmarkLabels { [weak self] message, error in
                     self?.statusMessage = (message, error, error ? "❌" : "✅")
                 } ?? []
@@ -119,7 +117,6 @@ class ShareBookmarkViewModel: ObservableObject {
                     measurement.end()
                 }
             } else {
-                // Load from local database
                 let localTags = OfflineBookmarkManager.shared.getTags()
                 let localLabels = localTags.enumerated().map { index, tagName in 
                     BookmarkLabelDto(name: tagName, count: 0, href: "local://\(index)")

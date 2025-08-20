@@ -29,6 +29,15 @@ class LabelsRepository: PLabelsRepository {
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "name == %@", name)
         
-        return (try? coreDataManager.context.fetch(fetchRequest).isEmpty == false) ?? false
+        var exists = false
+        coreDataManager.context.performAndWait {
+            do {
+                let results = try coreDataManager.context.fetch(fetchRequest)
+                exists = !results.isEmpty
+            } catch {
+                exists = false
+            }
+        }
+        return exists
     }
 }
