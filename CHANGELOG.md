@@ -2,7 +2,7 @@
 
 All changes to this project will be documented in this file.
 
-## 1.0.0
+## Planned for Version 1.0.0
 
 **Initial release:**
 - Browse and manage bookmarks (All, Unread, Favorites, Archive, Article, Videos, Pictures)
@@ -15,11 +15,13 @@ All changes to this project will be documented in this file.
 - Search functionality
 - Support for tags
 - Support for reading progress
+- Save bookmarks when server is unavailable and sync when reconnected
 
-## [Unreleased]
-### Planned Features
+## Planned for Version 1.1.0
+
 - [ ] Add support for bookmark filtering and sorting options
-- [ ] Offline sync with Core Data
-- [ ] Add support for collection management
-- [ ] Add offline sync capabilities
+- [ ] Add support for collection management  
 - [ ] Add support for custom themes
+- [ ] Text highlighting of selected text in a article
+- [ ] Multiple selection of bookmarks for bulk actions
+

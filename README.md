@@ -45,6 +45,7 @@ If you are interested in joining the internal beta, please contact me directly a
 - Article View with Reading Time and Word Count
 - Search functionality
 - Support for reading progress
+- Save bookmarks when server is unavailable and sync when reconnected
 
 ## Configuration
 

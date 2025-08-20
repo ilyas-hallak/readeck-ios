@@ -101,7 +101,7 @@ class BookmarksViewModel {
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
         } catch {
             errorMessage = "Error loading bookmarks"
-            bookmarks = nil
+            // Don't clear bookmarks on error - keep existing data visible
         }
         
         isLoading = false

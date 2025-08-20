@@ -9,11 +9,22 @@ struct WebView: UIViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        let configuration = WKWebViewConfiguration()
+        
+        // Enable text selection and copy functionality
+        let preferences = WKWebpagePreferences()
+        preferences.allowsContentJavaScript = true
+        configuration.defaultWebpagePreferences = preferences
+        
+        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.isScrollEnabled = false
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
+        
+        // Allow text selection and copying
+        webView.allowsBackForwardNavigationGestures = false
+        webView.allowsLinkPreview = true
         
         // Message Handler hier einmalig hinzufügen
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
@@ -66,6 +77,9 @@ struct WebView: UIViewRepresentable {
                     color: var(--text-color);
                     font-size: var(--base-font-size);
                     -webkit-text-size-adjust: 100%;
+                    -webkit-user-select: text;
+                    -webkit-touch-callout: default;
+                    user-select: text;
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
