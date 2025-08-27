@@ -10,13 +10,13 @@ import netfox
 
 @main
 struct readeckApp: App {
-    @State private var hasFinishedSetup = true
+    @StateObject private var appViewModel = AppViewModel()
     @StateObject private var appSettings = AppSettings()
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if hasFinishedSetup {
+                if appViewModel.hasFinishedSetup {
                     MainTabView()
                 } else {
                     SettingsServerView()
@@ -32,25 +32,19 @@ struct readeckApp: App {
                 // Initialize server connectivity monitoring
                 _ = ServerConnectivity.shared
                 Task {
-                    await loadSetupStatus()
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetupStatusChanged"))) { _ in
-                Task {
-                    await loadSetupStatus()
+                    await loadAppSettings()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SettingsChanged"))) { _ in
                 Task {
-                    await loadSetupStatus()
+                    await loadAppSettings()
                 }
             }
         }
     }
 
-    private func loadSetupStatus() async {
+    private func loadAppSettings() async {
         let settingsRepository = SettingsRepository()
-        hasFinishedSetup = settingsRepository.hasFinishedSetup
         let settings = try? await settingsRepository.loadSettings()
         await MainActor.run {
             appSettings.settings = settings

@@ -39,6 +39,11 @@ class SimpleAPI {
             logger.logNetworkRequest(method: "POST", url: "/api/bookmarks", statusCode: httpResponse.statusCode)
             
             guard 200...299 ~= httpResponse.statusCode else {
+                if httpResponse.statusCode == 401 {
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedAPIResponse"), object: nil)
+                    }
+                }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")
                 showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
@@ -87,6 +92,11 @@ class SimpleAPI {
             logger.logNetworkRequest(method: "GET", url: "/api/bookmarks/labels", statusCode: httpResponse.statusCode)
             
             guard 200...299 ~= httpResponse.statusCode else {
+                if httpResponse.statusCode == 401 {
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedAPIResponse"), object: nil)
+                    }
+                }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")
                 showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)

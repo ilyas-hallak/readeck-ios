@@ -18,12 +18,14 @@ struct PhoneTabView: View {
     @EnvironmentObject var appSettings: AppSettings
     
     var body: some View {
-        GlobalPlayerContainerView {
-            TabView(selection: $selectedTabIndex) {
-                mainTabsContent
-                moreTabContent
+        NavigationStack {
+            GlobalPlayerContainerView {
+                TabView(selection: $selectedTabIndex) {
+                    mainTabsContent
+                    moreTabContent
+                }
+                .accentColor(.accentColor)
             }
-            .accentColor(.accentColor)
         }
     }
     
@@ -34,23 +36,19 @@ struct PhoneTabView: View {
     @ViewBuilder
     private var mainTabsContent: some View {
         ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
-            NavigationStack {
-                tabView(for: tab)
-            }
-            .tabItem {
-                Label(tab.label, systemImage: tab.systemImage)
-            }
-            .tag(idx)
+            tabView(for: tab)
+                .tabItem {
+                    Label(tab.label, systemImage: tab.systemImage)
+                }
+                .tag(idx)
         }
     }
     
     @ViewBuilder
     private var moreTabContent: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                moreTabsList
-                moreTabsFooter
-            }
+        VStack(spacing: 0) {
+            moreTabsList
+            moreTabsFooter
         }
         .tabItem {
             Label("More", systemImage: "ellipsis")
@@ -71,6 +69,7 @@ struct PhoneTabView: View {
                 NavigationLink {
                     tabView(for: tab)
                         .navigationTitle(tab.label)
+                        .navigationBarTitleDisplayMode(.large)
                         .onDisappear {
                             // tags and search handle navigation by own
                             if tab != .tags && tab != .search {

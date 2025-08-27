@@ -41,6 +41,14 @@ class API: PAPI {
             return url
         }
     }
+    
+    private func handleUnauthorizedResponse(_ statusCode: Int) {
+        if statusCode == 401 {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedAPIResponse"), object: nil)
+            }
+        }
+    }
         
     private func makeJSONRequestWithHeaders<T: Codable>(
         endpoint: String,
@@ -74,6 +82,7 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
             throw APIError.serverError(httpResponse.statusCode)
         }
         
@@ -114,6 +123,7 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
             throw APIError.serverError(httpResponse.statusCode)
         }
         
@@ -146,6 +156,7 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
             throw APIError.serverError(httpResponse.statusCode)
         }
         
@@ -181,6 +192,7 @@ class API: PAPI {
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
             logger.logNetworkError(method: "POST", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
@@ -342,6 +354,7 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
             logger.logNetworkError(method: "PATCH", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
@@ -379,6 +392,7 @@ class API: PAPI {
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
             logger.logNetworkError(method: "DELETE", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
