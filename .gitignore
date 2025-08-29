@@ -63,3 +63,6 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 fastlane/.env.default
 fastlane/AuthKey_JZJCQWW9N3.p8
+
+# Documentation
+documentation/
