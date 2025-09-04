@@ -190,7 +190,7 @@ struct BookmarkDetailView: View {
                 let offset = geo.frame(in: .global).minY
                 ZStack(alignment: .top) {
                     CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
-                        .scaledToFit()
+                        .aspectRatio(contentMode: .fill)
                         .frame(width: geometry.size.width, height: headerHeight + (offset > 0 ? offset : 0))
                         .clipped()
                         .offset(y: (offset > 0 ? -offset : 0))                        

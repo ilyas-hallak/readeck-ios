@@ -2,7 +2,7 @@ import Foundation
 import CoreData
 import SwiftUI
 
-class OfflineSyncManager: ObservableObject {
+class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     static let shared = OfflineSyncManager()
     
     @Published var isSyncing = false
@@ -99,10 +99,9 @@ class OfflineSyncManager: ObservableObject {
     }
     
     private func getOfflineBookmarks() -> [ArticleURLEntity] {
-        let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
-        
         do {
-            return try coreDataManager.context.fetch(fetchRequest)
+            let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
+            return try coreDataManager.context.safeFetch(fetchRequest)
         } catch {
             print("Failed to fetch offline bookmarks: \(error)")
             return []
@@ -110,8 +109,16 @@ class OfflineSyncManager: ObservableObject {
     }
     
     private func deleteOfflineBookmark(_ entity: ArticleURLEntity) {
-        coreDataManager.context.delete(entity)
-        coreDataManager.save()
+        do {
+            try coreDataManager.context.safePerform { [weak self] in
+                guard let self = self else { return }
+                
+                self.coreDataManager.context.delete(entity)
+                self.coreDataManager.save()
+            }
+        } catch {
+            print("Failed to delete offline bookmark: \(error)")
+        }
     }
     
     // MARK: - Auto Sync on Server Connectivity Changes

@@ -42,6 +42,15 @@ class SettingsRepository: PSettingsRepository {
     private let userDefault = UserDefaults.standard
     private let keychainHelper = KeychainHelper.shared
     
+    var hasFinishedSetup: Bool {
+        get {
+            return userDefault.value(forKey: "hasFinishedSetup") as? Bool ?? false
+        }
+        set {
+            userDefault.set(newValue, forKey: "hasFinishedSetup")
+        }
+    }
+    
     func saveSettings(_ settings: Settings) async throws {
         // Save credentials to keychain
         if let endpoint = settings.endpoint, !endpoint.isEmpty {
@@ -203,15 +212,6 @@ class SettingsRepository: PSettingsRepository {
                 NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
             }
             continuation.resume()
-        }
-    }
-    
-    var hasFinishedSetup: Bool {
-        get {
-            return userDefault.value(forKey: "hasFinishedSetup") as? Bool ?? false
-        }
-        set {
-            userDefault.set(newValue, forKey: "hasFinishedSetup")
         }
     }
     

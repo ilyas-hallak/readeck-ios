@@ -1,7 +1,7 @@
 import Foundation
 import CoreData
 
-class OfflineBookmarkManager {
+class OfflineBookmarkManager: @unchecked Sendable {
     static let shared = OfflineBookmarkManager()
     
     private init() {}
@@ -17,27 +17,31 @@ class OfflineBookmarkManager {
     func saveOfflineBookmark(url: String, title: String = "", tags: [String] = []) -> Bool {
         let tagsString = tags.joined(separator: ",")
         
-        // Check if URL already exists offline
-        let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "url == %@", url)
-        
         do {
-            let existingEntities = try context.fetch(fetchRequest)
-            if let existingEntity = existingEntities.first {
-                // Update existing entry
-                existingEntity.tags = tagsString
-                existingEntity.title = title
-            } else {
-                // Create new entry
-                let entity = ArticleURLEntity(context: context)
-                entity.id = UUID()
-                entity.url = url
-                entity.title = title
-                entity.tags = tagsString
+            try context.safePerform { [weak self] in
+                guard let self = self else { return }
+                
+                // Check if URL already exists offline
+                let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
+                fetchRequest.predicate = NSPredicate(format: "url == %@", url)
+                
+                let existingEntities = try self.context.fetch(fetchRequest)
+                if let existingEntity = existingEntities.first {
+                    // Update existing entry
+                    existingEntity.tags = tagsString
+                    existingEntity.title = title
+                } else {
+                    // Create new entry
+                    let entity = ArticleURLEntity(context: self.context)
+                    entity.id = UUID()
+                    entity.url = url
+                    entity.title = title
+                    entity.tags = tagsString
+                }
+                
+                try self.context.save()
+                print("Bookmark saved offline: \(url)")
             }
-            
-            try context.save()
-            print("Bookmark saved offline: \(url)")
             return true
         } catch {
             print("Failed to save offline bookmark: \(error)")
@@ -46,11 +50,14 @@ class OfflineBookmarkManager {
     }
     
     func getTags() -> [String] {
-        let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-        
         do {
-            let tagEntities = try context.fetch(fetchRequest)
-            return tagEntities.compactMap { $0.name }.sorted()
+            return try context.safePerform { [weak self] in
+                guard let self = self else { return [] }
+                
+                let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+                let tagEntities = try self.context.fetch(fetchRequest)
+                return tagEntities.compactMap { $0.name }.sorted()
+            }
         } catch {
             print("Failed to fetch tags: \(error)")
             return []

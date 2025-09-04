@@ -13,6 +13,7 @@ class BookmarksViewModel {
     var isLoading = false
     var isInitialLoading = true
     var errorMessage: String?
+    var isNetworkError = false
     var currentState: BookmarkState = .unread
     var currentType = [BookmarkType.article]
     var currentTag: String? = nil
@@ -123,8 +124,22 @@ class BookmarksViewModel {
             )
             bookmarks = newBookmarks
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
+            isNetworkError = false
         } catch {
-            errorMessage = "Error loading bookmarks"
+            // Check if it's a network error
+            if let urlError = error as? URLError {
+                switch urlError.code {
+                case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
+                    isNetworkError = true
+                    errorMessage = "No internet connection"
+                default:
+                    isNetworkError = false
+                    errorMessage = "Error loading bookmarks"
+                }
+            } else {
+                isNetworkError = false
+                errorMessage = "Error loading bookmarks"
+            }
             // Don't clear bookmarks on error - keep existing data visible
         }
         
@@ -151,7 +166,20 @@ class BookmarksViewModel {
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
         } catch {
-            errorMessage = "Error loading more bookmarks"
+            // Check if it's a network error
+            if let urlError = error as? URLError {
+                switch urlError.code {
+                case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
+                    isNetworkError = true
+                    errorMessage = "No internet connection"
+                default:
+                    isNetworkError = false
+                    errorMessage = "Error loading more bookmarks"
+                }
+            } else {
+                isNetworkError = false
+                errorMessage = "Error loading more bookmarks"
+            }
         }
         
         isLoading = false
@@ -160,6 +188,13 @@ class BookmarksViewModel {
     @MainActor
     func refreshBookmarks() async {
         await loadBookmarks(state: currentState)
+    }
+    
+    @MainActor
+    func retryLoading() async {
+        errorMessage = nil
+        isNetworkError = false
+        await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
     }
     
     @MainActor
@@ -258,6 +293,10 @@ class BookmarksViewModel {
     private func executeDelete(bookmark: Bookmark) async {
         do {
             try await deleteBookmarkUseCase.execute(bookmarkId: bookmark.id)
+            // If delete succeeds, remove bookmark from the list
+            await MainActor.run {
+                bookmarks?.bookmarks.removeAll { $0.id == bookmark.id }
+            }
         } catch {
             // If delete fails, restore the bookmark
             await MainActor.run {

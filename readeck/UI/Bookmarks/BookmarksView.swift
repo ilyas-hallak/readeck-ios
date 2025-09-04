@@ -88,7 +88,8 @@ struct BookmarksView: View {
     
     private var shouldShowCenteredState: Bool {
         let isEmpty = viewModel.bookmarks?.bookmarks.isEmpty == true
-        return isEmpty && (viewModel.isLoading || viewModel.errorMessage != nil)
+        let hasError = viewModel.errorMessage != nil
+        return (isEmpty && viewModel.isLoading) || hasError
     }
     
     // MARK: - View Components
@@ -134,16 +135,16 @@ struct BookmarksView: View {
     @ViewBuilder
     private func errorView(message: String) -> some View {
         VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            Image(systemName: viewModel.isNetworkError ? "wifi.slash" : "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.orange)
             
             VStack(spacing: 8) {
-                Text("Unable to load bookmarks")
+                Text(viewModel.isNetworkError ? "No internet connection" : "Unable to load bookmarks")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text(message)
+                Text(viewModel.isNetworkError ? "Please check your internet connection and try again" : message)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -151,7 +152,7 @@ struct BookmarksView: View {
             
             Button("Try Again") {
                 Task {
-                    await viewModel.loadBookmarks(state: state, type: type, tag: tag)
+                    await viewModel.retryLoading()
                 }
             }
             .buttonStyle(.borderedProminent)
