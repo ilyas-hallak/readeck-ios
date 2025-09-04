@@ -4,8 +4,6 @@ import SwiftUI
 
 struct BookmarksView: View {
 
-    @Namespace private var namespace
-    
     // MARK: States
     
     @State private var viewModel: BookmarksViewModel
@@ -14,7 +12,6 @@ struct BookmarksView: View {
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
-    @State private var bookmarkToDelete: Bookmark? = nil
     
     let state: BookmarkState
     let type: [BookmarkType]
@@ -39,14 +36,16 @@ struct BookmarksView: View {
 
     var body: some View {
         ZStack {
-            if shouldShowCenteredState {
+            if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
+                skeletonLoadingView
+            } else if shouldShowCenteredState {
                 centeredStateView
             } else {
                 bookmarksList
             }
             
             // FAB Button - only show for "Unread" and when not in error/loading state
-            if (state == .unread || state == .all) && !shouldShowCenteredState {
+            if (state == .unread || state == .all) && !shouldShowCenteredState && !viewModel.isInitialLoading {
                 fabButton
             }
         }
@@ -56,8 +55,7 @@ struct BookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId, namespace: namespace)
-                .navigationTransition(.zoom(sourceID: bookmarkId, in: namespace))
+            BookmarkDetailView(bookmarkId: bookmarkId)
         }
         .sheet(isPresented: $showingAddBookmark) {
             AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
@@ -68,18 +66,6 @@ struct BookmarksView: View {
                 AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
         )
-        .alert(item: $bookmarkToDelete) { bookmark in
-            Alert(
-                title: Text("Delete Bookmark"),
-                message: Text("Are you sure you want to delete this bookmark? This action cannot be undone."),
-                primaryButton: .destructive(Text("Delete")) {
-                    Task {
-                        await viewModel.deleteBookmark(bookmark: bookmark)
-                    }
-                },
-                secondaryButton: .cancel()
-            )
-        }
         .onAppear {
             Task {
                 await viewModel.loadBookmarks(state: state, type: type, tag: tag)
@@ -179,6 +165,11 @@ struct BookmarksView: View {
         List {
             ForEach(viewModel.bookmarks?.bookmarks ?? [], id: \.id) { bookmark in
                 Button(action: {
+                    // Don't navigate to detail if bookmark is pending deletion
+                    if viewModel.pendingDeletes[bookmark.id] != nil {
+                        return
+                    }
+                    
                     if UIDevice.isPhone {
                         selectedBookmarkId = bookmark.id
                     } else {
@@ -195,20 +186,24 @@ struct BookmarksView: View {
                     BookmarkCardView(
                         bookmark: bookmark,
                         currentState: state,
+                        layout: viewModel.cardLayoutStyle,
+                        pendingDelete: viewModel.pendingDeletes[bookmark.id],
                         onArchive: { bookmark in
                             Task {
                                 await viewModel.toggleArchive(bookmark: bookmark)
                             }
                         },
                         onDelete: { bookmark in
-                            bookmarkToDelete = bookmark
+                            viewModel.deleteBookmarkWithUndo(bookmark: bookmark)
                         },
                         onToggleFavorite: { bookmark in
                             Task {
                                 await viewModel.toggleFavorite(bookmark: bookmark)
                             }
                         },
-                        namespace: namespace
+                        onUndoDelete: { bookmarkId in
+                            viewModel.undoDelete(bookmarkId: bookmarkId)
+                        }
                     )
                     .onAppear {
                         if bookmark.id == viewModel.bookmarks?.bookmarks.last?.id {
@@ -219,10 +214,14 @@ struct BookmarksView: View {
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowInsets(EdgeInsets(
+                    top: viewModel.cardLayoutStyle == .compact ? 8 : 12,
+                    leading: 16,
+                    bottom: viewModel.cardLayoutStyle == .compact ? 8 : 12,
+                    trailing: 16
+                ))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color(R.color.bookmark_list_bg))
-                .matchedTransitionSource(id: bookmark.id, in: namespace)
             }
             
             // Show loading indicator for pagination
@@ -253,6 +252,25 @@ struct BookmarksView: View {
                     )
                 )
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var skeletonLoadingView: some View {
+        ScrollView {
+            SkeletonLoadingView(layout: viewModel.cardLayoutStyle)
+                .padding(
+                    EdgeInsets(
+                        top: viewModel.cardLayoutStyle == .compact ? 8 : 12,
+                        leading: 16,
+                        bottom: viewModel.cardLayoutStyle == .compact ? 8 : 12,
+                        trailing: 16
+                    )
+                )
+        }
+        .background(Color(R.color.bookmark_list_bg))
+        .refreshable {
+            await viewModel.refreshBookmarks()
         }
     }
     

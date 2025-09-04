@@ -12,7 +12,5 @@
 import Foundation
 
 struct Constants {
-    struct Labels {
-        static let pageSize = 12
-    }
+    // Empty for now - can be used for other constants in the future
 }

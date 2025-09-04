@@ -1,5 +1,61 @@
 import SwiftUI
 
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(
+            in: proposal.replacingUnspecifiedDimensions().width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        return result.bounds
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(
+            in: bounds.width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: CGPoint(
+                x: bounds.minX + result.frames[index].minX,
+                y: bounds.minY + result.frames[index].minY
+            ), proposal: ProposedViewSize(result.frames[index].size))
+        }
+    }
+}
+
+struct FlowResult {
+    var frames: [CGRect] = []
+    var bounds: CGSize = .zero
+    
+    init(in maxWidth: CGFloat, subviews: LayoutSubviews, spacing: CGFloat) {
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            
+            if x + size.width > maxWidth && x > 0 {
+                x = 0
+                y += lineHeight + spacing
+                lineHeight = 0
+            }
+            
+            frames.append(CGRect(x: x, y: y, width: size.width, height: size.height))
+            lineHeight = max(lineHeight, size.height)
+            x += size.width + spacing
+            bounds.width = max(bounds.width, x - spacing)
+        }
+        
+        bounds.height = y + lineHeight
+    }
+}
+
 enum AddBookmarkFieldFocus {
     case url
     case labels
@@ -27,7 +83,6 @@ struct TagManagementView: View {
     let selectedLabelsSet: Set<String>
     let searchText: Binding<String>
     let isLabelsLoading: Bool
-    let availableLabelPages: [[BookmarkLabel]]
     let filteredLabels: [BookmarkLabel]
     let searchFieldFocus: FocusState<AddBookmarkFieldFocus?>.Binding?
     
@@ -44,7 +99,6 @@ struct TagManagementView: View {
         selectedLabels: Set<String>,
         searchText: Binding<String>,
         isLabelsLoading: Bool,
-        availableLabelPages: [[BookmarkLabel]],
         filteredLabels: [BookmarkLabel],
         searchFieldFocus: FocusState<AddBookmarkFieldFocus?>.Binding? = nil,
         onAddCustomTag: @escaping () -> Void,
@@ -55,7 +109,6 @@ struct TagManagementView: View {
         self.selectedLabelsSet = selectedLabels
         self.searchText = searchText
         self.isLabelsLoading = isLabelsLoading
-        self.availableLabelPages = availableLabelPages
         self.filteredLabels = filteredLabels
         self.searchFieldFocus = searchFieldFocus
         self.onAddCustomTag = onAddCustomTag
@@ -138,7 +191,7 @@ struct TagManagementView: View {
                         .scaleEffect(0.8)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.vertical, 20)
-                } else if availableLabelPages.isEmpty {
+                } else if allLabels.isEmpty {
                     VStack {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 24))
@@ -150,7 +203,7 @@ struct TagManagementView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
                 } else {
-                    labelsTabView
+                    labelsScrollView
                 }
             }
             .padding(.top, 8)
@@ -158,28 +211,47 @@ struct TagManagementView: View {
     }
     
     @ViewBuilder
-    private var labelsTabView: some View {
-        TabView {
-            ForEach(Array(availableLabelPages.enumerated()), id: \.offset) { pageIndex, labelsPage in
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
-                    ForEach(labelsPage, id: \.id) { label in
-                        UnifiedLabelChip(
-                            label: label.name,
-                            isSelected: selectedLabelsSet.contains(label.name),
-                            isRemovable: false,
-                            onTap: {
-                                onToggleLabel(label.name)
-                            }
-                        )
+    private var labelsScrollView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(chunkedLabels, id: \.self) { rowLabels in
+                    HStack(alignment: .top, spacing: 8) {
+                        ForEach(rowLabels, id: \.id) { label in
+                            UnifiedLabelChip(
+                                label: label.name,
+                                isSelected: false,
+                                isRemovable: false,
+                                onTap: {
+                                    onToggleLabel(label.name)
+                                }
+                            )
+                        }
+                        Spacer()
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .padding(.horizontal)
             }
+            .padding(.horizontal)
         }
-        .tabViewStyle(.page(indexDisplayMode: availableLabelPages.count > 1 ? .automatic : .never))
-        .frame(height: 180)
-        .padding(.top, 10)
+        .frame(height: calculateMaxHeight())
+    }
+    
+    private var chunkedLabels: [[BookmarkLabel]] {
+        let maxRows = 3
+        let labelsPerRow = max(1, availableUnselectedLabels.count / maxRows + (availableUnselectedLabels.count % maxRows > 0 ? 1 : 0))
+        return availableUnselectedLabels.chunked(into: labelsPerRow)
+    }
+    
+    private var availableUnselectedLabels: [BookmarkLabel] {
+        let labelsToShow = searchText.wrappedValue.isEmpty ? allLabels : filteredLabels
+        return labelsToShow.filter { !selectedLabelsSet.contains($0.name) }
+    }
+    
+    private func calculateMaxHeight() -> CGFloat {
+        // Berechne Höhe für maximal 3 Reihen
+        let rowHeight: CGFloat = 32 // Höhe eines Labels
+        let spacing: CGFloat = 8
+        let maxRows: CGFloat = 3
+        return (rowHeight * maxRows) + (spacing * (maxRows - 1))
     }
     
     @ViewBuilder
@@ -190,11 +262,11 @@ struct TagManagementView: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
+                FlowLayout(spacing: 8) {
                     ForEach(selectedLabelsSet.sorted(), id: \.self) { label in
                         UnifiedLabelChip(
                             label: label,
-                            isSelected: false,
+                            isSelected: true,
                             isRemovable: true,
                             onTap: {
                                 // No action for selected labels
@@ -207,6 +279,14 @@ struct TagManagementView: View {
                 }
             }
             .padding(.top, 8)
+        }
+    }
+}
+
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
         }
     }
 }

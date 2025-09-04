@@ -15,17 +15,9 @@ struct FontSettingsView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            // Header
-            HStack(spacing: 8) {
-                Image(systemName: "textformat")
-                    .font(.title2)
-                    .foregroundColor(.accentColor)
-                
-                Text("Font")
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
+        VStack(spacing: 20) {
+            SectionHeader(title: "Font Settings", icon: "textformat")
+                .padding(.bottom, 4)
             
             // Font Family Picker
             HStack(alignment: .firstTextBaseline, spacing: 16) {

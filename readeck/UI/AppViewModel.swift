@@ -25,7 +25,7 @@ class AppViewModel: ObservableObject {
     
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("UnauthorizedAPIResponse"),
+            forName: .unauthorizedAPIResponse,
             object: nil,
             queue: .main
         ) { [weak self] _ in
@@ -35,7 +35,7 @@ class AppViewModel: ObservableObject {
         }
         
         NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("SetupStatusChanged"),
+            forName: .setupStatusChanged,
             object: nil,
             queue: .main
         ) { [weak self] _ in

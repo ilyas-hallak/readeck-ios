@@ -19,23 +19,6 @@ struct SettingsGeneralView: View {
             SectionHeader(title: "General Settings", icon: "gear")
                 .padding(.bottom, 4)
             
-            // Theme
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Theme")
-                    .font(.headline)
-                Picker("Theme", selection: $viewModel.selectedTheme) {
-                    ForEach(Theme.allCases, id: \.self) { theme in
-                        Text(theme.displayName).tag(theme)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: viewModel.selectedTheme) {
-                    Task {
-                        await viewModel.saveGeneralSettings()
-                    }
-                }
-            }
-            
             VStack(alignment: .leading, spacing: 12) {
                 Text("General")
                     .font(.headline)
@@ -76,38 +59,6 @@ struct SettingsGeneralView: View {
                     .toggleStyle(SwitchToggleStyle())
                 Toggle("Automatically mark articles as read", isOn: $viewModel.autoMarkAsRead)
                     .toggleStyle(SwitchToggleStyle())
-            }
-            
-            // Data Management
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Data Management")
-                    .font(.headline)
-                Button(role: .destructive) {
-                    Task {
-                        // await viewModel.clearCache()
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                        Text("Clear cache")
-                            .foregroundColor(.red)
-                        Spacer()
-                    }
-                }
-                Button(role: .destructive) {
-                    Task {
-                        // await viewModel.resetSettings()
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundColor(.red)
-                        Text("Reset settings")
-                            .foregroundColor(.red)
-                        Spacer()
-                    }
-                }
             }
             
             // Messages

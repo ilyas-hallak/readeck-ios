@@ -4,7 +4,6 @@ import Combine
 
 struct BookmarkDetailView: View {
     let bookmarkId: String
-    let namespace: Namespace.ID?
     
     // MARK: - States
     
@@ -24,11 +23,10 @@ struct BookmarkDetailView: View {
     @EnvironmentObject var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
     
-    private let headerHeight: CGFloat = 320
+    private let headerHeight: CGFloat = 360
     
-    init(bookmarkId: String, namespace: Namespace.ID? = nil, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel(), webViewHeight: CGFloat = 300, showingFontSettings: Bool = false, showingLabelsSheet: Bool = false, playerUIState: PlayerUIState = .init()) {
+    init(bookmarkId: String, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel(), webViewHeight: CGFloat = 300, showingFontSettings: Bool = false, showingLabelsSheet: Bool = false, playerUIState: PlayerUIState = .init()) {
         self.bookmarkId = bookmarkId
-        self.namespace = namespace
         self.viewModel = viewModel
         self.webViewHeight = webViewHeight
         self.showingFontSettings = showingFontSettings
@@ -66,7 +64,7 @@ struct BookmarkDetailView: View {
                                     })
                                     .frame(height: webViewHeight)
                                     .cornerRadius(14)
-                                    .padding(.horizontal)
+                                    .padding(.horizontal, 4)
                                     .animation(.easeInOut, value: webViewHeight)
                                 } else if viewModel.isLoadingArticle {
                                     ProgressView("Loading article...")
@@ -191,40 +189,11 @@ struct BookmarkDetailView: View {
             GeometryReader { geo in
                 let offset = geo.frame(in: .global).minY
                 ZStack(alignment: .top) {
-                    AsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
+                    CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
+                        .scaledToFit()
                         .frame(width: geometry.size.width, height: headerHeight + (offset > 0 ? offset : 0))
                         .clipped()
-                        .offset(y: (offset > 0 ? -offset : 0))
-                        .if(namespace != nil) { view in
-                            view.matchedGeometryEffect(id: "image-\(viewModel.bookmarkDetail.id)", in: namespace!)
-                        }
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.4))
-                        .frame(width: geometry.size.width, height: headerHeight)
-                        .if(namespace != nil) { view in
-                            view.matchedGeometryEffect(id: "image-\(viewModel.bookmarkDetail.id)", in: namespace!)
-                        }
-                }
-                    // Gradient overlay für bessere Button-Sichtbarkeit
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.black.opacity(1.0),
-                            Color.black.opacity(0.9),
-                            Color.black.opacity(0.7),
-                            Color.black.opacity(0.4),
-                            Color.black.opacity(0.2),
-                            Color.clear
-                        ]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 240)
-                    .frame(maxWidth: .infinity)
-                    .offset(y: (offset > 0 ? -offset : 0))
+                        .offset(y: (offset > 0 ? -offset : 0))                        
                     
                     // Tap area and zoom icon
                     VStack {

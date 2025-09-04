@@ -74,11 +74,9 @@ struct AddBookmarkView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 20) {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 16) {
                         urlField
                             .id("urlField")
-                        Spacer()
-                            .frame(height: 40)
                             .id("labelsOffset")
                         labelsField
                             .id("labelsField")
@@ -160,10 +158,11 @@ struct AddBookmarkView: View {
                     }
                 }
             }
-            .padding()
+            .padding(12)
             .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .transition(.opacity.combined(with: .move(edge: .top)))
+            .padding(.top, 4)
         }
     }
     
@@ -183,7 +182,6 @@ struct AddBookmarkView: View {
             selectedLabels: viewModel.selectedLabels,
             searchText: $viewModel.searchText,
             isLabelsLoading: viewModel.isLabelsLoading,
-            availableLabelPages: viewModel.availableLabelPages,
             filteredLabels: viewModel.filteredLabels,
             searchFieldFocus: $focusedField,
             onAddCustomTag: {

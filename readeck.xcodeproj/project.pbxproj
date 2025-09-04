@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		5D2B7FB92DFA27A400EBDB2B /* URLShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */ = {isa = PBXBuildFile; productRef = 5D348CC22E0C9F4F00D0AF21 /* netfox */; };
+		5D9D95492E623668009AF769 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 5D9D95482E623668009AF769 /* Kingfisher */; };
 		5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 5DA241FA2E17C3B3007531C3 /* RswiftLibrary */; };
 /* End PBXBuildFile section */
 
@@ -90,6 +91,7 @@
 				UI/Components/CustomTextFieldStyle.swift,
 				UI/Components/TagManagementView.swift,
 				UI/Components/UnifiedLabelChip.swift,
+				UI/Utils/NotificationNames.swift,
 			);
 			target = 5D2B7FAE2DFA27A400EBDB2B /* URLShare */;
 		};
@@ -144,6 +146,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5D9D95492E623668009AF769 /* Kingfisher in Frameworks */,
 				5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */,
 				5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */,
 			);
@@ -236,6 +239,7 @@
 			packageProductDependencies = (
 				5D348CC22E0C9F4F00D0AF21 /* netfox */,
 				5DA241FA2E17C3B3007531C3 /* RswiftLibrary */,
+				5D9D95482E623668009AF769 /* Kingfisher */,
 			);
 			productName = readeck;
 			productReference = 5D45F9C82DF858680048D5B8 /* readeck.app */;
@@ -326,6 +330,7 @@
 			packageReferences = (
 				5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */,
 				5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */,
+				5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5D45F9C92DF858680048D5B8 /* Products */;
@@ -847,6 +852,14 @@
 				minimumVersion = 1.21.0;
 			};
 		};
+		5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.5.0;
+			};
+		};
 		5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mac-cain13/R.swift.git";
@@ -862,6 +875,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */;
 			productName = netfox;
+		};
+		5D9D95482E623668009AF769 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 		5DA241FA2E17C3B3007531C3 /* RswiftLibrary */ = {
 			isa = XCSwiftPackageProductDependency;

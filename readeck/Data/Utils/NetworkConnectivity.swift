@@ -25,7 +25,7 @@ class ServerConnectivity: ObservableObject {
                         
                         // Notify when server becomes available
                         if !wasReachable && serverReachable {
-                            NotificationCenter.default.post(name: NSNotification.Name("ServerDidBecomeAvailable"), object: nil)
+                            NotificationCenter.default.post(name: .serverDidBecomeAvailable, object: nil)
                         }
                     }
                 }

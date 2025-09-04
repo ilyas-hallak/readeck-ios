@@ -15,13 +15,12 @@ class ShareBookmarkViewModel: ObservableObject {
     let extensionContext: NSExtensionContext?
     
     private let logger = Logger.viewModel
-    
-    // Computed properties for pagination
+        
     var availableLabels: [BookmarkLabelDto] {
         return labels.filter { !selectedLabels.contains($0.name) }
     }
     
-    // Computed property for filtered labels based on search text
+    // filtered labels based on search text
     var filteredLabels: [BookmarkLabelDto] {
         if searchText.isEmpty {
             return availableLabels

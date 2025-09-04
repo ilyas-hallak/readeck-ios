@@ -61,7 +61,7 @@ struct SearchBookmarksView: View {
                             }
                         }
                     }) {
-                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in }, namespace: namespace)
+                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in })
                     }
                     .buttonStyle(PlainButtonStyle())
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -91,8 +91,7 @@ struct SearchBookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId, namespace: namespace)
-                .navigationTransition(.zoom(sourceID: bookmarkId, in: namespace))
+            BookmarkDetailView(bookmarkId: bookmarkId)
         }
         .onAppear {
             if isFirstAppearance {

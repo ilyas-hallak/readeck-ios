@@ -77,6 +77,13 @@ class MockUseCaseFactory: UseCaseFactory {
         MockAddTextToSpeechQueueUseCase()
     }
     
+    func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase {
+        MockLoadCardLayoutUseCase()
+    }
+    
+    func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase {
+        MockSaveCardLayoutUseCase()
+    }
 }
     
 
@@ -200,6 +207,18 @@ class MockOfflineBookmarkSyncUseCase: POfflineBookmarkSyncUseCase {
     }
     
     func syncOfflineBookmarks() async {
+        // Mock implementation - do nothing
+    }
+}
+
+class MockLoadCardLayoutUseCase: PLoadCardLayoutUseCase {
+    func execute() async -> CardLayoutStyle {
+        return .magazine
+    }
+}
+
+class MockSaveCardLayoutUseCase: PSaveCardLayoutUseCase {
+    func execute(layout: CardLayoutStyle) async {
         // Mock implementation - do nothing
     }
 }

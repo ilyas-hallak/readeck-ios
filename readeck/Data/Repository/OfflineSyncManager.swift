@@ -119,7 +119,7 @@ class OfflineSyncManager: ObservableObject {
     func startAutoSync() {
         // Monitor server connectivity and auto-sync when server becomes reachable
         NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("ServerDidBecomeAvailable"),
+            forName: .serverDidBecomeAvailable,
             object: nil,
             queue: .main
         ) { [weak self] _ in

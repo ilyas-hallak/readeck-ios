@@ -12,6 +12,7 @@ struct Settings {
     var hasFinishedSetup: Bool = false
     var enableTTS: Bool? = nil
     var theme: Theme? = nil
+    var cardLayoutStyle: CardLayoutStyle? = nil
     
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty
@@ -31,6 +32,8 @@ protocol PSettingsRepository {
     func savePassword(_ password: String) async throws
     func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws
     func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws 
+    func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws
+    func loadCardLayoutStyle() async throws -> CardLayoutStyle
     var hasFinishedSetup: Bool { get }
 }
 
@@ -79,6 +82,10 @@ class SettingsRepository: PSettingsRepository {
                         existingSettings.theme = theme.rawValue
                     }
                     
+                    if let cardLayoutStyle = settings.cardLayoutStyle {
+                        existingSettings.cardLayoutStyle = cardLayoutStyle.rawValue
+                    }
+                    
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -115,7 +122,8 @@ class SettingsRepository: PSettingsRepository {
                         fontFamily: FontFamily(rawValue: settingEntity?.fontFamily ?? FontFamily.system.rawValue),
                         fontSize: FontSize(rawValue: settingEntity?.fontSize ?? FontSize.medium.rawValue),
                         enableTTS: settingEntity?.enableTTS,
-                        theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue)
+                        theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue),
+                        cardLayoutStyle: CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue)
                     )
                     continuation.resume(returning: settings)
                 } catch {
@@ -160,7 +168,7 @@ class SettingsRepository: PSettingsRepository {
             self.hasFinishedSetup = true
             // Notification senden, dass sich der Setup-Status geändert hat
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+                NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
             }
         }
     }
@@ -174,7 +182,7 @@ class SettingsRepository: PSettingsRepository {
         if !token.isEmpty {
             self.hasFinishedSetup = true
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+                NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
             }
         }
     }
@@ -192,7 +200,7 @@ class SettingsRepository: PSettingsRepository {
             self.hasFinishedSetup = hasFinishedSetup
             // Notification senden, dass sich der Setup-Status geändert hat
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+                NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
             }
             continuation.resume()
         }
@@ -204,6 +212,47 @@ class SettingsRepository: PSettingsRepository {
         }
         set {
             userDefault.set(newValue, forKey: "hasFinishedSetup")
+        }
+    }
+    
+    func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws {
+        let context = coreDataManager.context
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
+                    
+                    existingSettings.cardLayoutStyle = cardLayoutStyle.rawValue
+                    
+                    try context.save()
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    func loadCardLayoutStyle() async throws -> CardLayoutStyle {
+        let context = coreDataManager.context
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    fetchRequest.fetchLimit = 1
+                    
+                    let settingEntities = try context.fetch(fetchRequest)
+                    let settingEntity = settingEntities.first
+                    
+                    let cardLayoutStyle = CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue) ?? .magazine
+                    continuation.resume(returning: cardLayoutStyle)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
         }
     }
 }

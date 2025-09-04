@@ -18,6 +18,8 @@ protocol UseCaseFactory {
     func makeGetLabelsUseCase() -> PGetLabelsUseCase
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase
+    func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase
+    func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase
 }
 
 
@@ -101,5 +103,13 @@ class DefaultUseCaseFactory: UseCaseFactory {
     
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase {
         return OfflineBookmarkSyncUseCase()
+    }
+    
+    func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase {
+        return LoadCardLayoutUseCase(settingsRepository: settingsRepository)
+    }
+    
+    func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase {
+        return SaveCardLayoutUseCase(settingsRepository: settingsRepository)
     }
 }

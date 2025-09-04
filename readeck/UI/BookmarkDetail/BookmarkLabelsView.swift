@@ -61,7 +61,6 @@ struct BookmarkLabelsView: View {
             selectedLabels: Set(viewModel.currentLabels),
             searchText: $viewModel.searchText,
             isLabelsLoading: viewModel.isInitialLoading,
-            availableLabelPages: viewModel.availableLabelPages,
             filteredLabels: viewModel.filteredLabels,
             onAddCustomTag: {
                 Task {

@@ -59,19 +59,6 @@ class AddBookmarkViewModel {
         }
     }
     
-    var availableLabelPages: [[BookmarkLabel]] {
-        let pageSize = Constants.Labels.pageSize
-        let labelsToShow = searchText.isEmpty ? availableLabels : filteredLabels
-        
-        if labelsToShow.count <= pageSize {
-            return [labelsToShow]
-        } else {
-            return stride(from: 0, to: labelsToShow.count, by: pageSize).map {
-                Array(labelsToShow[$0..<min($0 + pageSize, labelsToShow.count)])
-            }
-        }
-    }
-    
     // MARK: - Labels Management
     
     @MainActor

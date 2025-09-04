@@ -45,7 +45,7 @@ class API: PAPI {
     private func handleUnauthorizedResponse(_ statusCode: Int) {
         if statusCode == 401 {
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedAPIResponse"), object: nil)
+                NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
             }
         }
     }

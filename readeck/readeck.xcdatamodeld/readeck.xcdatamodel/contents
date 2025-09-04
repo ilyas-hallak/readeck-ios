@@ -51,6 +51,7 @@
         <attribute name="src" optional="YES" attributeType="String"/>
     </entity>
     <entity name="SettingEntity" representedClassName="SettingEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="cardLayoutStyle" optional="YES" attributeType="String"/>
         <attribute name="enableTTS" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="fontFamily" optional="YES" attributeType="String"/>
         <attribute name="fontSize" optional="YES" attributeType="String"/>

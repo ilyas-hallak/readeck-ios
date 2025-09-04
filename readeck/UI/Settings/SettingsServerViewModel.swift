@@ -67,7 +67,7 @@ class SettingsServerViewModel {
             isLoggedIn = true
             successMessage = "Server settings saved and successfully logged in."
             try await SettingsRepository().saveHasFinishedSetup(true)
-            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+            NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
         } catch {
             errorMessage = "Connection or login failed: \(error.localizedDescription)"
             isLoggedIn = false
@@ -80,7 +80,7 @@ class SettingsServerViewModel {
             try await logoutUseCase.execute()
             isLoggedIn = false
             successMessage = "Logged out"
-            NotificationCenter.default.post(name: NSNotification.Name("SetupStatusChanged"), object: nil)
+            NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
         } catch {
             errorMessage = "Error logging out"
         }

@@ -34,7 +34,7 @@ class ShareViewController: UIViewController {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(dismissKeyboard),
-            name: NSNotification.Name("DismissKeyboard"),
+            name: .dismissKeyboard,
             object: nil
         )
     }

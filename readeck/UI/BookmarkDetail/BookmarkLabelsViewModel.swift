@@ -10,45 +10,23 @@ class BookmarkLabelsViewModel {
     var isInitialLoading = false
     var errorMessage: String?
     var showErrorAlert = false
-    var currentLabels: [String] = [] {
-        didSet {
-            if oldValue != currentLabels {
-                calculatePages()
-            }
-        }
-    }
+    var currentLabels: [String] = []
     var newLabelText = ""
-    var searchText = "" {
-        didSet {
-            if oldValue != searchText {
-                calculatePages()
-            }
-        }
-    }
+    var searchText = ""
     
-    var allLabels: [BookmarkLabel] = [] {
-        didSet {
-            if oldValue != allLabels {
-                calculatePages()
-            }
-        }
-    }
-    
-    var labelPages: [[BookmarkLabel]] = []
-    
-    // Cached properties to avoid recomputation
-    private var _availableLabels: [BookmarkLabel] = []
-    private var _filteredLabels: [BookmarkLabel] = []
+    var allLabels: [BookmarkLabel] = []
     
     var availableLabels: [BookmarkLabel] {
-        return _availableLabels
+        return allLabels.filter { !currentLabels.contains($0.name) }
     }
     
     var filteredLabels: [BookmarkLabel] {
-        return _filteredLabels
+        if searchText.isEmpty {
+            return availableLabels
+        } else {
+            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
     }
-    
-    var availableLabelPages: [[BookmarkLabel]] = []
     
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared, initialLabels: [String] = []) {
         self.currentLabels = initialLabels
@@ -70,8 +48,6 @@ class BookmarkLabelsViewModel {
             errorMessage = "failed to load labels"
             showErrorAlert = true
         }
-        
-        calculatePages()
     }
     
     @MainActor
@@ -142,37 +118,5 @@ class BookmarkLabelsViewModel {
     
     func updateLabels(_ labels: [String]) {
         currentLabels = labels
-    }
-    
-    private func calculatePages() {
-        let pageSize = Constants.Labels.pageSize
-        
-        // Update cached available labels
-        _availableLabels = allLabels.filter { !currentLabels.contains($0.name) }
-        
-        // Update cached filtered labels
-        if searchText.isEmpty {
-            _filteredLabels = _availableLabels
-        } else {
-            _filteredLabels = _availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
-        
-        // Calculate pages for all labels
-        if allLabels.count <= pageSize {
-            labelPages = [allLabels]
-        } else {
-            labelPages = stride(from: 0, to: allLabels.count, by: pageSize).map {
-                Array(allLabels[$0..<min($0 + pageSize, allLabels.count)])
-            }
-        }
-        
-        // Calculate pages for filtered labels
-        if _filteredLabels.count <= pageSize {
-            availableLabelPages = [_filteredLabels]
-        } else {
-            availableLabelPages = stride(from: 0, to: _filteredLabels.count, by: pageSize).map {
-                Array(_filteredLabels[$0..<min($0 + pageSize, _filteredLabels.count)])
-            }
-        }
     }
 }

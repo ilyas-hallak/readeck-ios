@@ -6,7 +6,7 @@ struct ShareBookmarkView: View {
     @FocusState private var focusedField: AddBookmarkFieldFocus?
     
     private func dismissKeyboard() {
-        NotificationCenter.default.post(name: NSNotification.Name("DismissKeyboard"), object: nil)
+        NotificationCenter.default.post(name: .dismissKeyboard, object: nil)
     }
     
     var body: some View {
@@ -140,7 +140,6 @@ struct ShareBookmarkView: View {
                 selectedLabels: viewModel.selectedLabels,
                 searchText: $viewModel.searchText,
                 isLabelsLoading: false,
-                availableLabelPages: convertToBookmarkLabelPages(viewModel.availableLabelPages),
                 filteredLabels: convertToBookmarkLabels(viewModel.filteredLabels),
                 searchFieldFocus: $focusedField,
                 onAddCustomTag: {

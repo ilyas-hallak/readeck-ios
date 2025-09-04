@@ -41,7 +41,7 @@ class SimpleAPI {
             guard 200...299 ~= httpResponse.statusCode else {
                 if httpResponse.statusCode == 401 {
                     DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedAPIResponse"), object: nil)
+                        NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -94,7 +94,7 @@ class SimpleAPI {
             guard 200...299 ~= httpResponse.statusCode else {
                 if httpResponse.statusCode == 401 {
                     DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedAPIResponse"), object: nil)
+                        NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"

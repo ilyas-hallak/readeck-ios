@@ -21,6 +21,12 @@ struct SettingsContainerView: View {
                 FontSettingsView()
                     .cardStyle()
                 
+                AppearanceSettingsView()
+                    .cardStyle()
+                
+                CacheSettingsView()
+                    .cardStyle()
+                
                 SettingsGeneralView()
                     .cardStyle()
                 
@@ -103,9 +109,19 @@ struct SettingsContainerView: View {
             HStack(spacing: 8) {
                 Image(systemName: "person.crop.circle")
                     .foregroundColor(.secondary)
-                Text("Developer: Ilyas Hallak")
+                HStack(spacing: 4) {
+                    Text("Developer:")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Button("Ilyas Hallak") {
+                        if let url = URL(string: "https://ilyashallak.de") {
+                            UIApplication.shared.open(url)
+                        }
+                    }
                     .font(.footnote)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.blue)
+                    .underline()
+                }
             }
             HStack(spacing: 8) {
                 Image(systemName: "globe")

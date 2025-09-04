@@ -52,7 +52,7 @@ class SettingsGeneralViewModel {
             successMessage = "Settings saved"
             
             // send notification to apply settings to the app
-            NotificationCenter.default.post(name: NSNotification.Name("SettingsChanged"), object: nil)
+            NotificationCenter.default.post(name: .settingsChanged, object: nil)
         } catch {
             errorMessage = "Error saving settings"
         }

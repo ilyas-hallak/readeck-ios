@@ -35,7 +35,7 @@ struct readeckApp: App {
                     await loadAppSettings()
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SettingsChanged"))) { _ in
+            .onReceive(NotificationCenter.default.publisher(for: .settingsChanged)) { _ in
                 Task {
                     await loadAppSettings()
                 }

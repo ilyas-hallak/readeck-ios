@@ -141,16 +141,18 @@ struct SettingsServerView: View {
                 Button(action: {
                     showingLogoutAlert = true
                 }) {
-                    HStack {
+                    HStack(spacing: 6) {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.caption)
                         Text("Logout")
-                            .fontWeight(.semibold)
+                            .font(.caption)
+                            .fontWeight(.medium)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.red)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray5))
+                    .foregroundColor(.secondary)
+                    .cornerRadius(8)
                 }
             }
         }
