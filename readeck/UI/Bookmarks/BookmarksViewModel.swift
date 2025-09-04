@@ -234,7 +234,7 @@ class BookmarksViewModel {
     
     private func startDeleteCountdown(for bookmarkId: String) {
         let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 guard let self = self,
                       let pendingDelete = self.pendingDeletes[bookmarkId] else {
                     timer.invalidate()
@@ -242,6 +242,9 @@ class BookmarksViewModel {
                 }
                 
                 pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
+                
+                // Trigger UI update by modifying the dictionary
+                self.pendingDeletes[bookmarkId] = pendingDelete
                 
                 if pendingDelete.progress >= 1.0 {
                     timer.invalidate()
@@ -273,10 +276,10 @@ class BookmarksViewModel {
     }
 }
 
-class PendingDelete: Identifiable, ObservableObject {
+class PendingDelete: Identifiable {
     let id = UUID()
     let bookmark: Bookmark
-    @Published var progress: Double = 0.0
+    var progress: Double = 0.0
     var timer: Timer?
     var deleteTask: Task<Void, Never>?
     

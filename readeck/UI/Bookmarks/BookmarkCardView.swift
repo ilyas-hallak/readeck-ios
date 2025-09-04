@@ -59,17 +59,26 @@ struct BookmarkCardView: View {
             .opacity(pendingDelete != nil ? 0.4 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: pendingDelete != nil)
             
-            // Undo button overlay
+            // Undo toast overlay with progress background
             if let pendingDelete = pendingDelete {
                 VStack(spacing: 0) {
                     Spacer()
                     
-                    // Undo button area - only when user interacts
+                    // Undo button area with circular progress
                     HStack {
-                        HStack(spacing: 6) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.secondary)
-                                .font(.caption2)
+                        HStack(spacing: 8) {
+                            // Circular progress indicator
+                            ZStack {
+                                Circle()
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                                    .frame(width: 16, height: 16)
+                                Circle()
+                                    .trim(from: 0, to: CGFloat(pendingDelete.progress))
+                                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                                    .rotationEffect(.degrees(-90))
+                                    .frame(width: 16, height: 16)
+                                    .animation(.linear(duration: 0.1), value: pendingDelete.progress)
+                            }
                             
                             Text("Deleting...")
                                 .font(.caption2)
@@ -98,24 +107,6 @@ struct BookmarkCardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: layout == .compact ? 8 : 12))
                 .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
-            
-            // Progress Bar am unteren Rand
-            if let pendingDelete = pendingDelete {
-                VStack(spacing: 0) {
-                    Spacer()
-                    
-                    // Progress Bar
-                    ProgressView(value: pendingDelete.progress, total: 1.0)
-                        .progressViewStyle(LinearProgressViewStyle(tint: .red))
-                        .scaleEffect(x: 1, y: 1.5, anchor: .center)
-                        .clipShape(
-                            .rect(
-                                bottomLeadingRadius: layout == .compact ? 8 : 12,
-                                bottomTrailingRadius: layout == .compact ? 8 : 12
-                            )
-                        )
-                }
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
