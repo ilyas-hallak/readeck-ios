@@ -275,8 +275,9 @@ struct BookmarkCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomTrailing) {
                 CachedAsyncImage(url: imageURL)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(minHeight: 180)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: UIScreen.main.bounds.width - 32)
+                    .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {

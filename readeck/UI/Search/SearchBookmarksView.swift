@@ -7,6 +7,7 @@ struct SearchBookmarksView: View {
     @Binding var selectedBookmark: Bookmark?
     @Namespace private var namespace
     @State private var isFirstAppearance = true
+    @State private var cardLayoutStyle: CardLayoutStyle = .magazine
     
     var body: some View {
         VStack(spacing: 0) {
@@ -61,10 +62,22 @@ struct SearchBookmarksView: View {
                             }
                         }
                     }) {
-                        BookmarkCardView(bookmark: bookmark, currentState: .all, onArchive: {_ in }, onDelete: {_ in }, onToggleFavorite: {_ in })
+                        BookmarkCardView(
+                            bookmark: bookmark, 
+                            currentState: .all, 
+                            layout: cardLayoutStyle,
+                            onArchive: {_ in }, 
+                            onDelete: {_ in }, 
+                            onToggleFavorite: {_ in }
+                        )
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowInsets(EdgeInsets(
+                        top: cardLayoutStyle == .compact ? 8 : 12,
+                        leading: 16,
+                        bottom: cardLayoutStyle == .compact ? 8 : 12,
+                        trailing: 16
+                    ))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color(R.color.bookmark_list_bg))
                 }
@@ -97,6 +110,22 @@ struct SearchBookmarksView: View {
             if isFirstAppearance {
                 searchFieldIsFocused = true
                 isFirstAppearance = false
+            }
+            loadCardLayoutStyle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .cardLayoutChanged)) { notification in
+            if let layout = notification.object as? CardLayoutStyle {
+                cardLayoutStyle = layout
+            }
+        }
+    }
+    
+    private func loadCardLayoutStyle() {
+        Task {
+            let loadCardLayoutUseCase = DefaultUseCaseFactory.shared.makeLoadCardLayoutUseCase()
+            let layout = await loadCardLayoutUseCase.execute()
+            await MainActor.run {
+                cardLayoutStyle = layout
             }
         }
     }
