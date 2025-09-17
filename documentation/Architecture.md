@@ -15,9 +15,9 @@
 
 ```mermaid
 graph TD
-  UI["UI Layer\n(View, ViewModel)"]
-  Domain["Domain Layer\n(Use Cases, Models, Repository Protocols)"]
-  Data["Data Layer\n(Repository implementations, Database, Entities, API)"]
+  UI["UI Layer (View, ViewModel)"]
+  Domain["Domain Layer (Use Cases, Models, Repository Protocols)"]
+  Data["Data Layer (Repository implementations, Database, Entities, API)"]
   UI --> Domain
   Domain --> Data
 ```
