@@ -133,6 +133,7 @@ struct TagManagementView: View {
             .textFieldStyle(CustomTextFieldStyle())
             .keyboardType(.default)
             .autocorrectionDisabled(true)
+            .autocapitalization(.none)
             .onSubmit {
                 onAddCustomTag()
             }

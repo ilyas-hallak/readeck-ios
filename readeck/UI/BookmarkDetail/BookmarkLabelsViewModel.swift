@@ -73,10 +73,15 @@ class BookmarkLabelsViewModel {
     
     @MainActor
     func addLabel(to bookmarkId: String, label: String) async {
-        let trimmedLabel = label.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedLabel.isEmpty else { return }
+        let individualLabels = label
+            .components(separatedBy: " ")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .filter { !currentLabels.contains($0) }
         
-        await addLabels(to: bookmarkId, labels: [trimmedLabel])
+        guard !individualLabels.isEmpty else { return }
+        
+        await addLabels(to: bookmarkId, labels: individualLabels)
         newLabelText = ""
         searchText = ""
     }
