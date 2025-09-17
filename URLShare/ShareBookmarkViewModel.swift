@@ -67,8 +67,22 @@ class ShareBookmarkViewModel: ObservableObject {
             logger.warning("No extension context available for content extraction")
             return 
         }
+        
+        var extractedUrl: String?
+        var extractedTitle: String?
+        
         for item in extensionContext.inputItems {
             guard let inputItem = item as? NSExtensionItem else { continue }
+            
+            // Use the inputItem's attributedTitle or attributedContentText as potential title
+            if let attributedTitle = inputItem.attributedTitle?.string, !attributedTitle.isEmpty {
+                extractedTitle = attributedTitle
+                logger.info("Extracted title from input item: \(attributedTitle)")
+            } else if let attributedContent = inputItem.attributedContentText?.string, !attributedContent.isEmpty {
+                extractedTitle = attributedContent
+                logger.info("Extracted title from content text: \(attributedContent)")
+            }
+            
             for attachment in inputItem.attachments ?? [] {
                 if attachment.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     attachment.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] (url, error) in
@@ -76,6 +90,12 @@ class ShareBookmarkViewModel: ObservableObject {
                             if let url = url as? URL {
                                 self?.url = url.absoluteString
                                 self?.logger.info("Extracted URL from shared content: \(url.absoluteString)")
+                                
+                                // Set title if we extracted one and current title is empty
+                                if let title = extractedTitle, self?.title.isEmpty == true {
+                                    self?.title = title
+                                    self?.logger.info("Set title from shared content: \(title)")
+                                }
                             } else if let error = error {
                                 self?.logger.error("Failed to extract URL: \(error.localizedDescription)")
                             }
@@ -85,9 +105,18 @@ class ShareBookmarkViewModel: ObservableObject {
                 if attachment.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     attachment.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] (text, error) in
                         DispatchQueue.main.async {
-                            if let text = text as? String, let url = URL(string: text) {
-                                self?.url = url.absoluteString
-                                self?.logger.info("Extracted URL from shared text: \(url.absoluteString)")
+                            if let text = text as? String {
+                                // Only treat as URL if it's a valid URL and we don't have one yet
+                                if self?.url == nil, let url = URL(string: text), url.scheme != nil {
+                                    self?.url = url.absoluteString
+                                    self?.logger.info("Extracted URL from shared text: \(url.absoluteString)")
+                                } else {
+                                    // If not a valid URL or we already have a URL, treat as potential title
+                                    if self?.title.isEmpty == true {
+                                        self?.title = text
+                                        self?.logger.info("Set title from shared text: \(text)")
+                                    }
+                                }
                             } else if let error = error {
                                 self?.logger.error("Failed to extract text: \(error.localizedDescription)")
                             }

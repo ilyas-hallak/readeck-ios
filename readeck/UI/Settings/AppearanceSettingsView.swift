@@ -6,10 +6,12 @@ struct AppearanceSettingsView: View {
     
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let saveCardLayoutUseCase: PSaveCardLayoutUseCase
+    private let settingsRepository: PSettingsRepository
     
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
         self.saveCardLayoutUseCase = factory.makeSaveCardLayoutUseCase()
+        self.settingsRepository = SettingsRepository()
     }
     
     var body: some View {
@@ -58,18 +60,29 @@ struct AppearanceSettingsView: View {
     }
     
     private func loadSettings() {
-        // Load theme setting
-        let themeString = UserDefaults.standard.string(forKey: "selectedTheme") ?? "system"
-        selectedTheme = Theme(rawValue: themeString) ?? .system
-        
-        // Load card layout setting
         Task {
+            // Load both theme and card layout from repository
+            if let settings = try? await settingsRepository.loadSettings() {
+                await MainActor.run {
+                    selectedTheme = settings.theme ?? .system
+                }
+            }
             selectedCardLayout = await loadCardLayoutUseCase.execute()
         }
     }
     
     private func saveThemeSettings() {
-        UserDefaults.standard.set(selectedTheme.rawValue, forKey: "selectedTheme")
+        Task {
+            // Load current settings, update theme, and save back
+            var settings = (try? await settingsRepository.loadSettings()) ?? Settings()
+            settings.theme = selectedTheme
+            try? await settingsRepository.saveSettings(settings)
+            
+            // Notify app about theme change
+            await MainActor.run {
+                NotificationCenter.default.post(name: .settingsChanged, object: nil)
+            }
+        }
     }
     
     private func saveCardLayoutSettings() {
