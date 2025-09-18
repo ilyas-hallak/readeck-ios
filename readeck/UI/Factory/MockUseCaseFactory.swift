@@ -150,6 +150,7 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {}
     func execute(enableTTS: Bool) async throws {}
     func execute(theme: Theme) async throws {}
+    func execute(urlOpener: UrlOpener) async throws {}
 }
 
 class MockGetBookmarkUseCase: PGetBookmarkUseCase {

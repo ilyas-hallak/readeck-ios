@@ -14,6 +14,7 @@ extension View {
 
 struct BookmarkCardView: View {
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var appSettings: AppSettings
     
     let bookmark: Bookmark
     let currentState: BookmarkState
@@ -255,7 +256,7 @@ struct BookmarkCardView: View {
                     HStack {
                         Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Site") + " open", systemImage: "safari")
                             .onTapGesture {
-                                SafariUtil.openInSafari(url: bookmark.url)
+                                URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
                             }
                     }
                 }
@@ -336,7 +337,7 @@ struct BookmarkCardView: View {
                     HStack {
                         Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Site") + " open", systemImage: "safari")
                             .onTapGesture {
-                                SafariUtil.openInSafari(url: bookmark.url)
+                                URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
                             }
                     }
                 }

@@ -26,6 +26,10 @@ class AppSettings: ObservableObject {
     var theme: Theme {
         settings?.theme ?? .system
     }
+    
+    var urlOpener: UrlOpener {
+        settings?.urlOpener ?? .inAppBrowser
+    }
 
     init(settings: Settings? = nil) {
         self.settings = settings

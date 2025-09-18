@@ -72,7 +72,7 @@ struct BookmarkDetailView: View {
                                         .padding()
                                 } else {
                                     Button(action: {
-                                        SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)
+                                        URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
                                     }) {
                                         HStack {
                                             Image(systemName: "safari")
@@ -263,7 +263,7 @@ struct BookmarkDetailView: View {
                 .padding()
         } else {
             Button(action: {
-                SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)
+                URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
             }) {
                 HStack {
                     Image(systemName: "safari")
@@ -319,7 +319,7 @@ struct BookmarkDetailView: View {
             
             metaRow(icon: "safari") {
                 Button(action: {
-                    SafariUtil.openInSafari(url: viewModel.bookmarkDetail.url)
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
                 }) {
                     Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
                         .font(.subheadline)
