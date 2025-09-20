@@ -103,12 +103,12 @@ struct PadSidebarView: View {
                     case .tags:
                         NavigationStack {
                             LabelsView(selectedTag: $selectedTag)
-                                .navigationDestination(item: $selectedTag) { label in
-                                    BookmarksView(state: .all, type: [], selectedBookmark: $selectedBookmark, tag: label.name)
-                                        .navigationTitle("\(label.name) (\(label.count))")
-                                        .onDisappear {
-                                            selectedTag = nil
-                                        }
+                        }
+                        .navigationDestination(item: $selectedTag) { label in
+                            BookmarksView(state: .all, type: [], selectedBookmark: $selectedBookmark, tag: label.name)
+                                .navigationTitle("\(label.name) (\(label.count))")
+                                .onDisappear {
+                                    selectedTag = nil
                                 }
                         }
                     }

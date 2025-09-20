@@ -9,7 +9,7 @@ struct CacheSettingsView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: "Cache Settings", icon: "internaldrive")
+            SectionHeader(title: "Cache Settings".localized, icon: "internaldrive")
                 .padding(.bottom, 4)
             
             VStack(spacing: 12) {

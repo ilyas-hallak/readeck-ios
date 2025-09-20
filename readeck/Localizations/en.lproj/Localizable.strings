@@ -18,6 +18,34 @@
 "%lld/%lld" = "%1$lld/%2$lld";
 "12 min • Today • example.com" = "12 min • Today • example.com";
 "Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly." = "Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.";
+
+/* Legal & Privacy */
+"Legal & Privacy" = "Legal & Privacy";
+"Privacy Policy" = "Privacy Policy";
+"Legal Notice" = "Legal Notice";
+"Report an Issue" = "Report an Issue";
+"Contact Support" = "Contact Support";
+
+/* Navigation & States */
+"All" = "All";
+"Unread" = "Unread";
+"Favorites" = "Favorites";
+"Archive" = "Archive";
+"Search" = "Search";
+"Settings" = "Settings";
+"Articles" = "Articles";
+"Videos" = "Videos";
+"Pictures" = "Pictures";
+"Tags" = "Tags";
+
+/* Settings Sections */
+"Font Settings" = "Font Settings";
+"Appearance" = "Appearance";
+"Cache Settings" = "Cache Settings";
+"General Settings" = "General Settings";
+"Server Settings" = "Server Settings";
+"Server Connection" = "Server Connection";
+
 "Add" = "Add";
 "Add new tag:" = "Add new tag:";
 "all" = "all";

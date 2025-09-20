@@ -5,6 +5,8 @@
 //  Created by Ilyas Hallak on 01.07.25.
 //
 
+import Foundation
+
 enum SidebarTab: Hashable, CaseIterable, Identifiable {
     case search, all, unread, favorite, archived, article, videos, pictures, tags, settings
     
@@ -12,16 +14,16 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
     
     var label: String {
         switch self {
-        case .all: return "All"
-        case .unread: return "Unread"
-        case .favorite: return "Favorites"
-        case .archived: return "Archive"
-        case .search: return "Search"
-        case .settings: return "Settings"
-        case .article: return "Articles"
-        case .videos: return "Videos"
-        case .pictures: return "Pictures"
-        case .tags: return "Tags"
+        case .all: return NSLocalizedString("All", comment: "")
+        case .unread: return NSLocalizedString("Unread", comment: "")
+        case .favorite: return NSLocalizedString("Favorites", comment: "")
+        case .archived: return NSLocalizedString("Archive", comment: "")
+        case .search: return NSLocalizedString("Search", comment: "")
+        case .settings: return NSLocalizedString("Settings", comment: "")
+        case .article: return NSLocalizedString("Articles", comment: "")
+        case .videos: return NSLocalizedString("Videos", comment: "")
+        case .pictures: return NSLocalizedString("Pictures", comment: "")
+        case .tags: return NSLocalizedString("Tags", comment: "")
         }
     }
     
