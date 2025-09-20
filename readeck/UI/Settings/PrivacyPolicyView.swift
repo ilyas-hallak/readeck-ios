@@ -44,7 +44,7 @@ struct PrivacyPolicyView: View {
                         
                         sectionView(
                             title: "Contact",
-                            content: "If you have questions about this privacy policy, please contact us at: ilhallak@gmail.com"
+                            content: "If you have questions about this privacy policy, please contact us at: hi@ilyashallak.de"
                         )
                     }
                 }

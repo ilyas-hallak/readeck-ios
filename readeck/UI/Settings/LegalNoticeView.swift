@@ -17,11 +17,11 @@ struct LegalNoticeView: View {
                             title: "App Publisher",
                             content: """
                             Ilyas Hallak
-                            [Street Address]
-                            [City, Postal Code]
-                            [Country]
+                            Albert-Bischof-Str. 18
+                            28357 Bremen
+                            Germany
                             
-                            Email: ilhallak@gmail.com
+                            Email: hi@ilyashallak.de
                             """
                         )
                         
