@@ -16,7 +16,7 @@ struct AppearanceSettingsView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: "Appearance", icon: "paintbrush")
+            SectionHeader(title: "Appearance".localized, icon: "paintbrush")
                 .padding(.bottom, 4)
             
             // Theme Section

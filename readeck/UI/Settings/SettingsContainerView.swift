@@ -33,6 +33,9 @@ struct SettingsContainerView: View {
                 SettingsServerView()
                     .cardStyle()
                 
+                LegalPrivacySettingsView()
+                    .cardStyle()
+                
                 // Debug-only Logging Configuration
                 if Bundle.main.isDebugBuild {
                     debugSettingsSection

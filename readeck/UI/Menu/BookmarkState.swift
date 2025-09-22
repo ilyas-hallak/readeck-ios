@@ -5,6 +5,8 @@
 //  Created by Ilyas Hallak on 01.07.25.
 //
 
+import Foundation
+
 enum BookmarkState: String, CaseIterable {
     case all = "all"
     case unread = "unread"
@@ -14,13 +16,13 @@ enum BookmarkState: String, CaseIterable {
     var displayName: String {
         switch self {
         case .all:
-            return "All"
+            return NSLocalizedString("All", comment: "")
         case .unread:
-            return "Unread"
+            return NSLocalizedString("Unread", comment: "")
         case .favorite:
-            return "Favorites"
+            return NSLocalizedString("Favorites", comment: "")
         case .archived:
-            return "Archive"
+            return NSLocalizedString("Archive", comment: "")
         }
     }
     

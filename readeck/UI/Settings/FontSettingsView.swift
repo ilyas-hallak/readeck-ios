@@ -16,7 +16,7 @@ struct FontSettingsView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: "Font Settings", icon: "textformat")
+            SectionHeader(title: "Font Settings".localized, icon: "textformat")
                 .padding(.bottom, 4)
             
             // Font Family Picker

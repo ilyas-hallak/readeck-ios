@@ -73,15 +73,12 @@ class BookmarkLabelsViewModel {
     
     @MainActor
     func addLabel(to bookmarkId: String, label: String) async {
-        let individualLabels = label
-            .components(separatedBy: " ")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .filter { !currentLabels.contains($0) }
+        let splitLabels = LabelUtils.splitLabelsFromInput(label)
+        let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels)
         
-        guard !individualLabels.isEmpty else { return }
+        guard !uniqueLabels.isEmpty else { return }
         
-        await addLabels(to: bookmarkId, labels: individualLabels)
+        await addLabels(to: bookmarkId, labels: uniqueLabels)
         newLabelText = ""
         searchText = ""
     }

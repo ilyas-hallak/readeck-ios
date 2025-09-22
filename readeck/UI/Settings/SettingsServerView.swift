@@ -18,7 +18,7 @@ struct SettingsServerView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: viewModel.isSetupMode ? "Server Settings" : "Server Connection", icon: "server.rack")
+            SectionHeader(title: viewModel.isSetupMode ? "Server Settings".localized : "Server Connection".localized, icon: "server.rack")
                 .padding(.bottom, 4)
             
             Text(viewModel.isSetupMode ?

@@ -208,19 +208,15 @@ struct ShareBookmarkView: View {
     }
     
     private func addCustomTag() {
-        let trimmed = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        let splitLabels = LabelUtils.splitLabelsFromInput(viewModel.searchText)
+        let availableLabels = viewModel.labels.map { $0.name }
+        let currentLabels = Array(viewModel.selectedLabels)
+        let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels, availableLabels: availableLabels)
         
-        let lowercased = trimmed.lowercased()
-        let allExisting = Set(viewModel.labels.map { $0.name.lowercased() })
-        let allSelected = Set(viewModel.selectedLabels.map { $0.lowercased() })
-        
-        if allExisting.contains(lowercased) || allSelected.contains(lowercased) {
-            // Tag already exists, don't add
-            return
-        } else {
-            viewModel.selectedLabels.insert(trimmed)
-            viewModel.searchText = ""
+        for label in uniqueLabels {
+            viewModel.selectedLabels.insert(label)
         }
+        
+        viewModel.searchText = ""
     }
 }

@@ -16,7 +16,7 @@ struct SettingsGeneralView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: "General Settings", icon: "gear")
+            SectionHeader(title: "General Settings".localized, icon: "gear")
                 .padding(.bottom, 4)
             
             VStack(alignment: .leading, spacing: 12) {
