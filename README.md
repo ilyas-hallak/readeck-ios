@@ -18,9 +18,15 @@ https://codeberg.org/readeck/readeck
   <img src="screenshots/ipad.webp" height="400" alt="iPad View">
 </p>
 
-## TestFlight Beta Access
+## Download
 
-You can now join the public TestFlight beta for the Readeck iOS app:
+### App Store (Stable Releases)
+The official app is available on the App Store with stable, tested releases:
+
+[Download Readeck on the App Store](https://apps.apple.com/de/app/readeck/id6748764703)
+
+### TestFlight Beta Access (Early Releases)
+For early access to new features and beta versions (use with caution):
 
 [Join the Readeck Beta on TestFlight](https://testflight.apple.com/join/cV55mKsR)
 

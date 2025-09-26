@@ -1,7 +1,7 @@
 import Foundation
 import CoreData
 
-class LabelsRepository: PLabelsRepository {
+class LabelsRepository: PLabelsRepository, @unchecked Sendable {
     private let api: PAPI
     
     private let coreDataManager = CoreDataManager.shared
@@ -17,27 +17,28 @@ class LabelsRepository: PLabelsRepository {
     }
     
     func saveLabels(_ dtos: [BookmarkLabelDto]) async throws {
-        for dto in dtos {
-            if !tagExists(name: dto.name) {
-                dto.toEntity(context: coreDataManager.context)
+        let backgroundContext = coreDataManager.newBackgroundContext()
+        
+        try await backgroundContext.perform { [weak self] in
+            guard let self = self else { return }
+            for dto in dtos {
+                if !self.tagExists(name: dto.name, in: backgroundContext) {
+                    dto.toEntity(context: backgroundContext)
+                }
             }
+            try backgroundContext.save()
         }
-        try coreDataManager.context.save()
     }
     
-    private func tagExists(name: String) -> Bool {
+    private func tagExists(name: String, in context: NSManagedObjectContext) -> Bool {
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "name == %@", name)
         
-        var exists = false
-        coreDataManager.context.performAndWait {
-            do {
-                let results = try coreDataManager.context.fetch(fetchRequest)
-                exists = !results.isEmpty
-            } catch {
-                exists = false
-            }
+        do {
+            let count = try context.count(for: fetchRequest)
+            return count > 0
+        } catch {
+            return false
         }
-        return exists
     }
 }

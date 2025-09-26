@@ -50,6 +50,16 @@ class CoreDataManager {
         return persistentContainer.viewContext
     }
     
+    var mainContext: NSManagedObjectContext {
+        return persistentContainer.viewContext
+    }
+    
+    func newBackgroundContext() -> NSManagedObjectContext {
+        let context = persistentContainer.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
+        return context
+    }
+    
     func save() {
         if context.hasChanges {
             do {

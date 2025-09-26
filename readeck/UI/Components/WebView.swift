@@ -285,6 +285,8 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
     var hasHeightUpdate: Bool = false
+    var isScrolling: Bool = false
+    var scrollEndTimer: Timer?
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
@@ -300,7 +302,8 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
             DispatchQueue.main.async {
-                if self.hasHeightUpdate == false {
+                // Block height updates during active scrolling to prevent flicker
+                if !self.isScrolling && !self.hasHeightUpdate {
                     self.onHeightChange?(height)
                     self.hasHeightUpdate = true
                 }
@@ -308,6 +311,15 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
         if message.name == "scrollProgress", let progress = message.body as? Double {
             DispatchQueue.main.async {
+                // Track scrolling state
+                self.isScrolling = true
+                
+                // Reset scrolling state after scroll ends
+                self.scrollEndTimer?.invalidate()
+                self.scrollEndTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
+                    self.isScrolling = false
+                }
+                
                 self.onScroll?(progress)
             }
         }
