@@ -4,6 +4,7 @@ protocol PSaveSettingsUseCase {
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws
     func execute(enableTTS: Bool) async throws
     func execute(theme: Theme) async throws
+    func execute(urlOpener: UrlOpener) async throws
 }
 
 class SaveSettingsUseCase: PSaveSettingsUseCase {
@@ -31,6 +32,12 @@ class SaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(theme: Theme) async throws {
         try await settingsRepository.saveSettings(
             .init(theme: theme)
+        )
+    }
+    
+    func execute(urlOpener: UrlOpener) async throws {
+        try await settingsRepository.saveSettings(
+            .init(urlOpener: urlOpener)
         )
     }
 }

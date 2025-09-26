@@ -15,8 +15,8 @@ class SettingsGeneralViewModel {
     // MARK: - Reading Settings
     var enableReaderMode: Bool = false
     var enableTTS: Bool = false
-    var openExternalLinksInApp: Bool = true
     var autoMarkAsRead: Bool = false
+    var urlOpener: UrlOpener = .inAppBrowser
     
     // MARK: - Messages
     
@@ -36,6 +36,7 @@ class SettingsGeneralViewModel {
             if let settings = try await loadSettingsUseCase.execute() {
                 enableTTS = settings.enableTTS ?? false
                 selectedTheme = settings.theme ?? .system
+                urlOpener = settings.urlOpener ?? .inAppBrowser
                 autoSyncEnabled = false
             }
         } catch {
@@ -48,6 +49,7 @@ class SettingsGeneralViewModel {
         do {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
             try await saveSettingsUseCase.execute(theme: selectedTheme)
+            try await saveSettingsUseCase.execute(urlOpener: urlOpener)
             
             successMessage = "Settings saved"
             
