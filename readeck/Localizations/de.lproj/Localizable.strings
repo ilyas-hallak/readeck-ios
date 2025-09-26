@@ -46,6 +46,9 @@
 "General Settings" = "Allgemeine Einstellungen";
 "Server Settings" = "Server-Einstellungen";
 "Server Connection" = "Server-Verbindung";
+"Open external links in" = "Öffne externe Links in";
+"In App Browser" = "In App Browser";
+"Default Browser" = "Standard Browser";
 
 "Add" = "Hinzufügen";
 "Add new tag:" = "Neues Label hinzufügen:";

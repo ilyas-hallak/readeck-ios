@@ -35,11 +35,11 @@ struct SettingsGeneralView: View {
             
             // Reading Settings
             VStack(alignment: .leading, spacing: 12) {
-                Text("Open external links in")
+                Text("Open external links in".localized)
                     .font(.headline)
                 Picker("urlOpener", selection: $viewModel.urlOpener) {
                     ForEach(UrlOpener.allCases, id: \.self) { urlOpener in
-                        Text(urlOpener.displayName).tag(urlOpener)
+                        Text(urlOpener.displayName.localized).tag(urlOpener)
                     }
                 }
                 .pickerStyle(.segmented)
