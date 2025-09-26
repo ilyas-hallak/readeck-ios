@@ -14,6 +14,8 @@ struct Settings {
     var theme: Theme? = nil
     var cardLayoutStyle: CardLayoutStyle? = nil
     
+    var urlOpener: UrlOpener? = nil
+    
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty
     }
@@ -91,6 +93,10 @@ class SettingsRepository: PSettingsRepository {
                         existingSettings.theme = theme.rawValue
                     }
                     
+                    if let urlOpener = settings.urlOpener {
+                        existingSettings.urlOpener = urlOpener.rawValue
+                    }
+                    
                     if let cardLayoutStyle = settings.cardLayoutStyle {
                         existingSettings.cardLayoutStyle = cardLayoutStyle.rawValue
                     }
@@ -132,7 +138,8 @@ class SettingsRepository: PSettingsRepository {
                         fontSize: FontSize(rawValue: settingEntity?.fontSize ?? FontSize.medium.rawValue),
                         enableTTS: settingEntity?.enableTTS,
                         theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue),
-                        cardLayoutStyle: CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue)
+                        cardLayoutStyle: CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue),
+                        urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue)
                     )
                     continuation.resume(returning: settings)
                 } catch {

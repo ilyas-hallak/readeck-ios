@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SettingsGeneralView: View {
-    @State private var viewModel: SettingsGeneralViewModel        
+    @State private var viewModel: SettingsGeneralViewModel
     
     init(viewModel: SettingsGeneralViewModel = SettingsGeneralViewModel()) {
         self.viewModel = viewModel
@@ -33,6 +33,23 @@ struct SettingsGeneralView: View {
                     .font(.footnote)
             }
             
+            // Reading Settings
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Open external links in".localized)
+                    .font(.headline)
+                Picker("urlOpener", selection: $viewModel.urlOpener) {
+                    ForEach(UrlOpener.allCases, id: \.self) { urlOpener in
+                        Text(urlOpener.displayName.localized).tag(urlOpener)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: viewModel.urlOpener) {
+                    Task {
+                        await viewModel.saveGeneralSettings()
+                    }
+                }
+            }
+            
             #if DEBUG
             // Sync Settings
             VStack(alignment: .leading, spacing: 12) {
@@ -54,8 +71,6 @@ struct SettingsGeneralView: View {
                 Text("Reading Settings")
                     .font(.headline)
                 Toggle("Safari Reader Mode", isOn: $viewModel.enableReaderMode)
-                    .toggleStyle(SwitchToggleStyle())
-                Toggle("Open external links in in-app Safari", isOn: $viewModel.openExternalLinksInApp)
                     .toggleStyle(SwitchToggleStyle())
                 Toggle("Automatically mark articles as read", isOn: $viewModel.autoMarkAsRead)
                     .toggleStyle(SwitchToggleStyle())
