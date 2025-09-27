@@ -15,9 +15,7 @@ https://codeberg.org/readeck/readeck
 </a>
 
 ### TestFlight Beta Access (Early Releases)
-<a href="https://testflight.apple.com/join/cV55mKsR">
-  <img src="https://developer.apple.com/assets/elements/badges/testflight.svg" alt="Join TestFlight Beta" width="200">
-</a>
+[Join the Readeck Beta on TestFlight](https://testflight.apple.com/join/cV55mKsR)
 
 For early access to new features and beta versions (use with caution). To participate, simply install TestFlight from the App Store and open the link above on your iPhone, iPad, or Mac. This early version lets you explore all core features before the official release. Your feedback is incredibly valuable and will help shape the final app.
 
