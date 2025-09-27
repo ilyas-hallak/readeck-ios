@@ -64,8 +64,7 @@ struct BookmarkDetailView: View {
                                     })
                                     .frame(height: webViewHeight)
                                     .cornerRadius(14)
-                                    .padding(.horizontal, 4)
-                                    .animation(.easeInOut, value: webViewHeight)
+                                    .padding(.horizontal, 4)                                   
                                 } else if viewModel.isLoadingArticle {
                                     ProgressView("Loading article...")
                                         .frame(maxWidth: .infinity, alignment: .center)

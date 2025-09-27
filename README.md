@@ -9,13 +9,24 @@ https://codeberg.org/readeck/readeck
 
 ## Screenshots
 
+### iPhone
+
 <p align="center">  
-  <img src="screenshots/main.webp" height="400" alt="Main View">
-  <img src="screenshots/detail.webp" height="400" alt="Detail View">
-  <img src="screenshots/new.webp" height="400" alt="Add Bookmark">
-  <img src="screenshots/more.webp" height="400" alt="More Options">
-  <img src="screenshots/share.webp" height="400" alt="Share Extension">  
-  <img src="screenshots/ipad.webp" height="400" alt="iPad View">
+  <img src="screenshots/iphone_1.png" height="400" alt="iPhone Screenshot 1">
+  <img src="screenshots/iphone_2.png" height="400" alt="iPhone Screenshot 2">
+  <img src="screenshots/iphone_3.png" height="400" alt="iPhone Screenshot 3">
+  <img src="screenshots/iphone_4.png" height="400" alt="iPhone Screenshot 4">
+  <img src="screenshots/iphone_5.png" height="400" alt="iPhone Screenshot 5">
+</p>
+
+### iPad
+
+<p align="center">  
+  <img src="screenshots/ipad_1.jpg" height="400" alt="iPad Screenshot 1">
+  <img src="screenshots/ipad_2.jpg" height="400" alt="iPad Screenshot 2">
+  <img src="screenshots/ipad_3.jpg" height="400" alt="iPad Screenshot 3">
+  <img src="screenshots/ipad_4.jpg" height="400" alt="iPad Screenshot 4">
+  <img src="screenshots/ipad_5.jpg" height="400" alt="iPad Screenshot 5">
 </p>
 
 ## Download

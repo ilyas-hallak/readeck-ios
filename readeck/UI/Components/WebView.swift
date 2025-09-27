@@ -228,9 +228,24 @@ struct WebView: UIViewRepresentable {
         <body>
             \(htmlContent)
             <script>
+                let lastHeight = 0;
+                let heightUpdateTimeout = null;
+                let scrollTimeout = null;
+                let isScrolling = false;
+                
                 function updateHeight() {
                     const height = document.body.scrollHeight;
-                    window.webkit.messageHandlers.heightUpdate.postMessage(height);
+                    
+                    // Only send height update if it changed significantly and we're not scrolling
+                    if (Math.abs(height - lastHeight) > 5 && !isScrolling) {
+                        lastHeight = height;
+                        window.webkit.messageHandlers.heightUpdate.postMessage(height);
+                    }
+                }
+                
+                function debouncedHeightUpdate() {
+                    clearTimeout(heightUpdateTimeout);
+                    heightUpdateTimeout = setTimeout(updateHeight, 100);
                 }
                 
                 window.addEventListener('load', updateHeight);
@@ -238,14 +253,29 @@ struct WebView: UIViewRepresentable {
                 
                 // Höhe bei Bild-Ladevorgängen aktualisieren
                 document.querySelectorAll('img').forEach(img => {
-                    img.addEventListener('load', updateHeight);
+                    img.addEventListener('load', debouncedHeightUpdate);
                 });
-                // Scroll progress reporting
+                
+                // Throttled scroll progress reporting
                 window.addEventListener('scroll', function() {
-                    var scrollTop = window.scrollY || document.documentElement.scrollTop;
-                    var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                    var progress = docHeight > 0 ? scrollTop / docHeight : 0;
-                    window.webkit.messageHandlers.scrollProgress.postMessage(progress);
+                    isScrolling = true;
+                    
+                    // Clear existing timeout
+                    clearTimeout(scrollTimeout);
+                    
+                    // Throttle scroll events to reduce frequency
+                    scrollTimeout = setTimeout(function() {
+                        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+                        var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                        var progress = docHeight > 0 ? scrollTop / docHeight : 0;
+                        window.webkit.messageHandlers.scrollProgress.postMessage(progress);
+                        
+                        // Reset scrolling state after a delay
+                        setTimeout(function() {
+                            isScrolling = false;
+                            debouncedHeightUpdate(); // Check for height changes after scrolling stops
+                        }, 200);
+                    }, 16); // ~60fps throttling
                 });
             </script>
         </body>
@@ -284,9 +314,13 @@ struct WebView: UIViewRepresentable {
 class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
-    var hasHeightUpdate: Bool = false
     var isScrolling: Bool = false
     var scrollEndTimer: Timer?
+    var heightUpdateTimer: Timer?
+    var lastHeight: CGFloat = 0
+    var pendingHeight: CGFloat = 0
+    var scrollVelocity: Double = 0
+    var lastScrollTime: Date = Date()
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
@@ -302,26 +336,75 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
             DispatchQueue.main.async {
-                // Block height updates during active scrolling to prevent flicker
-                if !self.isScrolling && !self.hasHeightUpdate {
-                    self.onHeightChange?(height)
-                    self.hasHeightUpdate = true
-                }
+                self.handleHeightUpdate(height: height)
             }
         }
         if message.name == "scrollProgress", let progress = message.body as? Double {
             DispatchQueue.main.async {
-                // Track scrolling state
-                self.isScrolling = true
-                
-                // Reset scrolling state after scroll ends
-                self.scrollEndTimer?.invalidate()
-                self.scrollEndTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
-                    self.isScrolling = false
-                }
-                
-                self.onScroll?(progress)
+                self.handleScrollProgress(progress: progress)
             }
         }
+    }
+    
+    private func handleHeightUpdate(height: CGFloat) {
+        // Store the pending height
+        pendingHeight = height
+        
+        // If we're actively scrolling, defer the height update
+        if isScrolling {
+            return
+        }
+        
+        // Apply height update immediately if not scrolling
+        applyHeightUpdate(height: height)
+    }
+    
+    private func handleScrollProgress(progress: Double) {
+        let now = Date()
+        let timeDelta = now.timeIntervalSince(lastScrollTime)
+        
+        // Calculate scroll velocity to detect fast scrolling
+        if timeDelta > 0 {
+            scrollVelocity = abs(progress) / timeDelta
+        }
+        
+        lastScrollTime = now
+        isScrolling = true
+        
+        // Longer delay for scroll end detection, especially during fast scrolling
+        let scrollEndDelay: TimeInterval = scrollVelocity > 2.0 ? 0.8 : 0.5
+        
+        scrollEndTimer?.invalidate()
+        scrollEndTimer = Timer.scheduledTimer(withTimeInterval: scrollEndDelay, repeats: false) { [weak self] _ in
+            self?.handleScrollEnd()
+        }
+        
+        onScroll?(progress)
+    }
+    
+    private func handleScrollEnd() {
+        isScrolling = false
+        scrollVelocity = 0
+        
+        // Apply any pending height update after scrolling ends
+        if pendingHeight != lastHeight && pendingHeight > 0 {
+            // Add small delay to ensure scroll has fully stopped
+            heightUpdateTimer?.invalidate()
+            heightUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
+                guard let self = self else { return }
+                self.applyHeightUpdate(height: self.pendingHeight)
+            }
+        }
+    }
+    
+    private func applyHeightUpdate(height: CGFloat) {
+        // Only update if height actually changed significantly
+        let heightDifference = abs(height - lastHeight)
+        if heightDifference < 5 { // Ignore tiny height changes that cause flicker
+            return
+        }
+        
+        lastHeight = height
+        onHeightChange?(height)
     }
 }
