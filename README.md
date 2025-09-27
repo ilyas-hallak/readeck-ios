@@ -7,6 +7,28 @@ A native iOS client for [readeck](https://readeck.org) bookmark management.
 The official repository is on Codeberg:
 https://codeberg.org/readeck/readeck
 
+## Download
+
+### App Store (Stable Releases)
+<a href="https://apps.apple.com/de/app/readeck/id6748764703">
+  <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" width="200">
+</a>
+
+### TestFlight Beta Access (Early Releases)
+<a href="https://testflight.apple.com/join/cV55mKsR">
+  <img src="https://developer.apple.com/assets/elements/badges/testflight.svg" alt="Join TestFlight Beta" width="200">
+</a>
+
+For early access to new features and beta versions (use with caution). To participate, simply install TestFlight from the App Store and open the link above on your iPhone, iPad, or Mac. This early version lets you explore all core features before the official release. Your feedback is incredibly valuable and will help shape the final app.
+
+What to test:
+- See the feature list below for an overview of what you can try out.
+- For details and recent changes, please refer to the release notes in TestFlight or the [Changelog](./CHANGELOG.md).
+
+Please report any bugs, crashes, or suggestions directly through TestFlight, or email me at ilhallak@gmail.com. Thank you for helping make Readeck better!
+
+If you are interested in joining the internal beta, please contact me directly at mooonki:matrix.org.
+
 ## Screenshots
 
 ### iPhone
@@ -29,27 +51,6 @@ https://codeberg.org/readeck/readeck
   <img src="screenshots/ipad_5.jpg" height="400" alt="iPad Screenshot 5">
 </p>
 
-## Download
-
-### App Store (Stable Releases)
-The official app is available on the App Store with stable, tested releases:
-
-[Download Readeck on the App Store](https://apps.apple.com/de/app/readeck/id6748764703)
-
-### TestFlight Beta Access (Early Releases)
-For early access to new features and beta versions (use with caution):
-
-[Join the Readeck Beta on TestFlight](https://testflight.apple.com/join/cV55mKsR)
-
-To participate, simply install TestFlight from the App Store and open the link above on your iPhone, iPad, or Mac. This early version lets you explore all core features before the official release. Your feedback is incredibly valuable and will help shape the final app.
-
-What to test:
-- See the feature list below for an overview of what you can try out.
-- For details and recent changes, please refer to the release notes in TestFlight or the [Changelog](./CHANGELOG.md).
-
-Please report any bugs, crashes, or suggestions directly through TestFlight, or email me at ilhallak@gmail.com. Thank you for helping make Readeck better!
-
-If you are interested in joining the internal beta, please contact me directly at mooonki:matrix.org.
 
 ## Core Features
 
