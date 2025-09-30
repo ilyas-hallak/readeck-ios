@@ -26,7 +26,6 @@ struct WebView: UIViewRepresentable {
         webView.allowsBackForwardNavigationGestures = false
         webView.allowsLinkPreview = true
         
-        // Message Handler hier einmalig hinzufügen
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
         context.coordinator.onHeightChange = onHeightChange
@@ -36,13 +35,10 @@ struct WebView: UIViewRepresentable {
     }
     
     func updateUIView(_ webView: WKWebView, context: Context) {
-        // Nur den HTML-Inhalt laden, keine Handler-Konfiguration
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
         
         let isDarkMode = colorScheme == .dark
-        
-        // Font Settings aus Settings-Objekt
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
         let fontFamily = getFontFamily(from: settings.fontFamily ?? .serif)
         
@@ -235,8 +231,6 @@ struct WebView: UIViewRepresentable {
                 
                 function updateHeight() {
                     const height = document.body.scrollHeight;
-                    
-                    // Only send height update if it changed significantly and we're not scrolling
                     if (Math.abs(height - lastHeight) > 5 && !isScrolling) {
                         lastHeight = height;
                         window.webkit.messageHandlers.heightUpdate.postMessage(height);
@@ -251,31 +245,24 @@ struct WebView: UIViewRepresentable {
                 window.addEventListener('load', updateHeight);
                 setTimeout(updateHeight, 500);
                 
-                // Höhe bei Bild-Ladevorgängen aktualisieren
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
-                
-                // Throttled scroll progress reporting
                 window.addEventListener('scroll', function() {
                     isScrolling = true;
-                    
-                    // Clear existing timeout
                     clearTimeout(scrollTimeout);
                     
-                    // Throttle scroll events to reduce frequency
                     scrollTimeout = setTimeout(function() {
                         var scrollTop = window.scrollY || document.documentElement.scrollTop;
                         var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
                         var progress = docHeight > 0 ? scrollTop / docHeight : 0;
                         window.webkit.messageHandlers.scrollProgress.postMessage(progress);
                         
-                        // Reset scrolling state after a delay
                         setTimeout(function() {
                             isScrolling = false;
-                            debouncedHeightUpdate(); // Check for height changes after scrolling stops
+                            debouncedHeightUpdate();
                         }, 200);
-                    }, 16); // ~60fps throttling
+                    }, 16);
                 });
             </script>
         </body>
@@ -284,27 +271,13 @@ struct WebView: UIViewRepresentable {
         webView.loadHTMLString(styledHTML, baseURL: nil)
     }
     
-    // CRITICAL: Proper cleanup when view is destroyed
     func dismantleUIView(_ webView: WKWebView, coordinator: WebViewCoordinator) {
-        print("🔴 WebView - DISMANTLING: Starting cleanup")
-        
-        // Stop all loading
         webView.stopLoading()
-        
-        // Remove navigation delegate
         webView.navigationDelegate = nil
-        
-        // Remove message handlers to prevent memory leaks
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "heightUpdate")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollProgress")
-        
-        // Clear content
         webView.loadHTMLString("", baseURL: nil)
-        
-        // Cleanup coordinator
         coordinator.cleanup()
-        
-        print("🔴 WebView - DISMANTLING: Cleanup completed")
     }
     
     func makeCoordinator() -> WebViewCoordinator {
@@ -335,19 +308,25 @@ struct WebView: UIViewRepresentable {
 }
 
 class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+    // Callbacks
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
-    var isScrolling: Bool = false
-    var scrollEndTimer: Timer?
-    var heightUpdateTimer: Timer?
+    
+    // Height management
     var lastHeight: CGFloat = 0
     var pendingHeight: CGFloat = 0
+    var heightUpdateTimer: Timer?
+    
+    // Scroll management
+    var isScrolling: Bool = false
     var scrollVelocity: Double = 0
     var lastScrollTime: Date = Date()
+    var scrollEndTimer: Timer?
+    
+    // Lifecycle
     private var isCleanedUp = false
     
     deinit {
-        print("🔴 WebViewCoordinator - deinit called")
         cleanup()
     }
     
@@ -441,18 +420,12 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         guard !isCleanedUp else { return }
         isCleanedUp = true
         
-        print("🔴 WebViewCoordinator - cleanup: Invalidating timers")
-        
-        // Invalidate all timers
         scrollEndTimer?.invalidate()
         scrollEndTimer = nil
         heightUpdateTimer?.invalidate()
         heightUpdateTimer = nil
         
-        // Clear callbacks to prevent memory leaks
         onHeightChange = nil
         onScroll = nil
-        
-        print("🔴 WebViewCoordinator - cleanup: Completed")
     }
 }
