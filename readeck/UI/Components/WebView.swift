@@ -284,6 +284,29 @@ struct WebView: UIViewRepresentable {
         webView.loadHTMLString(styledHTML, baseURL: nil)
     }
     
+    // CRITICAL: Proper cleanup when view is destroyed
+    func dismantleUIView(_ webView: WKWebView, coordinator: WebViewCoordinator) {
+        print("🔴 WebView - DISMANTLING: Starting cleanup")
+        
+        // Stop all loading
+        webView.stopLoading()
+        
+        // Remove navigation delegate
+        webView.navigationDelegate = nil
+        
+        // Remove message handlers to prevent memory leaks
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "heightUpdate")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollProgress")
+        
+        // Clear content
+        webView.loadHTMLString("", baseURL: nil)
+        
+        // Cleanup coordinator
+        coordinator.cleanup()
+        
+        print("🔴 WebView - DISMANTLING: Cleanup completed")
+    }
+    
     func makeCoordinator() -> WebViewCoordinator {
         WebViewCoordinator()
     }
@@ -321,6 +344,12 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     var pendingHeight: CGFloat = 0
     var scrollVelocity: Double = 0
     var lastScrollTime: Date = Date()
+    private var isCleanedUp = false
+    
+    deinit {
+        print("🔴 WebViewCoordinator - deinit called")
+        cleanup()
+    }
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
@@ -406,5 +435,24 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         
         lastHeight = height
         onHeightChange?(height)
+    }
+    
+    func cleanup() {
+        guard !isCleanedUp else { return }
+        isCleanedUp = true
+        
+        print("🔴 WebViewCoordinator - cleanup: Invalidating timers")
+        
+        // Invalidate all timers
+        scrollEndTimer?.invalidate()
+        scrollEndTimer = nil
+        heightUpdateTimer?.invalidate()
+        heightUpdateTimer = nil
+        
+        // Clear callbacks to prevent memory leaks
+        onHeightChange = nil
+        onScroll = nil
+        
+        print("🔴 WebViewCoordinator - cleanup: Completed")
     }
 }
