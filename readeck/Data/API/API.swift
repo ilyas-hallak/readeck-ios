@@ -241,7 +241,9 @@ class API: PAPI {
         }
         
         if let tag {
-            queryItems.append(URLQueryItem(name: "labels", value: tag))
+            // URL-encode label with quotes for proper API handling
+            let encodedTag = "\"\(tag)\""
+            queryItems.append(URLQueryItem(name: "labels", value: encodedTag))
         }
         
         if !queryItems.isEmpty {

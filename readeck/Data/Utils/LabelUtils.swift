@@ -1,14 +1,12 @@
 import Foundation
 
 struct LabelUtils {
-    /// Splits a label input string by spaces and returns individual trimmed labels
-    /// - Parameter input: The input string containing one or more labels separated by spaces
-    /// - Returns: Array of individual trimmed labels, excluding empty strings
+    /// Processes a label input string and returns it as a single trimmed label
+    /// - Parameter input: The input string containing a label (spaces are allowed)
+    /// - Returns: Array containing the trimmed label, or empty array if input is empty
     static func splitLabelsFromInput(_ input: String) -> [String] {
-        return input
-            .components(separatedBy: " ")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? [] : [trimmed]
     }
     
     /// Filters out labels that already exist in current or available labels
