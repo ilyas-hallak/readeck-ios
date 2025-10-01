@@ -34,26 +34,30 @@ struct PhoneTabView: View {
     @ViewBuilder
     private var mainTabsContent: some View {
         ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
-            Tab(tab.label, systemImage: tab.systemImage, value: idx) {
-                tabView(for: tab)
-            }
+            tabView(for: tab)
+                .tabItem {
+                    Label(tab.label, systemImage: tab.systemImage)
+                }
+                .tag(idx)
         }
     }
     
     @ViewBuilder
     private var moreTabContent: some View {
-        Tab("More", systemImage: "ellipsis", value: mainTabs.count) {
-            VStack(spacing: 0) {
-                moreTabsList
-                moreTabsFooter
-            }
-            .onAppear {
-                if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
-                    selectedMoreTab = nil
-                }
-            }
+        VStack(spacing: 0) {
+            moreTabsList
+            moreTabsFooter
+        }
+        .tabItem {
+            Label("More", systemImage: "ellipsis")
         }
         .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
+        .tag(mainTabs.count)
+        .onAppear {
+            if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
+                selectedMoreTab = nil
+            }
+        }
     }
     
     @ViewBuilder
