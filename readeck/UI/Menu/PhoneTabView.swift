@@ -12,7 +12,7 @@ struct PhoneTabView: View {
     private let moreTabs: [SidebarTab] = [.search, .article, .videos, .pictures, .tags, .settings]
     
     @State private var selectedMoreTab: SidebarTab? = nil
-    @State private var selectedTabIndex: Int = 1
+    @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
     
     @EnvironmentObject var appSettings: AppSettings
@@ -20,7 +20,7 @@ struct PhoneTabView: View {
     var body: some View {
         NavigationStack {
             GlobalPlayerContainerView {
-                TabView(selection: $selectedTabIndex) {
+                TabView {
                     mainTabsContent
                     moreTabContent
                 }
@@ -33,31 +33,25 @@ struct PhoneTabView: View {
     
     @ViewBuilder
     private var mainTabsContent: some View {
-        ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
-            tabView(for: tab)
-                .tabItem {
-                    Label(tab.label, systemImage: tab.systemImage)
-                }
-                .tag(idx)
+        ForEach(mainTabs, id: \.self) { tab in
+            Tab(tab.label, systemImage: tab.systemImage) {
+                tabView(for: tab)
+            }
         }
     }
     
     @ViewBuilder
     private var moreTabContent: some View {
-        VStack(spacing: 0) {
-            moreTabsList
-            moreTabsFooter
-        }
-        .tabItem {
-            Label("More", systemImage: "ellipsis")
-        }
-        .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
-        .tag(mainTabs.count)
-        .onAppear {
-            if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
+        Tab("More", systemImage: "ellipsis") {
+            VStack(spacing: 0) {
+                moreTabsList
+                moreTabsFooter
+            }
+            .onAppear {
                 selectedMoreTab = nil
             }
         }
+        .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
     }
     
     @ViewBuilder
