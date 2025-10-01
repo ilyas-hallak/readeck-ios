@@ -20,28 +20,19 @@ struct PhoneTabView: View {
     var body: some View {
         NavigationStack {
             GlobalPlayerContainerView {
-                if #available(iOS 18.0, *) {
-                    TabView(selection: $selectedTabIndex) {
-                        mainTabsContentNew
-                        moreTabContentNew
-                    }
-                    .accentColor(.accentColor)
-                } else {
-                    TabView(selection: $selectedTabIndex) {
-                        mainTabsContent
-                        moreTabContent
-                    }
-                    .accentColor(.accentColor)
+                TabView(selection: $selectedTabIndex) {
+                    mainTabsContent
+                    moreTabContent
                 }
+                .accentColor(.accentColor)
             }
         }
     }
     
-    // MARK: - Tab Content (iOS 18+)
+    // MARK: - Tab Content
     
-    @available(iOS 18.0, *)
     @ViewBuilder
-    private var mainTabsContentNew: some View {
+    private var mainTabsContent: some View {
         ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
             Tab(tab.label, systemImage: tab.systemImage, value: idx) {
                 tabView(for: tab)
@@ -49,9 +40,8 @@ struct PhoneTabView: View {
         }
     }
     
-    @available(iOS 18.0, *)
     @ViewBuilder
-    private var moreTabContentNew: some View {
+    private var moreTabContent: some View {
         Tab("More", systemImage: "ellipsis", value: mainTabs.count) {
             VStack(spacing: 0) {
                 moreTabsList
@@ -64,37 +54,6 @@ struct PhoneTabView: View {
             }
         }
         .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
-    }
-    
-    // MARK: - Tab Content (Legacy)
-    
-    @ViewBuilder
-    private var mainTabsContent: some View {
-        ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
-            tabView(for: tab)
-                .tabItem {
-                    Label(tab.label, systemImage: tab.systemImage)
-                }
-                .tag(idx)
-        }
-    }
-    
-    @ViewBuilder
-    private var moreTabContent: some View {
-        VStack(spacing: 0) {
-            moreTabsList
-            moreTabsFooter
-        }
-        .tabItem {
-            Label("More", systemImage: "ellipsis")
-        }
-        .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
-        .tag(mainTabs.count)
-        .onAppear {
-            if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
-                selectedMoreTab = nil
-            }
-        }
     }
     
     @ViewBuilder
