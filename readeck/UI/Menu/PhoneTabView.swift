@@ -20,18 +20,53 @@ struct PhoneTabView: View {
     var body: some View {
         NavigationStack {
             GlobalPlayerContainerView {
-                TabView(selection: $selectedTabIndex) {
-                    mainTabsContent
-                    moreTabContent
+                if #available(iOS 18.0, *) {
+                    TabView(selection: $selectedTabIndex) {
+                        mainTabsContentNew
+                        moreTabContentNew
+                    }
+                    .accentColor(.accentColor)
+                } else {
+                    TabView(selection: $selectedTabIndex) {
+                        mainTabsContent
+                        moreTabContent
+                    }
+                    .accentColor(.accentColor)
                 }
-                .accentColor(.accentColor)
             }
         }
     }
     
+    // MARK: - Tab Content (iOS 18+)
     
+    @available(iOS 18.0, *)
+    @ViewBuilder
+    private var mainTabsContentNew: some View {
+        ForEach(Array(mainTabs.enumerated()), id: \.element) { idx, tab in
+            Tab(tab.label, systemImage: tab.systemImage, value: idx) {
+                tabView(for: tab)
+            }
+        }
+    }
     
-    // MARK: - Tab Content
+    @available(iOS 18.0, *)
+    @ViewBuilder
+    private var moreTabContentNew: some View {
+        Tab("More", systemImage: "ellipsis", value: mainTabs.count) {
+            VStack(spacing: 0) {
+                moreTabsList
+                moreTabsFooter
+            }
+            .onAppear {
+                if selectedTabIndex == mainTabs.count && selectedMoreTab != nil {
+                    selectedMoreTab = nil
+                }
+            }
+        }
+        .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
+    }
+    
+    // MARK: - Tab Content (Legacy)
     
     @ViewBuilder
     private var mainTabsContent: some View {
