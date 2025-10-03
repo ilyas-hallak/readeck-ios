@@ -9,51 +9,179 @@ import SwiftUI
 
 struct PhoneTabView: View {
     private let mainTabs: [SidebarTab] = [.all, .unread, .favorite, .archived]
-    private let moreTabs: [SidebarTab] = [.search, .article, .videos, .pictures, .tags, .settings]
-    
+    private let moreTabs: [SidebarTab] = [.article, .videos, .pictures, .tags, .settings]
+
     @State private var selectedMoreTab: SidebarTab? = nil
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
-    
+
+    // Navigation paths for each tab
+    @State private var allPath = NavigationPath()
+    @State private var unreadPath = NavigationPath()
+    @State private var favoritePath = NavigationPath()
+    @State private var archivedPath = NavigationPath()
+    @State private var searchPath = NavigationPath()
+    @State private var morePath = NavigationPath()
+
+    // Search functionality
+    @State private var searchViewModel = SearchBookmarksViewModel()
+    @FocusState private var searchFieldIsFocused: Bool
+
     @EnvironmentObject var appSettings: AppSettings
     
     var body: some View {
-        NavigationStack {
-            GlobalPlayerContainerView {
-                TabView {
-                    mainTabsContent
-                    moreTabContent
+        GlobalPlayerContainerView {
+            TabView(selection: $selectedTab) {
+
+                Tab(value: SidebarTab.all) {
+                    NavigationStack(path: $allPath) {
+                        tabView(for: .all)
+                    }
+                } label: {
+                    Label(SidebarTab.all.label, systemImage: SidebarTab.all.systemImage)
                 }
-                .accentColor(.accentColor)
+
+                Tab(value: SidebarTab.unread) {
+                    NavigationStack(path: $unreadPath) {
+                        tabView(for: .unread)
+                    }
+                } label: {
+                    Label(SidebarTab.unread.label, systemImage: SidebarTab.unread.systemImage)
+                }
+
+                Tab(value: SidebarTab.favorite) {
+                    NavigationStack(path: $favoritePath) {
+                        tabView(for: .favorite)
+                    }
+                } label: {
+                    Label(SidebarTab.favorite.label, systemImage: SidebarTab.favorite.systemImage)
+                }
+
+                Tab(value: SidebarTab.archived) {
+                    NavigationStack(path: $archivedPath) {
+                        tabView(for: .archived)
+                    }
+                } label: {
+                    Label(SidebarTab.archived.label, systemImage: SidebarTab.archived.systemImage)
+                }
+
+                // iOS 26+: Dedicated search tab with role
+                if #available(iOS 26, *) {
+                    Tab("Search", systemImage: SidebarTab.search.systemImage, value: SidebarTab.search, role: .search) {
+                        NavigationStack {
+                            moreTabContent
+                                .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
+                        }
+                    }
+                    .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
+                } else {
+                    Tab(value: SidebarTab.settings) {
+                        NavigationStack(path: $morePath) {
+                            VStack(spacing: 0) {
+
+                                // Classic search bar for iOS 18
+                                HStack {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+                                    TextField("Search...", text: $searchViewModel.searchQuery)
+                                        .focused($searchFieldIsFocused)
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                    if !searchViewModel.searchQuery.isEmpty {
+                                        Button(action: {
+                                            searchViewModel.searchQuery = ""
+                                            searchFieldIsFocused = true
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.gray)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(10)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                                .padding([.horizontal, .top])
+
+                                moreTabContent
+                                moreTabsFooter
+                            }
+                            .navigationTitle("More")
+                            .onAppear {
+                                selectedMoreTab = nil
+                            }
+                        }
+                    } label: {
+                        Label("More", systemImage: "ellipsis")
+                    }
+                    .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
+                }
             }
+            .accentColor(.accentColor)
+            
+            // .tabBarMinimizeBehavior(.onScrollDown)
         }
     }
+    
     
     // MARK: - Tab Content
-    
-    @ViewBuilder
-    private var mainTabsContent: some View {
-        ForEach(mainTabs, id: \.self) { tab in
-            Tab(tab.label, systemImage: tab.systemImage) {
-                tabView(for: tab)
-            }
-        }
-    }
-    
+
     @ViewBuilder
     private var moreTabContent: some View {
-        Tab("More", systemImage: "ellipsis") {
-            VStack(spacing: 0) {
-                moreTabsList
-                moreTabsFooter
-            }
-            .onAppear {
-                selectedMoreTab = nil
-            }
+        if searchViewModel.searchQuery.isEmpty {
+            moreTabsList
+        } else {
+            searchResultsView
         }
-        .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
     }
-    
+
+    @ViewBuilder
+    private var searchResultsView: some View {
+        if searchViewModel.isLoading {
+            ProgressView("Searching...")
+                .padding()
+        } else if let error = searchViewModel.errorMessage {
+            Text(error)
+                .foregroundColor(.red)
+                .padding()
+        } else if let bookmarks = searchViewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
+            List(bookmarks) { bookmark in
+                ZStack {
+                    NavigationLink {
+                        BookmarkDetailView(bookmarkId: bookmark.id)
+                            .toolbar(.hidden, for: .tabBar)
+                            .navigationBarBackButtonHidden(false)
+                    } label: {
+                        BookmarkCardView(
+                            bookmark: bookmark,
+                            currentState: .all,
+                            layout: appSettings.settings?.cardLayoutStyle ?? .compact,
+                            onArchive: { _ in },
+                            onDelete: { _ in },
+                            onToggleFavorite: { _ in }
+                        )
+                        .listRowBackground(Color(R.color.bookmark_list_bg))
+                    }
+                    .listRowInsets(EdgeInsets(
+                        top: appSettings.settings?.cardLayoutStyle == .compact ? 8 : 12,
+                        leading: 16,
+                        bottom: appSettings.settings?.cardLayoutStyle == .compact ? 8 : 12,
+                        trailing: 16
+                    ))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color(R.color.bookmark_list_bg))
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Color(R.color.bookmark_list_bg))
+            .listStyle(.plain)
+        } else if searchViewModel.searchQuery.isEmpty == false {
+            ContentUnavailableView("No results", systemImage: "magnifyingglass", description: Text("No bookmarks found."))
+                .padding()
+        }
+    }
+
     @ViewBuilder
     private var moreTabsList: some View {
         List {
