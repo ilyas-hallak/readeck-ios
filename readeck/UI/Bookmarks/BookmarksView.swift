@@ -56,6 +56,7 @@ struct BookmarksView: View {
             )
         ) { bookmarkId in
             BookmarkDetailView(bookmarkId: bookmarkId)
+                .toolbar(.hidden, for: .tabBar)
         }
         .sheet(isPresented: $showingAddBookmark) {
             AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
