@@ -11,7 +11,6 @@ struct PhoneTabView: View {
     private let mainTabs: [SidebarTab] = [.all, .unread, .favorite, .archived]
     private let moreTabs: [SidebarTab] = [.article, .videos, .pictures, .tags, .settings]
 
-    @State private var selectedMoreTab: SidebarTab? = nil
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
 
@@ -20,7 +19,6 @@ struct PhoneTabView: View {
     @State private var unreadPath = NavigationPath()
     @State private var favoritePath = NavigationPath()
     @State private var archivedPath = NavigationPath()
-    @State private var searchPath = NavigationPath()
     @State private var morePath = NavigationPath()
 
     // Search functionality
@@ -28,7 +26,15 @@ struct PhoneTabView: View {
     @FocusState private var searchFieldIsFocused: Bool
 
     @EnvironmentObject var appSettings: AppSettings
-    
+
+    private var cardLayoutStyle: CardLayoutStyle {
+        appSettings.settings?.cardLayoutStyle ?? .compact
+    }
+
+    private var offlineBookmarksBadgeCount: Int {
+        offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0
+    }
+
     var body: some View {
         GlobalPlayerContainerView {
             TabView(selection: $selectedTab) {
@@ -73,7 +79,7 @@ struct PhoneTabView: View {
                                 .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
                         }
                     }
-                    .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
+                    .badge(offlineBookmarksBadgeCount)
                 } else {
                     Tab(value: SidebarTab.settings) {
                         NavigationStack(path: $morePath) {
@@ -108,19 +114,14 @@ struct PhoneTabView: View {
                                 moreTabsFooter
                             }
                             .navigationTitle("More")
-                            .onAppear {
-                                selectedMoreTab = nil
-                            }
                         }
                     } label: {
                         Label("More", systemImage: "ellipsis")
                     }
-                    .badge(offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0)
+                    .badge(offlineBookmarksBadgeCount)
                 }
             }
             .accentColor(.accentColor)
-            
-            // .tabBarMinimizeBehavior(.onScrollDown)
         }
     }
     
@@ -147,31 +148,36 @@ struct PhoneTabView: View {
                 .padding()
         } else if let bookmarks = searchViewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
             List(bookmarks) { bookmark in
+                // Hidden NavigationLink to remove disclosure indicator
+                // To restore: uncomment block below and remove ZStack
                 ZStack {
                     NavigationLink {
                         BookmarkDetailView(bookmarkId: bookmark.id)
                             .toolbar(.hidden, for: .tabBar)
                             .navigationBarBackButtonHidden(false)
                     } label: {
-                        BookmarkCardView(
-                            bookmark: bookmark,
-                            currentState: .all,
-                            layout: appSettings.settings?.cardLayoutStyle ?? .compact,
-                            onArchive: { _ in },
-                            onDelete: { _ in },
-                            onToggleFavorite: { _ in }
-                        )
-                        .listRowBackground(Color(R.color.bookmark_list_bg))
+                        EmptyView()
                     }
-                    .listRowInsets(EdgeInsets(
-                        top: appSettings.settings?.cardLayoutStyle == .compact ? 8 : 12,
-                        leading: 16,
-                        bottom: appSettings.settings?.cardLayoutStyle == .compact ? 8 : 12,
-                        trailing: 16
-                    ))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color(R.color.bookmark_list_bg))
+                    .opacity(0)
+
+                    BookmarkCardView(
+                        bookmark: bookmark,
+                        currentState: .all,
+                        layout: cardLayoutStyle,
+                        onArchive: { _ in },
+                        onDelete: { _ in },
+                        onToggleFavorite: { _ in }
+                    )
+                    .contentShape(Rectangle())
                 }
+                .listRowInsets(EdgeInsets(
+                    top: cardLayoutStyle == .compact ? 8 : 12,
+                    leading: 16,
+                    bottom: cardLayoutStyle == .compact ? 8 : 12,
+                    trailing: 16
+                ))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color(R.color.bookmark_list_bg))
             }
             .scrollContentBackground(.hidden)
             .background(Color(R.color.bookmark_list_bg))
@@ -190,12 +196,6 @@ struct PhoneTabView: View {
                     tabView(for: tab)
                         .navigationTitle(tab.label)
                         .navigationBarTitleDisplayMode(.large)
-                        .onDisappear {
-                            // tags and search handle navigation by own
-                            if tab != .tags && tab != .search {
-                                selectedMoreTab = nil
-                            }
-                        }
                 } label: {
                     Label(tab.label, systemImage: tab.systemImage)
                 }
@@ -241,17 +241,22 @@ struct PhoneTabView: View {
         case .archived:
             BookmarksView(state: .archived, type: [.article], selectedBookmark: .constant(nil))
         case .search:
-            SearchBookmarksView(selectedBookmark: .constant(nil))
+            EmptyView() // search is directly implemented
         case .settings:
             SettingsView()
+                .toolbar(.hidden, for: .tabBar)
         case .article:
             BookmarksView(state: .all, type: [.article], selectedBookmark: .constant(nil))
+                .toolbar(.hidden, for: .tabBar)
         case .videos:
             BookmarksView(state: .all, type: [.video], selectedBookmark: .constant(nil))
+                .toolbar(.hidden, for: .tabBar)
         case .pictures:
             BookmarksView(state: .all, type: [.photo], selectedBookmark: .constant(nil))
+                .toolbar(.hidden, for: .tabBar)
         case .tags:
             LabelsView(selectedTag: .constant(nil))
+                .toolbar(.hidden, for: .tabBar)
         }
     }
 }
