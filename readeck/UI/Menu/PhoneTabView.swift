@@ -121,11 +121,12 @@ struct PhoneTabView: View {
                     .badge(offlineBookmarksBadgeCount)
                 }
             }
+            .tabBarMinimizeBehaviorIfAvailable()
             .accentColor(.accentColor)
+            .searchToolbarBehaviorIfAvailable()
         }
     }
-    
-    
+
     // MARK: - Tab Content
 
     @ViewBuilder
@@ -153,8 +154,6 @@ struct PhoneTabView: View {
                 ZStack {
                     NavigationLink {
                         BookmarkDetailView(bookmarkId: bookmark.id)
-                            .toolbar(.hidden, for: .tabBar)
-                            .navigationBarBackButtonHidden(false)
                     } label: {
                         EmptyView()
                     }
@@ -244,19 +243,39 @@ struct PhoneTabView: View {
             EmptyView() // search is directly implemented
         case .settings:
             SettingsView()
-                .toolbar(.hidden, for: .tabBar)
         case .article:
             BookmarksView(state: .all, type: [.article], selectedBookmark: .constant(nil))
-                .toolbar(.hidden, for: .tabBar)
         case .videos:
             BookmarksView(state: .all, type: [.video], selectedBookmark: .constant(nil))
-                .toolbar(.hidden, for: .tabBar)
         case .pictures:
             BookmarksView(state: .all, type: [.photo], selectedBookmark: .constant(nil))
-                .toolbar(.hidden, for: .tabBar)
         case .tags:
             LabelsView(selectedTag: .constant(nil))
-                .toolbar(.hidden, for: .tabBar)
+        }
+    }
+}
+
+
+
+// MARK: - View Extension for iOS 26+ Compatibility
+extension View {
+    @ViewBuilder
+    func searchToolbarBehaviorIfAvailable() -> some View {
+        if #available(iOS 26, *) {
+            self
+                .searchToolbarBehavior(.minimize)
+        } else {
+            self
+        }
+    }
+    
+    @ViewBuilder
+    func tabBarMinimizeBehaviorIfAvailable() -> some View {
+        if #available(iOS 26.0, *) {
+            self
+                .tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            self
         }
     }
 }
