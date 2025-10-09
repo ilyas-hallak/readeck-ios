@@ -38,79 +38,91 @@ struct BookmarkDetailView: View {
             ProgressView(value: readingProgress)
                 .progressViewStyle(LinearProgressViewStyle())
                 .frame(height: 3)
-            GeometryReader { outerGeo in
+            GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 0) {
-                        GeometryReader { geo in
-                            Color.clear
-                                .preference(key: ScrollOffsetPreferenceKey.self,
-                                             value: geo.frame(in: .named("scroll")).minY)
-                        }
-                        .frame(height: 0)
                         ZStack(alignment: .top) {
-                            headerView(geometry: outerGeo)
+                            headerView(width: geometry.size.width)
                             VStack(alignment: .leading, spacing: 16) {
-                                Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
-                                titleSection
-                                Divider().padding(.horizontal)
-                                if showJumpToProgressButton {
-                                    JumpButton()
-                                }
-                                if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
-                                    WebView(htmlContent: viewModel.articleContent, settings: settings, onHeightChange: { height in
-                                        if webViewHeight != height {
-                                            webViewHeight = height
-                                        }
-                                    })
-                                    .frame(height: webViewHeight)
-                                    .cornerRadius(14)
-                                    .padding(.horizontal, 4)                                   
-                                } else if viewModel.isLoadingArticle {
-                                    ProgressView("Loading article...")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding()
-                                } else {
-                                    Button(action: {
-                                        URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                                    }) {
-                                        HStack {
-                                            Image(systemName: "safari")
-                                            Text((URLUtil.extractDomain(from: "open " + viewModel.bookmarkDetail.url) ?? "Open original page"))
-                                        }
-                                        .font(.title3.bold())
-                                        .frame(maxWidth: .infinity)
+                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                            titleSection
+                            Divider().padding(.horizontal)
+                            if showJumpToProgressButton {
+                                JumpButton()
+                            }
+                            if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
+                                WebView(htmlContent: viewModel.articleContent, settings: settings, onHeightChange: { height in
+                                    if webViewHeight != height {
+                                        webViewHeight = height
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .padding(.horizontal)
-                                    .padding(.top, 0)
-                                }
-                                
-                                if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                                    VStack(alignment: .center) {
-                                        archiveSection
-                                            .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                            .animation(.easeInOut, value: viewModel.articleContent)
+                                })
+                                .frame(height: webViewHeight)
+                                .cornerRadius(14)
+                                .padding(.horizontal, 4)
+                            } else if viewModel.isLoadingArticle {
+                                ProgressView("Loading article...")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding()
+                            } else {
+                                Button(action: {
+                                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                                }) {
+                                    HStack {
+                                        Image(systemName: "safari")
+                                        Text((URLUtil.extractDomain(from: "open " + viewModel.bookmarkDetail.url) ?? "Open original page"))
                                     }
+                                    .font(.title3.bold())
                                     .frame(maxWidth: .infinity)
                                 }
+                                .buttonStyle(.borderedProminent)
+                                .padding(.horizontal)
+                                .padding(.top, 0)
+                            }
+
+                            if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                                VStack(alignment: .center) {
+                                    archiveSection
+                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                        .animation(.easeInOut, value: viewModel.articleContent)
+                                }
+                                .frame(maxWidth: .infinity)
                             }
                         }
+                        .frame(maxWidth: .infinity)
                     }
-                }
-                .coordinateSpace(name: "scroll")
-                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                    scrollViewHeight = outerGeo.size.height
-                    let maxOffset = webViewHeight - scrollViewHeight
-                    let rawProgress = -offset / (maxOffset != 0 ? maxOffset : 1)
-                    let progress = min(max(rawProgress, 0), 1)
-                    readingProgress = progress                    
-                    viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                    }
                 }
                 .ignoresSafeArea(edges: .top)
                 .scrollPosition($scrollPosition)
+                .onScrollGeometryChange(for: CGFloat.self) { geo in
+                    geo.contentOffset.y
+                } action: { oldValue, newValue in
+                    // Early exit: only process if scroll changed significantly (> 50px)
+                    guard abs(newValue - oldValue) > 50 else { return }
+
+                    let offset = newValue
+                    let maxOffset = webViewHeight - geometry.size.height
+                    let rawProgress = offset / (maxOffset > 0 ? maxOffset : 1)
+                    let progress = min(max(rawProgress, 0), 1)
+
+                    // Only update if change is significant (> 5%) to avoid lag
+                    let threshold: Double = 0.05
+                    if abs(progress - readingProgress) > threshold {
+                        readingProgress = progress
+                        
+                        // Always update backend (debounced internally)
+                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                    }
+                }
+                .onScrollGeometryChange(for: CGFloat.self) { geo in
+                    geo.containerSize.height
+                } action: { oldValue, newValue in
+                    scrollViewHeight = newValue
+                }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)        
+        .frame(maxWidth: .infinity)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 12) {
@@ -183,45 +195,33 @@ struct BookmarkDetailView: View {
     // MARK: - ViewBuilder
     
     @ViewBuilder
-    private func headerView(geometry: GeometryProxy) -> some View {
+    private func headerView(width: CGFloat) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
-            GeometryReader { geo in
-                let offset = geo.frame(in: .global).minY
-                ZStack(alignment: .top) {
-                    CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width, height: headerHeight + (offset > 0 ? offset : 0))
-                        .clipped()
-                        .offset(y: (offset > 0 ? -offset : 0))                        
-                    
-                    // Tap area and zoom icon
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                showingImageViewer = true
-                            }) {
-                                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.black.opacity(0.6))
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                            )
-                                    )
-                            }
-                            .padding(.trailing, 16)
-                            .padding(.bottom, 16)
-                        }
-                    }
-                    .frame(height: headerHeight + (offset > 0 ? offset : 0))
-                    .offset(y: (offset > 0 ? -offset : 0))
+            ZStack(alignment: .bottomTrailing) {
+                CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: width, height: headerHeight)
+                    .clipped()
+
+                // Zoom icon
+                Button(action: {
+                    showingImageViewer = true
+                }) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.6))
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                        )
                 }
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
             }
             .frame(height: headerHeight)
             .ignoresSafeArea(edges: .top)
@@ -252,9 +252,10 @@ struct BookmarkDetailView: View {
                     webViewHeight = height
                 }
             }
+            .frame(maxWidth: .infinity)
             .frame(height: webViewHeight)
             .cornerRadius(14)
-            .padding(.horizontal)
+            .padding(.horizontal, 4)
             .animation(.easeInOut, value: webViewHeight)
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
@@ -448,14 +449,6 @@ struct BookmarkDetailView: View {
         .background(Color.accentColor.opacity(0.15))
         .cornerRadius(8)
         .padding([.top, .horizontal])
-    }
-}
-
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    typealias Value = CGFloat
-    static var defaultValue = CGFloat.zero
-    static func reduce(value: inout Value, nextValue: () -> Value) {
-        value += nextValue()
     }
 }
 
