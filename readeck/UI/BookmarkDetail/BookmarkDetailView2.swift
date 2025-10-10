@@ -106,7 +106,7 @@ struct BookmarkDetailView2: View {
                         // Content (in foreground)
                         VStack(alignment: .leading, spacing: 16) {
                             // Spacer for header
-                            Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
 
                             // Title section
                             titleSection
