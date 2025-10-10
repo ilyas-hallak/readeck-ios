@@ -1,6 +1,14 @@
 import SwiftUI
 import SafariServices
 
+// PreferenceKey for scroll offset tracking
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGPoint = .zero
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
+        value = nextValue()
+    }
+}
+
 struct BookmarkDetailLegacyView: View {
     let bookmarkId: String
     @Binding var useNativeWebView: Bool
@@ -12,8 +20,7 @@ struct BookmarkDetailLegacyView: View {
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var readingProgress: Double = 0.0
-    @State private var scrollViewHeight: CGFloat = 1
-    @State private var currentScrollOffset: CGFloat = 0
+    @State private var lastSentProgress: Double = 0.0
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
@@ -39,6 +46,18 @@ struct BookmarkDetailLegacyView: View {
                 .frame(height: 3)
             GeometryReader { geometry in
                 ScrollView {
+                    // Invisible GeometryReader to track scroll offset
+                    GeometryReader { scrollGeo in
+                        Color.clear.preference(
+                            key: ScrollOffsetPreferenceKey.self,
+                            value: CGPoint(
+                                x: scrollGeo.frame(in: .named("scrollView")).minX,
+                                y: scrollGeo.frame(in: .named("scrollView")).minY
+                            )
+                        )
+                    }
+                    .frame(height: 0)
+
                     VStack(spacing: 0) {
                         ZStack(alignment: .top) {
                             headerView(width: geometry.size.width)
@@ -47,7 +66,7 @@ struct BookmarkDetailLegacyView: View {
                             titleSection
                             Divider().padding(.horizontal)
                             if showJumpToProgressButton {
-                                JumpButton()
+                                JumpButton(containerHeight: geometry.size.height)
                             }
                             if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
                                 WebView(
@@ -95,32 +114,26 @@ struct BookmarkDetailLegacyView: View {
                     }
                     }
                 }
+                .coordinateSpace(name: "scrollView")
                 .ignoresSafeArea(edges: .top)
                 .scrollPosition($scrollPosition)
-                .onScrollGeometryChange(for: CGFloat.self) { geo in
-                    geo.contentOffset.y
-                } action: { oldValue, newValue in
-                    currentScrollOffset = newValue
-                }
-                .onScrollGeometryChange(for: CGFloat.self) { geo in
-                    geo.containerSize.height
-                } action: { oldValue, newValue in
-                    scrollViewHeight = newValue
-                }
-                .onScrollPhaseChange { oldPhase, newPhase in
-                    // Only calculate when scrolling ends (interacting -> idle)
-                    if oldPhase == .interacting && newPhase == .idle {
-                        let offset = currentScrollOffset
-                        let maxOffset = webViewHeight - geometry.size.height
-                        let rawProgress = offset / (maxOffset > 0 ? maxOffset : 1)
-                        let progress = min(max(rawProgress, 0), 1)
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                    // Calculate progress from scroll offset
+                    let scrollOffset = -offset.y  // Negative because scroll goes down
+                    let containerHeight = geometry.size.height
+                    let maxOffset = webViewHeight - containerHeight
 
-                        // Only update if change >= 3%
-                        let threshold: Double = 0.03
-                        if abs(progress - readingProgress) >= threshold {
-                            readingProgress = progress
-                            viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
-                        }
+                    guard maxOffset > 0 else { return }
+
+                    let rawProgress = scrollOffset / maxOffset
+                    let progress = min(max(rawProgress, 0), 1)
+
+                    // Only update if change >= 3%
+                    let threshold: Double = 0.03
+                    if abs(progress - lastSentProgress) >= threshold {
+                        lastSentProgress = progress
+                        readingProgress = progress
+                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                     }
                 }
             }
@@ -449,9 +462,9 @@ struct BookmarkDetailLegacyView: View {
     }
     
     @ViewBuilder
-    func JumpButton() -> some View {
+    func JumpButton(containerHeight: CGFloat) -> some View {
         Button(action: {
-            let maxOffset = webViewHeight - scrollViewHeight
+            let maxOffset = webViewHeight - containerHeight
             let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 scrollPosition = ScrollPosition(y: offset)
