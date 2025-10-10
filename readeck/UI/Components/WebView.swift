@@ -264,21 +264,24 @@ struct WebView: UIViewRepresentable {
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
+                let lastSent = { value: 0 };
                 window.addEventListener('scroll', function() {
                     isScrolling = true;
+
+                    let scrollTop = window.scrollY || document.documentElement.scrollTop;
+                    let docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    let scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+
+                    if (Math.abs(scrollPercent - lastSent.value) >= 3) {
+                        window.webkit.messageHandlers.scrollProgress.postMessage(scrollPercent / 100);
+                        lastSent.value = scrollPercent;
+                    }
+
                     clearTimeout(scrollTimeout);
-                    
                     scrollTimeout = setTimeout(function() {
-                        var scrollTop = window.scrollY || document.documentElement.scrollTop;
-                        var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                        var progress = docHeight > 0 ? scrollTop / docHeight : 0;
-                        window.webkit.messageHandlers.scrollProgress.postMessage(progress);
-                        
-                        setTimeout(function() {
-                            isScrolling = false;
-                            debouncedHeightUpdate();
-                        }, 200);
-                    }, 16);
+                        isScrolling = false;
+                        debouncedHeightUpdate();
+                    }, 200);
                 });
             </script>
         </body>
