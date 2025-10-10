@@ -50,6 +50,7 @@ struct BookmarkDetailView2: View {
         .toolbar {
             toolbarContent
         }
+        .toolbarBackgroundVisibility(.hidden, for: .bottomBar)
         .sheet(isPresented: $showingFontSettings) {
             fontSettingsSheet
         }
@@ -381,7 +382,6 @@ struct BookmarkDetailView2: View {
                         }
                     }
                 )
-                .frame(maxWidth: .infinity)
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
                 .padding(.horizontal, 4)
