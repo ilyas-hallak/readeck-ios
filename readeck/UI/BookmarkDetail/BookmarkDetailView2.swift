@@ -10,6 +10,7 @@ struct BookmarkDetailView2: View {
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: CGFloat = 300
+    @State private var contentHeight: CGFloat = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var readingProgress: Double = 0.0
@@ -120,16 +121,27 @@ struct BookmarkDetailView2: View {
                         .frame(maxWidth: .infinity)
                     }
                 }
+                .background(
+                    GeometryReader { contentGeo in
+                        Color.clear.preference(
+                            key: ContentHeightPreferenceKey.self,
+                            value: contentGeo.size.height
+                        )
+                    }
+                )
             }
             .coordinateSpace(name: "scrollView")
             .clipped()
             .ignoresSafeArea(edges: .top)
             .scrollPosition($scrollPosition)
+            .onPreferenceChange(ContentHeightPreferenceKey.self) { height in
+                contentHeight = height
+            }
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
                 // Calculate progress from scroll offset
                 let scrollOffset = -offset.y
                 let containerHeight = geometry.size.height
-                let maxOffset = webViewHeight - containerHeight
+                let maxOffset = contentHeight - containerHeight
 
                 guard maxOffset > 0 else { return }
 
