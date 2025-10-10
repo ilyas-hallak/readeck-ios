@@ -101,7 +101,7 @@ struct BookmarkDetailView2: View {
 
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
-                        headerView
+                        headerView(width: geometry.size.width)
 
                         VStack(alignment: .leading, spacing: 16) {
                             Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
@@ -234,12 +234,12 @@ struct BookmarkDetailView2: View {
     // MARK: - ViewBuilder
 
     @ViewBuilder
-    private var headerView: some View {
+    private func headerView(width: CGFloat) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
                 CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
                     .aspectRatio(contentMode: .fill)
-                    .frame(height: headerHeight)
+                    .frame(width: width, height: headerHeight)
                     .clipped()
 
                 // Zoom icon
@@ -262,7 +262,7 @@ struct BookmarkDetailView2: View {
                 .padding(.trailing, 16)
                 .padding(.bottom, 16)
             }
-            .frame(height: headerHeight)
+            .frame(width: width, height: headerHeight)
             .ignoresSafeArea(edges: .top)
             .onTapGesture {
                 showingImageViewer = true
