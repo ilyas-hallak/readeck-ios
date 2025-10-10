@@ -12,9 +12,11 @@ struct BookmarkDetailLegacyView: View {
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var readingProgress: Double = 0.0
+    @State private var currentScrollOffset: CGFloat = 0
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
+    @State private var webViewCoordinator: WebViewCoordinator? = nil
     
     // MARK: - Envs
     
@@ -60,6 +62,10 @@ struct BookmarkDetailLegacyView: View {
                                         print("🔥 BookmarkDetailLegacyView onScroll callback: \(String(format: "%.3f", scrollPercent)) (\(String(format: "%.1f", scrollPercent * 100))%)")
                                         readingProgress = scrollPercent
                                         viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: scrollPercent, anchor: nil)
+                                    },
+                                    onExternalScrollUpdate: { coordinator in
+                                        print("🎯 WebView coordinator ready, storing reference")
+                                        webViewCoordinator = coordinator
                                     }
                                 )
                                 .frame(height: webViewHeight)
@@ -100,6 +106,24 @@ struct BookmarkDetailLegacyView: View {
                 }
                 .ignoresSafeArea(edges: .top)
                 .scrollPosition($scrollPosition)
+                .onScrollGeometryChange(for: CGFloat.self) { geo in
+                    geo.contentOffset.y
+                } action: { oldValue, newValue in
+                    currentScrollOffset = newValue
+                }
+                .onScrollPhaseChange { oldPhase, newPhase in
+                    // Only calculate when scrolling ends (interacting -> idle)
+                    if oldPhase == .interacting && newPhase == .idle {
+                        print("📊 Scroll ended at offset: \(currentScrollOffset)")
+                        let offset = currentScrollOffset
+                        let maxOffset = webViewHeight - geometry.size.height
+
+                        print("🎯 Sending to WebView coordinator: offset=\(offset), maxOffset=\(maxOffset)")
+
+                        // Send to WebView coordinator which handles the 3% threshold
+                        webViewCoordinator?.updateScrollProgress(offset: offset, maxOffset: maxOffset)
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity)

@@ -6,6 +6,7 @@ struct WebView: UIViewRepresentable {
     let settings: Settings
     let onHeightChange: (CGFloat) -> Void
     var onScroll: ((Double) -> Void)? = nil
+    var onExternalScrollUpdate: ((WebViewCoordinator) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
@@ -21,6 +22,8 @@ struct WebView: UIViewRepresentable {
         webView.scrollView.isScrollEnabled = false
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
+
+        print("🟢 WebView created with scrolling DISABLED (embedded in ScrollView)")
         
         // Allow text selection and copying
         webView.allowsBackForwardNavigationGestures = false
@@ -30,7 +33,11 @@ struct WebView: UIViewRepresentable {
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
-        
+        context.coordinator.webView = webView
+
+        // Notify parent that coordinator is ready
+        onExternalScrollUpdate?(context.coordinator)
+
         return webView
     }
     
@@ -343,18 +350,22 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     // Callbacks
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
-    
+
+    // WebView reference
+    weak var webView: WKWebView?
+
     // Height management
     var lastHeight: CGFloat = 0
     var pendingHeight: CGFloat = 0
     var heightUpdateTimer: Timer?
-    
+
     // Scroll management
     var isScrolling: Bool = false
     var scrollVelocity: Double = 0
     var lastScrollTime: Date = Date()
     var scrollEndTimer: Timer?
-    
+    var lastSentProgress: Double = 0
+
     // Lifecycle
     private var isCleanedUp = false
     
@@ -450,11 +461,28 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         if heightDifference < 5 { // Ignore tiny height changes that cause flicker
             return
         }
-        
+
         lastHeight = height
         onHeightChange?(height)
     }
-    
+
+    // Method to receive scroll updates from SwiftUI ScrollView
+    func updateScrollProgress(offset: CGFloat, maxOffset: CGFloat) {
+        let progress = maxOffset > 0 ? min(max(offset / maxOffset, 0), 1) : 0
+
+        print("📊 External scroll update: offset=\(offset), maxOffset=\(maxOffset), progress=\(String(format: "%.3f", progress))")
+
+        // Only send if change >= 3%
+        let threshold: Double = 0.03
+        if abs(progress - lastSentProgress) >= threshold {
+            print("✅ Calling onScroll callback with: \(String(format: "%.3f", progress))")
+            lastSentProgress = progress
+            onScroll?(progress)
+        } else {
+            print("⏸️ Skipping (change < 3%): \(String(format: "%.3f", abs(progress - lastSentProgress)))")
+        }
+    }
+
     func cleanup() {
         guard !isCleanedUp else { return }
         isCleanedUp = true
