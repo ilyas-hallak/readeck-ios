@@ -46,6 +46,7 @@ struct BookmarkDetailView2: View {
             // Main scroll content
             scrollViewContent
         }
+        
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             toolbarContent
@@ -100,20 +101,15 @@ struct BookmarkDetailView2: View {
 
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
-                        // Header image (in background)
                         headerView
 
-                        // Content (in foreground)
                         VStack(alignment: .leading, spacing: 16) {
-                            // Spacer for header
                             Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
 
-                            // Title section
                             titleSection
 
                             Divider().padding(.horizontal)
 
-                            // Jump to last position button
                             if showJumpToProgressButton {
                                 jumpButton(containerHeight: geometry.size.height)
                             }

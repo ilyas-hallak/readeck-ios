@@ -115,6 +115,7 @@ struct BookmarkDetailLegacyView: View {
                     }
                 }
                 .coordinateSpace(name: "scrollView")
+                .clipped()
                 .ignoresSafeArea(edges: .top)
                 .scrollPosition($scrollPosition)
                 .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in

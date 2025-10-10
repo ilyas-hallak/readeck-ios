@@ -108,9 +108,19 @@ struct NativeWebView: View {
         let styledHTML = """
         <html>
         <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
+                * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+
+                html {
+                    overflow-x: hidden;
+                    width: 100%;
+                }
+
                 body {
                     font-family: \(fontFamily);
                     line-height: 1.8;
@@ -122,6 +132,10 @@ struct NativeWebView: View {
                     -webkit-text-size-adjust: 100%;
                     -webkit-user-select: text;
                     user-select: text;
+                    overflow-x: hidden;
+                    width: 100%;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
@@ -169,6 +183,9 @@ struct NativeWebView: View {
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
+                    max-width: 100%;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
                     font-family: 'SF Mono', monospace;
                 }
                 
