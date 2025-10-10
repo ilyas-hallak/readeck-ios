@@ -51,7 +51,7 @@ struct NativeWebView: View {
 
             do {
                 // Try to get height via JavaScript - use simple document.body.scrollHeight
-                let result = try await webPage.callJavaScript("document.body.scrollHeight")
+                let result = try await webPage.callJavaScript("return document.body.scrollHeight")
 
                 if let height = result as? Double, height > 0 {
                     let cgHeight = CGFloat(height)
