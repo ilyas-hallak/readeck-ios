@@ -50,16 +50,8 @@ struct NativeWebView: View {
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
 
             do {
-                // Try to get height via JavaScript - use direct expression instead of function call
-                let result = try await webPage.callJavaScript("""
-                    Math.max(
-                        document.body.scrollHeight || 0,
-                        document.body.offsetHeight || 0,
-                        document.documentElement.clientHeight || 0,
-                        document.documentElement.scrollHeight || 0,
-                        document.documentElement.offsetHeight || 0
-                    )
-                """)
+                // Try to get height via JavaScript - use simple document.body.scrollHeight
+                let result = try await webPage.callJavaScript("document.body.scrollHeight")
 
                 if let height = result as? Double, height > 0 {
                     let cgHeight = CGFloat(height)
@@ -119,11 +111,6 @@ struct NativeWebView: View {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
-                * {
-                    box-sizing: border-box;
-                    max-width: 100%;
-                }
-
                 body {
                     font-family: \(fontFamily);
                     line-height: 1.8;
@@ -135,19 +122,6 @@ struct NativeWebView: View {
                     -webkit-text-size-adjust: 100%;
                     -webkit-user-select: text;
                     user-select: text;
-                    overflow: hidden;
-                    overflow-wrap: break-word;
-                    word-wrap: break-word;
-                    word-break: break-word;
-                    height: auto;
-                    max-width: 100%;
-                }
-
-                html {
-                    overflow: hidden;
-                    overflow-x: hidden;
-                    height: auto;
-                    max-width: 100%;
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
@@ -162,8 +136,13 @@ struct NativeWebView: View {
                 h3 { font-size: \(fontSize * 9 / 8)px; }
                 
                 p { margin-bottom: 16px; }
-                
-                img { max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0; }
+
+                img {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                    margin: 16px 0;
+                }
                 a { color: \(isDarkMode ? "#0A84FF" : "#007AFF"); text-decoration: none; }
                 a:hover { text-decoration: underline; }
                 
@@ -190,30 +169,14 @@ struct NativeWebView: View {
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
-                    overflow-wrap: break-word;
-                    word-wrap: break-word;
-                    white-space: pre-wrap;
-                    max-width: 100%;
                     font-family: 'SF Mono', monospace;
                 }
                 
                 ul, ol { padding-left: 20px; margin-bottom: 16px; }
                 li { margin-bottom: 4px; }
                 
-                table {
-                    width: 100%;
-                    max-width: 100%;
-                    border-collapse: collapse;
-                    margin: 16px 0;
-                    display: block;
-                    overflow-x: auto;
-                }
-                th, td {
-                    border: 1px solid #ccc;
-                    padding: 8px 12px;
-                    text-align: left;
-                    word-wrap: break-word;
-                }
+                table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+                th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
                 th { font-weight: 600; }
                 
                 hr { border: none; height: 1px; background-color: #ccc; margin: 24px 0; }
