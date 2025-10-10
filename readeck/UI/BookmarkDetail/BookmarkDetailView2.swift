@@ -13,8 +13,7 @@ struct BookmarkDetailView2: View {
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var readingProgress: Double = 0.0
-    @State private var scrollViewHeight: CGFloat = 1
-    @State private var currentScrollOffset: CGFloat = 0
+    @State private var lastSentProgress: Double = 0.0
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
@@ -84,62 +83,71 @@ struct BookmarkDetailView2: View {
     }
 
     private var scrollViewContent: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Header image
-                headerView
-
-                // Content
-                VStack(alignment: .leading, spacing: 16) {
-                    // Spacer for header
-                    Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
-
-                    // Title section
-                    titleSection
-
-                    Divider().padding(.horizontal)
-
-                    // Jump to last position button
-                    if showJumpToProgressButton {
-                        jumpButton
-                    }
-
-                    // Article content (WebView)
-                    articleContent
+        GeometryReader { geometry in
+            ScrollView {
+                // Invisible GeometryReader to track scroll offset
+                GeometryReader { scrollGeo in
+                    Color.clear.preference(
+                        key: ScrollOffsetPreferenceKey.self,
+                        value: CGPoint(
+                            x: scrollGeo.frame(in: .named("scrollView")).minX,
+                            y: scrollGeo.frame(in: .named("scrollView")).minY
+                        )
+                    )
                 }
-                .frame(maxWidth: .infinity)
+                .frame(height: 0)
+
+                VStack(spacing: 0) {
+                    ZStack(alignment: .top) {
+                        // Header image (in background)
+                        headerView
+
+                        // Content (in foreground)
+                        VStack(alignment: .leading, spacing: 16) {
+                            // Spacer for header
+                            Color.clear.frame(height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+
+                            // Title section
+                            titleSection
+
+                            Divider().padding(.horizontal)
+
+                            // Jump to last position button
+                            if showJumpToProgressButton {
+                                jumpButton(containerHeight: geometry.size.height)
+                            }
+
+                            // Article content (WebView)
+                            articleContent
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            .coordinateSpace(name: "scrollView")
+            .clipped()
+            .ignoresSafeArea(edges: .top)
+            .scrollPosition($scrollPosition)
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                // Calculate progress from scroll offset
+                let scrollOffset = -offset.y
+                let containerHeight = geometry.size.height
+                let maxOffset = webViewHeight - containerHeight
+
+                guard maxOffset > 0 else { return }
+
+                let rawProgress = scrollOffset / maxOffset
+                let progress = min(max(rawProgress, 0), 1)
+
+                // Only update if change >= 3%
+                let threshold: Double = 0.03
+                if abs(progress - lastSentProgress) >= threshold {
+                    lastSentProgress = progress
+                    readingProgress = progress
+                    viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                }
             }
         }
-        .clipped()
-        .ignoresSafeArea(edges: .top)
-        .scrollPosition($scrollPosition)
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
-                geo.contentOffset.y
-            } action: { oldValue, newValue in
-                // Just track current offset, don't calculate yet
-                currentScrollOffset = newValue
-            }
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
-                geo.containerSize.height
-            } action: { oldValue, newValue in
-                scrollViewHeight = newValue
-            }
-            .onScrollPhaseChange { oldPhase, newPhase in
-                // Only calculate progress when scrolling ends
-                if oldPhase == .interacting && newPhase == .idle {
-                    let offset = currentScrollOffset
-                    let maxOffset = webViewHeight - scrollViewHeight
-                    let rawProgress = offset / (maxOffset > 0 ? maxOffset : 1)
-                    let progress = min(max(rawProgress, 0), 1)
-
-                    // Only update if change is significant (> 5%)
-                    let threshold: Double = 0.05
-                    if abs(progress - readingProgress) > threshold {
-                        readingProgress = progress
-                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
-                    }
-                }
-            }
     }
 
     @ToolbarContentBuilder
@@ -399,9 +407,9 @@ struct BookmarkDetailView2: View {
         }
     }
 
-    private var jumpButton: some View {
+    private func jumpButton(containerHeight: CGFloat) -> some View {
         Button(action: {
-            let maxOffset = webViewHeight - scrollViewHeight
+            let maxOffset = webViewHeight - containerHeight
             let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 scrollPosition = ScrollPosition(y: offset)
