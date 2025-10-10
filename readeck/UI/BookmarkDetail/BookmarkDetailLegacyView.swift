@@ -12,11 +12,11 @@ struct BookmarkDetailLegacyView: View {
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var readingProgress: Double = 0.0
+    @State private var scrollViewHeight: CGFloat = 1
     @State private var currentScrollOffset: CGFloat = 0
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
-    @State private var webViewCoordinator: WebViewCoordinator? = nil
     
     // MARK: - Envs
     
@@ -57,15 +57,6 @@ struct BookmarkDetailLegacyView: View {
                                         if webViewHeight != height {
                                             webViewHeight = height
                                         }
-                                    },
-                                    onScroll: { scrollPercent in
-                                        print("🔥 BookmarkDetailLegacyView onScroll callback: \(String(format: "%.3f", scrollPercent)) (\(String(format: "%.1f", scrollPercent * 100))%)")
-                                        readingProgress = scrollPercent
-                                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: scrollPercent, anchor: nil)
-                                    },
-                                    onExternalScrollUpdate: { coordinator in
-                                        print("🎯 WebView coordinator ready, storing reference")
-                                        webViewCoordinator = coordinator
                                     }
                                 )
                                 .frame(height: webViewHeight)
@@ -111,17 +102,25 @@ struct BookmarkDetailLegacyView: View {
                 } action: { oldValue, newValue in
                     currentScrollOffset = newValue
                 }
+                .onScrollGeometryChange(for: CGFloat.self) { geo in
+                    geo.containerSize.height
+                } action: { oldValue, newValue in
+                    scrollViewHeight = newValue
+                }
                 .onScrollPhaseChange { oldPhase, newPhase in
                     // Only calculate when scrolling ends (interacting -> idle)
                     if oldPhase == .interacting && newPhase == .idle {
-                        print("📊 Scroll ended at offset: \(currentScrollOffset)")
                         let offset = currentScrollOffset
                         let maxOffset = webViewHeight - geometry.size.height
+                        let rawProgress = offset / (maxOffset > 0 ? maxOffset : 1)
+                        let progress = min(max(rawProgress, 0), 1)
 
-                        print("🎯 Sending to WebView coordinator: offset=\(offset), maxOffset=\(maxOffset)")
-
-                        // Send to WebView coordinator which handles the 3% threshold
-                        webViewCoordinator?.updateScrollProgress(offset: offset, maxOffset: maxOffset)
+                        // Only update if change >= 3%
+                        let threshold: Double = 0.03
+                        if abs(progress - readingProgress) >= threshold {
+                            readingProgress = progress
+                            viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                        }
                     }
                 }
             }
@@ -452,10 +451,12 @@ struct BookmarkDetailLegacyView: View {
     @ViewBuilder
     func JumpButton() -> some View {
         Button(action: {
-            // TODO: Implement scroll-to-position via JavaScript
-            // Since we're now using JavaScript-based scroll tracking,
-            // we need to send a message to the WebView to scroll to the position
-            showJumpToProgressButton = false
+            let maxOffset = webViewHeight - scrollViewHeight
+            let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                scrollPosition = ScrollPosition(y: offset)
+                showJumpToProgressButton = false
+            }
         }) {
             Text("Jump to last read position (\(viewModel.readProgress)%)")
                 .font(.subheadline)

@@ -6,7 +6,6 @@ struct WebView: UIViewRepresentable {
     let settings: Settings
     let onHeightChange: (CGFloat) -> Void
     var onScroll: ((Double) -> Void)? = nil
-    var onExternalScrollUpdate: ((WebViewCoordinator) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
@@ -23,20 +22,14 @@ struct WebView: UIViewRepresentable {
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
 
-        print("🟢 WebView created with scrolling DISABLED (embedded in ScrollView)")
-        
         // Allow text selection and copying
         webView.allowsBackForwardNavigationGestures = false
         webView.allowsLinkPreview = true
-        
+
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
-        context.coordinator.webView = webView
-
-        // Notify parent that coordinator is ready
-        onExternalScrollUpdate?(context.coordinator)
 
         return webView
     }
@@ -271,38 +264,6 @@ struct WebView: UIViewRepresentable {
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
-                console.log('🟢 WebView JavaScript loaded');
-                console.log('🔵 Document scroll enabled:', document.body.style.overflow);
-                console.log('🔵 Window innerHeight:', window.innerHeight);
-                console.log('🔵 Document scrollHeight:', document.documentElement.scrollHeight);
-
-                let lastSent = { value: 0 };
-                window.addEventListener('scroll', function() {
-                    console.log('📜 Scroll event fired!');
-                    isScrolling = true;
-
-                    let scrollTop = window.scrollY || document.documentElement.scrollTop;
-                    let docHeight = document.documentElement.scrollHeight - window.innerHeight;
-                    let scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-
-                    console.log('📊 scrollTop:', scrollTop, 'docHeight:', docHeight, 'scrollPercent:', scrollPercent.toFixed(2) + '%');
-
-                    if (Math.abs(scrollPercent - lastSent.value) >= 3) {
-                        console.log('✅ Sending scroll progress:', (scrollPercent / 100).toFixed(3));
-                        window.webkit.messageHandlers.scrollProgress.postMessage(scrollPercent / 100);
-                        lastSent.value = scrollPercent;
-                    } else {
-                        console.log('⏸️ Skipping (change < 3%): ', Math.abs(scrollPercent - lastSent.value).toFixed(2) + '%');
-                    }
-
-                    clearTimeout(scrollTimeout);
-                    scrollTimeout = setTimeout(function() {
-                        isScrolling = false;
-                        debouncedHeightUpdate();
-                    }, 200);
-                }, { passive: true });
-
-                console.log('🎯 Scroll listener attached');
             </script>
         </body>
         </html>
@@ -351,9 +312,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
 
-    // WebView reference
-    weak var webView: WKWebView?
-
     // Height management
     var lastHeight: CGFloat = 0
     var pendingHeight: CGFloat = 0
@@ -364,7 +322,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     var scrollVelocity: Double = 0
     var lastScrollTime: Date = Date()
     var scrollEndTimer: Timer?
-    var lastSentProgress: Double = 0
 
     // Lifecycle
     private var isCleanedUp = false
@@ -385,16 +342,12 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("🔔 Swift received message: \(message.name)")
-
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
-            print("📏 Height update: \(height)px")
             DispatchQueue.main.async {
                 self.handleHeightUpdate(height: height)
             }
         }
         if message.name == "scrollProgress", let progress = message.body as? Double {
-            print("📊 Swift received scroll progress: \(String(format: "%.3f", progress)) (\(String(format: "%.1f", progress * 100))%)")
             DispatchQueue.main.async {
                 self.handleScrollProgress(progress: progress)
             }
@@ -415,8 +368,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     private func handleScrollProgress(progress: Double) {
-        print("🎯 handleScrollProgress called with: \(String(format: "%.3f", progress))")
-
         let now = Date()
         let timeDelta = now.timeIntervalSince(lastScrollTime)
 
@@ -436,7 +387,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             self?.handleScrollEnd()
         }
 
-        print("🚀 Calling onScroll callback with progress: \(String(format: "%.3f", progress))")
         onScroll?(progress)
     }
     
@@ -464,23 +414,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
 
         lastHeight = height
         onHeightChange?(height)
-    }
-
-    // Method to receive scroll updates from SwiftUI ScrollView
-    func updateScrollProgress(offset: CGFloat, maxOffset: CGFloat) {
-        let progress = maxOffset > 0 ? min(max(offset / maxOffset, 0), 1) : 0
-
-        print("📊 External scroll update: offset=\(offset), maxOffset=\(maxOffset), progress=\(String(format: "%.3f", progress))")
-
-        // Only send if change >= 3%
-        let threshold: Double = 0.03
-        if abs(progress - lastSentProgress) >= threshold {
-            print("✅ Calling onScroll callback with: \(String(format: "%.3f", progress))")
-            lastSentProgress = progress
-            onScroll?(progress)
-        } else {
-            print("⏸️ Skipping (change < 3%): \(String(format: "%.3f", abs(progress - lastSentProgress)))")
-        }
     }
 
     func cleanup() {
