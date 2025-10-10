@@ -57,6 +57,7 @@ struct BookmarkDetailLegacyView: View {
                                         }
                                     },
                                     onScroll: { scrollPercent in
+                                        print("🔥 BookmarkDetailLegacyView onScroll callback: \(String(format: "%.3f", scrollPercent)) (\(String(format: "%.1f", scrollPercent * 100))%)")
                                         readingProgress = scrollPercent
                                         viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: scrollPercent, anchor: nil)
                                     }

@@ -264,17 +264,28 @@ struct WebView: UIViewRepresentable {
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
+                console.log('🟢 WebView JavaScript loaded');
+                console.log('🔵 Document scroll enabled:', document.body.style.overflow);
+                console.log('🔵 Window innerHeight:', window.innerHeight);
+                console.log('🔵 Document scrollHeight:', document.documentElement.scrollHeight);
+
                 let lastSent = { value: 0 };
                 window.addEventListener('scroll', function() {
+                    console.log('📜 Scroll event fired!');
                     isScrolling = true;
 
                     let scrollTop = window.scrollY || document.documentElement.scrollTop;
                     let docHeight = document.documentElement.scrollHeight - window.innerHeight;
                     let scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
 
+                    console.log('📊 scrollTop:', scrollTop, 'docHeight:', docHeight, 'scrollPercent:', scrollPercent.toFixed(2) + '%');
+
                     if (Math.abs(scrollPercent - lastSent.value) >= 3) {
+                        console.log('✅ Sending scroll progress:', (scrollPercent / 100).toFixed(3));
                         window.webkit.messageHandlers.scrollProgress.postMessage(scrollPercent / 100);
                         lastSent.value = scrollPercent;
+                    } else {
+                        console.log('⏸️ Skipping (change < 3%): ', Math.abs(scrollPercent - lastSent.value).toFixed(2) + '%');
                     }
 
                     clearTimeout(scrollTimeout);
@@ -282,7 +293,9 @@ struct WebView: UIViewRepresentable {
                         isScrolling = false;
                         debouncedHeightUpdate();
                     }, 200);
-                });
+                }, { passive: true });
+
+                console.log('🎯 Scroll listener attached');
             </script>
         </body>
         </html>
@@ -361,12 +374,16 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        print("🔔 Swift received message: \(message.name)")
+
         if message.name == "heightUpdate", let height = message.body as? CGFloat {
+            print("📏 Height update: \(height)px")
             DispatchQueue.main.async {
                 self.handleHeightUpdate(height: height)
             }
         }
         if message.name == "scrollProgress", let progress = message.body as? Double {
+            print("📊 Swift received scroll progress: \(String(format: "%.3f", progress)) (\(String(format: "%.1f", progress * 100))%)")
             DispatchQueue.main.async {
                 self.handleScrollProgress(progress: progress)
             }
@@ -387,25 +404,28 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     private func handleScrollProgress(progress: Double) {
+        print("🎯 handleScrollProgress called with: \(String(format: "%.3f", progress))")
+
         let now = Date()
         let timeDelta = now.timeIntervalSince(lastScrollTime)
-        
+
         // Calculate scroll velocity to detect fast scrolling
         if timeDelta > 0 {
             scrollVelocity = abs(progress) / timeDelta
         }
-        
+
         lastScrollTime = now
         isScrolling = true
-        
+
         // Longer delay for scroll end detection, especially during fast scrolling
         let scrollEndDelay: TimeInterval = scrollVelocity > 2.0 ? 0.8 : 0.5
-        
+
         scrollEndTimer?.invalidate()
         scrollEndTimer = Timer.scheduledTimer(withTimeInterval: scrollEndDelay, repeats: false) { [weak self] _ in
             self?.handleScrollEnd()
         }
-        
+
+        print("🚀 Calling onScroll callback with progress: \(String(format: "%.3f", progress))")
         onScroll?(progress)
     }
     
