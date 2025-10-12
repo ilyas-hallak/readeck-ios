@@ -10,7 +10,8 @@ struct BookmarkDetailView2: View {
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: CGFloat = 300
-    @State private var contentHeight: CGFloat = 0
+    @State private var contentEndPosition: CGFloat = 0
+    @State private var initialContentEndPosition: CGFloat = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var readingProgress: Double = 0.0
@@ -120,41 +121,65 @@ struct BookmarkDetailView2: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                }
-                .background(
-                    GeometryReader { contentGeo in
-                        Color.clear.preference(
-                            key: ContentHeightPreferenceKey.self,
-                            value: contentGeo.size.height
+
+                    // Invisible marker to measure total content height - placed AFTER all content
+                    Color.clear
+                        .frame(height: 1)
+                        .background(
+                            GeometryReader { endGeo in
+                                Color.clear.preference(
+                                    key: ContentHeightPreferenceKey.self,
+                                    value: endGeo.frame(in: .named("scrollView")).maxY
+                                )
+                            }
                         )
-                    }
-                )
+                }
             }
             .coordinateSpace(name: "scrollView")
             .clipped()
             .ignoresSafeArea(edges: .top)
             .scrollPosition($scrollPosition)
-            .onPreferenceChange(ContentHeightPreferenceKey.self) { height in
-                contentHeight = height
-            }
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                // Calculate progress from scroll offset
-                let scrollOffset = -offset.y
+            .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
+                contentEndPosition = endPosition
+
                 let containerHeight = geometry.size.height
-                let maxOffset = contentHeight - containerHeight
 
-                guard maxOffset > 0 else { return }
+                // Update initial position if content grows (WebView still loading) or first time
+                // We always take the maximum position seen (when scrolled to top, this is total content height)
+                if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
+                    initialContentEndPosition = endPosition
+                }
 
-                let rawProgress = scrollOffset / maxOffset
-                let progress = min(max(rawProgress, 0), 1)
+                // Calculate progress from how much the end marker has moved up
+                guard initialContentEndPosition > 0 else { return }
 
-                // Only update if change >= 3%
+                let totalScrollableDistance = initialContentEndPosition - containerHeight
+
+                guard totalScrollableDistance > 0 else { return }
+
+                // How far has the marker moved from its initial position?
+                let scrolled = initialContentEndPosition - endPosition
+                let rawProgress = scrolled / totalScrollableDistance
+                var progress = min(max(rawProgress, 0), 1)
+
+                // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
+                if lastSentProgress >= 0.995 {
+                    progress = max(progress, 1.0)
+                }
+
+                // Check if we should update: threshold OR reaching 100% for first time
                 let threshold: Double = 0.03
-                if abs(progress - lastSentProgress) >= threshold {
+                let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
+                let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
+
+                if shouldUpdate {
                     lastSentProgress = progress
                     readingProgress = progress
                     viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                 }
+            }
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
+                // Not needed anymore, we track via ContentHeightPreferenceKey
             }
         }
     }
