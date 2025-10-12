@@ -437,7 +437,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = URLShare/Info.plist;
@@ -470,7 +470,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = URLShare/Info.plist;
@@ -625,7 +625,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -669,7 +669,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
