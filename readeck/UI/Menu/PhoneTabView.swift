@@ -153,7 +153,7 @@ struct PhoneTabView: View {
                 // To restore: uncomment block below and remove ZStack
                 ZStack {
                     NavigationLink {
-                        BookmarkDetailView(bookmarkId: bookmark.id)
+                        BookmarkDetailView(bookmarkId: bookmark.id)                            
                     } label: {
                         EmptyView()
                     }

@@ -48,7 +48,6 @@ struct BookmarkDetailView2: View {
             // Main scroll content
             scrollViewContent
         }
-        
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             toolbarContent
@@ -186,6 +185,8 @@ struct BookmarkDetailView2: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        
+        #if DEBUG
         // Toggle button (left)
         ToolbarItem(placement: .navigationBarLeading) {
             Button(action: {
@@ -195,6 +196,7 @@ struct BookmarkDetailView2: View {
                     .foregroundColor(.accentColor)
             }
         }
+        #endif
 
         // Top toolbar (right)
         ToolbarItem(placement: .navigationBarTrailing) {
@@ -213,6 +215,7 @@ struct BookmarkDetailView2: View {
             }
         }
 
+        #if DEBUG
         // Bottom toolbar - Archive section
         if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
             ToolbarItemGroup(placement: .bottomBar) {
@@ -244,6 +247,7 @@ struct BookmarkDetailView2: View {
                 .disabled(viewModel.isLoading)
             }
         }
+        #endif
     }
 
     private var fontSettingsSheet: some View {
