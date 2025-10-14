@@ -197,6 +197,7 @@ struct BookmarkDetailLegacyView: View {
         .frame(maxWidth: .infinity)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            #if DEBUG
             // Toggle button (left)
             ToolbarItem(placement: .navigationBarLeading) {
                 if #available(iOS 26.0, *) {
@@ -208,6 +209,7 @@ struct BookmarkDetailLegacyView: View {
                     }
                 }
             }
+            #endif
 
             // Top toolbar (right)
             ToolbarItem(placement: .navigationBarTrailing) {

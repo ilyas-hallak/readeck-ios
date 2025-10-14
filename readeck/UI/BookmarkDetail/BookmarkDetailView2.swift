@@ -39,6 +39,44 @@ struct BookmarkDetailView2: View {
     }
 
     private var mainView: some View {
+        content
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                toolbarContent
+            }
+            .sheet(isPresented: $showingFontSettings) {
+                fontSettingsSheet
+            }
+            .sheet(isPresented: $showingLabelsSheet) {
+                BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
+            }
+            .sheet(isPresented: $showingImageViewer) {
+                ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
+            }
+            .onChange(of: showingFontSettings) { _, isShowing in
+                if !isShowing {
+                    Task {
+                        await viewModel.loadBookmarkDetail(id: bookmarkId)
+                    }
+                }
+            }
+            .onChange(of: showingLabelsSheet) { _, isShowing in
+                if !isShowing {
+                    Task {
+                        await viewModel.refreshBookmarkDetail(id: bookmarkId)
+                    }
+                }
+            }
+            .onChange(of: viewModel.readProgress) { _, progress in
+                showJumpToProgressButton = progress > 0 && progress < 100
+            }
+            .task {
+                await viewModel.loadBookmarkDetail(id: bookmarkId)
+                await viewModel.loadArticleContent(id: bookmarkId)
+            }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             // Progress bar at top
             ProgressView(value: readingProgress)
@@ -47,42 +85,50 @@ struct BookmarkDetailView2: View {
 
             // Main scroll content
             scrollViewContent
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            toolbarContent
-        }
-        .toolbarBackgroundVisibility(.hidden, for: .bottomBar)
-        .sheet(isPresented: $showingFontSettings) {
-            fontSettingsSheet
-        }
-        .sheet(isPresented: $showingLabelsSheet) {
-            BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
-        }
-        .sheet(isPresented: $showingImageViewer) {
-            ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
-        }
-        .onChange(of: showingFontSettings) { _, isShowing in
-            if !isShowing {
-                Task {
-                    await viewModel.loadBookmarkDetail(id: bookmarkId)
+                .overlay(alignment: .bottomTrailing) {
+                    if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                        if readingProgress >= 0.9 {
+                            floatingActionButtons
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
                 }
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: readingProgress >= 0.9)
+        }
+    }
+
+    private var floatingActionButtons: some View {
+        GlassEffectContainer(spacing: 52.0) {
+            HStack(spacing: 52.0) {
+                Button(action: {
+                    Task {
+                        await viewModel.toggleFavorite(id: bookmarkId)
+                    }
+                }) {
+                    Image(systemName: viewModel.bookmarkDetail.isMarked ? "star.fill" : "star")
+                        .foregroundStyle(viewModel.bookmarkDetail.isMarked ? .yellow : .primary)
+                        .frame(width: 52.0, height: 52.0)
+                        .font(.system(size: 31))
+                }
+                .disabled(viewModel.isLoading)
+                .glassEffect()
+
+                Button(action: {
+                    Task {
+                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: !viewModel.bookmarkDetail.isArchived)
+                    }
+                }) {
+                    Image(systemName: viewModel.bookmarkDetail.isArchived ? "checkmark.circle" : "archivebox")
+                        .frame(width: 52.0, height: 52.0)
+                        .font(.system(size: 31))
+                }
+                .disabled(viewModel.isLoading)
+                .glassEffect()
+                .offset(x: -52.0, y: 0.0)
             }
         }
-        .onChange(of: showingLabelsSheet) { _, isShowing in
-            if !isShowing {
-                Task {
-                    await viewModel.refreshBookmarkDetail(id: bookmarkId)
-                }
-            }
-        }
-        .onChange(of: viewModel.readProgress) { _, progress in
-            showJumpToProgressButton = progress > 0 && progress < 100
-        }
-        .task {
-            await viewModel.loadBookmarkDetail(id: bookmarkId)
-            await viewModel.loadArticleContent(id: bookmarkId)
-        }
+        .padding(.trailing, 1)
+        .padding(.bottom, 10)
     }
 
     private var scrollViewContent: some View {
@@ -136,7 +182,7 @@ struct BookmarkDetailView2: View {
             }
             .coordinateSpace(name: "scrollView")
             .clipped()
-            .ignoresSafeArea(edges: .top)
+            .ignoresSafeArea(edges: [.top, .bottom])
             .scrollPosition($scrollPosition)
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 contentEndPosition = endPosition
@@ -171,9 +217,10 @@ struct BookmarkDetailView2: View {
                 let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
                 let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
+                readingProgress = progress
+                
                 if shouldUpdate {
                     lastSentProgress = progress
-                    readingProgress = progress
                     viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                 }
             }
@@ -214,40 +261,6 @@ struct BookmarkDetailView2: View {
                 }
             }
         }
-
-        #if DEBUG
-        // Bottom toolbar - Archive section
-        if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-            ToolbarItemGroup(placement: .bottomBar) {
-
-                Spacer()
-
-                Button(action: {
-                    Task {
-                        await viewModel.toggleFavorite(id: bookmarkId)
-                    }
-                }) {
-                    Label(
-                        viewModel.bookmarkDetail.isMarked ? "Favorited" : "Favorite",
-                        systemImage: viewModel.bookmarkDetail.isMarked ? "star.fill" : "star"
-                    )
-                }
-                .disabled(viewModel.isLoading)
-
-                Button(action: {
-                    Task {
-                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: !viewModel.bookmarkDetail.isArchived)
-                    }
-                }) {
-                    Label(
-                        viewModel.bookmarkDetail.isArchived ? "Unarchive" : "Archive",
-                        systemImage: viewModel.bookmarkDetail.isArchived ? "checkmark.circle" : "archivebox"
-                    )
-                }
-                .disabled(viewModel.isLoading)
-            }
-        }
-        #endif
     }
 
     private var fontSettingsSheet: some View {
@@ -278,10 +291,17 @@ struct BookmarkDetailView2: View {
     private func headerView(width: CGFloat) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
+                // Background blur for images that don't fill
                 CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
                     .aspectRatio(contentMode: .fill)
                     .frame(width: width, height: headerHeight)
+                    .blur(radius: 30)
                     .clipped()
+
+                // Main image with fit
+                CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: width, height: headerHeight)
 
                 // Zoom icon
                 Button(action: {
