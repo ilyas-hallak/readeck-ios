@@ -9,11 +9,12 @@ import SwiftUI
 
 struct SettingsGeneralView: View {
     @State private var viewModel: SettingsGeneralViewModel
-    
+    @State private var showReleaseNotes = false
+
     init(viewModel: SettingsGeneralViewModel = SettingsGeneralViewModel()) {
         self.viewModel = viewModel
     }
-    
+
     var body: some View {
         VStack(spacing: 20) {
             SectionHeader(title: "General Settings".localized, icon: "gear")
@@ -22,6 +23,24 @@ struct SettingsGeneralView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("General")
                     .font(.headline)
+
+                // What's New Button
+                Button(action: {
+                    showReleaseNotes = true
+                }) {
+                    HStack {
+                        Label("What's New", systemImage: "sparkles")
+                        Spacer()
+                        Text("Version \(VersionManager.shared.currentVersion)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+
                 Toggle("Read Aloud Feature", isOn: $viewModel.enableTTS)
                     .toggleStyle(.switch)
                     .onChange(of: viewModel.enableTTS) {
@@ -97,6 +116,9 @@ struct SettingsGeneralView: View {
             }
             #endif
             
+        }
+        .sheet(isPresented: $showReleaseNotes) {
+            ReleaseNotesView()
         }
         .task {
             await viewModel.loadGeneralSettings()
