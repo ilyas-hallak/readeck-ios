@@ -51,3 +51,58 @@ struct readeckApp: App {
         }
     }
 }
+
+
+struct TestView: View {
+    var body: some View {
+        if #available(iOS 26.0, *) {
+            Text("hello")
+                .toolbar {
+                    ToolbarSpacer(.flexible)
+
+                    ToolbarItem {
+                        Button {
+                            
+                        } label: {
+                            Label("Favorite", systemImage: "share")
+                                .symbolVariant(.none)
+                        }
+                    }
+
+                    ToolbarSpacer(.fixed)
+                    
+                    ToolbarItemGroup {
+                        Button {
+                            
+                        } label: {
+                            Label("Favorite", systemImage: "heart")
+                                .symbolVariant(.none)
+                        }
+                        
+                        Button("Info", systemImage: "info") {
+                            
+                        }
+                    }
+                    
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        Spacer()
+                        Button {
+                            
+                        } label: {
+                            Label("Favorite", systemImage: "heart")
+                                .symbolVariant(.none)
+                        }
+                        
+                        Button("Info", systemImage: "info") {
+                            
+                        }
+                    }
+                    
+                }
+                .toolbar(removing: .title)
+                .ignoresSafeArea(edges: .top)
+        } else {
+            Text("hello1")
+        }
+    }
+}
