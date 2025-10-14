@@ -7,9 +7,9 @@ struct ReleaseNotesView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    if let markdownContent = loadReleaseNotes() {
-                        Text(.init(markdownContent))
-                            .font(.body)
+                    if let attributedString = loadReleaseNotes() {
+                        Text(attributedString)
+                            .textSelection(.enabled)
                             .padding()
                     } else {
                         Text("Unable to load release notes")
@@ -30,12 +30,16 @@ struct ReleaseNotesView: View {
         }
     }
 
-    private func loadReleaseNotes() -> String? {
+    private func loadReleaseNotes() -> AttributedString? {
         guard let url = Bundle.main.url(forResource: "RELEASE_NOTES", withExtension: "md"),
-              let content = try? String(contentsOf: url) else {
+              let markdownContent = try? String(contentsOf: url),
+              let attributedString = try? AttributedString(
+                markdown: markdownContent,
+                options: .init(interpretedSyntax: .full)
+              ) else {
             return nil
         }
-        return content
+        return attributedString
     }
 }
 
