@@ -62,8 +62,15 @@ class SettingsServerViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            let user = try await loginUseCase.execute(endpoint: endpoint, username: username.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-            try await saveServerSettingsUseCase.execute(endpoint: endpoint, username: username, password: password, token: user.token)
+            // Normalize endpoint before saving
+            let normalizedEndpoint = normalizeEndpoint(endpoint)
+
+            let user = try await loginUseCase.execute(endpoint: normalizedEndpoint, username: username.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
+            try await saveServerSettingsUseCase.execute(endpoint: normalizedEndpoint, username: username, password: password, token: user.token)
+
+            // Update local endpoint with normalized version
+            endpoint = normalizedEndpoint
+
             isLoggedIn = true
             successMessage = "Server settings saved and successfully logged in."
             try await SettingsRepository().saveHasFinishedSetup(true)
@@ -72,6 +79,55 @@ class SettingsServerViewModel {
             errorMessage = "Connection or login failed: \(error.localizedDescription)"
             isLoggedIn = false
         }
+    }
+
+    // MARK: - Endpoint Normalization
+
+    private func normalizeEndpoint(_ endpoint: String) -> String {
+        var normalized = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Remove query parameters
+        if let queryIndex = normalized.firstIndex(of: "?") {
+            normalized = String(normalized[..<queryIndex])
+        }
+
+        // Parse URL components
+        guard var urlComponents = URLComponents(string: normalized) else {
+            // If parsing fails, try adding https:// and parse again
+            normalized = "https://" + normalized
+            guard var urlComponents = URLComponents(string: normalized) else {
+                return normalized
+            }
+            return buildNormalizedURL(from: urlComponents)
+        }
+
+        return buildNormalizedURL(from: urlComponents)
+    }
+
+    private func buildNormalizedURL(from components: URLComponents) -> String {
+        var urlComponents = components
+
+        // Ensure scheme is http or https, default to https
+        if urlComponents.scheme == nil {
+            urlComponents.scheme = "https"
+        } else if urlComponents.scheme != "http" && urlComponents.scheme != "https" {
+            urlComponents.scheme = "https"
+        }
+
+        // Add trailing slash to path if not present
+        if urlComponents.path.isEmpty || !urlComponents.path.hasSuffix("/") {
+            if urlComponents.path.isEmpty {
+                urlComponents.path = "/"
+            } else {
+                urlComponents.path += "/"
+            }
+        }
+
+        // Remove query parameters (already done above, but double check)
+        urlComponents.query = nil
+        urlComponents.fragment = nil
+
+        return urlComponents.string ?? components.string ?? ""
     }
     
     @MainActor
