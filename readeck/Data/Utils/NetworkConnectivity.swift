@@ -44,49 +44,7 @@ class ServerConnectivity: ObservableObject {
     
     // Check if the Readeck server endpoint is reachable
     static func isServerReachable() async -> Bool {
-        guard let endpoint = KeychainHelper.shared.loadEndpoint(),
-              !endpoint.isEmpty,
-              let url = URL(string: endpoint + "/api/health") else {
-            return false
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 5.0 // 5 second timeout
-        
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse {
-                return httpResponse.statusCode == 200
-            }
-        } catch {
-            // Fallback: try basic endpoint if health endpoint doesn't exist
-            return await isBasicEndpointReachable()
-        }
-        
-        return false
-    }
-    
-    private static func isBasicEndpointReachable() async -> Bool {
-        guard let endpoint = KeychainHelper.shared.loadEndpoint(),
-              !endpoint.isEmpty,
-              let url = URL(string: endpoint) else {
-            return false
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "HEAD"
-        request.timeoutInterval = 3.0
-        
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse {
-                return httpResponse.statusCode < 500
-            }
-        } catch {
-            print("Server connectivity check failed: \(error)")
-        }
-        
-        return false
+        let useCase = DefaultUseCaseFactory.shared.makeCheckServerReachabilityUseCase()
+        return await useCase.execute()
     }
 }
