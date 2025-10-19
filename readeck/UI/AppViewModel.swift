@@ -24,7 +24,6 @@ class AppViewModel: ObservableObject {
 
         Task {
             await loadSetupStatus()
-            await checkServerReachability()
         }
     }
     
@@ -68,6 +67,11 @@ class AppViewModel: ObservableObject {
     @MainActor
     private func loadSetupStatus() {
         hasFinishedSetup = settingsRepository.hasFinishedSetup
+    }
+
+    @MainActor
+    func onAppResume() async {
+        await checkServerReachability()
     }
 
     @MainActor
