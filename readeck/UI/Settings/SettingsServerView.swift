@@ -43,6 +43,11 @@ struct SettingsServerView: View {
                             .onChange(of: viewModel.endpoint) {
                                 viewModel.clearMessages()
                             }
+
+                        Text("HTTP/HTTPS supported. HTTP only for local networks. Port optional. No trailing slash needed.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     } else {
                         HStack {
                             Image(systemName: "server.rack")
