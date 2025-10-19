@@ -22,9 +22,12 @@ class BookmarksViewModel {
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
-    
+
     // Undo delete functionality
     var pendingDeletes: [String: PendingDelete] = [:] // bookmarkId -> PendingDelete
+
+    // Prevent concurrent updates
+    private var isUpdating = false
     
     
     private var cancellables = Set<AnyCancellable>()
@@ -104,15 +107,19 @@ class BookmarksViewModel {
     
     @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
+        guard !isUpdating else { return }
+        isUpdating = true
+        defer { isUpdating = false }
+
         isLoading = true
         errorMessage = nil
         currentState = state
         currentType = type
         currentTag = tag
-        
+
         offset = 0
         hasMoreData = true
-        
+
         do {
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
@@ -142,18 +149,20 @@ class BookmarksViewModel {
             }
             // Don't clear bookmarks on error - keep existing data visible
         }
-        
+
         isLoading = false
         isInitialLoading = false
     }
     
     @MainActor
     func loadMoreBookmarks() async {
-        guard !isLoading && hasMoreData else { return } // prevent multiple loads
-        
+        guard !isLoading && hasMoreData && !isUpdating else { return } // prevent multiple loads
+        isUpdating = true
+        defer { isUpdating = false }
+
         isLoading = true
         errorMessage = nil
-        
+
         do {
             offset += limit // inc. offset
             let newBookmarks = try await getBooksmarksUseCase.execute(
@@ -181,7 +190,7 @@ class BookmarksViewModel {
                 errorMessage = "Error loading more bookmarks"
             }
         }
-        
+
         isLoading = false
     }
     
