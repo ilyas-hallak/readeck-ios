@@ -10,7 +10,7 @@ import netfox
 
 @main
 struct readeckApp: App {
-    @StateObject private var appViewModel = AppViewModel()
+    @State private var appViewModel = AppViewModel()
     @StateObject private var appSettings = AppSettings()
     @Environment(\.scenePhase) private var scenePhase
 

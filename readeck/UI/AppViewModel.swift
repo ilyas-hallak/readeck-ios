@@ -21,9 +21,7 @@ class AppViewModel {
         self.factory = factory
         setupNotificationObservers()
 
-        Task {
-            await loadSetupStatus()
-        }
+        loadSetupStatus()
     }
     
     private func setupNotificationObservers() {
