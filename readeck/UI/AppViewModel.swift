@@ -8,18 +8,17 @@
 import Foundation
 import SwiftUI
 
-class AppViewModel: ObservableObject {
+@MainActor
+@Observable
+class AppViewModel {
     private let settingsRepository = SettingsRepository()
-    private let logoutUseCase: LogoutUseCase
-    private let checkServerReachabilityUseCase: PCheckServerReachabilityUseCase
+    private let factory: UseCaseFactory
 
-    @Published var hasFinishedSetup: Bool = true
-    @Published var isServerReachable: Bool = false
+    var hasFinishedSetup: Bool = true
+    var isServerReachable: Bool = false
 
-    init(logoutUseCase: LogoutUseCase = LogoutUseCase(),
-         checkServerReachabilityUseCase: PCheckServerReachabilityUseCase = DefaultUseCaseFactory.shared.makeCheckServerReachabilityUseCase()) {
-        self.logoutUseCase = logoutUseCase
-        self.checkServerReachabilityUseCase = checkServerReachabilityUseCase
+    init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+        self.factory = factory
         setupNotificationObservers()
 
         Task {
@@ -33,7 +32,7 @@ class AppViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task {
+            Task { @MainActor in
                 await self?.handleUnauthorizedResponse()
             }
         }
@@ -43,19 +42,17 @@ class AppViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSetupStatus()
+            Task { @MainActor in
+                self?.loadSetupStatus()
+            }
         }
     }
     
-    @MainActor
     private func handleUnauthorizedResponse() async {
         print("AppViewModel: Handling 401 Unauthorized - logging out user")
         
         do {
-            // Führe den Logout durch
-            try await logoutUseCase.execute()
-            
-            // Update UI state
+            try await factory.makeLogoutUseCase().execute()
             loadSetupStatus()
             
             print("AppViewModel: User successfully logged out due to 401 error")
@@ -64,19 +61,16 @@ class AppViewModel: ObservableObject {
         }
     }
     
-    @MainActor
     private func loadSetupStatus() {
         hasFinishedSetup = settingsRepository.hasFinishedSetup
     }
 
-    @MainActor
     func onAppResume() async {
         await checkServerReachability()
     }
 
-    @MainActor
     private func checkServerReachability() async {
-        isServerReachable = await checkServerReachabilityUseCase.execute()
+        isServerReachable = await factory.makeCheckServerReachabilityUseCase().execute()
     }
 
     deinit {
