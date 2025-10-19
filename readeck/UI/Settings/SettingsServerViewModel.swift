@@ -114,13 +114,9 @@ class SettingsServerViewModel {
             urlComponents.scheme = "https"
         }
 
-        // Add trailing slash to path if not present
-        if urlComponents.path.isEmpty || !urlComponents.path.hasSuffix("/") {
-            if urlComponents.path.isEmpty {
-                urlComponents.path = "/"
-            } else {
-                urlComponents.path += "/"
-            }
+        // Remove trailing slash from path if present
+        if urlComponents.path.hasSuffix("/") {
+            urlComponents.path = String(urlComponents.path.dropLast())
         }
 
         // Remove query parameters (already done above, but double check)
