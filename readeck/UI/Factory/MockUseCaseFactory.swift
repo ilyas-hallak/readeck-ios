@@ -9,6 +9,10 @@ import Foundation
 import Combine
 
 class MockUseCaseFactory: UseCaseFactory {
+    func makeCheckServerReachabilityUseCase() -> any PCheckServerReachabilityUseCase {
+        MockCheckServerReachabilityUseCase()
+    }
+    
     func makeOfflineBookmarkSyncUseCase() -> any POfflineBookmarkSyncUseCase {
         MockOfflineBookmarkSyncUseCase()
     }
@@ -221,6 +225,16 @@ class MockLoadCardLayoutUseCase: PLoadCardLayoutUseCase {
 class MockSaveCardLayoutUseCase: PSaveCardLayoutUseCase {
     func execute(layout: CardLayoutStyle) async {
         // Mock implementation - do nothing
+    }
+}
+
+class MockCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
+    func execute() async -> Bool {
+        return true
+    }
+
+    func getServerInfo() async throws -> ServerInfo {
+        return ServerInfo(version: "1.0.0", buildDate: nil, userAgent: nil, isReachable: true)
     }
 }
 

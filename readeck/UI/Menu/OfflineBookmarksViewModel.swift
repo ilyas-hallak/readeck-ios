@@ -12,7 +12,7 @@ class OfflineBookmarksViewModel {
     private var completionTimerActive = false
     
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
-        self.syncUseCase = factory.makeOfflineBookmarkSyncUseCase()
+        self.syncUseCase = factory.makeOfflineBookmarkSyncUseCase()        
         setupBindings()
         refreshState()
     }
