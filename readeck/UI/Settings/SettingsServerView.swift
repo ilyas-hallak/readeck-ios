@@ -11,8 +11,7 @@ struct SettingsServerView: View {
     @State private var viewModel = SettingsServerViewModel()
     @State private var showingLogoutAlert = false
     
-    init(viewModel: SettingsServerViewModel = SettingsServerViewModel(), showingLogoutAlert: Bool = false) {
-        self.viewModel = viewModel
+    init(showingLogoutAlert: Bool = false) {
         self.showingLogoutAlert = showingLogoutAlert
     }
     
@@ -35,11 +34,12 @@ struct SettingsServerView: View {
                     Text("Server Endpoint")
                         .font(.headline)
                     if viewModel.isSetupMode {
-                        TextField("https://readeck.example.com", text: $viewModel.endpoint)
+                        TextField("http://192.168.0.77:8000", text: $viewModel.endpoint)
                             .textFieldStyle(.roundedBorder)
                             .keyboardType(.URL)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
+                            .tint(.gray)
                             .onChange(of: viewModel.endpoint) {
                                 viewModel.clearMessages()
                             }
@@ -170,10 +170,4 @@ struct SettingsServerView: View {
             await viewModel.loadServerSettings()
         }
     }
-}
-
-#Preview {
-    SettingsServerView(viewModel: .init(
-        MockUseCaseFactory()
-    ))
 }
