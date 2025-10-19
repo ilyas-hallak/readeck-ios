@@ -7,10 +7,7 @@ extension Notification.Name {
     
     // MARK: - Authentication
     static let unauthorizedAPIResponse = Notification.Name("UnauthorizedAPIResponse")
-    
-    // MARK: - Network
-    static let serverDidBecomeAvailable = Notification.Name("ServerDidBecomeAvailable")
-    
+
     // MARK: - UI Interactions
     static let dismissKeyboard = Notification.Name("DismissKeyboard")
     static let addBookmarkFromShare = Notification.Name("AddBookmarkFromShare")

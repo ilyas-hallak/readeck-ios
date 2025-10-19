@@ -124,22 +124,4 @@ class OfflineSyncManager: ObservableObject, @unchecked Sendable {
         }
     }
     
-    // MARK: - Auto Sync on Server Connectivity Changes
-    
-    func startAutoSync() {
-        // Monitor server connectivity and auto-sync when server becomes reachable
-        NotificationCenter.default.addObserver(
-            forName: .serverDidBecomeAvailable,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task {
-                await self?.syncOfflineBookmarks()
-            }
-        }
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
 }
