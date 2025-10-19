@@ -1,5 +1,17 @@
 import Foundation
 
+public struct ServerInfoDto: Codable {
+    public let version: String
+    public let buildDate: String?
+    public let userAgent: String?
+
+    public enum CodingKeys: String, CodingKey {
+        case version
+        case buildDate = "build_date"
+        case userAgent = "user_agent"
+    }
+}
+
 public struct CreateBookmarkRequestDto: Codable {
     public let labels: [String]?
     public let title: String?
@@ -33,4 +45,3 @@ public struct BookmarkLabelDto: Codable, Identifiable {
         self.href = href
     }
 } 
-

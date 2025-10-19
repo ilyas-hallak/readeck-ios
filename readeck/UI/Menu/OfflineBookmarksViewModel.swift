@@ -11,8 +11,8 @@ class OfflineBookmarksViewModel {
     private let successDelaySubject = PassthroughSubject<Int, Never>()
     private var completionTimerActive = false
     
-    init(syncUseCase: POfflineBookmarkSyncUseCase = OfflineBookmarkSyncUseCase()) {
-        self.syncUseCase = syncUseCase
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+        self.syncUseCase = factory.makeOfflineBookmarkSyncUseCase()
         setupBindings()
         refreshState()
     }

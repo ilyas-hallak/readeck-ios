@@ -29,8 +29,6 @@ struct readeckApp: App {
                 #if DEBUG
                 NFX.sharedInstance().start()
                 #endif
-                // Initialize server connectivity monitoring
-                _ = ServerConnectivity.shared
                 Task {
                     await loadAppSettings()
                 }

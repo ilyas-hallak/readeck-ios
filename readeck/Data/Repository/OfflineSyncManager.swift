@@ -4,22 +4,25 @@ import SwiftUI
 
 class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     static let shared = OfflineSyncManager()
-    
+
     @Published var isSyncing = false
     @Published var syncStatus: String?
-    
+
     private let coreDataManager = CoreDataManager.shared
     private let api: PAPI
-    
-    init(api: PAPI = API()) {
+    private let checkServerReachabilityUseCase: PCheckServerReachabilityUseCase
+
+    init(api: PAPI = API(),
+         checkServerReachabilityUseCase: PCheckServerReachabilityUseCase = DefaultUseCaseFactory.shared.makeCheckServerReachabilityUseCase()) {
         self.api = api
+        self.checkServerReachabilityUseCase = checkServerReachabilityUseCase
     }
     
     // MARK: - Sync Methods
     
     func syncOfflineBookmarks() async {
         // First check if server is reachable
-        guard await ServerConnectivity.isServerReachable() else {
+        guard await checkServerReachabilityUseCase.execute() else {
             await MainActor.run {
                 isSyncing = false
                 syncStatus = "Server not reachable. Cannot sync."

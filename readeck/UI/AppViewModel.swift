@@ -11,15 +11,20 @@ import SwiftUI
 class AppViewModel: ObservableObject {
     private let settingsRepository = SettingsRepository()
     private let logoutUseCase: LogoutUseCase
-    
+    private let checkServerReachabilityUseCase: PCheckServerReachabilityUseCase
+
     @Published var hasFinishedSetup: Bool = true
-    
-    init(logoutUseCase: LogoutUseCase = LogoutUseCase()) {
+    @Published var isServerReachable: Bool = false
+
+    init(logoutUseCase: LogoutUseCase = LogoutUseCase(),
+         checkServerReachabilityUseCase: PCheckServerReachabilityUseCase = DefaultUseCaseFactory.shared.makeCheckServerReachabilityUseCase()) {
         self.logoutUseCase = logoutUseCase
+        self.checkServerReachabilityUseCase = checkServerReachabilityUseCase
         setupNotificationObservers()
-        
+
         Task {
             await loadSetupStatus()
+            await checkServerReachability()
         }
     }
     
@@ -64,7 +69,12 @@ class AppViewModel: ObservableObject {
     private func loadSetupStatus() {
         hasFinishedSetup = settingsRepository.hasFinishedSetup
     }
-    
+
+    @MainActor
+    private func checkServerReachability() async {
+        isServerReachable = await checkServerReachabilityUseCase.execute()
+    }
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
