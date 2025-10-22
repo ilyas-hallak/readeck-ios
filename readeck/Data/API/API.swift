@@ -18,6 +18,7 @@ protocol PAPI {
     func deleteBookmark(id: String) async throws
     func searchBookmarks(search: String) async throws -> BookmarksPageDto
     func getBookmarkLabels() async throws -> [BookmarkLabelDto]
+    func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto]
 }
 
 class API: PAPI {
@@ -435,13 +436,27 @@ class API: PAPI {
         logger.debug("Fetching bookmark labels")
         let endpoint = "/api/bookmarks/labels"
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
-        
+
         let result = try await makeJSONRequest(
             endpoint: endpoint,
             responseType: [BookmarkLabelDto].self
         )
-        
+
         logger.info("Successfully fetched \(result.count) bookmark labels")
+        return result
+    }
+
+    func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto] {
+        logger.debug("Fetching annotations for bookmark: \(bookmarkId)")
+        let endpoint = "/api/bookmarks/\(bookmarkId)/annotations"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
+            responseType: [AnnotationDto].self
+        )
+
+        logger.info("Successfully fetched \(result.count) annotations for bookmark: \(bookmarkId)")
         return result
     }
 }

@@ -21,6 +21,7 @@ protocol UseCaseFactory {
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase
 }
 
 
@@ -33,6 +34,7 @@ class DefaultUseCaseFactory: UseCaseFactory {
     private let settingsRepository: PSettingsRepository = SettingsRepository()
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
+    private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
 
     static let shared = DefaultUseCaseFactory()
 
@@ -118,5 +120,9 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase {
         return CheckServerReachabilityUseCase(repository: serverInfoRepository)
+    }
+
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
+        return GetBookmarkAnnotationsUseCase(repository: annotationsRepository)
     }
 }

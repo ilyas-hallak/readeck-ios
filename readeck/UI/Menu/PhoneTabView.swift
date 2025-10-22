@@ -153,7 +153,7 @@ struct PhoneTabView: View {
                     
                     // Hidden NavigationLink to remove disclosure indicator
                     NavigationLink {
-                        BookmarkDetailView(bookmarkId: bookmark.id)                            
+                        BookmarkDetailView(bookmarkId: bookmark.id)
                     } label: {
                         EmptyView()
                     }
@@ -234,11 +234,11 @@ struct PhoneTabView: View {
         case .all:
             BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .unread:
-            BookmarksView(state: .unread, type: [.article], selectedBookmark: .constant(nil))
+            BookmarksView(state: .unread, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .favorite:
-            BookmarksView(state: .favorite, type: [.article], selectedBookmark: .constant(nil))
+            BookmarksView(state: .favorite, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .archived:
-            BookmarksView(state: .archived, type: [.article], selectedBookmark: .constant(nil))
+            BookmarksView(state: .archived, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .search:
             EmptyView() // search is directly implemented
         case .settings:

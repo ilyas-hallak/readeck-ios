@@ -8,7 +8,7 @@ class BookmarkDetailViewModel {
     private let loadSettingsUseCase: PLoadSettingsUseCase
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
-    
+
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
     var articleParagraphs: [String] = []
@@ -18,7 +18,8 @@ class BookmarkDetailViewModel {
     var errorMessage: String?
     var settings: Settings?
     var readProgress: Int = 0
-    
+    var selectedAnnotationId: String?
+
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
     private let readProgressSubject = PassthroughSubject<(id: String, progress: Double, anchor: String?), Never>()
@@ -29,7 +30,7 @@ class BookmarkDetailViewModel {
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.factory = factory
-        
+
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
             .sink { [weak self] (id, progress, anchor) in
@@ -67,17 +68,17 @@ class BookmarkDetailViewModel {
     @MainActor
     func loadArticleContent(id: String) async {
         isLoadingArticle = true
-        
+
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
         } catch {
             errorMessage = "Error loading article"
         }
-        
+
         isLoadingArticle = false
     }
-    
+
     private func processArticleContent() {
         let paragraphs = articleContent
             .components(separatedBy: .newlines)

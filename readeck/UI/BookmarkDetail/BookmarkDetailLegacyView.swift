@@ -29,18 +29,19 @@ struct BookmarkDetailLegacyView: View {
     @State private var initialContentEndPosition: CGFloat = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
+    @State private var showingAnnotationsSheet = false
     @State private var readingProgress: Double = 0.0
     @State private var lastSentProgress: Double = 0.0
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
-    
+
     // MARK: - Envs
-    
+
     @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
-    
+
     private let headerHeight: CGFloat = 360
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
@@ -86,7 +87,8 @@ struct BookmarkDetailLegacyView: View {
                                         if webViewHeight != height {
                                             webViewHeight = height
                                         }
-                                    }
+                                    },
+                                    selectedAnnotationId: viewModel.selectedAnnotationId
                                 )
                                 .frame(height: webViewHeight)
                                 .cornerRadius(14)
@@ -221,6 +223,12 @@ struct BookmarkDetailLegacyView: View {
                     }
 
                     Button(action: {
+                        showingAnnotationsSheet = true
+                    }) {
+                        Image(systemName: "pencil.line")
+                    }
+
+                    Button(action: {
                         showingFontSettings = true
                     }) {
                         Image(systemName: "textformat")
@@ -252,6 +260,11 @@ struct BookmarkDetailLegacyView: View {
         .sheet(isPresented: $showingLabelsSheet) {
             BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
         }
+        .sheet(isPresented: $showingAnnotationsSheet) {
+            AnnotationsListView(bookmarkId: bookmarkId) { annotationId in
+                viewModel.selectedAnnotationId = annotationId
+            }
+        }
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
         }
@@ -271,8 +284,19 @@ struct BookmarkDetailLegacyView: View {
                 }
             }
         }
+        .onChange(of: showingAnnotationsSheet) { _, isShowing in
+            if !isShowing {
+                // Reload bookmark detail when labels sheet is dismissed
+                Task {
+                    await viewModel.refreshBookmarkDetail(id: bookmarkId)
+                }
+            }
+        }
         .onChange(of: viewModel.readProgress) { _, progress in
             showJumpToProgressButton = progress > 0 && progress < 100
+        }
+        .onChange(of: viewModel.selectedAnnotationId) { _, _ in
+            // Trigger WebView reload when annotation is selected
         }
         .task {
             await viewModel.loadBookmarkDetail(id: bookmarkId)

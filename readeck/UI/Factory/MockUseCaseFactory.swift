@@ -88,6 +88,10 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase {
         MockSaveCardLayoutUseCase()
     }
+
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
+        MockGetBookmarkAnnotationsUseCase()
+    }
 }
     
 
@@ -235,6 +239,14 @@ class MockCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
 
     func getServerInfo() async throws -> ServerInfo {
         return ServerInfo(version: "1.0.0", buildDate: nil, userAgent: nil, isReachable: true)
+    }
+}
+
+class MockGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
+    func execute(bookmarkId: String) async throws -> [Annotation] {
+        return [
+            .init(id: "1", text: "bla", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
+        ]
     }
 }
 

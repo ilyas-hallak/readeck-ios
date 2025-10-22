@@ -6,6 +6,7 @@ struct WebView: UIViewRepresentable {
     let settings: Settings
     let onHeightChange: (CGFloat) -> Void
     var onScroll: ((Double) -> Void)? = nil
+    var selectedAnnotationId: String?
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
@@ -235,6 +236,49 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #e0e0e0;
                     }
                 }
+
+                /* Annotation Highlighting - for rd-annotation tags */
+                rd-annotation {
+                    border-radius: 3px;
+                    padding: 2px 0;
+                    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+                }
+
+                /* Yellow annotations */
+                rd-annotation[data-annotation-color="yellow"] {
+                    background-color: \(isDarkMode ? "rgba(158, 117, 4, 0.4)" : "rgba(107, 79, 3, 0.3)");
+                }
+                rd-annotation[data-annotation-color="yellow"].selected {
+                    background-color: \(isDarkMode ? "rgba(158, 117, 4, 0.6)" : "rgba(107, 79, 3, 0.5)");
+                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(158, 117, 4, 0.5)" : "rgba(107, 79, 3, 0.6)");
+                }
+
+                /* Green annotations */
+                rd-annotation[data-annotation-color="green"] {
+                    background-color: \(isDarkMode ? "rgba(132, 204, 22, 0.4)" : "rgba(57, 88, 9, 0.3)");
+                }
+                rd-annotation[data-annotation-color="green"].selected {
+                    background-color: \(isDarkMode ? "rgba(132, 204, 22, 0.6)" : "rgba(57, 88, 9, 0.5)");
+                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(132, 204, 22, 0.5)" : "rgba(57, 88, 9, 0.6)");
+                }
+
+                /* Blue annotations */
+                rd-annotation[data-annotation-color="blue"] {
+                    background-color: \(isDarkMode ? "rgba(9, 132, 159, 0.4)" : "rgba(7, 95, 116, 0.3)");
+                }
+                rd-annotation[data-annotation-color="blue"].selected {
+                    background-color: \(isDarkMode ? "rgba(9, 132, 159, 0.6)" : "rgba(7, 95, 116, 0.5)");
+                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(9, 132, 159, 0.5)" : "rgba(7, 95, 116, 0.6)");
+                }
+
+                /* Red annotations */
+                rd-annotation[data-annotation-color="red"] {
+                    background-color: \(isDarkMode ? "rgba(152, 43, 43, 0.4)" : "rgba(103, 29, 29, 0.3)");
+                }
+                rd-annotation[data-annotation-color="red"].selected {
+                    background-color: \(isDarkMode ? "rgba(152, 43, 43, 0.6)" : "rgba(103, 29, 29, 0.5)");
+                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(152, 43, 43, 0.5)" : "rgba(103, 29, 29, 0.6)");
+                }
             </style>
         </head>
         <body>
@@ -264,6 +308,9 @@ struct WebView: UIViewRepresentable {
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
+
+                // Scroll to selected annotation
+                \(generateScrollToAnnotationJS())
             </script>
         </body>
         </html>
@@ -304,6 +351,37 @@ struct WebView: UIViewRepresentable {
         case .monospace:
             return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
         }
+    }
+
+    private func generateScrollToAnnotationJS() -> String {
+        guard let selectedId = selectedAnnotationId else {
+            return ""
+        }
+
+        return """
+        // Scroll to selected annotation and add selected class
+                function scrollToAnnotation() {
+                    // Remove 'selected' class from all annotations
+                    document.querySelectorAll('rd-annotation.selected').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+
+                    // Find and highlight selected annotation
+                    const selectedElement = document.querySelector('rd-annotation[data-annotation-id-value="\(selectedId)"]');
+                    if (selectedElement) {
+                        selectedElement.classList.add('selected');
+                        setTimeout(() => {
+                            selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    }
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', scrollToAnnotation);
+                } else {
+                    setTimeout(scrollToAnnotation, 300);
+                }
+        """
     }
 }
 
