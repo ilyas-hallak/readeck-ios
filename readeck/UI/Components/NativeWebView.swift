@@ -56,7 +56,7 @@ struct NativeWebView: View {
                 try? await Task.sleep(nanoseconds: 300_000_000) // Check every 0.3s
 
                 let script = """
-                (function() {
+                return (function() {
                     const selection = window.getSelection();
                     if (selection && selection.toString().length > 0) {
                         const range = selection.getRangeAt(0);
@@ -79,7 +79,7 @@ struct NativeWebView: View {
                 """
 
                 do {
-                    if let result = try await page.evaluateJavaScript(script) as? [String: Any],
+                    if let result = try await page.callJavaScript(script) as? [String: Any],
                        let text = result["text"] as? String,
                        let startOffset = result["startOffset"] as? Int,
                        let endOffset = result["endOffset"] as? Int {
