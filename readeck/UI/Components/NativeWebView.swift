@@ -49,7 +49,9 @@ struct NativeWebView: View {
         guard let onTextSelected = onTextSelected else { return }
 
         // Poll for text selection using JavaScript
-        Task {
+        Task { @MainActor in
+            let page = webPage // Capture the webPage
+
             while true {
                 try? await Task.sleep(nanoseconds: 300_000_000) // Check every 0.3s
 
@@ -77,13 +79,11 @@ struct NativeWebView: View {
                 """
 
                 do {
-                    if let result = try await webPage.evaluateJavaScript(script) as? [String: Any],
+                    if let result = try await page.evaluateJavaScript(script) as? [String: Any],
                        let text = result["text"] as? String,
                        let startOffset = result["startOffset"] as? Int,
                        let endOffset = result["endOffset"] as? Int {
-                        await MainActor.run {
-                            onTextSelected(text, startOffset, endOffset)
-                        }
+                        onTextSelected(text, startOffset, endOffset)
                     }
                 } catch {
                     // Silently continue polling
