@@ -35,6 +35,10 @@ struct BookmarkDetailLegacyView: View {
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
+    @State private var showingColorPicker = false
+    @State private var selectedText: String = ""
+    @State private var selectedStartOffset: Int = 0
+    @State private var selectedEndOffset: Int = 0
 
     // MARK: - Envs
 
@@ -88,7 +92,13 @@ struct BookmarkDetailLegacyView: View {
                                             webViewHeight = height
                                         }
                                     },
-                                    selectedAnnotationId: viewModel.selectedAnnotationId
+                                    selectedAnnotationId: viewModel.selectedAnnotationId,
+                                    onTextSelected: { text, startOffset, endOffset in
+                                        selectedText = text
+                                        selectedStartOffset = startOffset
+                                        selectedEndOffset = endOffset
+                                        showingColorPicker = true
+                                    }
                                 )
                                 .frame(height: webViewHeight)
                                 .cornerRadius(14)
@@ -267,6 +277,13 @@ struct BookmarkDetailLegacyView: View {
         }
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
+        }
+        .sheet(isPresented: $showingColorPicker) {
+            AnnotationColorPicker(selectedText: selectedText) { color in
+                // TODO: API call to create annotation will go here
+                print("Creating annotation with color: \(color.rawValue), offsets: \(selectedStartOffset)-\(selectedEndOffset)")
+            }
+            .presentationDetents([.height(300)])
         }
         .onChange(of: showingFontSettings) { _, isShowing in
             if !isShowing {

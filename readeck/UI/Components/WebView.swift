@@ -7,6 +7,7 @@ struct WebView: UIViewRepresentable {
     let onHeightChange: (CGFloat) -> Void
     var onScroll: ((Double) -> Void)? = nil
     var selectedAnnotationId: String?
+    var onTextSelected: ((String, Int, Int) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
@@ -29,8 +30,10 @@ struct WebView: UIViewRepresentable {
 
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
+        webView.configuration.userContentController.add(context.coordinator, name: "textSelected")
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
+        context.coordinator.onTextSelected = onTextSelected
 
         return webView
     }
@@ -38,6 +41,7 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
+        context.coordinator.onTextSelected = onTextSelected
 
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
@@ -309,6 +313,28 @@ struct WebView: UIViewRepresentable {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
 
+                // Text selection detection
+                document.addEventListener('selectionchange', function() {
+                    const selection = window.getSelection();
+                    if (selection && selection.toString().length > 0) {
+                        const range = selection.getRangeAt(0);
+                        const selectedText = selection.toString();
+
+                        // Calculate character offset from start of body
+                        const preRange = document.createRange();
+                        preRange.selectNodeContents(document.body);
+                        preRange.setEnd(range.startContainer, range.startOffset);
+                        const startOffset = preRange.toString().length;
+                        const endOffset = startOffset + selectedText.length;
+
+                        window.webkit.messageHandlers.textSelected.postMessage({
+                            text: selectedText,
+                            startOffset: startOffset,
+                            endOffset: endOffset
+                        });
+                    }
+                });
+
                 // Scroll to selected annotation
                 \(generateScrollToAnnotationJS())
             </script>
@@ -389,6 +415,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     // Callbacks
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
+    var onTextSelected: ((String, Int, Int) -> Void)?
 
     // Height management
     var lastHeight: CGFloat = 0
@@ -428,6 +455,14 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         if message.name == "scrollProgress", let progress = message.body as? Double {
             DispatchQueue.main.async {
                 self.handleScrollProgress(progress: progress)
+            }
+        }
+        if message.name == "textSelected", let body = message.body as? [String: Any],
+           let text = body["text"] as? String,
+           let startOffset = body["startOffset"] as? Int,
+           let endOffset = body["endOffset"] as? Int {
+            DispatchQueue.main.async {
+                self.onTextSelected?(text, startOffset, endOffset)
             }
         }
     }
