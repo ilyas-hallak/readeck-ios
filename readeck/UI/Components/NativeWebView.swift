@@ -12,6 +12,7 @@ struct NativeWebView: View {
     let onHeightChange: (CGFloat) -> Void
     var onScroll: ((Double) -> Void)? = nil
     var selectedAnnotationId: String?
+    var onTextSelected: ((String, Int, Int) -> Void)? = nil
 
     @State private var webPage = WebPage()
     @Environment(\.colorScheme) private var colorScheme
@@ -21,6 +22,7 @@ struct NativeWebView: View {
             .scrollDisabled(true) // Disable internal scrolling
             .onAppear {
                 loadStyledContent()
+                setupTextSelectionCallback()
             }
             .onChange(of: htmlContent) { _, _ in
                 loadStyledContent()
@@ -41,6 +43,53 @@ struct NativeWebView: View {
                     }
                 }
             }
+    }
+
+    private func setupTextSelectionCallback() {
+        guard let onTextSelected = onTextSelected else { return }
+
+        // Poll for text selection using JavaScript
+        Task {
+            while true {
+                try? await Task.sleep(nanoseconds: 300_000_000) // Check every 0.3s
+
+                let script = """
+                (function() {
+                    const selection = window.getSelection();
+                    if (selection && selection.toString().length > 0) {
+                        const range = selection.getRangeAt(0);
+                        const selectedText = selection.toString();
+
+                        const preRange = document.createRange();
+                        preRange.selectNodeContents(document.body);
+                        preRange.setEnd(range.startContainer, range.startOffset);
+                        const startOffset = preRange.toString().length;
+                        const endOffset = startOffset + selectedText.length;
+
+                        return {
+                            text: selectedText,
+                            startOffset: startOffset,
+                            endOffset: endOffset
+                        };
+                    }
+                    return null;
+                })();
+                """
+
+                do {
+                    if let result = try await webPage.evaluateJavaScript(script) as? [String: Any],
+                       let text = result["text"] as? String,
+                       let startOffset = result["startOffset"] as? Int,
+                       let endOffset = result["endOffset"] as? Int {
+                        await MainActor.run {
+                            onTextSelected(text, startOffset, endOffset)
+                        }
+                    }
+                } catch {
+                    // Silently continue polling
+                }
+            }
+        }
     }
     
     private func updateContentHeightWithJS() async {
@@ -290,6 +339,9 @@ struct NativeWebView: View {
                 
                 scheduleHeightCheck();
 
+                // Text selection detection
+                \(generateTextSelectionJS())
+
                 // Scroll to selected annotation
                 \(generateScrollToAnnotationJS())
             </script>
@@ -322,6 +374,11 @@ struct NativeWebView: View {
         case .sansSerif: return "'Helvetica Neue', Helvetica, Arial, sans-serif"
         case .monospace: return "'SF Mono', Menlo, Monaco, monospace"
         }
+    }
+
+    private func generateTextSelectionJS() -> String {
+        // Not needed for iOS 26 - we use polling instead
+        return ""
     }
 
     private func generateScrollToAnnotationJS() -> String {

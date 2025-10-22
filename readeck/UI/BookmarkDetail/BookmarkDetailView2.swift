@@ -471,7 +471,13 @@ struct BookmarkDetailView2: View {
                             webViewHeight = height
                         }
                     },
-                    selectedAnnotationId: viewModel.selectedAnnotationId
+                    selectedAnnotationId: viewModel.selectedAnnotationId,
+                    onTextSelected: { text, startOffset, endOffset in
+                        selectedText = text
+                        selectedStartOffset = startOffset
+                        selectedEndOffset = endOffset
+                        showingColorPicker = true
+                    }
                 )
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
