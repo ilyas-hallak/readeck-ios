@@ -7,7 +7,7 @@ struct WebView: UIViewRepresentable {
     let onHeightChange: (CGFloat) -> Void
     var onScroll: ((Double) -> Void)? = nil
     var selectedAnnotationId: String?
-    var onTextSelected: ((String, Int, Int) -> Void)? = nil
+    var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
@@ -30,10 +30,11 @@ struct WebView: UIViewRepresentable {
 
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
-        webView.configuration.userContentController.add(context.coordinator, name: "textSelected")
+        webView.configuration.userContentController.add(context.coordinator, name: "annotationCreated")
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
-        context.coordinator.onTextSelected = onTextSelected
+        context.coordinator.onAnnotationCreated = onAnnotationCreated
+        context.coordinator.webView = webView
 
         return webView
     }
@@ -41,7 +42,7 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
-        context.coordinator.onTextSelected = onTextSelected
+        context.coordinator.onAnnotationCreated = onAnnotationCreated
 
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
@@ -250,38 +251,38 @@ struct WebView: UIViewRepresentable {
 
                 /* Yellow annotations */
                 rd-annotation[data-annotation-color="yellow"] {
-                    background-color: \(isDarkMode ? "rgba(158, 117, 4, 0.4)" : "rgba(107, 79, 3, 0.3)");
+                    background-color: \(AnnotationColor.yellow.cssColor(isDark: isDarkMode));
                 }
                 rd-annotation[data-annotation-color="yellow"].selected {
-                    background-color: \(isDarkMode ? "rgba(158, 117, 4, 0.6)" : "rgba(107, 79, 3, 0.5)");
-                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(158, 117, 4, 0.5)" : "rgba(107, 79, 3, 0.6)");
+                    background-color: \(AnnotationColor.yellow.cssColorWithOpacity(0.5));
+                    box-shadow: 0 0 0 2px \(AnnotationColor.yellow.cssColorWithOpacity(0.6));
                 }
 
                 /* Green annotations */
                 rd-annotation[data-annotation-color="green"] {
-                    background-color: \(isDarkMode ? "rgba(132, 204, 22, 0.4)" : "rgba(57, 88, 9, 0.3)");
+                    background-color: \(AnnotationColor.green.cssColor(isDark: isDarkMode));
                 }
                 rd-annotation[data-annotation-color="green"].selected {
-                    background-color: \(isDarkMode ? "rgba(132, 204, 22, 0.6)" : "rgba(57, 88, 9, 0.5)");
-                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(132, 204, 22, 0.5)" : "rgba(57, 88, 9, 0.6)");
+                    background-color: \(AnnotationColor.green.cssColorWithOpacity(0.5));
+                    box-shadow: 0 0 0 2px \(AnnotationColor.green.cssColorWithOpacity(0.6));
                 }
 
                 /* Blue annotations */
                 rd-annotation[data-annotation-color="blue"] {
-                    background-color: \(isDarkMode ? "rgba(9, 132, 159, 0.4)" : "rgba(7, 95, 116, 0.3)");
+                    background-color: \(AnnotationColor.blue.cssColor(isDark: isDarkMode));
                 }
                 rd-annotation[data-annotation-color="blue"].selected {
-                    background-color: \(isDarkMode ? "rgba(9, 132, 159, 0.6)" : "rgba(7, 95, 116, 0.5)");
-                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(9, 132, 159, 0.5)" : "rgba(7, 95, 116, 0.6)");
+                    background-color: \(AnnotationColor.blue.cssColorWithOpacity(0.5));
+                    box-shadow: 0 0 0 2px \(AnnotationColor.blue.cssColorWithOpacity(0.6));
                 }
 
                 /* Red annotations */
                 rd-annotation[data-annotation-color="red"] {
-                    background-color: \(isDarkMode ? "rgba(152, 43, 43, 0.4)" : "rgba(103, 29, 29, 0.3)");
+                    background-color: \(AnnotationColor.red.cssColor(isDark: isDarkMode));
                 }
                 rd-annotation[data-annotation-color="red"].selected {
-                    background-color: \(isDarkMode ? "rgba(152, 43, 43, 0.6)" : "rgba(103, 29, 29, 0.5)");
-                    box-shadow: 0 0 0 2px \(isDarkMode ? "rgba(152, 43, 43, 0.5)" : "rgba(103, 29, 29, 0.6)");
+                    background-color: \(AnnotationColor.red.cssColorWithOpacity(0.5));
+                    box-shadow: 0 0 0 2px \(AnnotationColor.red.cssColorWithOpacity(0.6));
                 }
             </style>
         </head>
@@ -313,30 +314,11 @@ struct WebView: UIViewRepresentable {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
 
-                // Text selection detection
-                document.addEventListener('selectionchange', function() {
-                    const selection = window.getSelection();
-                    if (selection && selection.toString().length > 0) {
-                        const range = selection.getRangeAt(0);
-                        const selectedText = selection.toString();
-
-                        // Calculate character offset from start of body
-                        const preRange = document.createRange();
-                        preRange.selectNodeContents(document.body);
-                        preRange.setEnd(range.startContainer, range.startOffset);
-                        const startOffset = preRange.toString().length;
-                        const endOffset = startOffset + selectedText.length;
-
-                        window.webkit.messageHandlers.textSelected.postMessage({
-                            text: selectedText,
-                            startOffset: startOffset,
-                            endOffset: endOffset
-                        });
-                    }
-                });
-
                 // Scroll to selected annotation
                 \(generateScrollToAnnotationJS())
+
+                // Text Selection and Annotation Overlay
+                \(generateAnnotationOverlayJS(isDarkMode: isDarkMode))
             </script>
         </body>
         </html>
@@ -349,6 +331,7 @@ struct WebView: UIViewRepresentable {
         webView.navigationDelegate = nil
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "heightUpdate")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollProgress")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "annotationCreated")
         webView.loadHTMLString("", baseURL: nil)
         coordinator.cleanup()
     }
@@ -409,13 +392,264 @@ struct WebView: UIViewRepresentable {
                 }
         """
     }
+
+    private func generateAnnotationOverlayJS(isDarkMode: Bool) -> String {
+        let yellowColor = AnnotationColor.yellow.cssColor(isDark: isDarkMode)
+        let greenColor = AnnotationColor.green.cssColor(isDark: isDarkMode)
+        let blueColor = AnnotationColor.blue.cssColor(isDark: isDarkMode)
+        let redColor = AnnotationColor.red.cssColor(isDark: isDarkMode)
+
+        return """
+        // Create annotation color overlay
+        (function() {
+            let currentSelection = null;
+            let currentRange = null;
+            let selectionTimeout = null;
+
+            // Create overlay container with arrow
+            const overlay = document.createElement('div');
+            overlay.id = 'annotation-overlay';
+            overlay.style.cssText = `
+                display: none;
+                position: absolute;
+                z-index: 10000;
+            `;
+
+            // Create arrow/triangle pointing up with glass effect
+            const arrow = document.createElement('div');
+            arrow.style.cssText = `
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(20px) saturate(180%);
+                -webkit-backdrop-filter: blur(20px) saturate(180%);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-right: none;
+                border-bottom: none;
+                top: -11px;
+                left: 50%;
+                transform: translateX(-50%) rotate(45deg);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            `;
+            overlay.appendChild(arrow);
+
+            // Create the actual content container with glass morphism effect
+            const content = document.createElement('div');
+            content.style.cssText = `
+                display: flex;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(20px) saturate(180%);
+                -webkit-backdrop-filter: blur(20px) saturate(180%);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 24px;
+                padding: 12px 16px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                            0 2px 8px rgba(0, 0, 0, 0.15),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+                gap: 12px;
+                flex-direction: row;
+                align-items: center;
+            `;
+            overlay.appendChild(content);
+
+            // Add "Markierung" label
+            const label = document.createElement('span');
+            label.textContent = 'Markierung';
+            label.style.cssText = `
+                color: black;
+                font-size: 16px;
+                font-weight: 500;
+                margin-right: 4px;
+            `;
+            content.appendChild(label);
+
+            // Create color buttons with solid colors
+            const colors = [
+                { name: 'yellow', color: '\(AnnotationColor.yellow.hexColor)' },
+                { name: 'red', color: '\(AnnotationColor.red.hexColor)' },
+                { name: 'blue', color: '\(AnnotationColor.blue.hexColor)' },
+                { name: 'green', color: '\(AnnotationColor.green.hexColor)' }
+            ];
+
+            colors.forEach(({ name, color }) => {
+                const btn = document.createElement('button');
+                btn.dataset.color = name;
+                btn.style.cssText = `
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: ${color};
+                    border: 3px solid rgba(255, 255, 255, 0.3);
+                    cursor: pointer;
+                    padding: 0;
+                    margin: 0;
+                    transition: transform 0.2s, border-color 0.2s;
+                `;
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'scale(1.1)';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.6)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'scale(1)';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                });
+                btn.addEventListener('click', () => handleColorSelection(name));
+                content.appendChild(btn);
+            });
+
+            document.body.appendChild(overlay);
+
+            // Selection change listener
+            document.addEventListener('selectionchange', () => {
+                clearTimeout(selectionTimeout);
+                selectionTimeout = setTimeout(() => {
+                    const selection = window.getSelection();
+                    const text = selection.toString().trim();
+
+                    if (text.length > 0) {
+                        currentSelection = text;
+                        currentRange = selection.getRangeAt(0).cloneRange();
+                        showOverlay(selection.getRangeAt(0));
+                    } else {
+                        hideOverlay();
+                    }
+                }, 150);
+            });
+
+            function showOverlay(range) {
+                const rect = range.getBoundingClientRect();
+                const scrollY = window.scrollY || window.pageYOffset;
+
+                overlay.style.display = 'block';
+
+                // Center horizontally under selection
+                const overlayWidth = 320; // Approximate width with label + 4 buttons
+                const centerX = rect.left + (rect.width / 2);
+                const leftPos = Math.max(8, Math.min(centerX - (overlayWidth / 2), window.innerWidth - overlayWidth - 8));
+
+                // Position with extra space below selection (55px instead of 70px) to bring it closer
+                const topPos = rect.bottom + scrollY + 55;
+
+                overlay.style.left = leftPos + 'px';
+                overlay.style.top = topPos + 'px';
+            }
+
+            function hideOverlay() {
+                overlay.style.display = 'none';
+                currentSelection = null;
+                currentRange = null;
+            }
+
+            function calculateOffset(container, offset) {
+                const preRange = document.createRange();
+                preRange.selectNodeContents(document.body);
+                preRange.setEnd(container, offset);
+                return preRange.toString().length;
+            }
+
+            function getXPathSelector(node) {
+                // If node is text node, use parent element
+                const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+                if (!element || element === document.body) return 'body';
+
+                const path = [];
+                let current = element;
+
+                while (current && current !== document.body) {
+                    const tagName = current.tagName.toLowerCase();
+
+                    // Count position among siblings of same tag (1-based index)
+                    let index = 1;
+                    let sibling = current.previousElementSibling;
+                    while (sibling) {
+                        if (sibling.tagName === current.tagName) {
+                            index++;
+                        }
+                        sibling = sibling.previousElementSibling;
+                    }
+
+                    // Format: tagname[index] (1-based)
+                    path.unshift(tagName + '[' + index + ']');
+
+                    current = current.parentElement;
+                }
+
+                const selector = path.join('/');
+                console.log('Generated selector:', selector);
+                return selector || 'body';
+            }
+
+            function calculateOffsetInElement(container, offset) {
+                // Calculate offset relative to the parent element (not document.body)
+                const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                if (!element) return offset;
+
+                // Create range from start of element to the position
+                const range = document.createRange();
+                range.selectNodeContents(element);
+                range.setEnd(container, offset);
+
+                return range.toString().length;
+            }
+
+            function generateTempId() {
+                return 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            function handleColorSelection(color) {
+                if (!currentRange || !currentSelection) return;
+
+                // Generate XPath-like selectors for start and end containers
+                const startSelector = getXPathSelector(currentRange.startContainer);
+                const endSelector = getXPathSelector(currentRange.endContainer);
+
+                // Calculate offsets relative to the element (not document.body)
+                const startOffset = calculateOffsetInElement(currentRange.startContainer, currentRange.startOffset);
+                const endOffset = calculateOffsetInElement(currentRange.endContainer, currentRange.endOffset);
+
+                // Create annotation element
+                const annotation = document.createElement('rd-annotation');
+                annotation.setAttribute('data-annotation-color', color);
+                annotation.setAttribute('data-annotation-id-value', generateTempId());
+
+                // Wrap selection in annotation
+                try {
+                    currentRange.surroundContents(annotation);
+                } catch (e) {
+                    // If surroundContents fails (e.g., partial element selection), extract and wrap
+                    const fragment = currentRange.extractContents();
+                    annotation.appendChild(fragment);
+                    currentRange.insertNode(annotation);
+                }
+
+                // Send to Swift with selectors
+                window.webkit.messageHandlers.annotationCreated.postMessage({
+                    color: color,
+                    text: currentSelection,
+                    startOffset: startOffset,
+                    endOffset: endOffset,
+                    startSelector: startSelector,
+                    endSelector: endSelector
+                });
+
+                // Clear selection and hide overlay
+                window.getSelection().removeAllRanges();
+                hideOverlay();
+            }
+        })();
+        """
+    }
 }
 
 class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     // Callbacks
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
-    var onTextSelected: ((String, Int, Int) -> Void)?
+    var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+
+    // WebView reference
+    weak var webView: WKWebView?
 
     // Height management
     var lastHeight: CGFloat = 0
@@ -457,12 +691,15 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 self.handleScrollProgress(progress: progress)
             }
         }
-        if message.name == "textSelected", let body = message.body as? [String: Any],
+        if message.name == "annotationCreated", let body = message.body as? [String: Any],
+           let color = body["color"] as? String,
            let text = body["text"] as? String,
            let startOffset = body["startOffset"] as? Int,
-           let endOffset = body["endOffset"] as? Int {
+           let endOffset = body["endOffset"] as? Int,
+           let startSelector = body["startSelector"] as? String,
+           let endSelector = body["endSelector"] as? String {
             DispatchQueue.main.async {
-                self.onTextSelected?(text, startOffset, endOffset)
+                self.onAnnotationCreated?(color, text, startOffset, endOffset, startSelector, endSelector)
             }
         }
     }
@@ -532,13 +769,14 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     func cleanup() {
         guard !isCleanedUp else { return }
         isCleanedUp = true
-        
+
         scrollEndTimer?.invalidate()
         scrollEndTimer = nil
         heightUpdateTimer?.invalidate()
         heightUpdateTimer = nil
-        
+
         onHeightChange = nil
         onScroll = nil
+        onAnnotationCreated = nil
     }
 }

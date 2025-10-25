@@ -19,6 +19,7 @@ protocol PAPI {
     func searchBookmarks(search: String) async throws -> BookmarksPageDto
     func getBookmarkLabels() async throws -> [BookmarkLabelDto]
     func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto]
+    func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> AnnotationDto
 }
 
 class API: PAPI {
@@ -457,6 +458,32 @@ class API: PAPI {
         )
 
         logger.info("Successfully fetched \(result.count) annotations for bookmark: \(bookmarkId)")
+        return result
+    }
+
+    func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> AnnotationDto {
+        logger.debug("Creating annotation for bookmark: \(bookmarkId)")
+        let endpoint = "/api/bookmarks/\(bookmarkId)/annotations"
+        logger.logNetworkRequest(method: "POST", url: await self.baseURL + endpoint)
+
+        let bodyDict: [String: Any] = [
+            "color": color,
+            "start_offset": startOffset,
+            "end_offset": endOffset,
+            "start_selector": startSelector,
+            "end_selector": endSelector
+        ]
+
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
+
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
+            method: .POST,
+            body: bodyData,
+            responseType: AnnotationDto.self
+        )
+
+        logger.info("Successfully created annotation for bookmark: \(bookmarkId)")
         return result
     }
 }
