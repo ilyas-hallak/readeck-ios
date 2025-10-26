@@ -20,6 +20,7 @@ class BookmarkDetailViewModel {
     var settings: Settings?
     var readProgress: Int = 0
     var selectedAnnotationId: String?
+    var hasAnnotations: Bool = false
 
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
@@ -85,8 +86,11 @@ class BookmarkDetailViewModel {
         let paragraphs = articleContent
             .components(separatedBy: .newlines)
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        
+
         articleParagraphs = paragraphs
+
+        // Check if article contains annotations
+        hasAnnotations = articleContent.contains("<rd-annotation")
     }
     
     @MainActor

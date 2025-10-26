@@ -270,10 +270,12 @@ struct BookmarkDetailView2: View {
                     Image(systemName: "tag")
                 }
 
-                Button(action: {
-                    showingAnnotationsSheet = true
-                }) {
-                    Image(systemName: "pencil.line")
+                if viewModel.hasAnnotations {
+                    Button(action: {
+                        showingAnnotationsSheet = true
+                    }) {
+                        Image(systemName: "pencil.line")
+                    }
                 }
 
                 Button(action: {
