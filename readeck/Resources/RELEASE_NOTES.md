@@ -4,6 +4,39 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 1.2
+
+### Annotations & Highlighting
+
+- **Highlight important passages** directly in your articles
+- Select text to bring up a beautiful color picker overlay
+- Choose from four distinct colors: yellow, green, blue, and red
+- Your highlights are saved and synced across devices
+- Tap on annotations in the list to jump directly to that passage in the article
+- Glass morphism design for a modern, elegant look
+
+### Performance Improvements
+
+- **Dramatically faster label loading** - especially with 1000+ labels
+- Labels now load instantly from local cache, then sync in background
+- Optimized label management to prevent crashes and lag
+- Share Extension now loads labels without delay
+- Reduced memory usage when working with large label collections
+- Better offline support - labels always available even without internet
+
+### Fixes & Improvements
+
+- Centralized color management for consistent appearance
+- Improved annotation creation workflow
+- Better text selection handling in article view
+- Implemented lazy loading for label lists
+- Switched to Core Data as primary source for labels
+- Batch operations for faster database queries
+- Background sync to keep labels up-to-date without blocking the UI
+- Fixed duplicate ID warnings in label lists
+
+---
+
 ## Version 1.1
 
 There is a lot of feature reqeusts and improvements in this release which are based on your feedback. Thank you so much for that! If you like the new features, please consider leaving a review on the App Store to support further development.

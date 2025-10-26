@@ -51,20 +51,7 @@ class ShareBookmarkViewModel: ObservableObject {
     
     func onAppear() {
         logger.debug("ShareBookmarkViewModel appeared")
-        checkServerReachability()
         loadLabels()
-    }
-    
-    private func checkServerReachability() {
-        let measurement = PerformanceMeasurement(operation: "checkServerReachability", logger: logger)
-        Task {
-            let reachable = await serverCheck.checkServerReachability()
-            await MainActor.run {
-                self.isServerReachable = reachable
-                logger.info("Server reachability checked: \(reachable)")
-                measurement.end()
-            }
-        }
     }
     
     private func extractSharedContent() {
@@ -137,30 +124,43 @@ class ShareBookmarkViewModel: ObservableObject {
         let measurement = PerformanceMeasurement(operation: "loadLabels", logger: logger)
         logger.debug("Starting to load labels")
         Task {
+            // 1. First, load from Core Data (instant response)
+            let localTags = await OfflineBookmarkManager.shared.getTags()
+            let localLabels = localTags.enumerated().map { index, tagName in
+                BookmarkLabelDto(name: tagName, count: 0, href: "local://\(index)")
+            }
+
+            await MainActor.run {
+                self.labels = localLabels
+                self.logger.info("Loaded \(localLabels.count) labels from local cache")
+            }
+
+            // 2. Then check server and sync in background
             let serverReachable = await serverCheck.checkServerReachability()
+            await MainActor.run {
+                self.isServerReachable = serverReachable
+            }
             logger.debug("Server reachable for labels: \(serverReachable)")
 
             if serverReachable {
                 let loaded = await SimpleAPI.getBookmarkLabels { [weak self] message, error in
-                    self?.statusMessage = (message, error, error ? "❌" : "✅")
+                    if error {
+                        self?.logger.error("Failed to sync labels from API: \(message)")
+                    }
                 } ?? []
+
+                // Save new labels to Core Data
+                let tagNames = loaded.map { $0.name }
+                await OfflineBookmarkManager.shared.saveTags(tagNames)
+
                 let sorted = loaded.sorted { $0.count > $1.count }
                 await MainActor.run {
                     self.labels = Array(sorted)
-                    self.logger.info("Loaded \(loaded.count) labels from API")
+                    self.logger.info("Synced \(loaded.count) labels from API and updated cache")
                     measurement.end()
                 }
             } else {
-                let localTags = OfflineBookmarkManager.shared.getTags()
-                let localLabels = localTags.enumerated().map { index, tagName in 
-                    BookmarkLabelDto(name: tagName, count: 0, href: "local://\(index)")
-                }
-                    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-                await MainActor.run {
-                    self.labels = localLabels
-                    self.logger.info("Loaded \(localLabels.count) labels from local database")
-                    measurement.end()
-                }
+                measurement.end()
             }
         }
     }

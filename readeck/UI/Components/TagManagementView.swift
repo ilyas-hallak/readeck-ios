@@ -214,7 +214,7 @@ struct TagManagementView: View {
     @ViewBuilder
     private var labelsScrollView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 8) {
+            LazyVStack(alignment: .leading, spacing: 8) {
                 ForEach(chunkedLabels, id: \.self) { rowLabels in
                     HStack(alignment: .top, spacing: 8) {
                         ForEach(rowLabels, id: \.id) { label in
