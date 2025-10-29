@@ -4,7 +4,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
-## Version 1.2
+## Version 1.2.0
 
 ### Annotations & Highlighting
 
@@ -37,7 +37,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ---
 
-## Version 1.1
+## Version 1.1.0
 
 There is a lot of feature reqeusts and improvements in this release which are based on your feedback. Thank you so much for that! If you like the new features, please consider leaving a review on the App Store to support further development.
 
