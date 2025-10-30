@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		5D2B7FB92DFA27A400EBDB2B /* URLShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */ = {isa = PBXBuildFile; productRef = 5D348CC22E0C9F4F00D0AF21 /* netfox */; };
+		5D48E6022EB402F50043F90F /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5D48E6012EB402F50043F90F /* MarkdownUI */; };
 		5D9D95492E623668009AF769 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 5D9D95482E623668009AF769 /* Kingfisher */; };
 		5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 5DA241FA2E17C3B3007531C3 /* RswiftLibrary */; };
 /* End PBXBuildFile section */
@@ -86,7 +87,6 @@
 				Data/Utils/LabelUtils.swift,
 				Domain/Model/Bookmark.swift,
 				Domain/Model/BookmarkLabel.swift,
-				Logger.swift,
 				readeck.xcdatamodeld,
 				Splash.storyboard,
 				UI/Components/Constants.swift,
@@ -94,6 +94,7 @@
 				UI/Components/TagManagementView.swift,
 				UI/Components/UnifiedLabelChip.swift,
 				UI/Utils/NotificationNames.swift,
+				Utils/Logger.swift,
 			);
 			target = 5D2B7FAE2DFA27A400EBDB2B /* URLShare */;
 		};
@@ -151,6 +152,7 @@
 				5D9D95492E623668009AF769 /* Kingfisher in Frameworks */,
 				5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */,
 				5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */,
+				5D48E6022EB402F50043F90F /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,6 +244,7 @@
 				5D348CC22E0C9F4F00D0AF21 /* netfox */,
 				5DA241FA2E17C3B3007531C3 /* RswiftLibrary */,
 				5D9D95482E623668009AF769 /* Kingfisher */,
+				5D48E6012EB402F50043F90F /* MarkdownUI */,
 			);
 			productName = readeck;
 			productReference = 5D45F9C82DF858680048D5B8 /* readeck.app */;
@@ -333,6 +336,7 @@
 				5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */,
 				5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */,
 				5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				5D48E6002EB402F50043F90F /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5D45F9C92DF858680048D5B8 /* Products */;
@@ -437,7 +441,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = URLShare/Info.plist;
@@ -470,7 +474,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = URLShare/Info.plist;
@@ -625,7 +629,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -669,7 +673,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -854,6 +858,14 @@
 				minimumVersion = 1.21.0;
 			};
 		};
+		5D48E6002EB402F50043F90F /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
 		5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -877,6 +889,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5D348CC12E0C9F4F00D0AF21 /* XCRemoteSwiftPackageReference "netfox" */;
 			productName = netfox;
+		};
+		5D48E6012EB402F50043F90F /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D48E6002EB402F50043F90F /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
 		};
 		5D9D95482E623668009AF769 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
