@@ -126,7 +126,7 @@ struct BookmarkDetailLegacyView: View {
                                 }) {
                                     HStack {
                                         Image(systemName: "safari")
-                                        Text((URLUtil.extractDomain(from: "open " + viewModel.bookmarkDetail.url) ?? "Open original page"))
+                                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
                                     }
                                     .font(.title3.bold())
                                     .frame(maxWidth: .infinity)
@@ -402,7 +402,7 @@ struct BookmarkDetailLegacyView: View {
             }) {
                 HStack {
                     Image(systemName: "safari")
-                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + "open")
+                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
                 }
                 .font(.title3.bold())
                 .frame(maxWidth: .infinity)
@@ -456,7 +456,7 @@ struct BookmarkDetailLegacyView: View {
                 Button(action: {
                     URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
                 }) {
-                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
+                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
