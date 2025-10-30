@@ -475,6 +475,16 @@ struct BookmarkDetailView2: View {
                                 endSelector: endSelector
                             )
                         }
+                    },
+                    onScrollToPosition: { position in
+                        // Calculate scroll position: add header height and webview offset
+                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                        let targetPosition = imageHeight + position
+
+                        // Scroll to the annotation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            scrollPosition = ScrollPosition(y: targetPosition)
+                        }
                     }
                 )
                 .frame(height: webViewHeight)

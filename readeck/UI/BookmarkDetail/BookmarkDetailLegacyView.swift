@@ -101,6 +101,16 @@ struct BookmarkDetailLegacyView: View {
                                                 endSelector: endSelector
                                             )
                                         }
+                                    },
+                                    onScrollToPosition: { position in
+                                        // Calculate scroll position: add header height and webview offset
+                                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                                        let targetPosition = imageHeight + position
+
+                                        // Scroll to the annotation
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                            scrollPosition = ScrollPosition(y: targetPosition)
+                                        }
                                     }
                                 )
                                 .frame(height: webViewHeight)
@@ -392,7 +402,7 @@ struct BookmarkDetailLegacyView: View {
             }) {
                 HStack {
                     Image(systemName: "safari")
-                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
+                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + "open")
                 }
                 .font(.title3.bold())
                 .frame(maxWidth: .infinity)

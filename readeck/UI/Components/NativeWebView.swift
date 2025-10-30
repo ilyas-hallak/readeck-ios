@@ -13,6 +13,7 @@ struct NativeWebView: View {
     var onScroll: ((Double) -> Void)? = nil
     var selectedAnnotationId: String?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)? = nil
+    var onScrollToPosition: ((CGFloat) -> Void)? = nil
 
     @State private var webPage = WebPage()
     @Environment(\.colorScheme) private var colorScheme
@@ -23,6 +24,7 @@ struct NativeWebView: View {
             .onAppear {
                 loadStyledContent()
                 setupAnnotationMessageHandler()
+                setupScrollToPositionHandler()
             }
             .onChange(of: htmlContent) { _, _ in
                 loadStyledContent()
@@ -75,6 +77,38 @@ struct NativeWebView: View {
                        let startSelector = result["startSelector"] as? String,
                        let endSelector = result["endSelector"] as? String {
                         onAnnotationCreated(color, text, startOffset, endOffset, startSelector, endSelector)
+                    }
+                } catch {
+                    // Silently continue polling
+                }
+            }
+        }
+    }
+
+    private func setupScrollToPositionHandler() {
+        guard let onScrollToPosition = onScrollToPosition else { return }
+
+        // Poll for scroll position messages from JavaScript
+        Task { @MainActor in
+            let page = webPage
+
+            while true {
+                try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
+
+                let script = """
+                return (function() {
+                    if (window.__pendingScrollPosition !== undefined) {
+                        const position = window.__pendingScrollPosition;
+                        window.__pendingScrollPosition = undefined;
+                        return position;
+                    }
+                    return null;
+                })();
+                """
+
+                do {
+                    if let position = try await page.callJavaScript(script) as? Double {
+                        onScrollToPosition(CGFloat(position))
                     }
                 } catch {
                     // Silently continue polling
@@ -627,8 +661,15 @@ struct NativeWebView: View {
                     const selectedElement = document.querySelector('rd-annotation[data-annotation-id-value="\(selectedId)"]');
                     if (selectedElement) {
                         selectedElement.classList.add('selected');
+
+                        // Get the element's position relative to the document
+                        const rect = selectedElement.getBoundingClientRect();
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        const elementTop = rect.top + scrollTop;
+
+                        // Send position to Swift via polling mechanism
                         setTimeout(() => {
-                            selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            window.__pendingScrollPosition = elementTop;
                         }, 100);
                     }
                 }
