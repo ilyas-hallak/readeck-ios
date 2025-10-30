@@ -8,6 +8,7 @@ struct WebView: UIViewRepresentable {
     var onScroll: ((Double) -> Void)? = nil
     var selectedAnnotationId: String?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)? = nil
+    var onScrollToPosition: ((CGFloat) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     func makeUIView(context: Context) -> WKWebView {
@@ -31,9 +32,11 @@ struct WebView: UIViewRepresentable {
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
         webView.configuration.userContentController.add(context.coordinator, name: "annotationCreated")
+        webView.configuration.userContentController.add(context.coordinator, name: "scrollToPosition")
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
         context.coordinator.onAnnotationCreated = onAnnotationCreated
+        context.coordinator.onScrollToPosition = onScrollToPosition
         context.coordinator.webView = webView
 
         return webView
@@ -43,6 +46,7 @@ struct WebView: UIViewRepresentable {
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
         context.coordinator.onAnnotationCreated = onAnnotationCreated
+        context.coordinator.onScrollToPosition = onScrollToPosition
 
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
@@ -332,6 +336,7 @@ struct WebView: UIViewRepresentable {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "heightUpdate")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollProgress")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "annotationCreated")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollToPosition")
         webView.loadHTMLString("", baseURL: nil)
         coordinator.cleanup()
     }
@@ -379,8 +384,15 @@ struct WebView: UIViewRepresentable {
                     const selectedElement = document.querySelector('rd-annotation[data-annotation-id-value="\(selectedId)"]');
                     if (selectedElement) {
                         selectedElement.classList.add('selected');
+
+                        // Get the element's position relative to the document
+                        const rect = selectedElement.getBoundingClientRect();
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        const elementTop = rect.top + scrollTop;
+
+                        // Send position to Swift
                         setTimeout(() => {
-                            selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            window.webkit.messageHandlers.scrollToPosition.postMessage(elementTop);
                         }, 100);
                     }
                 }
@@ -647,6 +659,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     var onHeightChange: ((CGFloat) -> Void)?
     var onScroll: ((Double) -> Void)?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+    var onScrollToPosition: ((CGFloat) -> Void)?
 
     // WebView reference
     weak var webView: WKWebView?
@@ -700,6 +713,11 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
            let endSelector = body["endSelector"] as? String {
             DispatchQueue.main.async {
                 self.onAnnotationCreated?(color, text, startOffset, endOffset, startSelector, endSelector)
+            }
+        }
+        if message.name == "scrollToPosition", let position = message.body as? Double {
+            DispatchQueue.main.async {
+                self.onScrollToPosition?(CGFloat(position))
             }
         }
     }
@@ -778,5 +796,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         onHeightChange = nil
         onScroll = nil
         onAnnotationCreated = nil
+        onScrollToPosition = nil
     }
 }
