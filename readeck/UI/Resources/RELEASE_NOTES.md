@@ -18,23 +18,17 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 ### Performance Improvements
 
 - **Dramatically faster label loading** - especially with 1000+ labels
-- Labels now load instantly from local cache, then sync in background
-- Optimized label management to prevent crashes and lag
-- Share Extension now loads labels without delay
-- Reduced memory usage when working with large label collections
-- Better offline support - labels always available even without internet
+- Labels now load instantly, even without internet connection
+- Share Extension loads much faster
+- Better performance when working with many labels
+- Improved overall app stability
 
 ### Fixes & Improvements
 
-- Centralized color management for consistent appearance
-- Improved annotation creation workflow
-- Better text selection handling in article view
-- Implemented lazy loading for label lists
-- Switched to Core Data as primary source for labels
-- Batch operations for faster database queries
-- Background sync to keep labels up-to-date without blocking the UI
-- Fixed duplicate ID warnings in label lists
-- Improved markdown rendering in release notes with better formatting support
+- Better color consistency throughout the app
+- Improved text selection in articles
+- Better formatted release notes
+- Various bug fixes and stability improvements
 
 ---
 
