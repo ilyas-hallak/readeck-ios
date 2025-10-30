@@ -34,6 +34,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Batch operations for faster database queries
 - Background sync to keep labels up-to-date without blocking the UI
 - Fixed duplicate ID warnings in label lists
+- Improved markdown rendering in release notes with better formatting support
 
 ---
 
