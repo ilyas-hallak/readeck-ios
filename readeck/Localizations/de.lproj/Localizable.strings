@@ -40,11 +40,11 @@
 "Tags" = "Labels";
 
 /* Settings Sections */
-"Font Settings" = "Schriftart-Einstellungen";
+"Font Settings" = "Schriftart";
 "Appearance" = "Darstellung";
-"Cache Settings" = "Cache-Einstellungen";
-"General Settings" = "Allgemeine Einstellungen";
-"Server Settings" = "Server-Einstellungen";
+"Cache Settings" = "Cache";
+"General Settings" = "Allgemein";
+"Server Settings" = "Server";
 "Server Connection" = "Server-Verbindung";
 "Open external links in" = "Öffne externe Links in";
 "In App Browser" = "In App Browser";
@@ -67,7 +67,7 @@
 "Critical" = "Kritisch";
 "Debug" = "Debug";
 "DEBUG BUILD" = "DEBUG BUILD";
-"Debug Settings" = "Debug-Einstellungen";
+"Debug Settings" = "Debug";
 "Delete" = "Löschen";
 "Delete Bookmark" = "Lesezeichen löschen";
 "Developer: Ilyas Hallak" = "Entwickler: Ilyas Hallak";
@@ -80,13 +80,13 @@
 "Finished reading?" = "Fertig gelesen?";
 "Font" = "Schrift";
 "Font family" = "Schriftart";
-"Font Settings" = "Schrift-Einstellungen";
+"Font Settings" = "Schrift";
 "Font size" = "Schriftgröße";
 "From Bremen with 💚" = "Aus Bremen mit 💚";
 "General" = "Allgemein";
 "Global Level" = "Globales Level";
 "Global Minimum Level" = "Globales Minimum-Level";
-"Global Settings" = "Globale Einstellungen";
+"Global Settings" = "Global";
 "https://example.com" = "https://example.com";
 "https://readeck.example.com" = "https://readeck.example.com";
 "Include Source Location" = "Quellort einschließen";
