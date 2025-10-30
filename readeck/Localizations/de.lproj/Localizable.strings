@@ -105,6 +105,8 @@
 "More" = "Mehr";
 "New Bookmark" = "Neues Lesezeichen";
 "No articles in the queue" = "Keine Artikel in der Warteschlange";
+"open_url" = "%@ öffnen";
+"open_original_page" = "Originalseite öffnen";
 "No bookmarks" = "Keine Lesezeichen";
 "No bookmarks found in %@." = "Keine Lesezeichen in %@ gefunden.";
 "No bookmarks found." = "Keine Lesezeichen gefunden.";

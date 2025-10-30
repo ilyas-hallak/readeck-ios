@@ -101,6 +101,8 @@
 "More" = "More";
 "New Bookmark" = "New Bookmark";
 "No articles in the queue" = "No articles in the queue";
+"open_url" = "Open %@";
+"open_original_page" = "Open original page";
 "No bookmarks" = "No bookmarks";
 "No bookmarks found in %@." = "No bookmarks found in %@.";
 "No bookmarks found." = "No bookmarks found.";

@@ -44,4 +44,12 @@ struct URLUtil {
         guard let url = URL(string: urlString), let host = url.host else { return nil }
         return host.replacingOccurrences(of: "www.", with: "")
     }
+
+    static func openUrlLabel(for urlString: String) -> String {
+        if let domain = extractDomain(from: urlString) {
+            return String(format: "open_url".localized, domain)
+        } else {
+            return "open_original_page".localized
+        }
+    }
 }
