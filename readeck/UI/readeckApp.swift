@@ -20,7 +20,7 @@ struct readeckApp: App {
                 if appViewModel.hasFinishedSetup {
                     MainTabView()
                 } else {
-                    SettingsServerView()
+                    OnboardingServerView()
                         .padding()
                 }
             }

@@ -16,15 +16,8 @@ struct SettingsGeneralView: View {
     }
 
     var body: some View {
-        VStack(spacing: 20) {
-            SectionHeader(title: "General Settings".localized, icon: "gear")
-                .padding(.bottom, 4)
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text("General")
-                    .font(.headline)
-
-                // What's New Button
+        Group {
+            Section {
                 Button(action: {
                     showReleaseNotes = true
                 }) {
@@ -39,83 +32,57 @@ struct SettingsGeneralView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .buttonStyle(.plain)
 
                 Toggle("Read Aloud Feature", isOn: $viewModel.enableTTS)
-                    .toggleStyle(.switch)
                     .onChange(of: viewModel.enableTTS) {
                         Task {
                             await viewModel.saveGeneralSettings()
                         }
                     }
+            } header: {
+                Text("General")
+            } footer: {
                 Text("Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.")
-                    .font(.footnote)
             }
-            
-            // Reading Settings
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Open external links in".localized)
-                    .font(.headline)
-                Picker("urlOpener", selection: $viewModel.urlOpener) {
-                    ForEach(UrlOpener.allCases, id: \.self) { urlOpener in
-                        Text(urlOpener.displayName.localized).tag(urlOpener)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: viewModel.urlOpener) {
-                    Task {
-                        await viewModel.saveGeneralSettings()
-                    }
-                }
-            }
-            
+
             #if DEBUG
-            // Sync Settings
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Sync Settings")
-                    .font(.headline)
+            Section {
                 Toggle("Automatic sync", isOn: $viewModel.autoSyncEnabled)
-                    .toggleStyle(SwitchToggleStyle())
                 if viewModel.autoSyncEnabled {
-                    HStack {
-                        Text("Sync interval")
-                        Spacer()
-                        Stepper("\(viewModel.syncInterval) minutes", value: $viewModel.syncInterval, in: 1...60)
-                    }
+                    Stepper("Sync interval: \(viewModel.syncInterval) minutes", value: $viewModel.syncInterval, in: 1...60)
                 }
+            } header: {
+                Text("Sync Settings")
             }
-            
-            // Reading Settings
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Reading Settings")
-                    .font(.headline)
+
+            Section {
                 Toggle("Safari Reader Mode", isOn: $viewModel.enableReaderMode)
-                    .toggleStyle(SwitchToggleStyle())
                 Toggle("Automatically mark articles as read", isOn: $viewModel.autoMarkAsRead)
-                    .toggleStyle(SwitchToggleStyle())
+            } header: {
+                Text("Reading Settings")
             }
-            
-            // Messages
+
             if let successMessage = viewModel.successMessage {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text(successMessage)
-                        .foregroundColor(.green)
-                        .font(.caption)
+                Section {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text(successMessage)
+                            .foregroundColor(.green)
+                    }
                 }
             }
             if let errorMessage = viewModel.errorMessage {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .font(.caption)
+                Section {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                    }
                 }
             }
             #endif
-            
         }
         .sheet(isPresented: $showReleaseNotes) {
             ReleaseNotesView()
@@ -127,7 +94,10 @@ struct SettingsGeneralView: View {
 }
 
 #Preview {
-    SettingsGeneralView(viewModel: .init(
-        MockUseCaseFactory()
-    ))
+    List {
+        SettingsGeneralView(viewModel: .init(
+            MockUseCaseFactory()
+        ))
+    }
+    .listStyle(.insetGrouped)
 }
