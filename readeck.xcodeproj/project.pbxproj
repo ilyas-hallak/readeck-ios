@@ -95,6 +95,7 @@
 				UI/Components/UnifiedLabelChip.swift,
 				UI/Utils/NotificationNames.swift,
 				Utils/Logger.swift,
+				Utils/LogStore.swift,
 			);
 			target = 5D2B7FAE2DFA27A400EBDB2B /* URLShare */;
 		};
