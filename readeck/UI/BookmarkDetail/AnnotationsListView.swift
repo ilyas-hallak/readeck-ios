@@ -64,6 +64,15 @@ struct AnnotationsListView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            Task {
+                                await viewModel.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotation.id)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
 
             case .error:
@@ -74,8 +83,10 @@ struct AnnotationsListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
+                Button {
                     dismiss()
+                } label: {
+                    Image(systemName: "xmark")
                 }
             }
         }

@@ -92,6 +92,10 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
         MockGetBookmarkAnnotationsUseCase()
     }
+
+    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
+        MockDeleteAnnotationUseCase()
+    }
 }
     
 
@@ -247,6 +251,12 @@ class MockGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
         return [
             .init(id: "1", text: "bla", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
         ]
+    }
+}
+
+class MockDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
+    func execute(bookmarkId: String, annotationId: String) async throws {
+        // Mock implementation - do nothing
     }
 }
 

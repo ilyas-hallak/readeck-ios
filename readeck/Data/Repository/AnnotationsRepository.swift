@@ -21,4 +21,8 @@ class AnnotationsRepository: PAnnotationsRepository {
             )
         }
     }
+
+    func deleteAnnotation(bookmarkId: String, annotationId: String) async throws {
+        try await api.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
+    }
 }
