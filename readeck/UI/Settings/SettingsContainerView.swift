@@ -46,8 +46,17 @@ struct SettingsContainerView: View {
     private var debugSettingsSection: some View {
         Section {
             SettingsRowNavigationLink(
-                icon: "doc.text.magnifyingglass",
+                icon: "list.bullet.rectangle",
                 iconColor: .blue,
+                title: "Debug Logs",
+                subtitle: "View all debug messages"
+            ) {
+                DebugLogViewer()
+            }
+
+            SettingsRowNavigationLink(
+                icon: "slider.horizontal.3",
+                iconColor: .purple,
                 title: "Logging Configuration",
                 subtitle: "Configure log levels and categories"
             ) {

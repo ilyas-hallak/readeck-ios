@@ -10,14 +10,14 @@ import os
 
 // MARK: - Log Configuration
 
-enum LogLevel: Int, CaseIterable {
+enum LogLevel: Int, CaseIterable, Codable {
     case debug = 0
     case info = 1
     case notice = 2
     case warning = 3
     case error = 4
     case critical = 5
-    
+
     var emoji: String {
         switch self {
         case .debug: return "🔍"
@@ -30,7 +30,7 @@ enum LogLevel: Int, CaseIterable {
     }
 }
 
-enum LogCategory: String, CaseIterable {
+enum LogCategory: String, CaseIterable, Codable {
     case network = "Network"
     case ui = "UI"
     case data = "Data"
@@ -43,13 +43,14 @@ enum LogCategory: String, CaseIterable {
 
 class LogConfiguration: ObservableObject {
     static let shared = LogConfiguration()
-    
+
     @Published private var categoryLevels: [LogCategory: LogLevel] = [:]
     @Published var globalMinLevel: LogLevel = .debug
     @Published var showPerformanceLogs = true
     @Published var showTimestamps = true
     @Published var includeSourceLocation = true
-    
+    @Published var isLoggingEnabled = false
+
     private init() {
         loadConfiguration()
     }
@@ -64,6 +65,7 @@ class LogConfiguration: ObservableObject {
     }
     
     func shouldLog(_ level: LogLevel, for category: LogCategory) -> Bool {
+        guard isLoggingEnabled else { return false }
         let categoryLevel = getLevel(for: category)
         return level.rawValue >= categoryLevel.rawValue
     }
@@ -84,6 +86,7 @@ class LogConfiguration: ObservableObject {
         showPerformanceLogs = UserDefaults.standard.bool(forKey: "LogShowPerformance")
         showTimestamps = UserDefaults.standard.bool(forKey: "LogShowTimestamps")
         includeSourceLocation = UserDefaults.standard.bool(forKey: "LogIncludeSourceLocation")
+        isLoggingEnabled = UserDefaults.standard.bool(forKey: "LogIsEnabled")
     }
     
     private func saveConfiguration() {
@@ -96,6 +99,7 @@ class LogConfiguration: ObservableObject {
         UserDefaults.standard.set(showPerformanceLogs, forKey: "LogShowPerformance")
         UserDefaults.standard.set(showTimestamps, forKey: "LogShowTimestamps")
         UserDefaults.standard.set(includeSourceLocation, forKey: "LogIncludeSourceLocation")
+        UserDefaults.standard.set(isLoggingEnabled, forKey: "LogIsEnabled")
     }
 }
 
@@ -110,41 +114,66 @@ struct Logger {
     }
     
     // MARK: - Log Levels
-    
+
     func debug(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         guard config.shouldLog(.debug, for: category) else { return }
         let formattedMessage = formatMessage(message, level: .debug, file: file, function: function, line: line)
         logger.debug("\(formattedMessage)")
+        storeLog(message: message, level: .debug, file: file, function: function, line: line)
     }
-    
+
     func info(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         guard config.shouldLog(.info, for: category) else { return }
         let formattedMessage = formatMessage(message, level: .info, file: file, function: function, line: line)
         logger.info("\(formattedMessage)")
+        storeLog(message: message, level: .info, file: file, function: function, line: line)
     }
-    
+
     func notice(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         guard config.shouldLog(.notice, for: category) else { return }
         let formattedMessage = formatMessage(message, level: .notice, file: file, function: function, line: line)
         logger.notice("\(formattedMessage)")
+        storeLog(message: message, level: .notice, file: file, function: function, line: line)
     }
-    
+
     func warning(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         guard config.shouldLog(.warning, for: category) else { return }
         let formattedMessage = formatMessage(message, level: .warning, file: file, function: function, line: line)
         logger.warning("\(formattedMessage)")
+        storeLog(message: message, level: .warning, file: file, function: function, line: line)
     }
-    
+
     func error(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         guard config.shouldLog(.error, for: category) else { return }
         let formattedMessage = formatMessage(message, level: .error, file: file, function: function, line: line)
         logger.error("\(formattedMessage)")
+        storeLog(message: message, level: .error, file: file, function: function, line: line)
     }
-    
+
     func critical(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         guard config.shouldLog(.critical, for: category) else { return }
         let formattedMessage = formatMessage(message, level: .critical, file: file, function: function, line: line)
         logger.critical("\(formattedMessage)")
+        storeLog(message: message, level: .critical, file: file, function: function, line: line)
+    }
+
+    // MARK: - Store Log
+
+    private func storeLog(message: String, level: LogLevel, file: String, function: String, line: Int) {
+        #if DEBUG
+        guard config.isLoggingEnabled else { return }
+        let entry = LogEntry(
+            level: level,
+            category: category,
+            message: message,
+            file: file,
+            function: function,
+            line: line
+        )
+        Task {
+            await LogStore.shared.addEntry(entry)
+        }
+        #endif
     }
     
     // MARK: - Convenience Methods
