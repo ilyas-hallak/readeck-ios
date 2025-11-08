@@ -99,48 +99,6 @@ class FontSettingsViewModel {
     }
 }
 
-// MARK: - Font Enums (moved from SettingsViewModel)
-enum FontFamily: String, CaseIterable {
-    case system = "system"
-    case serif = "serif"
-    case sansSerif = "sansSerif"
-    case monospace = "monospace"
-    
-    var displayName: String {
-        switch self {
-        case .system: return "System"
-        case .serif: return "Serif"
-        case .sansSerif: return "Sans Serif"
-        case .monospace: return "Monospace"
-        }
-    }
-}
 
-enum FontSize: String, CaseIterable {
-    case small = "small"
-    case medium = "medium"
-    case large = "large"
-    case extraLarge = "extraLarge"
-    
-    var displayName: String {
-        switch self {
-        case .small: return "S"
-        case .medium: return "M"
-        case .large: return "L"
-        case .extraLarge: return "XL"
-        }
-    }
-    
-    var size: CGFloat {
-        switch self {
-        case .small: return 14
-        case .medium: return 16
-        case .large: return 18
-        case .extraLarge: return 20
-        }
-    }
-    
-    var systemFont: Font {
-        return Font.system(size: size)
-    }
-} 
+
+

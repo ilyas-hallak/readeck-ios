@@ -25,6 +25,7 @@ struct readeckApp: App {
                 }
             }
             .environmentObject(appSettings)
+            .environment(\.managedObjectContext, CoreDataManager.shared.context)
             .preferredColorScheme(appSettings.theme.colorScheme)
             .onAppear {
                 #if DEBUG

@@ -33,14 +33,17 @@ class LabelsRepository: PLabelsRepository, @unchecked Sendable {
 
         return try await backgroundContext.perform {
             let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+            fetchRequest.sortDescriptors = [
+                NSSortDescriptor(key: "count", ascending: false),
+                NSSortDescriptor(key: "name", ascending: true)
+            ]
 
             let entities = try backgroundContext.fetch(fetchRequest)
             return entities.compactMap { entity -> BookmarkLabel? in
                 guard let name = entity.name, !name.isEmpty else { return nil }
                 return BookmarkLabel(
                     name: name,
-                    count: 0,
+                    count: Int(entity.count),
                     href: name
                 )
             }
@@ -51,24 +54,37 @@ class LabelsRepository: PLabelsRepository, @unchecked Sendable {
         let backgroundContext = coreDataManager.newBackgroundContext()
 
         try await backgroundContext.perform {
-            // Batch fetch all existing label names (much faster than individual queries)
+            // Batch fetch all existing labels
             let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-            fetchRequest.propertiesToFetch = ["name"]
+            fetchRequest.propertiesToFetch = ["name", "count"]
 
             let existingEntities = try backgroundContext.fetch(fetchRequest)
-            let existingNames = Set(existingEntities.compactMap { $0.name })
+            var existingByName: [String: TagEntity] = [:]
+            for entity in existingEntities {
+                if let name = entity.name {
+                    existingByName[name] = entity
+                }
+            }
 
-            // Only insert new labels
+            // Insert or update labels
             var insertCount = 0
+            var updateCount = 0
             for dto in dtos {
-                if !existingNames.contains(dto.name) {
+                if let existing = existingByName[dto.name] {
+                    // Update count if changed
+                    if existing.count != dto.count {
+                        existing.count = Int32(dto.count)
+                        updateCount += 1
+                    }
+                } else {
+                    // Insert new label
                     dto.toEntity(context: backgroundContext)
                     insertCount += 1
                 }
             }
 
-            // Only save if there are new labels
-            if insertCount > 0 {
+            // Only save if there are changes
+            if insertCount > 0 || updateCount > 0 {
                 try backgroundContext.save()
             }
         }

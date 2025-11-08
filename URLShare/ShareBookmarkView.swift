@@ -1,9 +1,12 @@
 import SwiftUI
+import CoreData
 
 struct ShareBookmarkView: View {
     @ObservedObject var viewModel: ShareBookmarkViewModel
     @State private var keyboardHeight: CGFloat = 0
     @FocusState private var focusedField: AddBookmarkFieldFocus?
+
+    @Environment(\.managedObjectContext) private var viewContext
     
     private func dismissKeyboard() {
         NotificationCenter.default.post(name: .dismissKeyboard, object: nil)
@@ -39,7 +42,6 @@ struct ShareBookmarkView: View {
             saveButtonSection
         }
         .background(Color(.systemGroupedBackground))
-        .onAppear { viewModel.onAppear() }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .contentShape(Rectangle())
         .onTapGesture {
@@ -134,32 +136,30 @@ struct ShareBookmarkView: View {
     
     @ViewBuilder
     private var tagManagementSection: some View {
-        if !viewModel.labels.isEmpty || !viewModel.isServerReachable {
-            TagManagementView(
-                allLabels: convertToBookmarkLabels(viewModel.labels),
-                selectedLabels: viewModel.selectedLabels,
-                searchText: $viewModel.searchText,
-                isLabelsLoading: false,
-                filteredLabels: convertToBookmarkLabels(viewModel.filteredLabels),
-                searchFieldFocus: $focusedField,
-                onAddCustomTag: {
-                    addCustomTag()
-                },
-                onToggleLabel: { label in
-                    if viewModel.selectedLabels.contains(label) {
-                        viewModel.selectedLabels.remove(label)
-                    } else {
-                        viewModel.selectedLabels.insert(label)
-                    }
-                    viewModel.searchText = ""
-                },
-                onRemoveLabel: { label in
+        CoreDataTagManagementView(
+            selectedLabels: viewModel.selectedLabels,
+            searchText: $viewModel.searchText,
+            searchFieldFocus: $focusedField,
+            fetchLimit: 150,
+            sortOrder: viewModel.tagSortOrder,
+            availableTagsTitle: "Most used tags",
+            onAddCustomTag: {
+                addCustomTag()
+            },
+            onToggleLabel: { label in
+                if viewModel.selectedLabels.contains(label) {
                     viewModel.selectedLabels.remove(label)
+                } else {
+                    viewModel.selectedLabels.insert(label)
                 }
-            )
-            .padding(.top, 20)
-            .padding(.horizontal, 16)
-        }
+                viewModel.searchText = ""
+            },
+            onRemoveLabel: { label in
+                viewModel.selectedLabels.remove(label)
+            }
+        )
+        .padding(.top, 20)
+        .padding(.horizontal, 16)
     }
     
     @ViewBuilder
@@ -198,25 +198,21 @@ struct ShareBookmarkView: View {
     }
     
     // MARK: - Helper Functions
-    
-    private func convertToBookmarkLabels(_ dtos: [BookmarkLabelDto]) -> [BookmarkLabel] {
-        return dtos.map { .init(name: $0.name, count: $0.count, href: $0.href) }
-    }
-    
-    private func convertToBookmarkLabelPages(_ dtoPages: [[BookmarkLabelDto]]) -> [[BookmarkLabel]] {
-        return dtoPages.map { convertToBookmarkLabels($0) }
-    }
-    
+
     private func addCustomTag() {
         let splitLabels = LabelUtils.splitLabelsFromInput(viewModel.searchText)
-        let availableLabels = viewModel.labels.map { $0.name }
+
+        // Fetch available labels from Core Data
+        let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+        let availableLabels = (try? viewContext.fetch(fetchRequest))?.compactMap { $0.name } ?? []
+
         let currentLabels = Array(viewModel.selectedLabels)
         let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels, availableLabels: availableLabels)
-        
+
         for label in uniqueLabels {
             viewModel.selectedLabels.insert(label)
         }
-        
+
         viewModel.searchText = ""
     }
 }

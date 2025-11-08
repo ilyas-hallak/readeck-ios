@@ -1,30 +1,6 @@
 import Foundation
 import CoreData
 
-struct Settings {
-    var endpoint: String? = nil
-    var username: String? = nil
-    var password: String? = nil
-    var token: String? = nil
-    
-    var fontFamily: FontFamily? = nil
-    var fontSize: FontSize? = nil
-    var hasFinishedSetup: Bool = false
-    var enableTTS: Bool? = nil
-    var theme: Theme? = nil
-    var cardLayoutStyle: CardLayoutStyle? = nil
-    
-    var urlOpener: UrlOpener? = nil
-    
-    var isLoggedIn: Bool {
-        token != nil && !token!.isEmpty
-    }
-    
-    mutating func setToken(_ newToken: String) {
-        token = newToken
-    }
-}
-
 protocol PSettingsRepository {
     func saveSettings(_ settings: Settings) async throws
     func loadSettings() async throws -> Settings?
@@ -33,9 +9,11 @@ protocol PSettingsRepository {
     func saveUsername(_ username: String) async throws
     func savePassword(_ password: String) async throws
     func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws
-    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws 
+    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws
     func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws
     func loadCardLayoutStyle() async throws -> CardLayoutStyle
+    func saveTagSortOrder(_ tagSortOrder: TagSortOrder) async throws
+    func loadTagSortOrder() async throws -> TagSortOrder
     var hasFinishedSetup: Bool { get }
 }
 
@@ -100,7 +78,11 @@ class SettingsRepository: PSettingsRepository {
                     if let cardLayoutStyle = settings.cardLayoutStyle {
                         existingSettings.cardLayoutStyle = cardLayoutStyle.rawValue
                     }
-                    
+
+                    if let tagSortOrder = settings.tagSortOrder {
+                        existingSettings.tagSortOrder = tagSortOrder.rawValue
+                    }
+
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -139,6 +121,7 @@ class SettingsRepository: PSettingsRepository {
                         enableTTS: settingEntity?.enableTTS,
                         theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue),
                         cardLayoutStyle: CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue),
+                        tagSortOrder: TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue),
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue)
                     )
                     continuation.resume(returning: settings)
@@ -244,18 +227,59 @@ class SettingsRepository: PSettingsRepository {
     
     func loadCardLayoutStyle() async throws -> CardLayoutStyle {
         let context = coreDataManager.context
-        
+
         return try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
                     fetchRequest.fetchLimit = 1
-                    
+
                     let settingEntities = try context.fetch(fetchRequest)
                     let settingEntity = settingEntities.first
-                    
+
                     let cardLayoutStyle = CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue) ?? .magazine
                     continuation.resume(returning: cardLayoutStyle)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    func saveTagSortOrder(_ tagSortOrder: TagSortOrder) async throws {
+        let context = coreDataManager.context
+
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
+
+                    existingSettings.tagSortOrder = tagSortOrder.rawValue
+
+                    try context.save()
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    func loadTagSortOrder() async throws -> TagSortOrder {
+        let context = coreDataManager.context
+
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    fetchRequest.fetchLimit = 1
+
+                    let settingEntities = try context.fetch(fetchRequest)
+                    let settingEntity = settingEntities.first
+
+                    let tagSortOrder = TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue) ?? .byCount
+                    continuation.resume(returning: tagSortOrder)
                 } catch {
                     continuation.resume(throwing: error)
                 }

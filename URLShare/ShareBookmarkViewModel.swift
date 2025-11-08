@@ -6,52 +6,21 @@ import CoreData
 class ShareBookmarkViewModel: ObservableObject {
     @Published var url: String?
     @Published var title: String = ""
-    @Published var labels: [BookmarkLabelDto] = []
     @Published var selectedLabels: Set<String> = []
     @Published var statusMessage: (text: String, isError: Bool, emoji: String)? = nil
     @Published var isSaving: Bool = false
     @Published var searchText: String = ""
     @Published var isServerReachable: Bool = true
+    let tagSortOrder: TagSortOrder = .byCount  // Share Extension always uses byCount
     let extensionContext: NSExtensionContext?
 
     private let logger = Logger.viewModel
     private let serverCheck = ShareExtensionServerCheck.shared
-        
-    var availableLabels: [BookmarkLabelDto] {
-        return labels.filter { !selectedLabels.contains($0.name) }
-    }
-    
-    // filtered labels based on search text
-    var filteredLabels: [BookmarkLabelDto] {
-        if searchText.isEmpty {
-            return availableLabels
-        } else {
-            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
-    }
-    
-    var availableLabelPages: [[BookmarkLabelDto]] {
-        let pageSize = 12 // Extension can't access Constants.Labels.pageSize
-        let labelsToShow = searchText.isEmpty ? availableLabels : filteredLabels
-        
-        if labelsToShow.count <= pageSize {
-            return [labelsToShow]
-        } else {
-            return stride(from: 0, to: labelsToShow.count, by: pageSize).map {
-                Array(labelsToShow[$0..<min($0 + pageSize, labelsToShow.count)])
-            }
-        }
-    }
-    
+
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
         logger.info("ShareBookmarkViewModel initialized with extension context: \(extensionContext != nil)")
         extractSharedContent()
-    }
-    
-    func onAppear() {
-        logger.debug("ShareBookmarkViewModel appeared")
-        loadLabels()
     }
     
     private func extractSharedContent() {
@@ -119,52 +88,7 @@ class ShareBookmarkViewModel: ObservableObject {
             }
         }
     }
-    
-    func loadLabels() {
-        let measurement = PerformanceMeasurement(operation: "loadLabels", logger: logger)
-        logger.debug("Starting to load labels")
-        Task {
-            // 1. First, load from Core Data (instant response)
-            let localTags = await OfflineBookmarkManager.shared.getTags()
-            let localLabels = localTags.enumerated().map { index, tagName in
-                BookmarkLabelDto(name: tagName, count: 0, href: "local://\(index)")
-            }
 
-            await MainActor.run {
-                self.labels = localLabels
-                self.logger.info("Loaded \(localLabels.count) labels from local cache")
-            }
-
-            // 2. Then check server and sync in background
-            let serverReachable = await serverCheck.checkServerReachability()
-            await MainActor.run {
-                self.isServerReachable = serverReachable
-            }
-            logger.debug("Server reachable for labels: \(serverReachable)")
-
-            if serverReachable {
-                let loaded = await SimpleAPI.getBookmarkLabels { [weak self] message, error in
-                    if error {
-                        self?.logger.error("Failed to sync labels from API: \(message)")
-                    }
-                } ?? []
-
-                // Save new labels to Core Data
-                let tagNames = loaded.map { $0.name }
-                await OfflineBookmarkManager.shared.saveTags(tagNames)
-
-                let sorted = loaded.sorted { $0.count > $1.count }
-                await MainActor.run {
-                    self.labels = Array(sorted)
-                    self.logger.info("Synced \(loaded.count) labels from API and updated cache")
-                    measurement.end()
-                }
-            } else {
-                measurement.end()
-            }
-        }
-    }
-    
     func save() {
         logger.info("Starting to save bookmark with title: '\(title)', URL: '\(url ?? "nil")', labels: \(selectedLabels.count)")
         guard let url = url, !url.isEmpty else {
@@ -205,17 +129,21 @@ class ShareBookmarkViewModel: ObservableObject {
                 )
                 logger.info("Local save result: \(success)")
 
-                DispatchQueue.main.async {
+                await MainActor.run {
                     self.isSaving = false
                     if success {
                         self.logger.info("Bookmark saved locally successfully")
                         self.statusMessage = ("Server not reachable. Saved locally and will sync later.", false, "🏠")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                            self.completeExtensionRequest()
-                        }
                     } else {
                         self.logger.error("Failed to save bookmark locally")
                         self.statusMessage = ("Failed to save locally.", true, "❌")
+                    }
+                }
+
+                if success {
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    await MainActor.run {
+                        self.completeExtensionRequest()
                     }
                 }
             }

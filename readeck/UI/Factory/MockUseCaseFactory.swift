@@ -76,7 +76,11 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeGetLabelsUseCase() -> any PGetLabelsUseCase {
         MockGetLabelsUseCase()
     }
-    
+
+    func makeSyncTagsUseCase() -> any PSyncTagsUseCase {
+        MockSyncTagsUseCase()
+    }
+
     func makeAddTextToSpeechQueueUseCase() -> any PAddTextToSpeechQueueUseCase {
         MockAddTextToSpeechQueueUseCase()
     }
@@ -122,6 +126,12 @@ class MockCreateBookmarkUseCase: PCreateBookmarkUseCase {
 class MockGetLabelsUseCase: PGetLabelsUseCase {
     func execute() async throws -> [BookmarkLabel] {
         [BookmarkLabel(name: "Test", count: 1, href: "mock-href")]
+    }
+}
+
+class MockSyncTagsUseCase: PSyncTagsUseCase {
+    func execute() async throws {
+        // Mock implementation - does nothing
     }
 }
 

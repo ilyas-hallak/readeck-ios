@@ -3,8 +3,11 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @State private var selectedCardLayout: CardLayoutStyle = .magazine
     @State private var selectedTheme: Theme = .system
+    @State private var selectedTagSortOrder: TagSortOrder = .byCount
     @State private var fontViewModel: FontSettingsViewModel
     @State private var generalViewModel: SettingsGeneralViewModel
+
+    @EnvironmentObject private var appSettings: AppSettings
 
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let saveCardLayoutUseCase: PSaveCardLayoutUseCase
@@ -104,10 +107,20 @@ struct AppearanceSettingsView: View {
                         await generalViewModel.saveGeneralSettings()
                     }
                 }
+
+                // Tag Sort Order
+                Picker("Tag sort order", selection: $selectedTagSortOrder) {
+                    ForEach(TagSortOrder.allCases, id: \.self) { sortOrder in
+                        Text(sortOrder.displayName).tag(sortOrder)
+                    }
+                }
+                .onChange(of: selectedTagSortOrder) {
+                    saveTagSortOrderSettings()
+                }
             } header: {
                 Text("Appearance")
             } footer: {
-                Text("Choose where external links should open: In-App Browser keeps you in readeck, Default Browser opens in Safari or your default browser.")
+                Text("Choose where external links should open: In-App Browser keeps you in readeck, Default Browser opens in Safari or your default browser.\n\nTag sort order determines how tags are displayed when adding or editing bookmarks.")
             }
         }
         .task {
@@ -119,10 +132,11 @@ struct AppearanceSettingsView: View {
 
     private func loadSettings() {
         Task {
-            // Load both theme and card layout from repository
+            // Load theme, card layout, and tag sort order from repository
             if let settings = try? await settingsRepository.loadSettings() {
                 await MainActor.run {
                     selectedTheme = settings.theme ?? .system
+                    selectedTagSortOrder = settings.tagSortOrder ?? .byCount
                 }
             }
             selectedCardLayout = await loadCardLayoutUseCase.execute()
@@ -149,6 +163,20 @@ struct AppearanceSettingsView: View {
             // Notify other parts of the app about the change
             await MainActor.run {
                 NotificationCenter.default.post(name: .cardLayoutChanged, object: selectedCardLayout)
+            }
+        }
+    }
+
+    private func saveTagSortOrderSettings() {
+        Task {
+            var settings = (try? await settingsRepository.loadSettings()) ?? Settings()
+            settings.tagSortOrder = selectedTagSortOrder
+            try? await settingsRepository.saveSettings(settings)
+
+            // Update AppSettings to trigger UI updates
+            await MainActor.run {
+                appSettings.settings?.tagSortOrder = selectedTagSortOrder
+                NotificationCenter.default.post(name: .settingsChanged, object: nil)
             }
         }
     }

@@ -84,6 +84,7 @@ class OfflineBookmarkManager: @unchecked Sendable {
                     if !existingNames.contains(tag) {
                         let entity = TagEntity(context: backgroundContext)
                         entity.name = tag
+                        entity.count = 0
                         insertCount += 1
                     }
                 }
@@ -96,6 +97,53 @@ class OfflineBookmarkManager: @unchecked Sendable {
             }
         } catch {
             print("Failed to save tags: \(error)")
+        }
+    }
+
+    func saveTagsWithCount(_ tags: [BookmarkLabelDto]) async {
+        let backgroundContext = CoreDataManager.shared.newBackgroundContext()
+
+        do {
+            try await backgroundContext.perform {
+                // Batch fetch existing tags
+                let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+                fetchRequest.propertiesToFetch = ["name"]
+
+                let existingEntities = try backgroundContext.fetch(fetchRequest)
+                var existingByName: [String: TagEntity] = [:]
+                for entity in existingEntities {
+                    if let name = entity.name {
+                        existingByName[name] = entity
+                    }
+                }
+
+                // Insert or update tags
+                var insertCount = 0
+                var updateCount = 0
+                for tag in tags {
+                    if let existing = existingByName[tag.name] {
+                        // Update count if changed
+                        if existing.count != tag.count {
+                            existing.count = Int32(tag.count)
+                            updateCount += 1
+                        }
+                    } else {
+                        // Insert new tag
+                        let entity = TagEntity(context: backgroundContext)
+                        entity.name = tag.name
+                        entity.count = Int32(tag.count)
+                        insertCount += 1
+                    }
+                }
+
+                // Only save if there are changes
+                if insertCount > 0 || updateCount > 0 {
+                    try backgroundContext.save()
+                    print("Saved \(insertCount) new tags and updated \(updateCount) tags to Core Data")
+                }
+            }
+        } catch {
+            print("Failed to save tags with count: \(error)")
         }
     }
     
