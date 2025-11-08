@@ -32,6 +32,16 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Cleaner app info footer with muted styling
 - Combined legal, privacy and support into one section
 
+### Tag Management Improvements
+
+- **Handles 1000+ tags smoothly** - no more lag or slowdowns
+- **Tags now load from local database** - no internet required
+- Choose your preferred tag sorting: by usage count or alphabetically
+- Tags sync automatically in the background
+- Share Extension shows your 150 most-used tags instantly
+- Better offline support for managing tags
+- Faster and more responsive tag selection
+
 ### Fixes & Improvements
 
 - Better color consistency throughout the app
