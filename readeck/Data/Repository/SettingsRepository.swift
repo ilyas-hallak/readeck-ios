@@ -1,22 +1,6 @@
 import Foundation
 import CoreData
 
-protocol PSettingsRepository {
-    func saveSettings(_ settings: Settings) async throws
-    func loadSettings() async throws -> Settings?
-    func clearSettings() async throws
-    func saveToken(_ token: String) async throws
-    func saveUsername(_ username: String) async throws
-    func savePassword(_ password: String) async throws
-    func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws
-    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws
-    func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws
-    func loadCardLayoutStyle() async throws -> CardLayoutStyle
-    func saveTagSortOrder(_ tagSortOrder: TagSortOrder) async throws
-    func loadTagSortOrder() async throws -> TagSortOrder
-    var hasFinishedSetup: Bool { get }
-}
-
 class SettingsRepository: PSettingsRepository {
     private let coreDataManager = CoreDataManager.shared
     private let userDefault = UserDefaults.standard
@@ -285,5 +269,29 @@ class SettingsRepository: PSettingsRepository {
                 }
             }
         }
+    }
+
+    // MARK: - Offline Settings
+
+    private let offlineSettingsKey = "offlineSettings"
+    private let logger = Logger.data
+
+    func loadOfflineSettings() async throws -> OfflineSettings {
+        guard let data = userDefault.data(forKey: offlineSettingsKey) else {
+            logger.info("No offline settings found, returning defaults")
+            return OfflineSettings() // Default settings
+        }
+
+        let decoder = JSONDecoder()
+        let settings = try decoder.decode(OfflineSettings.self, from: data)
+        logger.debug("Loaded offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
+        return settings
+    }
+
+    func saveOfflineSettings(_ settings: OfflineSettings) async throws {
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(settings)
+        userDefault.set(data, forKey: offlineSettingsKey)
+        logger.info("Saved offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
     }
 }
