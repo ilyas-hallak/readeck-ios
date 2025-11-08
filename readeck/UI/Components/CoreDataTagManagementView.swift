@@ -174,7 +174,7 @@ struct CoreDataTagManagementView: View {
                 alignment: .top,
                 spacing: 8
             ) {
-                ForEach(tagEntities) { entity in
+                ForEach(tagEntities, id: \.objectID) { entity in
                     if let name = entity.name, shouldShowTag(name) {
                         UnifiedLabelChip(
                             label: name,
