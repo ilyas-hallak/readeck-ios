@@ -52,6 +52,19 @@ class LogConfiguration: ObservableObject {
     @Published var isLoggingEnabled = false
 
     private init() {
+        // First time setup: Enable logging in DEBUG builds with sensible defaults
+        #if DEBUG
+        if UserDefaults.standard.object(forKey: "LogConfigurationInitialized") == nil {
+            isLoggingEnabled = true
+            showPerformanceLogs = true
+            showTimestamps = true
+            includeSourceLocation = true
+            globalMinLevel = .debug
+            UserDefaults.standard.set(true, forKey: "LogConfigurationInitialized")
+            saveConfiguration()
+        }
+        #endif
+
         loadConfiguration()
     }
     
@@ -81,12 +94,22 @@ class LogConfiguration: ObservableObject {
                 }
             }
         }
-        
+
         globalMinLevel = LogLevel(rawValue: UserDefaults.standard.integer(forKey: "LogGlobalLevel")) ?? .debug
-        showPerformanceLogs = UserDefaults.standard.bool(forKey: "LogShowPerformance")
-        showTimestamps = UserDefaults.standard.bool(forKey: "LogShowTimestamps")
-        includeSourceLocation = UserDefaults.standard.bool(forKey: "LogIncludeSourceLocation")
-        isLoggingEnabled = UserDefaults.standard.bool(forKey: "LogIsEnabled")
+
+        // Load boolean settings with defaults
+        if UserDefaults.standard.object(forKey: "LogShowPerformance") != nil {
+            showPerformanceLogs = UserDefaults.standard.bool(forKey: "LogShowPerformance")
+        }
+        if UserDefaults.standard.object(forKey: "LogShowTimestamps") != nil {
+            showTimestamps = UserDefaults.standard.bool(forKey: "LogShowTimestamps")
+        }
+        if UserDefaults.standard.object(forKey: "LogIncludeSourceLocation") != nil {
+            includeSourceLocation = UserDefaults.standard.bool(forKey: "LogIncludeSourceLocation")
+        }
+        if UserDefaults.standard.object(forKey: "LogIsEnabled") != nil {
+            isLoggingEnabled = UserDefaults.standard.bool(forKey: "LogIsEnabled")
+        }
     }
     
     private func saveConfiguration() {
