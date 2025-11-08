@@ -59,6 +59,9 @@
 "Are you sure you want to delete this bookmark? This action cannot be undone." = "Dieses Lesezeichen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.";
 "Are you sure you want to log out? This will delete all your login credentials and return you to setup." = "Wirklich abmelden? Dies löscht alle Anmeldedaten und führt zurück zur Einrichtung.";
 "Available tags" = "Verfügbare Labels";
+"Most used tags" = "Meist verwendete Labels";
+"Sorted by usage count" = "Sortiert nach Verwendungshäufigkeit";
+"Sorted alphabetically" = "Alphabetisch sortiert";
 "Cancel" = "Abbrechen";
 "Category-specific Levels" = "Kategorie-spezifische Level";
 "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." = "Änderungen werden sofort wirksam. Niedrigere Log-Level enthalten höhere (Debug enthält alle, Critical nur kritische Nachrichten).";

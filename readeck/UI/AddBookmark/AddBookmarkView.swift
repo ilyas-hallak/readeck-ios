@@ -4,6 +4,8 @@ import UIKit
 struct AddBookmarkView: View {
     @State private var viewModel = AddBookmarkViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var appSettings: AppSettings
     @FocusState private var focusedField: AddBookmarkFieldFocus?
     @State private var keyboardHeight: CGFloat = 0
     
@@ -58,9 +60,9 @@ struct AddBookmarkView: View {
         }
         .onAppear {
             viewModel.checkClipboard()
-        }
-        .task {
-            await viewModel.loadAllLabels()
+            Task {
+                await viewModel.syncTags()
+            }
         }
         .onDisappear {
             viewModel.clearForm()
@@ -177,23 +179,28 @@ struct AddBookmarkView: View {
     
     @ViewBuilder
     private var labelsField: some View {
-        TagManagementView(
-            allLabels: viewModel.allLabels,
-            selectedLabels: viewModel.selectedLabels,
-            searchText: $viewModel.searchText,
-            isLabelsLoading: viewModel.isLabelsLoading,
-            filteredLabels: viewModel.filteredLabels,
-            searchFieldFocus: $focusedField,
-            onAddCustomTag: {
-                viewModel.addCustomTag()
-            },
-            onToggleLabel: { label in
-                viewModel.toggleLabel(label)
-            },
-            onRemoveLabel: { label in
-                viewModel.removeLabel(label)
-            }
-        )
+        VStack(alignment: .leading, spacing: 8) {
+            Text(appSettings.tagSortOrder == .byCount ? "Sorted by usage count".localized : "Sorted alphabetically".localized)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            CoreDataTagManagementView(
+                selectedLabels: viewModel.selectedLabels,
+                searchText: $viewModel.searchText,
+                searchFieldFocus: $focusedField,
+                fetchLimit: nil,
+                sortOrder: appSettings.tagSortOrder,
+                onAddCustomTag: {
+                    viewModel.addCustomTag()
+                },
+                onToggleLabel: { label in
+                    viewModel.toggleLabel(label)
+                },
+                onRemoveLabel: { label in
+                    viewModel.removeLabel(label)
+                }
+            )
+        }
     }
     
     @ViewBuilder

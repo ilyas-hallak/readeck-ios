@@ -8,6 +8,7 @@ class AddBookmarkViewModel {
 
     private let createBookmarkUseCase = DefaultUseCaseFactory.shared.makeCreateBookmarkUseCase()
     private let getLabelsUseCase = DefaultUseCaseFactory.shared.makeGetLabelsUseCase()
+    private let syncTagsUseCase = DefaultUseCaseFactory.shared.makeSyncTagsUseCase()
     
     // MARK: - Form Data
     var url: String = ""
@@ -60,12 +61,19 @@ class AddBookmarkViewModel {
     }
     
     // MARK: - Labels Management
-    
+
+    /// Triggers background sync of tags from server to Core Data
+    /// CoreDataTagManagementView will automatically update via @FetchRequest
+    @MainActor
+    func syncTags() async {
+        try? await syncTagsUseCase.execute()
+    }
+
     @MainActor
     func loadAllLabels() async {
         isLabelsLoading = true
         defer { isLabelsLoading = false }
-        
+
         do {
             let labels = try await getLabelsUseCase.execute()
             allLabels = labels.sorted { $0.count > $1.count }

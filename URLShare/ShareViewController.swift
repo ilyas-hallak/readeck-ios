@@ -11,14 +11,15 @@ import UniformTypeIdentifiers
 import SwiftUI
 
 class ShareViewController: UIViewController {
-    
-    private var hostingController: UIHostingController<ShareBookmarkView>?
-    
+
+    private var hostingController: UIHostingController<AnyView>?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         let viewModel = ShareBookmarkViewModel(extensionContext: extensionContext)
         let swiftUIView = ShareBookmarkView(viewModel: viewModel)
-        let hostingController = UIHostingController(rootView: swiftUIView)
+            .environment(\.managedObjectContext, CoreDataManager.shared.context)
+        let hostingController = UIHostingController(rootView: AnyView(swiftUIView))
         addChild(hostingController)
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(hostingController.view)

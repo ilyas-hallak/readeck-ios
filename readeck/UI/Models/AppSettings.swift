@@ -18,17 +18,21 @@ import Combine
 
 class AppSettings: ObservableObject {
     @Published var settings: Settings?
-    
+
     var enableTTS: Bool {
         settings?.enableTTS ?? false
     }
-    
+
     var theme: Theme {
         settings?.theme ?? .system
     }
-    
+
     var urlOpener: UrlOpener {
         settings?.urlOpener ?? .inAppBrowser
+    }
+
+    var tagSortOrder: TagSortOrder {
+        settings?.tagSortOrder ?? .byCount
     }
 
     init(settings: Settings? = nil) {

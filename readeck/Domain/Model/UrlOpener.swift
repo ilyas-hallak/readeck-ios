@@ -1,3 +1,10 @@
+//
+//  UrlOpener.swift
+//  readeck
+//
+//  Created by Ilyas Hallak on 06.11.25.
+//
+
 enum UrlOpener: String, CaseIterable {
     case inAppBrowser = "inAppBrowser"
     case defaultBrowser = "defaultBrowser"

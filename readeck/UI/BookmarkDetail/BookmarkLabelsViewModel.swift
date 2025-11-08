@@ -5,6 +5,7 @@ class BookmarkLabelsViewModel {
     private let addLabelsUseCase: PAddLabelsToBookmarkUseCase
     private let removeLabelsUseCase: PRemoveLabelsFromBookmarkUseCase
     private let getLabelsUseCase: PGetLabelsUseCase
+    private let syncTagsUseCase: PSyncTagsUseCase
     
     var isLoading = false
     var isInitialLoading = false
@@ -30,13 +31,20 @@ class BookmarkLabelsViewModel {
     
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared, initialLabels: [String] = []) {
         self.currentLabels = initialLabels
-        
+
         self.addLabelsUseCase = factory.makeAddLabelsToBookmarkUseCase()
         self.removeLabelsUseCase = factory.makeRemoveLabelsFromBookmarkUseCase()
         self.getLabelsUseCase = factory.makeGetLabelsUseCase()
-        
+        self.syncTagsUseCase = factory.makeSyncTagsUseCase()
     }
     
+    /// Triggers background sync of tags from server to Core Data
+    /// CoreDataTagManagementView will automatically update via @FetchRequest
+    @MainActor
+    func syncTags() async {
+        try? await syncTagsUseCase.execute()
+    }
+
     @MainActor
     func loadAllLabels() async {
         isInitialLoading = true

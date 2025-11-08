@@ -14,4 +14,5 @@ extension Notification.Name {
     
     // MARK: - User Preferences
     static let cardLayoutChanged = Notification.Name("cardLayoutChanged")
+    static let tagSortOrderChanged = Notification.Name("tagSortOrderChanged")
 }

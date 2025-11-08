@@ -1,3 +1,7 @@
+// TODO: deprecated - This file is no longer used and can be removed
+// Replaced by CoreDataTagManagementView.swift which uses Core Data directly
+// instead of fetching labels via API
+
 import SwiftUI
 
 struct FlowLayout: Layout {
@@ -75,7 +79,7 @@ struct FocusModifier: ViewModifier {
     }
 }
 
-struct TagManagementView: View {
+struct LegacyTagManagementView: View {
     
     // MARK: - Properties
     
