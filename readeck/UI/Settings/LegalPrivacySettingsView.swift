@@ -3,10 +3,26 @@ import SwiftUI
 struct LegalPrivacySettingsView: View {
     @State private var showingPrivacyPolicy = false
     @State private var showingLegalNotice = false
+    @State private var showReleaseNotes = false
 
     var body: some View {
         Group {
             Section {
+                Button(action: {
+                    showReleaseNotes = true
+                }) {
+                    HStack {
+                        Text("What's New")
+                        Spacer()
+                        Text("Version \(VersionManager.shared.currentVersion)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
                 Button(action: {
                     showingPrivacyPolicy = true
                 }) {
@@ -30,11 +46,7 @@ struct LegalPrivacySettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-            } header: {
-                Text("Legal & Privacy")
-            }
 
-            Section {
                 Button(action: {
                     if let url = URL(string: "https://github.com/ilyas-hallak/readeck-ios/issues") {
                         UIApplication.shared.open(url)
@@ -63,7 +75,7 @@ struct LegalPrivacySettingsView: View {
                     }
                 }
             } header: {
-                Text("Support")
+                Text("Legal, Privacy & Support")
             }
         }
         .sheet(isPresented: $showingPrivacyPolicy) {
@@ -71,6 +83,9 @@ struct LegalPrivacySettingsView: View {
         }
         .sheet(isPresented: $showingLegalNotice) {
             LegalNoticeView()
+        }
+        .sheet(isPresented: $showReleaseNotes) {
+            ReleaseNotesView()
         }
     }
 }

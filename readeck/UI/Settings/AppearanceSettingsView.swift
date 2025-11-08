@@ -28,48 +28,17 @@ struct AppearanceSettingsView: View {
     var body: some View {
         Group {
             Section {
-                // Font Family
-                Picker("Font family", selection: $fontViewModel.selectedFontFamily) {
-                    ForEach(FontFamily.allCases, id: \.self) { family in
-                        Text(family.displayName).tag(family)
+                // Font Settings als NavigationLink
+                NavigationLink {
+                    FontSelectionView(viewModel: fontViewModel)
+                } label: {
+                    HStack {
+                        Text("Font")
+                        Spacer()
+                        Text("\(fontViewModel.selectedFontFamily.displayName) · \(fontViewModel.selectedFontSize.displayName)")
+                            .foregroundColor(.secondary)
                     }
                 }
-                .onChange(of: fontViewModel.selectedFontFamily) {
-                    Task {
-                        await fontViewModel.saveFontSettings()
-                    }
-                }
-
-                // Font Size
-                Picker("Font size", selection: $fontViewModel.selectedFontSize) {
-                    ForEach(FontSize.allCases, id: \.self) { size in
-                        Text(size.displayName).tag(size)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: fontViewModel.selectedFontSize) {
-                    Task {
-                        await fontViewModel.saveFontSettings()
-                    }
-                }
-
-                // Font Preview - direkt in der gleichen Section
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("readeck Bookmark Title")
-                        .font(fontViewModel.previewTitleFont)
-                        .fontWeight(.semibold)
-                        .lineLimit(1)
-
-                    Text("This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog.")
-                        .font(fontViewModel.previewBodyFont)
-                        .lineLimit(3)
-
-                    Text("12 min • Today • example.com")
-                        .font(fontViewModel.previewCaptionFont)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 4)
-                .listRowBackground(Color(.systemGray6))
 
                 // Theme Picker (Menu statt Segmented)
                 Picker("Theme", selection: $selectedTheme) {
@@ -97,30 +66,42 @@ struct AppearanceSettingsView: View {
                 }
 
                 // Open external links in
-                Picker("Open links in", selection: $generalViewModel.urlOpener) {
-                    ForEach(UrlOpener.allCases, id: \.self) { urlOpener in
-                        Text(urlOpener.displayName).tag(urlOpener)
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Open links in", selection: $generalViewModel.urlOpener) {
+                        ForEach(UrlOpener.allCases, id: \.self) { urlOpener in
+                            Text(urlOpener.displayName).tag(urlOpener)
+                        }
                     }
-                }
-                .onChange(of: generalViewModel.urlOpener) {
-                    Task {
-                        await generalViewModel.saveGeneralSettings()
+                    .onChange(of: generalViewModel.urlOpener) {
+                        Task {
+                            await generalViewModel.saveGeneralSettings()
+                        }
                     }
+
+                    Text("Choose where external links should open: In-App Browser keeps you in readeck, Default Browser opens in Safari or your default browser.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
                 }
 
                 // Tag Sort Order
-                Picker("Tag sort order", selection: $selectedTagSortOrder) {
-                    ForEach(TagSortOrder.allCases, id: \.self) { sortOrder in
-                        Text(sortOrder.displayName).tag(sortOrder)
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Tag sort order", selection: $selectedTagSortOrder) {
+                        ForEach(TagSortOrder.allCases, id: \.self) { sortOrder in
+                            Text(sortOrder.displayName).tag(sortOrder)
+                        }
                     }
-                }
-                .onChange(of: selectedTagSortOrder) {
-                    saveTagSortOrderSettings()
+                    .onChange(of: selectedTagSortOrder) {
+                        saveTagSortOrderSettings()
+                    }
+
+                    Text("Determines how tags are displayed when adding or editing bookmarks.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
                 }
             } header: {
                 Text("Appearance")
-            } footer: {
-                Text("Choose where external links should open: In-App Browser keeps you in readeck, Default Browser opens in Safari or your default browser.\n\nTag sort order determines how tags are displayed when adding or editing bookmarks.")
             }
         }
         .task {

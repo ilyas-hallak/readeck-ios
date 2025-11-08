@@ -19,9 +19,11 @@ struct SettingsContainerView: View {
         List {
             AppearanceSettingsView()
 
+            ReadingSettingsView()
+
             CacheSettingsView()
 
-            SettingsGeneralView()
+            SyncSettingsView()
 
             SettingsServerView()
 
@@ -80,39 +82,42 @@ struct SettingsContainerView: View {
     @ViewBuilder
     private var appInfoSection: some View {
         Section {
-            VStack(spacing: 8) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
                     Image(systemName: "info.circle")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     Text("Version \(appVersion)")
-                        .font(.footnote)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
 
                 HStack(spacing: 4) {
                     Image(systemName: "person.crop.circle")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     Text("Developer:")
-                        .font(.footnote)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     Button("Ilyas Hallak") {
                         if let url = URL(string: "https://ilyashallak.de") {
                             UIApplication.shared.open(url)
                         }
                     }
-                    .font(.footnote)
-                    .foregroundColor(.blue)
+                    .font(.caption)
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Image(systemName: "globe")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     Text("From Bremen with 💚")
-                        .font(.footnote)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .listRowBackground(Color.clear)
             .padding(.vertical, 8)
         }
     }

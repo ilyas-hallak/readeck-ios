@@ -23,6 +23,15 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Better performance when working with many labels
 - Improved overall app stability
 
+### Settings Redesign
+
+- **Completely redesigned settings screen** with native iOS style
+- Font settings moved to dedicated screen with larger preview
+- Reorganized sections for better overview
+- Inline explanations directly under settings
+- Cleaner app info footer with muted styling
+- Combined legal, privacy and support into one section
+
 ### Fixes & Improvements
 
 - Better color consistency throughout the app
