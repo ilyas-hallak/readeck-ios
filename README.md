@@ -21,7 +21,7 @@ For early access to new features and beta versions (use with caution). To partic
 
 What to test:
 - See the feature list below for an overview of what you can try out.
-- For details and recent changes, please refer to the release notes in TestFlight or the [Changelog](./CHANGELOG.md).
+- For details and recent changes, please refer to the release notes in TestFlight or the [Release Notes](./readeck/UI/Resources/RELEASE_NOTES.md).
 
 Please report any bugs, crashes, or suggestions directly through TestFlight, or email me at ilhallak@gmail.com. Thank you for helping make Readeck better!
 
@@ -84,7 +84,7 @@ The app includes a Share Extension that allows adding bookmarks directly from Sa
 
 ## Versions
 
-[see Changelog](./CHANGELOG.md)
+[see Release Notes](./readeck/UI/Resources/RELEASE_NOTES.md)
 
 
 ## Contributing
