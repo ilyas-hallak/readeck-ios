@@ -8,6 +8,7 @@ class AddBookmarkViewModel {
 
     private let createBookmarkUseCase = DefaultUseCaseFactory.shared.makeCreateBookmarkUseCase()
     private let getLabelsUseCase = DefaultUseCaseFactory.shared.makeGetLabelsUseCase()
+    private let createLabelUseCase = DefaultUseCaseFactory.shared.makeCreateLabelUseCase()
     private let syncTagsUseCase = DefaultUseCaseFactory.shared.makeSyncTagsUseCase()
     
     // MARK: - Form Data
@@ -87,17 +88,22 @@ class AddBookmarkViewModel {
     func addCustomTag() {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        
+
         let lowercased = trimmed.lowercased()
         let allExisting = Set(allLabels.map { $0.name.lowercased() })
         let allSelected = Set(selectedLabels.map { $0.lowercased() })
-        
+
         if allExisting.contains(lowercased) || allSelected.contains(lowercased) {
             // Tag already exists, don't add
             return
         } else {
             selectedLabels.insert(trimmed)
             searchText = ""
+
+            // Save new label to Core Data so it's available next time
+            Task {
+                try? await createLabelUseCase.execute(name: trimmed)
+            }
         }
     }
     

@@ -13,12 +13,16 @@ import SwiftUI
 class AppViewModel {
     private let settingsRepository = SettingsRepository()
     private let factory: UseCaseFactory
+    private let syncTagsUseCase: PSyncTagsUseCase
 
     var hasFinishedSetup: Bool = true
     var isServerReachable: Bool = false
 
+    private var lastAppStartTagSyncTime: Date?
+
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.factory = factory
+        self.syncTagsUseCase = factory.makeSyncTagsUseCase()
         setupNotificationObservers()
 
         loadSetupStatus()
@@ -65,10 +69,27 @@ class AppViewModel {
 
     func onAppResume() async {
         await checkServerReachability()
+        await syncTagsOnAppStart()
     }
 
     private func checkServerReachability() async {
         isServerReachable = await factory.makeCheckServerReachabilityUseCase().execute()
+    }
+
+    private func syncTagsOnAppStart() async {
+        let now = Date()
+
+        // Check if last sync was less than 2 minutes ago
+        if let lastSync = lastAppStartTagSyncTime,
+           now.timeIntervalSince(lastSync) < 120 {
+            print("AppViewModel: Skipping tag sync - last sync was less than 2 minutes ago")
+            return
+        }
+
+        // Sync tags from server to Core Data
+        print("AppViewModel: Syncing tags on app start")
+        try? await syncTagsUseCase.execute()
+        lastAppStartTagSyncTime = now
     }
 
     deinit {

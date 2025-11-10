@@ -89,4 +89,29 @@ class LabelsRepository: PLabelsRepository, @unchecked Sendable {
             }
         }
     }
+
+    func saveNewLabel(name: String) async throws {
+        let backgroundContext = coreDataManager.newBackgroundContext()
+
+        try await backgroundContext.perform {
+            let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedName.isEmpty else { return }
+
+            // Check if label already exists
+            let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "name == %@", trimmedName)
+            fetchRequest.fetchLimit = 1
+
+            let existingTags = try backgroundContext.fetch(fetchRequest)
+
+            // Only create if it doesn't exist
+            if existingTags.isEmpty {
+                let newTag = TagEntity(context: backgroundContext)
+                newTag.name = trimmedName
+                newTag.count = 1 // New label is being used immediately
+
+                try backgroundContext.save()
+            }
+        }
+    }
 }

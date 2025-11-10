@@ -190,6 +190,7 @@ struct AddBookmarkView: View {
                 searchFieldFocus: $focusedField,
                 fetchLimit: nil,
                 sortOrder: appSettings.tagSortOrder,
+                context: viewContext,
                 onAddCustomTag: {
                     viewModel.addCustomTag()
                 },

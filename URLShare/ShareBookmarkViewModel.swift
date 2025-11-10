@@ -16,6 +16,7 @@ class ShareBookmarkViewModel: ObservableObject {
 
     private let logger = Logger.viewModel
     private let serverCheck = ShareExtensionServerCheck.shared
+    private let tagRepository = TagRepository()
 
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
@@ -149,14 +150,37 @@ class ShareBookmarkViewModel: ObservableObject {
             }
         }
     }
-    
+
+    func addCustomTag(context: NSManagedObjectContext) {
+        let splitLabels = LabelUtils.splitLabelsFromInput(searchText)
+
+        // Fetch available labels from Core Data
+        let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+        let availableLabels = (try? context.fetch(fetchRequest))?.compactMap { $0.name } ?? []
+
+        let currentLabels = Array(selectedLabels)
+        let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels, availableLabels: availableLabels)
+
+        for label in uniqueLabels {
+            selectedLabels.insert(label)
+            // Save new label to Core Data so it's available next time
+            tagRepository.saveNewLabel(name: label, context: context)
+        }
+
+        // Force refresh of @FetchRequest in CoreDataTagManagementView
+        // This ensures newly created labels appear immediately in the search results
+        context.refreshAllObjects()
+
+        searchText = ""
+    }
+
     private func completeExtensionRequest() {
         logger.debug("Completing extension request")
         guard let context = extensionContext else {
             logger.warning("Extension context not available for completion")
             return
         }
-        
+
         context.completeRequest(returningItems: []) { [weak self] error in
             if error {
                 self?.logger.error("Extension completion failed: \(error)")
