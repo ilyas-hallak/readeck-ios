@@ -8,7 +8,8 @@ class BookmarkDetailViewModel {
     private let loadSettingsUseCase: PLoadSettingsUseCase
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
-    
+    private let api: PAPI
+
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
     var articleParagraphs: [String] = []
@@ -18,7 +19,9 @@ class BookmarkDetailViewModel {
     var errorMessage: String?
     var settings: Settings?
     var readProgress: Int = 0
-    
+    var selectedAnnotationId: String?
+    var hasAnnotations: Bool = false
+
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
     private let readProgressSubject = PassthroughSubject<(id: String, progress: Double, anchor: String?), Never>()
@@ -28,8 +31,9 @@ class BookmarkDetailViewModel {
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
+        self.api = API()
         self.factory = factory
-        
+
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
             .sink { [weak self] (id, progress, anchor) in
@@ -67,23 +71,26 @@ class BookmarkDetailViewModel {
     @MainActor
     func loadArticleContent(id: String) async {
         isLoadingArticle = true
-        
+
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
         } catch {
             errorMessage = "Error loading article"
         }
-        
+
         isLoadingArticle = false
     }
-    
+
     private func processArticleContent() {
         let paragraphs = articleContent
             .components(separatedBy: .newlines)
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        
+
         articleParagraphs = paragraphs
+
+        // Check if article contains annotations
+        hasAnnotations = articleContent.contains("<rd-annotation")
     }
     
     @MainActor
@@ -136,5 +143,23 @@ class BookmarkDetailViewModel {
     
     func debouncedUpdateReadProgress(id: String, progress: Double, anchor: String?) {
         readProgressSubject.send((id, progress, anchor))
+    }
+
+    @MainActor
+    func createAnnotation(bookmarkId: String, color: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async {
+        do {
+            let annotation = try await api.createAnnotation(
+                bookmarkId: bookmarkId,
+                color: color,
+                startOffset: startOffset,
+                endOffset: endOffset,
+                startSelector: startSelector,
+                endSelector: endSelector
+            )
+            print("✅ Annotation created: \(annotation.id)")
+        } catch {
+            print("❌ Failed to create annotation: \(error)")
+            errorMessage = "Error creating annotation"
+        }
     }
 }

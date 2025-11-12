@@ -11,34 +11,107 @@ class LabelsRepository: PLabelsRepository, @unchecked Sendable {
     }
     
     func getLabels() async throws -> [BookmarkLabel] {
-        let dtos = try await api.getBookmarkLabels()
-        try? await saveLabels(dtos)
-        return dtos.map { $0.toDomain() }
+        // First, load from Core Data (instant response)
+        let cachedLabels = try await loadLabelsFromCoreData()
+
+        // Then sync with API in background (don't wait)
+        Task.detached(priority: .background) { [weak self] in
+            guard let self = self else { return }
+            do {
+                let dtos = try await self.api.getBookmarkLabels()
+                try? await self.saveLabels(dtos)
+            } catch {
+                // Silent fail - we already have cached data
+            }
+        }
+
+        return cachedLabels
+    }
+
+    private func loadLabelsFromCoreData() async throws -> [BookmarkLabel] {
+        let backgroundContext = coreDataManager.newBackgroundContext()
+
+        return try await backgroundContext.perform {
+            let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+            fetchRequest.sortDescriptors = [
+                NSSortDescriptor(key: "count", ascending: false),
+                NSSortDescriptor(key: "name", ascending: true)
+            ]
+
+            let entities = try backgroundContext.fetch(fetchRequest)
+            return entities.compactMap { entity -> BookmarkLabel? in
+                guard let name = entity.name, !name.isEmpty else { return nil }
+                return BookmarkLabel(
+                    name: name,
+                    count: Int(entity.count),
+                    href: name
+                )
+            }
+        }
     }
     
     func saveLabels(_ dtos: [BookmarkLabelDto]) async throws {
         let backgroundContext = coreDataManager.newBackgroundContext()
-        
-        try await backgroundContext.perform { [weak self] in
-            guard let self = self else { return }
-            for dto in dtos {
-                if !self.tagExists(name: dto.name, in: backgroundContext) {
-                    dto.toEntity(context: backgroundContext)
+
+        try await backgroundContext.perform {
+            // Batch fetch all existing labels
+            let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+            fetchRequest.propertiesToFetch = ["name", "count"]
+
+            let existingEntities = try backgroundContext.fetch(fetchRequest)
+            var existingByName: [String: TagEntity] = [:]
+            for entity in existingEntities {
+                if let name = entity.name {
+                    existingByName[name] = entity
                 }
             }
-            try backgroundContext.save()
+
+            // Insert or update labels
+            var insertCount = 0
+            var updateCount = 0
+            for dto in dtos {
+                if let existing = existingByName[dto.name] {
+                    // Update count if changed
+                    if existing.count != dto.count {
+                        existing.count = Int32(dto.count)
+                        updateCount += 1
+                    }
+                } else {
+                    // Insert new label
+                    dto.toEntity(context: backgroundContext)
+                    insertCount += 1
+                }
+            }
+
+            // Only save if there are changes
+            if insertCount > 0 || updateCount > 0 {
+                try backgroundContext.save()
+            }
         }
     }
-    
-    private func tagExists(name: String, in context: NSManagedObjectContext) -> Bool {
-        let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "name == %@", name)
-        
-        do {
-            let count = try context.count(for: fetchRequest)
-            return count > 0
-        } catch {
-            return false
+
+    func saveNewLabel(name: String) async throws {
+        let backgroundContext = coreDataManager.newBackgroundContext()
+
+        try await backgroundContext.perform {
+            let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedName.isEmpty else { return }
+
+            // Check if label already exists
+            let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "name == %@", trimmedName)
+            fetchRequest.fetchLimit = 1
+
+            let existingTags = try backgroundContext.fetch(fetchRequest)
+
+            // Only create if it doesn't exist
+            if existingTags.isEmpty {
+                let newTag = TagEntity(context: backgroundContext)
+                newTag.name = trimmedName
+                newTag.count = 1 // New label is being used immediately
+
+                try backgroundContext.save()
+            }
         }
     }
 }

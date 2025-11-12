@@ -8,19 +8,24 @@
 import Foundation
 import SwiftUI
 
-class AppViewModel: ObservableObject {
+@MainActor
+@Observable
+class AppViewModel {
     private let settingsRepository = SettingsRepository()
-    private let logoutUseCase: LogoutUseCase
-    
-    @Published var hasFinishedSetup: Bool = true
-    
-    init(logoutUseCase: LogoutUseCase = LogoutUseCase()) {
-        self.logoutUseCase = logoutUseCase
+    private let factory: UseCaseFactory
+    private let syncTagsUseCase: PSyncTagsUseCase
+
+    var hasFinishedSetup: Bool = true
+    var isServerReachable: Bool = false
+
+    private var lastAppStartTagSyncTime: Date?
+
+    init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+        self.factory = factory
+        self.syncTagsUseCase = factory.makeSyncTagsUseCase()
         setupNotificationObservers()
-        
-        Task {
-            await loadSetupStatus()
-        }
+
+        loadSetupStatus()
     }
     
     private func setupNotificationObservers() {
@@ -29,7 +34,7 @@ class AppViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task {
+            Task { @MainActor in
                 await self?.handleUnauthorizedResponse()
             }
         }
@@ -39,19 +44,17 @@ class AppViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSetupStatus()
+            Task { @MainActor in
+                self?.loadSetupStatus()
+            }
         }
     }
     
-    @MainActor
     private func handleUnauthorizedResponse() async {
         print("AppViewModel: Handling 401 Unauthorized - logging out user")
         
         do {
-            // Führe den Logout durch
-            try await logoutUseCase.execute()
-            
-            // Update UI state
+            try await factory.makeLogoutUseCase().execute()
             loadSetupStatus()
             
             print("AppViewModel: User successfully logged out due to 401 error")
@@ -60,11 +63,35 @@ class AppViewModel: ObservableObject {
         }
     }
     
-    @MainActor
     private func loadSetupStatus() {
         hasFinishedSetup = settingsRepository.hasFinishedSetup
     }
-    
+
+    func onAppResume() async {
+        await checkServerReachability()
+        await syncTagsOnAppStart()
+    }
+
+    private func checkServerReachability() async {
+        isServerReachable = await factory.makeCheckServerReachabilityUseCase().execute()
+    }
+
+    private func syncTagsOnAppStart() async {
+        let now = Date()
+
+        // Check if last sync was less than 2 minutes ago
+        if let lastSync = lastAppStartTagSyncTime,
+           now.timeIntervalSince(lastSync) < 120 {
+            print("AppViewModel: Skipping tag sync - last sync was less than 2 minutes ago")
+            return
+        }
+
+        // Sync tags from server to Core Data
+        print("AppViewModel: Syncing tags on app start")
+        try? await syncTagsUseCase.execute()
+        lastAppStartTagSyncTime = now
+    }
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }

@@ -9,6 +9,10 @@ import Foundation
 import Combine
 
 class MockUseCaseFactory: UseCaseFactory {
+    func makeCheckServerReachabilityUseCase() -> any PCheckServerReachabilityUseCase {
+        MockCheckServerReachabilityUseCase()
+    }
+    
     func makeOfflineBookmarkSyncUseCase() -> any POfflineBookmarkSyncUseCase {
         MockOfflineBookmarkSyncUseCase()
     }
@@ -72,7 +76,15 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeGetLabelsUseCase() -> any PGetLabelsUseCase {
         MockGetLabelsUseCase()
     }
-    
+
+    func makeCreateLabelUseCase() -> any PCreateLabelUseCase {
+        MockCreateLabelUseCase()
+    }
+
+    func makeSyncTagsUseCase() -> any PSyncTagsUseCase {
+        MockSyncTagsUseCase()
+    }
+
     func makeAddTextToSpeechQueueUseCase() -> any PAddTextToSpeechQueueUseCase {
         MockAddTextToSpeechQueueUseCase()
     }
@@ -83,6 +95,14 @@ class MockUseCaseFactory: UseCaseFactory {
     
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase {
         MockSaveCardLayoutUseCase()
+    }
+
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
+        MockGetBookmarkAnnotationsUseCase()
+    }
+
+    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
+        MockDeleteAnnotationUseCase()
     }
 }
     
@@ -110,6 +130,18 @@ class MockCreateBookmarkUseCase: PCreateBookmarkUseCase {
 class MockGetLabelsUseCase: PGetLabelsUseCase {
     func execute() async throws -> [BookmarkLabel] {
         [BookmarkLabel(name: "Test", count: 1, href: "mock-href")]
+    }
+}
+
+class MockCreateLabelUseCase: PCreateLabelUseCase {
+    func execute(name: String) async throws {
+        // Mock implementation - does nothing
+    }
+}
+
+class MockSyncTagsUseCase: PSyncTagsUseCase {
+    func execute() async throws {
+        // Mock implementation - does nothing
     }
 }
 
@@ -220,6 +252,30 @@ class MockLoadCardLayoutUseCase: PLoadCardLayoutUseCase {
 
 class MockSaveCardLayoutUseCase: PSaveCardLayoutUseCase {
     func execute(layout: CardLayoutStyle) async {
+        // Mock implementation - do nothing
+    }
+}
+
+class MockCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
+    func execute() async -> Bool {
+        return true
+    }
+
+    func getServerInfo() async throws -> ServerInfo {
+        return ServerInfo(version: "1.0.0", buildDate: nil, userAgent: nil, isReachable: true)
+    }
+}
+
+class MockGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
+    func execute(bookmarkId: String) async throws -> [Annotation] {
+        return [
+            .init(id: "1", text: "bla", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
+        ]
+    }
+}
+
+class MockDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
+    func execute(bookmarkId: String, annotationId: String) async throws {
         // Mock implementation - do nothing
     }
 }

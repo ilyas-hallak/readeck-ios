@@ -16,10 +16,15 @@ protocol UseCaseFactory {
     func makeAddLabelsToBookmarkUseCase() -> PAddLabelsToBookmarkUseCase
     func makeRemoveLabelsFromBookmarkUseCase() -> PRemoveLabelsFromBookmarkUseCase
     func makeGetLabelsUseCase() -> PGetLabelsUseCase
+    func makeCreateLabelUseCase() -> PCreateLabelUseCase
+    func makeSyncTagsUseCase() -> PSyncTagsUseCase
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase
+    func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase
+    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase
 }
 
 
@@ -30,9 +35,12 @@ class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     private let settingsRepository: PSettingsRepository = SettingsRepository()
-    
+    private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
+    private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
+    private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
+
     static let shared = DefaultUseCaseFactory()
-    
+
     private init() {}
     
     func makeLoginUseCase() -> PLoginUseCase {
@@ -96,7 +104,19 @@ class DefaultUseCaseFactory: UseCaseFactory {
         let labelsRepository = LabelsRepository(api: api)
         return GetLabelsUseCase(labelsRepository: labelsRepository)
     }
-    
+
+    func makeCreateLabelUseCase() -> PCreateLabelUseCase {
+        let api = API(tokenProvider: KeychainTokenProvider())
+        let labelsRepository = LabelsRepository(api: api)
+        return CreateLabelUseCase(labelsRepository: labelsRepository)
+    }
+
+    func makeSyncTagsUseCase() -> PSyncTagsUseCase {
+        let api = API(tokenProvider: KeychainTokenProvider())
+        let labelsRepository = LabelsRepository(api: api)
+        return SyncTagsUseCase(labelsRepository: labelsRepository)
+    }
+
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase {
         return AddTextToSpeechQueueUseCase()
     }
@@ -111,5 +131,17 @@ class DefaultUseCaseFactory: UseCaseFactory {
     
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase {
         return SaveCardLayoutUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase {
+        return CheckServerReachabilityUseCase(repository: serverInfoRepository)
+    }
+
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
+        return GetBookmarkAnnotationsUseCase(repository: annotationsRepository)
+    }
+
+    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
+        return DeleteAnnotationUseCase(repository: annotationsRepository)
     }
 }

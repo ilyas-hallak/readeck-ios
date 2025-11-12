@@ -254,7 +254,7 @@ struct BookmarkCardView: View {
                         }
                     }
                     HStack {
-                        Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Site") + " open", systemImage: "safari")
+                        Label(URLUtil.openUrlLabel(for: bookmark.url), systemImage: "safari")
                             .onTapGesture {
                                 URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
                             }
@@ -335,7 +335,7 @@ struct BookmarkCardView: View {
                         }
                     }
                     HStack {
-                        Label((URLUtil.extractDomain(from: bookmark.url) ?? "Original Site") + " open", systemImage: "safari")
+                        Label(URLUtil.openUrlLabel(for: bookmark.url), systemImage: "safari")
                             .onTapGesture {
                                 URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
                             }

@@ -8,141 +8,122 @@
 import SwiftUI
 
 struct SettingsContainerView: View {
-    
+
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
         return "v\(version) (\(build))"
     }
-    
+
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 20) {
-                FontSettingsView()
-                    .cardStyle()
-                
-                AppearanceSettingsView()
-                    .cardStyle()
-                
-                CacheSettingsView()
-                    .cardStyle()
-                
-                SettingsGeneralView()
-                    .cardStyle()
-                
-                SettingsServerView()
-                    .cardStyle()
-                
-                LegalPrivacySettingsView()
-                    .cardStyle()
-                
-                // Debug-only Logging Configuration
-                if Bundle.main.isDebugBuild {
-                    debugSettingsSection
-                }
+        List {
+            AppearanceSettingsView()
+
+            ReadingSettingsView()
+
+            CacheSettingsView()
+
+            SyncSettingsView()
+
+            SettingsServerView()
+
+            LegalPrivacySettingsView()
+
+            // Debug-only Logging Configuration
+            #if DEBUG
+            if Bundle.main.isDebugBuild {
+                debugSettingsSection
             }
-            .padding()
-            .background(Color(.systemGroupedBackground))
-            
-            AppInfo()
-            
-            Spacer()
+            #endif
+
+            // App Info Section
+            appInfoSection
         }
-        .background(Color(.systemGroupedBackground))
+        .listStyle(.insetGrouped)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
     }
-    
+
     @ViewBuilder
     private var debugSettingsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        Section {
+            SettingsRowNavigationLink(
+                icon: "list.bullet.rectangle",
+                iconColor: .blue,
+                title: "Debug Logs",
+                subtitle: "View all debug messages"
+            ) {
+                DebugLogViewer()
+            }
+
+            SettingsRowNavigationLink(
+                icon: "slider.horizontal.3",
+                iconColor: .purple,
+                title: "Logging Configuration",
+                subtitle: "Configure log levels and categories"
+            ) {
+                LoggingConfigurationView()
+            }
+        } header: {
             HStack {
-                Image(systemName: "ant.fill")
-                    .foregroundColor(.orange)
                 Text("Debug Settings")
-                    .font(.headline)
-                    .foregroundColor(.primary)
                 Spacer()
                 Text("DEBUG BUILD")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
                     .background(Color.orange.opacity(0.2))
                     .foregroundColor(.orange)
                     .clipShape(Capsule())
             }
-            
-            NavigationLink {
-                LoggingConfigurationView()
-            } label: {
-                HStack {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .foregroundColor(.blue)
-                        .frame(width: 24)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Logging Configuration")
-                            .foregroundColor(.primary)
-                        Text("Configure log levels and categories")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
+        }
+    }
+
+    @ViewBuilder
+    private var appInfoSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("Version \(appVersion)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-            }
-        }
-        .cardStyle()
-    }
-    
-    @ViewBuilder
-    func AppInfo() -> some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "info.circle")
-                    .foregroundColor(.secondary)
-                Text("Version \(appVersion)")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
-            HStack(spacing: 8) {
-                Image(systemName: "person.crop.circle")
-                    .foregroundColor(.secondary)
+
                 HStack(spacing: 4) {
+                    Image(systemName: "person.crop.circle")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     Text("Developer:")
-                        .font(.footnote)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                     Button("Ilyas Hallak") {
                         if let url = URL(string: "https://ilyashallak.de") {
                             UIApplication.shared.open(url)
                         }
                     }
-                    .font(.footnote)
-                    .foregroundColor(.blue)
-                    .underline()
+                    .font(.caption)
+                }
+
+                HStack(spacing: 6) {
+                    Image(systemName: "globe")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("From Bremen with 💚")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
-            HStack(spacing: 8) {
-                Image(systemName: "globe")
-                    .foregroundColor(.secondary)
-                Text("From Bremen with 💚")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .listRowBackground(Color.clear)
+            .padding(.vertical, 8)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 16)
-        .padding(.bottom, 4)
-        .multilineTextAlignment(.center)
-        .opacity(0.7)
     }
 }
 
-// Card Modifier für einheitlichen Look
+// Card Modifier für einheitlichen Look (kept for backwards compatibility with other views)
 extension View {
     func cardStyle() -> some View {
         self
@@ -154,5 +135,7 @@ extension View {
 }
 
 #Preview {
-    SettingsContainerView()
-} 
+    NavigationStack {
+        SettingsContainerView()
+    }
+}

@@ -13,7 +13,7 @@ struct PadSidebarView: View {
     @State private var selectedTag: BookmarkLabel?
     @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
-    @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
+    @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
     
@@ -87,11 +87,11 @@ struct PadSidebarView: View {
                     case .all:
                         BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .unread:
-                        BookmarksView(state: .unread, type: [.article], selectedBookmark: $selectedBookmark)
+                        BookmarksView(state: .unread, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .favorite:
-                        BookmarksView(state: .favorite, type: [.article], selectedBookmark: $selectedBookmark)
+                        BookmarksView(state: .favorite, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .archived:
-                        BookmarksView(state: .archived, type: [.article], selectedBookmark: $selectedBookmark)
+                        BookmarksView(state: .archived, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .settings:
                         SettingsView()
                     case .article:

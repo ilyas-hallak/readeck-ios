@@ -12,7 +12,7 @@ struct PhoneTabView: View {
     private let moreTabs: [SidebarTab] = [.article, .videos, .pictures, .tags, .settings]
 
     @State private var selectedTab: SidebarTab = .unread
-    @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel(syncUseCase: DefaultUseCaseFactory.shared.makeOfflineBookmarkSyncUseCase())
+    @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
 
     // Navigation paths for each tab
     @State private var allPath = NavigationPath()
@@ -149,11 +149,11 @@ struct PhoneTabView: View {
                 .padding()
         } else if let bookmarks = searchViewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
             List(bookmarks) { bookmark in
-                // Hidden NavigationLink to remove disclosure indicator
-                // To restore: uncomment block below and remove ZStack
                 ZStack {
+                    
+                    // Hidden NavigationLink to remove disclosure indicator
                     NavigationLink {
-                        BookmarkDetailView(bookmarkId: bookmark.id)                            
+                        BookmarkDetailView(bookmarkId: bookmark.id)
                     } label: {
                         EmptyView()
                     }
@@ -234,11 +234,11 @@ struct PhoneTabView: View {
         case .all:
             BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .unread:
-            BookmarksView(state: .unread, type: [.article], selectedBookmark: .constant(nil))
+            BookmarksView(state: .unread, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .favorite:
-            BookmarksView(state: .favorite, type: [.article], selectedBookmark: .constant(nil))
+            BookmarksView(state: .favorite, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .archived:
-            BookmarksView(state: .archived, type: [.article], selectedBookmark: .constant(nil))
+            BookmarksView(state: .archived, type: [.article, .video, .photo], selectedBookmark: .constant(nil))
         case .search:
             EmptyView() // search is directly implemented
         case .settings:

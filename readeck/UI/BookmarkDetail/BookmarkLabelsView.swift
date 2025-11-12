@@ -4,6 +4,8 @@ struct BookmarkLabelsView: View {
     let bookmarkId: String
     @State private var viewModel: BookmarkLabelsViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var appSettings: AppSettings
     
     init(bookmarkId: String, initialLabels: [String], viewModel: BookmarkLabelsViewModel? = nil) {
         self.bookmarkId = bookmarkId
@@ -40,12 +42,14 @@ struct BookmarkLabelsView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
-            .task {
-                await viewModel.loadAllLabels()
-            }
             .ignoresSafeArea(.keyboard)
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+            .onAppear {
+                Task {
+                    await viewModel.syncTags()
+                }
             }
         }
     }
@@ -56,29 +60,36 @@ struct BookmarkLabelsView: View {
     
     @ViewBuilder
     private var availableLabelsSection: some View {
-        TagManagementView(
-            allLabels: viewModel.allLabels,
-            selectedLabels: Set(viewModel.currentLabels),
-            searchText: $viewModel.searchText,
-            isLabelsLoading: viewModel.isInitialLoading,
-            filteredLabels: viewModel.filteredLabels,
-            onAddCustomTag: {
-                Task {
-                    await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(appSettings.tagSortOrder == .byCount ? "Sorted by usage count".localized : "Sorted alphabetically".localized)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+
+            CoreDataTagManagementView(
+                selectedLabels: Set(viewModel.currentLabels),
+                searchText: $viewModel.searchText,
+                fetchLimit: nil,
+                sortOrder: appSettings.tagSortOrder,
+                context: viewContext,
+                onAddCustomTag: {
+                    Task {
+                        await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)
+                    }
+                },
+                onToggleLabel: { label in
+                    Task {
+                        await viewModel.toggleLabel(for: bookmarkId, label: label)
+                    }
+                },
+                onRemoveLabel: { label in
+                    Task {
+                        await viewModel.removeLabel(from: bookmarkId, label: label)
+                    }
                 }
-            },
-            onToggleLabel: { label in
-                Task {
-                    await viewModel.toggleLabel(for: bookmarkId, label: label)
-                }
-            },
-            onRemoveLabel: { label in
-                Task {
-                    await viewModel.removeLabel(from: bookmarkId, label: label)
-                }
-            }
-        )
-        .padding(.horizontal)
+            )
+            .padding(.horizontal)
+        }
     }
 }
 

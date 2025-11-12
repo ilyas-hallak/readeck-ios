@@ -10,8 +10,9 @@ import netfox
 
 @main
 struct readeckApp: App {
-    @StateObject private var appViewModel = AppViewModel()
+    @State private var appViewModel = AppViewModel()
     @StateObject private var appSettings = AppSettings()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -19,18 +20,17 @@ struct readeckApp: App {
                 if appViewModel.hasFinishedSetup {
                     MainTabView()
                 } else {
-                    SettingsServerView()
+                    OnboardingServerView()
                         .padding()
                 }
             }
             .environmentObject(appSettings)
+            .environment(\.managedObjectContext, CoreDataManager.shared.context)
             .preferredColorScheme(appSettings.theme.colorScheme)
             .onAppear {
                 #if DEBUG
                 NFX.sharedInstance().start()
                 #endif
-                // Initialize server connectivity monitoring
-                _ = ServerConnectivity.shared
                 Task {
                     await loadAppSettings()
                 }
@@ -38,6 +38,13 @@ struct readeckApp: App {
             .onReceive(NotificationCenter.default.publisher(for: .settingsChanged)) { _ in
                 Task {
                     await loadAppSettings()
+                }
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .active {
+                    Task {
+                        await appViewModel.onAppResume()
+                    }
                 }
             }
         }

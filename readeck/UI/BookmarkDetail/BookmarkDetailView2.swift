@@ -14,6 +14,7 @@ struct BookmarkDetailView2: View {
     @State private var initialContentEndPosition: CGFloat = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
+    @State private var showingAnnotationsSheet = false
     @State private var readingProgress: Double = 0.0
     @State private var lastSentProgress: Double = 0.0
     @State private var showJumpToProgressButton: Bool = false
@@ -50,6 +51,11 @@ struct BookmarkDetailView2: View {
             .sheet(isPresented: $showingLabelsSheet) {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
+            .sheet(isPresented: $showingAnnotationsSheet) {
+                AnnotationsListView(bookmarkId: bookmarkId) { annotationId in
+                    viewModel.selectedAnnotationId = annotationId
+                }
+            }
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
             }
@@ -67,8 +73,18 @@ struct BookmarkDetailView2: View {
                     }
                 }
             }
+            .onChange(of: showingAnnotationsSheet) { _, isShowing in
+                if !isShowing {
+                    Task {
+                        await viewModel.refreshBookmarkDetail(id: bookmarkId)
+                    }
+                }
+            }
             .onChange(of: viewModel.readProgress) { _, progress in
                 showJumpToProgressButton = progress > 0 && progress < 100
+            }
+            .onChange(of: viewModel.selectedAnnotationId) { _, _ in
+                // Trigger WebView reload when annotation is selected
             }
             .task {
                 await viewModel.loadBookmarkDetail(id: bookmarkId)
@@ -254,6 +270,14 @@ struct BookmarkDetailView2: View {
                     Image(systemName: "tag")
                 }
 
+                if viewModel.hasAnnotations {
+                    Button(action: {
+                        showingAnnotationsSheet = true
+                    }) {
+                        Image(systemName: "pencil.line")
+                    }
+                }
+
                 Button(action: {
                     showingFontSettings = true
                 }) {
@@ -387,7 +411,7 @@ struct BookmarkDetailView2: View {
                 Button(action: {
                     URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
                 }) {
-                    Text((URLUtil.extractDomain(from: viewModel.bookmarkDetail.url) ?? "Open original page") + " open")
+                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -437,6 +461,30 @@ struct BookmarkDetailView2: View {
                         if webViewHeight != height {
                             webViewHeight = height
                         }
+                    },
+                    selectedAnnotationId: viewModel.selectedAnnotationId,
+                    onAnnotationCreated: { color, text, startOffset, endOffset, startSelector, endSelector in
+                        Task {
+                            await viewModel.createAnnotation(
+                                bookmarkId: bookmarkId,
+                                color: color,
+                                text: text,
+                                startOffset: startOffset,
+                                endOffset: endOffset,
+                                startSelector: startSelector,
+                                endSelector: endSelector
+                            )
+                        }
+                    },
+                    onScrollToPosition: { position in
+                        // Calculate scroll position: add header height and webview offset
+                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                        let targetPosition = imageHeight + position
+
+                        // Scroll to the annotation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            scrollPosition = ScrollPosition(y: targetPosition)
+                        }
                     }
                 )
                 .frame(height: webViewHeight)
@@ -453,7 +501,7 @@ struct BookmarkDetailView2: View {
             }) {
                 HStack {
                     Image(systemName: "safari")
-                    Text((URLUtil.extractDomain(from: "open " + viewModel.bookmarkDetail.url) ?? "Open original page"))
+                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
                 }
                 .font(.title3.bold())
                 .frame(maxWidth: .infinity)

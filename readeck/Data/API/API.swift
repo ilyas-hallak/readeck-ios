@@ -18,6 +18,9 @@ protocol PAPI {
     func deleteBookmark(id: String) async throws
     func searchBookmarks(search: String) async throws -> BookmarksPageDto
     func getBookmarkLabels() async throws -> [BookmarkLabelDto]
+    func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto]
+    func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> AnnotationDto
+    func deleteAnnotation(bookmarkId: String, annotationId: String) async throws
 }
 
 class API: PAPI {
@@ -435,14 +438,92 @@ class API: PAPI {
         logger.debug("Fetching bookmark labels")
         let endpoint = "/api/bookmarks/labels"
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
-        
+
         let result = try await makeJSONRequest(
             endpoint: endpoint,
             responseType: [BookmarkLabelDto].self
         )
-        
+
         logger.info("Successfully fetched \(result.count) bookmark labels")
         return result
+    }
+
+    func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto] {
+        logger.debug("Fetching annotations for bookmark: \(bookmarkId)")
+        let endpoint = "/api/bookmarks/\(bookmarkId)/annotations"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
+            responseType: [AnnotationDto].self
+        )
+
+        logger.info("Successfully fetched \(result.count) annotations for bookmark: \(bookmarkId)")
+        return result
+    }
+
+    func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> AnnotationDto {
+        logger.debug("Creating annotation for bookmark: \(bookmarkId)")
+        let endpoint = "/api/bookmarks/\(bookmarkId)/annotations"
+        logger.logNetworkRequest(method: "POST", url: await self.baseURL + endpoint)
+
+        let bodyDict: [String: Any] = [
+            "color": color,
+            "start_offset": startOffset,
+            "end_offset": endOffset,
+            "start_selector": startSelector,
+            "end_selector": endSelector
+        ]
+
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
+
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
+            method: .POST,
+            body: bodyData,
+            responseType: AnnotationDto.self
+        )
+
+        logger.info("Successfully created annotation for bookmark: \(bookmarkId)")
+        return result
+    }
+
+    func deleteAnnotation(bookmarkId: String, annotationId: String) async throws {
+        logger.info("Deleting annotation: \(annotationId) from bookmark: \(bookmarkId)")
+
+        let baseURL = await self.baseURL
+        let fullEndpoint = "/api/bookmarks/\(bookmarkId)/annotations/\(annotationId)"
+
+        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
+            logger.error("Invalid URL: \(baseURL)\(fullEndpoint)")
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        if let token = await tokenProvider.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for DELETE \(url.absoluteString)")
+            throw APIError.invalidResponse
+        }
+
+        guard 200...299 ~= httpResponse.statusCode else {
+            handleUnauthorizedResponse(httpResponse.statusCode)
+            logger.logNetworkError(method: "DELETE", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+
+        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.info("Successfully deleted annotation: \(annotationId)")
     }
 }
 

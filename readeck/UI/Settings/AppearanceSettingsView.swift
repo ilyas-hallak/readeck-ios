@@ -3,88 +3,141 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @State private var selectedCardLayout: CardLayoutStyle = .magazine
     @State private var selectedTheme: Theme = .system
-    
+    @State private var selectedTagSortOrder: TagSortOrder = .byCount
+    @State private var fontViewModel: FontSettingsViewModel
+    @State private var generalViewModel: SettingsGeneralViewModel
+
+    @EnvironmentObject private var appSettings: AppSettings
+
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let saveCardLayoutUseCase: PSaveCardLayoutUseCase
     private let settingsRepository: PSettingsRepository
-    
-    init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+
+    init(
+        factory: UseCaseFactory = DefaultUseCaseFactory.shared,
+        fontViewModel: FontSettingsViewModel = FontSettingsViewModel(),
+        generalViewModel: SettingsGeneralViewModel = SettingsGeneralViewModel()
+    ) {
         self.loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
         self.saveCardLayoutUseCase = factory.makeSaveCardLayoutUseCase()
         self.settingsRepository = SettingsRepository()
+        self.fontViewModel = fontViewModel
+        self.generalViewModel = generalViewModel
     }
-    
+
     var body: some View {
-        VStack(spacing: 20) {
-            SectionHeader(title: "Appearance".localized, icon: "paintbrush")
-                .padding(.bottom, 4)
-            
-            // Theme Section
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Theme")
-                    .font(.headline)
+        Group {
+            Section {
+                // Font Settings als NavigationLink
+                NavigationLink {
+                    FontSelectionView(viewModel: fontViewModel)
+                } label: {
+                    HStack {
+                        Text("Font")
+                        Spacer()
+                        Text("\(fontViewModel.selectedFontFamily.displayName) · \(fontViewModel.selectedFontSize.displayName)")
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                // Theme Picker (Menu statt Segmented)
                 Picker("Theme", selection: $selectedTheme) {
                     ForEach(Theme.allCases, id: \.self) { theme in
                         Text(theme.displayName).tag(theme)
                     }
                 }
-                .pickerStyle(.segmented)
                 .onChange(of: selectedTheme) {
                     saveThemeSettings()
                 }
-            }
-            
-            Divider()
-            
-            // Card Layout Section
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Card Layout")
-                    .font(.headline)
-                
-                VStack(spacing: 16) {
-                    ForEach(CardLayoutStyle.allCases, id: \.self) { layout in
-                        CardLayoutPreview(
-                            layout: layout,
-                            isSelected: selectedCardLayout == layout
-                        ) {
-                            selectedCardLayout = layout
-                            saveCardLayoutSettings()
-                        }
+
+                // Card Layout als NavigationLink
+                NavigationLink {
+                    CardLayoutSelectionView(
+                        selectedCardLayout: $selectedCardLayout,
+                        onSave: saveCardLayoutSettings
+                    )
+                } label: {
+                    HStack {
+                        Text("Card Layout")
+                        Spacer()
+                        Text(selectedCardLayout.displayName)
+                            .foregroundColor(.secondary)
                     }
                 }
+
+                // Open external links in
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Open links in", selection: $generalViewModel.urlOpener) {
+                        ForEach(UrlOpener.allCases, id: \.self) { urlOpener in
+                            Text(urlOpener.displayName).tag(urlOpener)
+                        }
+                    }
+                    .onChange(of: generalViewModel.urlOpener) {
+                        Task {
+                            await generalViewModel.saveGeneralSettings()
+                        }
+                    }
+
+                    Text("Choose where external links should open: In-App Browser keeps you in readeck, Default Browser opens in Safari or your default browser.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
+
+                // Tag Sort Order
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Tag sort order", selection: $selectedTagSortOrder) {
+                        ForEach(TagSortOrder.allCases, id: \.self) { sortOrder in
+                            Text(sortOrder.displayName).tag(sortOrder)
+                        }
+                    }
+                    .onChange(of: selectedTagSortOrder) {
+                        saveTagSortOrderSettings()
+                    }
+
+                    Text("Determines how tags are displayed when adding or editing bookmarks.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
+            } header: {
+                Text("Appearance")
             }
         }
-        .onAppear {
+        .task {
+            await fontViewModel.loadFontSettings()
+            await generalViewModel.loadGeneralSettings()
             loadSettings()
         }
     }
-    
+
     private func loadSettings() {
         Task {
-            // Load both theme and card layout from repository
+            // Load theme, card layout, and tag sort order from repository
             if let settings = try? await settingsRepository.loadSettings() {
                 await MainActor.run {
                     selectedTheme = settings.theme ?? .system
+                    selectedTagSortOrder = settings.tagSortOrder ?? .byCount
                 }
             }
             selectedCardLayout = await loadCardLayoutUseCase.execute()
         }
     }
-    
+
     private func saveThemeSettings() {
         Task {
             // Load current settings, update theme, and save back
             var settings = (try? await settingsRepository.loadSettings()) ?? Settings()
             settings.theme = selectedTheme
             try? await settingsRepository.saveSettings(settings)
-            
+
             // Notify app about theme change
             await MainActor.run {
                 NotificationCenter.default.post(name: .settingsChanged, object: nil)
             }
         }
     }
-    
+
     private func saveCardLayoutSettings() {
         Task {
             await saveCardLayoutUseCase.execute(layout: selectedCardLayout)
@@ -94,141 +147,27 @@ struct AppearanceSettingsView: View {
             }
         }
     }
-}
 
+    private func saveTagSortOrderSettings() {
+        Task {
+            var settings = (try? await settingsRepository.loadSettings()) ?? Settings()
+            settings.tagSortOrder = selectedTagSortOrder
+            try? await settingsRepository.saveSettings(settings)
 
-struct CardLayoutPreview: View {
-    let layout: CardLayoutStyle
-    let isSelected: Bool
-    let onSelect: () -> Void
-    
-    var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 12) {
-                // Visual Preview
-                switch layout {
-                case .compact:
-                    // Compact: Small image on left, content on right
-                    HStack(spacing: 8) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.blue.opacity(0.6))
-                            .frame(width: 24, height: 24)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.8))
-                                .frame(height: 6)
-                                .frame(maxWidth: .infinity)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.6))
-                                .frame(height: 4)
-                                .frame(maxWidth: 60)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.4))
-                                .frame(height: 4)
-                                .frame(maxWidth: 40)
-                        }
-                    }
-                    .padding(8)
-                    .background(Color.gray.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .frame(width: 80, height: 50)
-                
-                case .magazine:
-                    VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.blue.opacity(0.6))
-                            .frame(height: 24)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.8))
-                                .frame(height: 5)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.6))
-                                .frame(height: 4)
-                                .frame(maxWidth: 40)
-                            
-                            Text("Fixed 140px")
-                                .font(.system(size: 7))
-                                .foregroundColor(.secondary)
-                                .padding(.top, 1)
-                        }
-                        .padding(.horizontal, 4)
-                    }
-                    .padding(6)
-                    .background(Color.gray.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .frame(width: 80, height: 65)
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                
-                case .natural:
-                    VStack(spacing: 3) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.blue.opacity(0.6))
-                            .frame(height: 38)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.8))
-                                .frame(height: 5)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.primary.opacity(0.6))
-                                .frame(height: 4)
-                                .frame(maxWidth: 35)
-                            
-                            Text("Original ratio")
-                                .font(.system(size: 7))
-                                .foregroundColor(.secondary)
-                                .padding(.top, 1)
-                        }
-                        .padding(.horizontal, 4)
-                    }
-                    .padding(6)
-                    .background(Color.gray.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .frame(width: 80, height: 75) // Höher als Magazine
-                    .shadow(color: .black.opacity(0.06), radius: 2, x: 0, y: 1)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(layout.displayName)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                    
-                    Text(layout.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.leading)
-                }
-                
-                Spacer()
-                
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
-                        .font(.title2)
-                }
+            // Update AppSettings to trigger UI updates
+            await MainActor.run {
+                appSettings.settings?.tagSortOrder = selectedTagSortOrder
+                NotificationCenter.default.post(name: .settingsChanged, object: nil)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
         }
-        .buttonStyle(.plain)
     }
 }
 
-
 #Preview {
-    AppearanceSettingsView()
-        .cardStyle()
-        .padding()
+    NavigationStack {
+        List {
+            AppearanceSettingsView()
+        }
+        .listStyle(.insetGrouped)
+    }
 }

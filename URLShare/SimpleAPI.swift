@@ -2,7 +2,40 @@ import Foundation
 
 class SimpleAPI {
     private static let logger = Logger.network
-    
+
+    // MARK: - Server Info
+
+    static func checkServerReachability() async -> Bool {
+        guard let endpoint = KeychainHelper.shared.loadEndpoint(),
+              !endpoint.isEmpty,
+              let url = URL(string: "\(endpoint)/api/info") else {
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "accept")
+        request.timeoutInterval = 5.0
+
+        if let token = KeychainHelper.shared.loadToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
+        }
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse,
+               200...299 ~= httpResponse.statusCode {
+                logger.info("Server is reachable")
+                return true
+            }
+        } catch {
+            logger.error("Server reachability check failed: \(error.localizedDescription)")
+            return false
+        }
+
+        return false
+    }
+
     // MARK: - API Methods
     static func addBookmark(title: String, url: String, labels: [String]? = nil, showStatus: @escaping (String, Bool) -> Void) async {
         logger.info("Adding bookmark: \(url)")
