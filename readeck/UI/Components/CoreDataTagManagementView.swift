@@ -9,7 +9,8 @@ struct CoreDataTagManagementView: View {
     let searchText: Binding<String>
     let searchFieldFocus: FocusState<AddBookmarkFieldFocus?>.Binding?
     let sortOrder: TagSortOrder
-    let availableTagsTitle: String?
+    let availableLabelsTitle: String?
+    let context: NSManagedObjectContext
 
     // MARK: - Callbacks
 
@@ -22,6 +23,11 @@ struct CoreDataTagManagementView: View {
     @FetchRequest
     private var tagEntities: FetchedResults<TagEntity>
 
+    // MARK: - Search State
+
+    @State private var searchResults: [TagEntity] = []
+    @State private var isSearchActive: Bool = false
+
     // MARK: - Initialization
 
     init(
@@ -30,7 +36,8 @@ struct CoreDataTagManagementView: View {
         searchFieldFocus: FocusState<AddBookmarkFieldFocus?>.Binding? = nil,
         fetchLimit: Int? = nil,
         sortOrder: TagSortOrder = .byCount,
-        availableTagsTitle: String? = nil,
+        availableLabelsTitle: String? = nil,
+        context: NSManagedObjectContext,
         onAddCustomTag: @escaping () -> Void,
         onToggleLabel: @escaping (String) -> Void,
         onRemoveLabel: @escaping (String) -> Void
@@ -39,7 +46,8 @@ struct CoreDataTagManagementView: View {
         self.searchText = searchText
         self.searchFieldFocus = searchFieldFocus
         self.sortOrder = sortOrder
-        self.availableTagsTitle = availableTagsTitle
+        self.availableLabelsTitle = availableLabelsTitle
+        self.context = context
         self.onAddCustomTag = onAddCustomTag
         self.onToggleLabel = onToggleLabel
         self.onRemoveLabel = onRemoveLabel
@@ -79,13 +87,16 @@ struct CoreDataTagManagementView: View {
             availableLabels
             selectedLabels
         }
+        .onChange(of: searchText.wrappedValue) { oldValue, newValue in
+            performSearch(query: newValue)
+        }
     }
 
     // MARK: - View Components
 
     @ViewBuilder
     private var searchField: some View {
-        TextField("Search or add new tag...", text: searchText)
+        TextField("Search or add new label...", text: searchText)
             .textFieldStyle(CustomTextFieldStyle())
             .keyboardType(.default)
             .autocorrectionDisabled(true)
@@ -102,7 +113,7 @@ struct CoreDataTagManagementView: View {
            !allTagNames.contains(where: { $0.lowercased() == searchText.wrappedValue.lowercased() }) &&
            !selectedLabelsSet.contains(searchText.wrappedValue) {
             HStack {
-                Text("Add new tag:")
+                Text("Add new label:")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 Text(searchText.wrappedValue)
@@ -132,7 +143,7 @@ struct CoreDataTagManagementView: View {
         if !tagEntities.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(searchText.wrappedValue.isEmpty ? (availableTagsTitle ?? "Available tags") : "Search results")
+                    Text(searchText.wrappedValue.isEmpty ? (availableLabelsTitle ?? "Available labels") : "Search results")
                         .font(.subheadline)
                         .fontWeight(.medium)
                     if !searchText.wrappedValue.isEmpty {
@@ -144,16 +155,31 @@ struct CoreDataTagManagementView: View {
                 }
 
                 if availableUnselectedTagsCount == 0 {
-                    VStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.green)
-                        Text("All tags selected")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    // Show "All labels selected" only if there are actually filtered results
+                    // Otherwise show "No labels found" for empty search results
+                    if filteredTagsCount > 0 {
+                        VStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.green)
+                            Text("All labels selected")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                    } else if !searchText.wrappedValue.isEmpty {
+                        VStack {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 24))
+                                .foregroundColor(.secondary)
+                            Text("No labels found")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
                 } else {
                     labelsScrollView
                 }
@@ -174,17 +200,26 @@ struct CoreDataTagManagementView: View {
                 alignment: .top,
                 spacing: 8
             ) {
-                ForEach(tagEntities, id: \.objectID) { entity in
-                    if let name = entity.name, shouldShowTag(name) {
-                        UnifiedLabelChip(
-                            label: name,
-                            isSelected: false,
-                            isRemovable: false,
-                            onTap: {
-                                onToggleLabel(name)
-                            }
-                        )
-                        .fixedSize(horizontal: true, vertical: false)
+                // Use searchResults when search is active, otherwise use tagEntities
+                let tagsToDisplay = isSearchActive ? searchResults : Array(tagEntities)
+
+                ForEach(tagsToDisplay, id: \.objectID) { entity in
+                    if let name = entity.name {
+                        // When searching, show all results (already filtered by predicate)
+                        // When not searching, filter with shouldShowTag()
+                        let shouldShow = isSearchActive ? !selectedLabelsSet.contains(name) : shouldShowTag(name)
+
+                        if shouldShow {
+                            UnifiedLabelChip(
+                                label: name,
+                                isSelected: false,
+                                isRemovable: false,
+                                onTap: {
+                                    onToggleLabel(name)
+                                }
+                            )
+                            .fixedSize(horizontal: true, vertical: false)
+                        }
                     }
                 }
             }
@@ -200,7 +235,9 @@ struct CoreDataTagManagementView: View {
     }
 
     private var filteredTagsCount: Int {
-        if searchText.wrappedValue.isEmpty {
+        if isSearchActive {
+            return searchResults.count
+        } else if searchText.wrappedValue.isEmpty {
             return tagEntities.count
         } else {
             return tagEntities.filter { entity in
@@ -211,12 +248,19 @@ struct CoreDataTagManagementView: View {
     }
 
     private var availableUnselectedTagsCount: Int {
-        tagEntities.filter { entity in
-            guard let name = entity.name else { return false }
-            let matchesSearch = searchText.wrappedValue.isEmpty || name.localizedCaseInsensitiveContains(searchText.wrappedValue)
-            let isNotSelected = !selectedLabelsSet.contains(name)
-            return matchesSearch && isNotSelected
-        }.count
+        if isSearchActive {
+            return searchResults.filter { entity in
+                guard let name = entity.name else { return false }
+                return !selectedLabelsSet.contains(name)
+            }.count
+        } else {
+            return tagEntities.filter { entity in
+                guard let name = entity.name else { return false }
+                let matchesSearch = searchText.wrappedValue.isEmpty || name.localizedCaseInsensitiveContains(searchText.wrappedValue)
+                let isNotSelected = !selectedLabelsSet.contains(name)
+                return matchesSearch && isNotSelected
+            }.count
+        }
     }
 
     private func shouldShowTag(_ name: String) -> Bool {
@@ -225,11 +269,42 @@ struct CoreDataTagManagementView: View {
         return matchesSearch && isNotSelected
     }
 
+    private func performSearch(query: String) {
+        guard !query.isEmpty else {
+            isSearchActive = false
+            searchResults = []
+            return
+        }
+
+        // Search directly in Core Data without fetchLimit
+        let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
+
+        // Use same sort order as main fetch
+        let sortDescriptors: [NSSortDescriptor]
+        switch sortOrder {
+        case .byCount:
+            sortDescriptors = [
+                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
+                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
+            ]
+        case .alphabetically:
+            sortDescriptors = [
+                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
+            ]
+        }
+        fetchRequest.sortDescriptors = sortDescriptors
+
+        // NO fetchLimit - search ALL tags in database
+        searchResults = (try? context.fetch(fetchRequest)) ?? []
+        isSearchActive = true
+    }
+
     @ViewBuilder
     private var selectedLabels: some View {
         if !selectedLabelsSet.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Selected tags")
+                Text("Selected labels")
                     .font(.subheadline)
                     .fontWeight(.medium)
 

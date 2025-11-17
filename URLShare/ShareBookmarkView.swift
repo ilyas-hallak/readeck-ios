@@ -142,7 +142,8 @@ struct ShareBookmarkView: View {
             searchFieldFocus: $focusedField,
             fetchLimit: 150,
             sortOrder: viewModel.tagSortOrder,
-            availableTagsTitle: "Most used tags",
+            availableLabelsTitle: "Most used labels",
+            context: viewContext,
             onAddCustomTag: {
                 addCustomTag()
             },
@@ -200,19 +201,6 @@ struct ShareBookmarkView: View {
     // MARK: - Helper Functions
 
     private func addCustomTag() {
-        let splitLabels = LabelUtils.splitLabelsFromInput(viewModel.searchText)
-
-        // Fetch available labels from Core Data
-        let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-        let availableLabels = (try? viewContext.fetch(fetchRequest))?.compactMap { $0.name } ?? []
-
-        let currentLabels = Array(viewModel.selectedLabels)
-        let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels, availableLabels: availableLabels)
-
-        for label in uniqueLabels {
-            viewModel.selectedLabels.insert(label)
-        }
-
-        viewModel.searchText = ""
+        viewModel.addCustomTag(context: viewContext)
     }
 }

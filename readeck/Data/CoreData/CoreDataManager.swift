@@ -43,6 +43,11 @@ class CoreDataManager {
                 self?.logger.info("Core Data persistent store loaded successfully")
             }
         }
+
+        // Configure viewContext for better extension support
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+
         return container
     }()
     

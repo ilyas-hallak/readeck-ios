@@ -71,6 +71,7 @@ struct BookmarkLabelsView: View {
                 searchText: $viewModel.searchText,
                 fetchLimit: nil,
                 sortOrder: appSettings.tagSortOrder,
+                context: viewContext,
                 onAddCustomTag: {
                     Task {
                         await viewModel.addLabel(to: bookmarkId, label: viewModel.searchText)

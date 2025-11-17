@@ -16,6 +16,7 @@ protocol UseCaseFactory {
     func makeAddLabelsToBookmarkUseCase() -> PAddLabelsToBookmarkUseCase
     func makeRemoveLabelsFromBookmarkUseCase() -> PRemoveLabelsFromBookmarkUseCase
     func makeGetLabelsUseCase() -> PGetLabelsUseCase
+    func makeCreateLabelUseCase() -> PCreateLabelUseCase
     func makeSyncTagsUseCase() -> PSyncTagsUseCase
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase
@@ -102,6 +103,12 @@ class DefaultUseCaseFactory: UseCaseFactory {
         let api = API(tokenProvider: KeychainTokenProvider())
         let labelsRepository = LabelsRepository(api: api)
         return GetLabelsUseCase(labelsRepository: labelsRepository)
+    }
+
+    func makeCreateLabelUseCase() -> PCreateLabelUseCase {
+        let api = API(tokenProvider: KeychainTokenProvider())
+        let labelsRepository = LabelsRepository(api: api)
+        return CreateLabelUseCase(labelsRepository: labelsRepository)
     }
 
     func makeSyncTagsUseCase() -> PSyncTagsUseCase {
