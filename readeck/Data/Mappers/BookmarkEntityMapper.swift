@@ -77,7 +77,56 @@ extension ResourceDto {
 
 // MARK: - BookmarkEntity to Domain Mapping
 extension BookmarkEntity {
-    
+    func toDomain() -> Bookmark? {
+        guard let id = self.id,
+              let title = self.title,
+              let url = self.url,
+              let href = self.href,
+              let created = self.created,
+              let update = self.update,
+              let siteName = self.siteName,
+              let site = self.site else {
+            return nil
+        }
+
+        let resources = BookmarkResources(
+            article: nil,
+            icon: nil,
+            image: nil,
+            log: nil,
+            props: nil,
+            thumbnail: nil
+        )
+
+        return Bookmark(
+            id: id,
+            title: title,
+            url: url,
+            href: href,
+            description: self.desc ?? "",
+            authors: self.authors?.components(separatedBy: ",") ?? [],
+            created: created,
+            published: self.published,
+            updated: update,
+            siteName: siteName,
+            site: site,
+            readingTime: Int(self.readingTime),
+            wordCount: Int(self.wordCount),
+            hasArticle: self.hasArticle,
+            isArchived: self.isArchived,
+            isDeleted: self.hasDeleted,
+            isMarked: self.isMarked,
+            labels: [],
+            lang: self.lang,
+            loaded: self.loaded,
+            readProgress: Int(self.readProgress),
+            documentType: self.documentType ?? "",
+            state: Int(self.state),
+            textDirection: self.textDirection ?? "",
+            type: self.type ?? "",
+            resources: resources
+        )
+    }
 }
 
 // MARK: - Domain to BookmarkEntity Mapping
