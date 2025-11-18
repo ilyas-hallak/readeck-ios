@@ -25,6 +25,8 @@ struct SettingsContainerView: View {
 
             SyncSettingsView()
 
+            OfflineSettingsView()
+
             SettingsServerView()
 
             LegalPrivacySettingsView()

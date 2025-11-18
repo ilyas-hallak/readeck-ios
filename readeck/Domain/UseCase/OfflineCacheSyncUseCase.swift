@@ -21,7 +21,6 @@ protocol POfflineCacheSyncUseCase {
 
 // MARK: - Implementation
 
-@MainActor
 final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 
     // MARK: - Dependencies
@@ -32,15 +31,15 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 
     // MARK: - Published State
 
-    @Published private var _isSyncing = false
-    @Published private var _syncProgress: String?
+    private let _isSyncingSubject = CurrentValueSubject<Bool, Never>(false)
+    private let _syncProgressSubject = CurrentValueSubject<String?, Never>(nil)
 
     var isSyncing: AnyPublisher<Bool, Never> {
-        $_isSyncing.eraseToAnyPublisher()
+        _isSyncingSubject.eraseToAnyPublisher()
     }
 
     var syncProgress: AnyPublisher<String?, Never> {
-        $_syncProgress.eraseToAnyPublisher()
+        _syncProgressSubject.eraseToAnyPublisher()
     }
 
     // MARK: - Initialization
@@ -57,13 +56,14 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 
     // MARK: - Public Methods
 
+    @MainActor
     func syncOfflineArticles(settings: OfflineSettings) async {
         guard settings.enabled else {
             Logger.sync.info("Offline sync skipped: disabled in settings")
             return
         }
 
-        _isSyncing = true
+        _isSyncingSubject.send(true)
         Logger.sync.info("🔄 Starting offline sync (max: \(settings.maxUnreadArticlesInt) articles, images: \(settings.saveImages))")
 
         do {
@@ -92,13 +92,13 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
                 if offlineCacheRepository.hasCachedArticle(id: bookmark.id) {
                     Logger.sync.debug("⏭️ Skipping '\(bookmark.title)' (already cached)")
                     skippedCount += 1
-                    _syncProgress = "⏭️ Artikel \(progress) bereits gecacht..."
+                    _syncProgressSubject.send("⏭️ Artikel \(progress) bereits gecacht...")
                     continue
                 }
 
                 // Update progress
                 let imagesSuffix = settings.saveImages ? " + Bilder" : ""
-                _syncProgress = "📥 Artikel \(progress)\(imagesSuffix)..."
+                _syncProgressSubject.send("📥 Artikel \(progress)\(imagesSuffix)...")
                 Logger.sync.info("📥 Caching '\(bookmark.title)'")
 
                 do {
@@ -131,22 +131,22 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
             // Final status
             let statusMessage = "✅ Synchronisiert: \(successCount), Übersprungen: \(skippedCount), Fehler: \(errorCount)"
             Logger.sync.info(statusMessage)
-            _syncProgress = statusMessage
+            _syncProgressSubject.send(statusMessage)
 
             // Clear progress message after 3 seconds
             try? await Task.sleep(nanoseconds: 3_000_000_000)
-            _syncProgress = nil
+            _syncProgressSubject.send(nil)
 
         } catch {
             Logger.sync.error("❌ Offline sync failed: \(error.localizedDescription)")
-            _syncProgress = "❌ Synchronisierung fehlgeschlagen"
+            _syncProgressSubject.send("❌ Synchronisierung fehlgeschlagen")
 
             // Clear error message after 5 seconds
             try? await Task.sleep(nanoseconds: 5_000_000_000)
-            _syncProgress = nil
+            _syncProgressSubject.send(nil)
         }
 
-        _isSyncing = false
+        _isSyncingSubject.send(false)
     }
 
     func getCachedArticlesCount() -> Int {

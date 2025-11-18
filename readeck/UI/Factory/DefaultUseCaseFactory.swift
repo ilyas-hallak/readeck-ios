@@ -25,6 +25,8 @@ protocol UseCaseFactory {
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase
+    func makeSettingsRepository() -> PSettingsRepository
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase
 }
 
 
@@ -38,6 +40,7 @@ class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
+    private let offlineCacheRepository: POfflineCacheRepository = OfflineCacheRepository()
 
     static let shared = DefaultUseCaseFactory()
 
@@ -143,5 +146,17 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
         return DeleteAnnotationUseCase(repository: annotationsRepository)
+    }
+
+    func makeSettingsRepository() -> PSettingsRepository {
+        return settingsRepository
+    }
+
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase {
+        return OfflineCacheSyncUseCase(
+            offlineCacheRepository: offlineCacheRepository,
+            bookmarksRepository: bookmarksRepository,
+            settingsRepository: settingsRepository
+        )
     }
 }

@@ -104,6 +104,14 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
         MockDeleteAnnotationUseCase()
     }
+
+    func makeSettingsRepository() -> PSettingsRepository {
+        MockSettingsRepository()
+    }
+
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase {
+        MockOfflineCacheSyncUseCase()
+    }
 }
     
 
@@ -277,6 +285,49 @@ class MockGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
 class MockDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
     func execute(bookmarkId: String, annotationId: String) async throws {
         // Mock implementation - do nothing
+    }
+}
+
+class MockSettingsRepository: PSettingsRepository {
+    var hasFinishedSetup: Bool = true
+
+    func saveSettings(_ settings: Settings) async throws {}
+    func loadSettings() async throws -> Settings? {
+        return Settings(endpoint: "mock-endpoint", username: "mock-user", password: "mock-pw", token: "mock-token", fontFamily: .system, fontSize: .medium, hasFinishedSetup: true)
+    }
+    func clearSettings() async throws {}
+    func saveToken(_ token: String) async throws {}
+    func saveUsername(_ username: String) async throws {}
+    func savePassword(_ password: String) async throws {}
+    func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws {}
+    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws {}
+    func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws {}
+    func loadCardLayoutStyle() async throws -> CardLayoutStyle { return .magazine }
+    func saveTagSortOrder(_ tagSortOrder: TagSortOrder) async throws {}
+    func loadTagSortOrder() async throws -> TagSortOrder { return .byCount }
+    func loadOfflineSettings() async throws -> OfflineSettings {
+        return OfflineSettings()
+    }
+    func saveOfflineSettings(_ settings: OfflineSettings) async throws {}
+}
+
+class MockOfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
+    var isSyncing: AnyPublisher<Bool, Never> {
+        Just(false).eraseToAnyPublisher()
+    }
+
+    var syncProgress: AnyPublisher<String?, Never> {
+        Just(nil).eraseToAnyPublisher()
+    }
+
+    func syncOfflineArticles(settings: OfflineSettings) async {}
+
+    func getCachedArticlesCount() -> Int {
+        return 0
+    }
+
+    func getCacheSize() -> String {
+        return "0 KB"
     }
 }
 

@@ -8,6 +8,7 @@ class BookmarksViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
+    private let offlineCacheRepository: POfflineCacheRepository
     
     var bookmarks: BookmarksPage?
     var isLoading = false
@@ -47,9 +48,10 @@ class BookmarksViewModel {
         updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
-        
+        offlineCacheRepository = OfflineCacheRepository()
+
         setupNotificationObserver()
-        
+
         Task {
             await loadCardLayout()
         }
@@ -139,6 +141,8 @@ class BookmarksViewModel {
                 case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
                     isNetworkError = true
                     errorMessage = "No internet connection"
+                    // Try to load cached bookmarks
+                    await loadCachedBookmarks()
                 default:
                     isNetworkError = false
                     errorMessage = "Error loading bookmarks"
@@ -152,6 +156,28 @@ class BookmarksViewModel {
 
         isLoading = false
         isInitialLoading = false
+    }
+
+    @MainActor
+    private func loadCachedBookmarks() async {
+        do {
+            let cachedBookmarks = try await offlineCacheRepository.getCachedBookmarks()
+
+            if !cachedBookmarks.isEmpty {
+                // Create a BookmarksPage from cached bookmarks
+                bookmarks = BookmarksPage(
+                    bookmarks: cachedBookmarks,
+                    currentPage: 1,
+                    totalCount: cachedBookmarks.count,
+                    totalPages: 1,
+                    links: nil
+                )
+                hasMoreData = false
+                Logger.viewModel.info("📱 Loaded \(cachedBookmarks.count) cached bookmarks for offline mode")
+            }
+        } catch {
+            Logger.viewModel.error("Failed to load cached bookmarks: \(error.localizedDescription)")
+        }
     }
     
     @MainActor

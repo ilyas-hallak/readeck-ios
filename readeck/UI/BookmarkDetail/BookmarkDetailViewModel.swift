@@ -9,6 +9,7 @@ class BookmarkDetailViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let api: PAPI
+    private let offlineCacheRepository: POfflineCacheRepository
 
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -33,6 +34,7 @@ class BookmarkDetailViewModel {
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.api = API()
         self.factory = factory
+        self.offlineCacheRepository = OfflineCacheRepository()
 
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
@@ -72,6 +74,16 @@ class BookmarkDetailViewModel {
     func loadArticleContent(id: String) async {
         isLoadingArticle = true
 
+        // First, try to load from cache
+        if let cachedHTML = offlineCacheRepository.getCachedArticle(id: id) {
+            articleContent = cachedHTML
+            processArticleContent()
+            isLoadingArticle = false
+            Logger.viewModel.info("📱 Loaded article \(id) from cache")
+            return
+        }
+
+        // If not cached, fetch from server
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()

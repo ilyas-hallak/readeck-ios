@@ -36,14 +36,22 @@ struct BookmarksView: View {
 
     var body: some View {
         ZStack {
-            if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
-                skeletonLoadingView
-            } else if shouldShowCenteredState {
-                centeredStateView
-            } else {
-                bookmarksList
+            VStack(spacing: 0) {
+                // Offline banner
+                if viewModel.isNetworkError && (viewModel.bookmarks?.bookmarks.isEmpty == false) {
+                    offlineBanner
+                }
+
+                // Main content
+                if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
+                    skeletonLoadingView
+                } else if shouldShowCenteredState {
+                    centeredStateView
+                } else {
+                    bookmarksList
+                }
             }
-            
+
             // FAB Button - only show for "Unread" and when not in error/loading state
             if (state == .unread || state == .all) && !shouldShowCenteredState && !viewModel.isInitialLoading {
                 fabButton
@@ -86,11 +94,12 @@ struct BookmarksView: View {
     }
     
     // MARK: - Computed Properties
-    
+
     private var shouldShowCenteredState: Bool {
         let isEmpty = viewModel.bookmarks?.bookmarks.isEmpty == true
         let hasError = viewModel.errorMessage != nil
-        return (isEmpty && viewModel.isLoading) || hasError
+        // Only show centered state when empty AND error (not just error)
+        return isEmpty && hasError
     }
     
     // MARK: - View Components
@@ -276,6 +285,30 @@ struct BookmarksView: View {
         }
     }
     
+    @ViewBuilder
+    private var offlineBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "wifi.slash")
+                .font(.body)
+                .foregroundColor(.secondary)
+
+            Text("Offline-Modus – Zeige gespeicherte Artikel")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemGray6))
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundColor(Color(.separator)),
+            alignment: .bottom
+        )
+    }
+
     @ViewBuilder
     private var fabButton: some View {
         VStack {
