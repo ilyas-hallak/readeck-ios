@@ -34,6 +34,7 @@ struct readeckApp: App {
                 Task {
                     await loadAppSettings()
                 }
+                appViewModel.bindNetworkStatus(to: appSettings)
             }
             .onReceive(NotificationCenter.default.publisher(for: .settingsChanged)) { _ in
                 Task {

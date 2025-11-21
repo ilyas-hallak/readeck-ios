@@ -9,7 +9,7 @@ class BookmarksViewModel {
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let offlineCacheRepository: POfflineCacheRepository
-    
+
     var bookmarks: BookmarksPage?
     var isLoading = false
     var isInitialLoading = true
@@ -19,7 +19,7 @@ class BookmarksViewModel {
     var currentType = [BookmarkType.article]
     var currentTag: String? = nil
     var cardLayoutStyle: CardLayoutStyle = .magazine
-    
+
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -29,8 +29,7 @@ class BookmarksViewModel {
 
     // Prevent concurrent updates
     private var isUpdating = false
-    
-    
+
     private var cancellables = Set<AnyCancellable>()
     private var limit = 50
     private var offset = 0
@@ -69,7 +68,7 @@ class BookmarksViewModel {
                 }
             }
             .store(in: &cancellables)
-        
+
         // Listen for
         NotificationCenter.default
             .publisher(for: .addBookmarkFromShare)
@@ -178,6 +177,13 @@ class BookmarksViewModel {
         } catch {
             Logger.viewModel.error("Failed to load cached bookmarks: \(error.localizedDescription)")
         }
+    }
+
+    @MainActor
+    func loadCachedBookmarksFromUI() async {
+        isNetworkError = true
+        errorMessage = "No internet connection"
+        await loadCachedBookmarks()
     }
     
     @MainActor

@@ -78,6 +78,8 @@ class OfflineSettingsViewModel {
     func syncNow() async {
         Logger.viewModel.info("Manual sync triggered")
         await offlineCacheSyncUseCase.syncOfflineArticles(settings: offlineSettings)
+        // Reload settings to get updated lastSyncDate
+        await loadSettings()
         updateCacheStats()
     }
 

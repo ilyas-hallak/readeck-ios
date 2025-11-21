@@ -9,19 +9,20 @@ import SwiftUI
 
 struct OfflineSettingsView: View {
     @State private var viewModel = OfflineSettingsViewModel()
+    @EnvironmentObject var appSettings: AppSettings
 
     var body: some View {
         Group {
             Section {
                 VStack(alignment: .leading, spacing: 4) {
-                    Toggle("Offline-Reading aktivieren", isOn: $viewModel.offlineSettings.enabled)
+                    Toggle("Enable Offline Reading", isOn: $viewModel.offlineSettings.enabled)
                         .onChange(of: viewModel.offlineSettings.enabled) {
                             Task {
                                 await viewModel.saveSettings()
                             }
                         }
 
-                    Text("Lade automatisch Artikel für die Offline-Nutzung herunter.")
+                    Text("Automatically download articles for offline use.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
@@ -31,7 +32,7 @@ struct OfflineSettingsView: View {
                     // Max articles slider
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Maximale Artikel")
+                            Text("Maximum Articles")
                             Spacer()
                             Text("\(viewModel.offlineSettings.maxUnreadArticlesInt)")
                                 .font(.caption)
@@ -43,7 +44,7 @@ struct OfflineSettingsView: View {
                             in: 0...100,
                             step: 10
                         ) {
-                            Text("Max. Artikel offline")
+                            Text("Max. Articles Offline")
                         }
                         .onChange(of: viewModel.offlineSettings.maxUnreadArticles) {
                             Task {
@@ -54,14 +55,14 @@ struct OfflineSettingsView: View {
 
                     // Save images toggle
                     VStack(alignment: .leading, spacing: 4) {
-                        Toggle("Bilder speichern", isOn: $viewModel.offlineSettings.saveImages)
+                        Toggle("Save Images", isOn: $viewModel.offlineSettings.saveImages)
                             .onChange(of: viewModel.offlineSettings.saveImages) {
                                 Task {
                                     await viewModel.saveSettings()
                                 }
                             }
 
-                        Text("Lädt auch Bilder für die Offline-Nutzung herunter.")
+                        Text("Also download images for offline use.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .padding(.top, 2)
@@ -83,7 +84,7 @@ struct OfflineSettingsView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Jetzt synchronisieren")
+                                Text("Sync Now")
                                     .foregroundColor(viewModel.isSyncing ? .secondary : .blue)
 
                                 if let progress = viewModel.syncProgress {
@@ -91,7 +92,7 @@ struct OfflineSettingsView: View {
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 } else if let lastSync = viewModel.offlineSettings.lastSyncDate {
-                                    Text("Zuletzt: \(lastSync.formatted(.relative(presentation: .named)))")
+                                    Text("Last synced: \(lastSync.formatted(.relative(presentation: .named)))")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -106,8 +107,8 @@ struct OfflineSettingsView: View {
                     if viewModel.cachedArticlesCount > 0 {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Gespeicherte Artikel")
-                                Text("\(viewModel.cachedArticlesCount) Artikel (\(viewModel.cacheSize))")
+                                Text("Cached Articles")
+                                Text("\(viewModel.cachedArticlesCount) articles (\(viewModel.cacheSize))")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -116,43 +117,36 @@ struct OfflineSettingsView: View {
                     }
 
                     #if DEBUG
-                    // Debug: Force offline mode
-                    Button(action: {
-                        simulateOfflineMode()
-                    }) {
-                        HStack {
-                            Image(systemName: "airplane")
-                                .foregroundColor(.orange)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Offline-Modus simulieren")
-                                    .foregroundColor(.orange)
-                                Text("DEBUG: Netzwerk temporär deaktivieren")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                    // Debug: Toggle offline mode simulation
+                    VStack(alignment: .leading, spacing: 4) {
+                        Toggle(isOn: Binding(
+                            get: { !appSettings.isNetworkConnected },
+                            set: { isOffline in
+                                appSettings.isNetworkConnected = !isOffline
                             }
+                        )) {
+                            HStack {
+                                Image(systemName: "airplane")
+                                    .foregroundColor(.orange)
 
-                            Spacer()
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Simulate Offline Mode")
+                                        .foregroundColor(.orange)
+                                    Text("DEBUG: Toggle network status")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
                     }
                     #endif
                 }
             } header: {
-                Text("Offline-Reading")
+                Text("Offline Reading")
             }
         }
         .task {
             await viewModel.loadSettings()
         }
     }
-
-    #if DEBUG
-    private func simulateOfflineMode() {
-        // Post notification to simulate offline mode
-        NotificationCenter.default.post(
-            name: Notification.Name("SimulateOfflineMode"),
-            object: nil
-        )
-    }
-    #endif
 }

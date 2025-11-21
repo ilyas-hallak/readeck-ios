@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 @MainActor
 @Observable
@@ -14,17 +15,22 @@ class AppViewModel {
     private let settingsRepository = SettingsRepository()
     private let factory: UseCaseFactory
     private let syncTagsUseCase: PSyncTagsUseCase
+    let networkMonitorUseCase: PNetworkMonitorUseCase
 
     var hasFinishedSetup: Bool = true
     var isServerReachable: Bool = false
+    var isNetworkConnected: Bool = true
 
     private var lastAppStartTagSyncTime: Date?
+    private var cancellables = Set<AnyCancellable>()
 
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.factory = factory
         self.syncTagsUseCase = factory.makeSyncTagsUseCase()
-        setupNotificationObservers()
+        self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
 
+        setupNotificationObservers()
+        setupNetworkMonitoring()
         loadSetupStatus()
     }
     
@@ -63,6 +69,28 @@ class AppViewModel {
         }
     }
     
+    private func setupNetworkMonitoring() {
+        // Start monitoring network status
+        networkMonitorUseCase.startMonitoring()
+
+        // Bind network status to our published property
+        networkMonitorUseCase.isConnected
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.isNetworkConnected, on: self)
+            .store(in: &cancellables)
+    }
+
+    func bindNetworkStatus(to appSettings: AppSettings) {
+        // Bind network status to AppSettings for global access
+        networkMonitorUseCase.isConnected
+            .receive(on: DispatchQueue.main)
+            .sink { isConnected in
+                Logger.viewModel.info("🌐 Network status changed: \(isConnected ? "Connected" : "Disconnected")")
+                appSettings.isNetworkConnected = isConnected
+            }
+            .store(in: &cancellables)
+    }
+
     private func loadSetupStatus() {
         hasFinishedSetup = settingsRepository.hasFinishedSetup
     }

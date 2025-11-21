@@ -5,22 +5,23 @@ import SwiftUI
 struct BookmarksView: View {
 
     // MARK: States
-    
+
     @State private var viewModel: BookmarksViewModel
     @State private var showingAddBookmark = false
     @State private var selectedBookmarkId: String?
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
-    
+
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
     @EnvironmentObject var playerUIState: PlayerUIState
+    @EnvironmentObject var appSettings: AppSettings
     let tag: String?
-    
+
     // MARK: Environments
-    
+
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
     
@@ -37,8 +38,13 @@ struct BookmarksView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
+                #if DEBUG
+                // Debug: Network status indicator
+                debugNetworkStatusBanner
+                #endif
+
                 // Offline banner
-                if viewModel.isNetworkError && (viewModel.bookmarks?.bookmarks.isEmpty == false) {
+                if !appSettings.isNetworkConnected && (viewModel.bookmarks?.bookmarks.isEmpty == false) {
                     offlineBanner
                 }
 
@@ -86,7 +92,21 @@ struct BookmarksView: View {
                 Task {
                     // Wait a bit for the server to process the new bookmark
                     try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                    
+
+                    await viewModel.refreshBookmarks()
+                }
+            }
+        }
+        .onChange(of: appSettings.isNetworkConnected) { oldValue, newValue in
+            // Network status changed
+            if !newValue && oldValue {
+                // Lost network connection - load cached bookmarks
+                Task {
+                    await viewModel.loadCachedBookmarksFromUI()
+                }
+            } else if newValue && !oldValue {
+                // Regained network connection - refresh from server
+                Task {
                     await viewModel.refreshBookmarks()
                 }
             }
@@ -286,13 +306,38 @@ struct BookmarksView: View {
     }
     
     @ViewBuilder
+    private var debugNetworkStatusBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: appSettings.isNetworkConnected ? "wifi" : "wifi.slash")
+                .font(.body)
+                .foregroundColor(appSettings.isNetworkConnected ? .green : .red)
+
+            Text("DEBUG: Network \(appSettings.isNetworkConnected ? "Connected ✓" : "Disconnected ✗")")
+                .font(.caption)
+                .foregroundColor(appSettings.isNetworkConnected ? .green : .red)
+                .bold()
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(appSettings.isNetworkConnected ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+        .overlay(
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(appSettings.isNetworkConnected ? Color.green : Color.red),
+            alignment: .bottom
+        )
+    }
+
+    @ViewBuilder
     private var offlineBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "wifi.slash")
                 .font(.body)
                 .foregroundColor(.secondary)
 
-            Text("Offline-Modus – Zeige gespeicherte Artikel")
+            Text("Offline Mode – Showing cached articles")
                 .font(.caption)
                 .foregroundColor(.secondary)
 

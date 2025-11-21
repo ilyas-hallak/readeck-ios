@@ -92,13 +92,13 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
                 if offlineCacheRepository.hasCachedArticle(id: bookmark.id) {
                     Logger.sync.debug("⏭️ Skipping '\(bookmark.title)' (already cached)")
                     skippedCount += 1
-                    _syncProgressSubject.send("⏭️ Artikel \(progress) bereits gecacht...")
+                    _syncProgressSubject.send("⏭️ Article \(progress) already cached...")
                     continue
                 }
 
                 // Update progress
-                let imagesSuffix = settings.saveImages ? " + Bilder" : ""
-                _syncProgressSubject.send("📥 Artikel \(progress)\(imagesSuffix)...")
+                let imagesSuffix = settings.saveImages ? " + images" : ""
+                _syncProgressSubject.send("📥 Article \(progress)\(imagesSuffix)...")
                 Logger.sync.info("📥 Caching '\(bookmark.title)'")
 
                 do {
@@ -116,7 +116,15 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
                     Logger.sync.info("✅ Cached '\(bookmark.title)'")
                 } catch {
                     errorCount += 1
-                    Logger.sync.error("❌ Failed to cache '\(bookmark.title)': \(error.localizedDescription)")
+
+                    // Detailed error logging
+                    if let urlError = error as? URLError {
+                        Logger.sync.error("❌ Failed to cache '\(bookmark.title)' - Network error: \(urlError.code.rawValue) (\(urlError.localizedDescription))")
+                    } else if let decodingError = error as? DecodingError {
+                        Logger.sync.error("❌ Failed to cache '\(bookmark.title)' - Decoding error: \(decodingError)")
+                    } else {
+                        Logger.sync.error("❌ Failed to cache '\(bookmark.title)' - Error: \(error.localizedDescription) (Type: \(type(of: error)))")
+                    }
                 }
             }
 
@@ -129,7 +137,7 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
             try await settingsRepository.saveOfflineSettings(updatedSettings)
 
             // Final status
-            let statusMessage = "✅ Synchronisiert: \(successCount), Übersprungen: \(skippedCount), Fehler: \(errorCount)"
+            let statusMessage = "✅ Synced: \(successCount), Skipped: \(skippedCount), Errors: \(errorCount)"
             Logger.sync.info(statusMessage)
             _syncProgressSubject.send(statusMessage)
 
@@ -139,7 +147,7 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 
         } catch {
             Logger.sync.error("❌ Offline sync failed: \(error.localizedDescription)")
-            _syncProgressSubject.send("❌ Synchronisierung fehlgeschlagen")
+            _syncProgressSubject.send("❌ Sync failed")
 
             // Clear error message after 5 seconds
             try? await Task.sleep(nanoseconds: 5_000_000_000)

@@ -112,6 +112,10 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase {
         MockOfflineCacheSyncUseCase()
     }
+
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase {
+        MockNetworkMonitorUseCase()
+    }
 }
     
 
@@ -328,6 +332,45 @@ class MockOfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 
     func getCacheSize() -> String {
         return "0 KB"
+    }
+}
+
+class MockNetworkMonitorRepository: PNetworkMonitorRepository {
+    var isConnected: AnyPublisher<Bool, Never> {
+        Just(true).eraseToAnyPublisher()
+    }
+
+    func startMonitoring() {}
+    func stopMonitoring() {}
+    func reportConnectionFailure() {}
+    func reportConnectionSuccess() {}
+}
+
+class MockNetworkMonitorUseCase: PNetworkMonitorUseCase {
+    private let repository: PNetworkMonitorRepository
+
+    init(repository: PNetworkMonitorRepository = MockNetworkMonitorRepository()) {
+        self.repository = repository
+    }
+
+    var isConnected: AnyPublisher<Bool, Never> {
+        repository.isConnected
+    }
+
+    func startMonitoring() {
+        repository.startMonitoring()
+    }
+
+    func stopMonitoring() {
+        repository.stopMonitoring()
+    }
+
+    func reportConnectionFailure() {
+        repository.reportConnectionFailure()
+    }
+
+    func reportConnectionSuccess() {
+        repository.reportConnectionSuccess()
     }
 }
 
