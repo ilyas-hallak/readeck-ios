@@ -30,8 +30,6 @@ struct ReadingSettingsView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
                 }
-
-                
             } header: {
                 Text("Reading Settings")
             }
