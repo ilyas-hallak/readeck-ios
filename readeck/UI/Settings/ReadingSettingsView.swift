@@ -30,11 +30,6 @@ struct ReadingSettingsView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
                 }
-
-                #if DEBUG
-                Toggle("Safari Reader Mode", isOn: $viewModel.enableReaderMode)
-                Toggle("Automatically mark articles as read", isOn: $viewModel.autoMarkAsRead)
-                #endif
             } header: {
                 Text("Reading Settings")
             }
