@@ -316,14 +316,20 @@ struct BookmarkDetailView2: View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
                 // Background blur for images that don't fill
-                CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
+                CachedAsyncImage(
+                    url: URL(string: viewModel.bookmarkDetail.imageUrl),
+                    cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
+                )
                     .aspectRatio(contentMode: .fill)
                     .frame(width: width, height: headerHeight)
                     .blur(radius: 30)
                     .clipped()
 
                 // Main image with fit
-                CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
+                CachedAsyncImage(
+                    url: URL(string: viewModel.bookmarkDetail.imageUrl),
+                    cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
+                )
                     .aspectRatio(contentMode: .fit)
                     .frame(width: width, height: headerHeight)
 

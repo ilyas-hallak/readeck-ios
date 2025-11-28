@@ -15,6 +15,7 @@
         <attribute name="documentType" optional="YES" attributeType="String"/>
         <attribute name="hasArticle" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="hasDeleted" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="heroImageURL" optional="YES" attributeType="String"/>
         <attribute name="href" optional="YES" attributeType="String"/>
         <attribute name="htmlContent" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="String"/>

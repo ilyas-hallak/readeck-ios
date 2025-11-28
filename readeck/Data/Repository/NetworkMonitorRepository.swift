@@ -27,7 +27,7 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
 
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.readeck.networkmonitor")
-    private let _isConnectedSubject = CurrentValueSubject<Bool, Never>(true)
+    private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
     private var hasPathConnection = true
     private var hasRealConnection = true
 
@@ -38,7 +38,15 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     // MARK: - Initialization
 
     init() {
-        // Repository just manages the monitor, doesn't start it automatically
+        // Check current network status synchronously before starting monitor
+        let currentPath = monitor.currentPath
+        let hasInterfaces = currentPath.availableInterfaces.count > 0
+        let initialStatus = currentPath.status == .satisfied && hasInterfaces
+
+        _isConnectedSubject = CurrentValueSubject<Bool, Never>(initialStatus)
+        hasPathConnection = initialStatus
+
+        Logger.network.info("🌐 Initial network status: \(initialStatus ? "Connected" : "Offline")")
     }
 
     deinit {

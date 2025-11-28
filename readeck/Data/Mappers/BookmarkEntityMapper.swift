@@ -89,10 +89,15 @@ extension BookmarkEntity {
             return nil
         }
 
+        // Reconstruct hero image from cached URL for offline access
+        let heroImage: ImageResource? = self.heroImageURL.flatMap { urlString in
+            ImageResource(src: urlString, height: 0, width: 0)
+        }
+
         let resources = BookmarkResources(
             article: nil,
             icon: nil,
-            image: nil,
+            image: heroImage,
             log: nil,
             props: nil,
             thumbnail: nil
@@ -177,6 +182,13 @@ private extension BookmarkEntity {
         self.textDirection = bookmark.textDirection
         self.type = bookmark.type
         self.state = Int16(bookmark.state)
+
+        // Save hero image URL for offline access
+        if let heroImageUrl = bookmark.resources.image?.src {
+            self.heroImageURL = heroImageUrl
+        } else if let thumbnailUrl = bookmark.resources.thumbnail?.src {
+            self.heroImageURL = thumbnailUrl
+        }
     }
 }
 
