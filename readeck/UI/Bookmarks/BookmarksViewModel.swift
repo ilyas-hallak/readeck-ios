@@ -8,7 +8,7 @@ class BookmarksViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
-    private let offlineCacheRepository: POfflineCacheRepository
+    private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
     weak var appSettings: AppSettings?
 
     var bookmarks: BookmarksPage?
@@ -48,7 +48,7 @@ class BookmarksViewModel {
         updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
-        offlineCacheRepository = OfflineCacheRepository()
+        getCachedBookmarksUseCase = factory.makeGetCachedBookmarksUseCase()
 
         setupNotificationObserver()
 
@@ -186,8 +186,8 @@ class BookmarksViewModel {
         }
 
         do {
-            Logger.viewModel.info("📱 Fetching cached bookmarks from repository...")
-            let cachedBookmarks = try await offlineCacheRepository.getCachedBookmarks()
+            Logger.viewModel.info("📱 Fetching cached bookmarks from use case...")
+            let cachedBookmarks = try await getCachedBookmarksUseCase.execute()
             Logger.viewModel.info("📱 Retrieved \(cachedBookmarks.count) cached bookmarks")
 
             if !cachedBookmarks.isEmpty {

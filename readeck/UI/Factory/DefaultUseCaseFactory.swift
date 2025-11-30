@@ -28,6 +28,9 @@ protocol UseCaseFactory {
     func makeSettingsRepository() -> PSettingsRepository
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
 }
 
 
@@ -164,5 +167,17 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase {
         return NetworkMonitorUseCase(repository: networkMonitorRepository)
+    }
+
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase {
+        return GetCachedBookmarksUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase {
+        return GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {
+        return CreateAnnotationUseCase(repository: annotationsRepository)
     }
 }
