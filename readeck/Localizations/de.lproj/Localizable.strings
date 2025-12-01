@@ -82,6 +82,7 @@
 "Favorite" = "Favorit";
 "Finished reading?" = "Fertig gelesen?";
 "Font" = "Schrift";
+"Highlight" = "Markierung";
 "Font family" = "Schriftart";
 "Font Settings" = "Schrift";
 "Font size" = "Schriftgröße";
@@ -148,6 +149,8 @@
 "Settings" = "Einstellungen";
 "Show Performance Logs" = "Performance-Logs anzeigen";
 "Show Timestamps" = "Zeitstempel anzeigen";
+"Synchronization" = "Synchronisation";
+"VPN connections are detected as active internet connections." = "VPN-Verbindungen werden als aktive Internetverbindungen erkannt.";
 "Speed" = "Geschwindigkeit";
 "Syncing with server..." = "Synchronisiere mit Server...";
 "Theme" = "Design";

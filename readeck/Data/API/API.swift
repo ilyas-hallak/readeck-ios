@@ -153,21 +153,26 @@ class API: PAPI {
         }
         
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for \(endpoint)")
             throw APIError.invalidResponse
         }
-        
+
         guard 200...299 ~= httpResponse.statusCode else {
+            logger.error("Server error for \(endpoint): HTTP \(httpResponse.statusCode)")
+            logger.error("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
             handleUnauthorizedResponse(httpResponse.statusCode)
             throw APIError.serverError(httpResponse.statusCode)
         }
-        
+
         // Als String dekodieren statt als JSON
         guard let string = String(data: data, encoding: .utf8) else {
+            logger.error("Unable to decode response as UTF-8 string for \(endpoint)")
+            logger.error("Data size: \(data.count) bytes")
             throw APIError.invalidResponse
         }
-        
+
         return string
     }
     
@@ -539,4 +544,17 @@ enum APIError: Error {
     case invalidURL
     case invalidResponse
     case serverError(Int)
+}
+
+extension APIError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid URL"
+        case .invalidResponse:
+            return "Invalid server response"
+        case .serverError(let statusCode):
+            return "Server error: HTTP \(statusCode)"
+        }
+    }
 }

@@ -78,6 +78,7 @@
 "Favorite" = "Favorite";
 "Finished reading?" = "Finished reading?";
 "Font" = "Font";
+"Highlight" = "Highlight";
 "Font family" = "Font family";
 "Font Settings" = "Font Settings";
 "Font size" = "Font size";
@@ -144,6 +145,8 @@
 "Settings" = "Settings";
 "Show Performance Logs" = "Show Performance Logs";
 "Show Timestamps" = "Show Timestamps";
+"Synchronization" = "Synchronization";
+"VPN connections are detected as active internet connections." = "VPN connections are detected as active internet connections.";
 "Speed" = "Speed";
 "Syncing with server..." = "Syncing with server...";
 "Theme" = "Theme";

@@ -26,4 +26,10 @@ protocol PSettingsRepository {
     // Offline Settings methods
     func loadOfflineSettings() async throws -> OfflineSettings
     func saveOfflineSettings(_ settings: OfflineSettings) async throws
+
+    // Cache Settings methods
+    func getCacheSize() async throws -> UInt
+    func getMaxCacheSize() async throws -> UInt
+    func updateMaxCacheSize(_ sizeInBytes: UInt) async throws
+    func clearCache() async throws
 }

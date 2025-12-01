@@ -1,5 +1,6 @@
 import Foundation
 import CoreData
+import Kingfisher
 
 class SettingsRepository: PSettingsRepository {
     private let coreDataManager = CoreDataManager.shared
@@ -329,4 +330,47 @@ class SettingsRepository: PSettingsRepository {
         }
     }
 
+    // MARK: - Cache Settings
+
+    private let maxCacheSizeKey = "KingfisherMaxCacheSize"
+
+    func getCacheSize() async throws -> UInt {
+        return try await withCheckedThrowingContinuation { continuation in
+            KingfisherManager.shared.cache.calculateDiskStorageSize { result in
+                switch result {
+                case .success(let size):
+                    continuation.resume(returning: size)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    func getMaxCacheSize() async throws -> UInt {
+        if let savedSize = userDefault.object(forKey: maxCacheSizeKey) as? UInt {
+            return savedSize
+        } else {
+            // Default: 200 MB
+            let defaultBytes = UInt(200 * 1024 * 1024)
+            userDefault.set(defaultBytes, forKey: maxCacheSizeKey)
+            return defaultBytes
+        }
+    }
+
+    func updateMaxCacheSize(_ sizeInBytes: UInt) async throws {
+        KingfisherManager.shared.cache.diskStorage.config.sizeLimit = sizeInBytes
+        userDefault.set(sizeInBytes, forKey: maxCacheSizeKey)
+        logger.info("Updated max cache size to \(sizeInBytes) bytes")
+    }
+
+    func clearCache() async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            KingfisherManager.shared.cache.clearDiskCache {
+                KingfisherManager.shared.cache.clearMemoryCache()
+                self.logger.info("Cache cleared successfully")
+                continuation.resume()
+            }
+        }
+    }
 }
