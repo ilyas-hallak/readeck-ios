@@ -273,25 +273,60 @@ class SettingsRepository: PSettingsRepository {
 
     // MARK: - Offline Settings
 
-    private let offlineSettingsKey = "offlineSettings"
     private let logger = Logger.data
 
     func loadOfflineSettings() async throws -> OfflineSettings {
-        guard let data = userDefault.data(forKey: offlineSettingsKey) else {
-            logger.info("No offline settings found, returning defaults")
-            return OfflineSettings() // Default settings
-        }
+        let context = coreDataManager.context
 
-        let decoder = JSONDecoder()
-        let settings = try decoder.decode(OfflineSettings.self, from: data)
-        logger.debug("Loaded offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
-        return settings
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    fetchRequest.fetchLimit = 1
+
+                    let settingEntities = try context.fetch(fetchRequest)
+                    let settingEntity = settingEntities.first
+
+                    let settings = OfflineSettings(
+                        enabled: settingEntity?.offlineEnabled ?? false,
+                        maxUnreadArticles: settingEntity?.offlineMaxUnreadArticles ?? 20,
+                        saveImages: settingEntity?.offlineSaveImages ?? true,
+                        lastSyncDate: settingEntity?.offlineLastSyncDate
+                    )
+
+                    self.logger.debug("Loaded offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
+                    continuation.resume(returning: settings)
+                } catch {
+                    self.logger.error("Failed to load offline settings: \(error.localizedDescription)")
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 
     func saveOfflineSettings(_ settings: OfflineSettings) async throws {
-        let encoder = JSONEncoder()
-        let data = try encoder.encode(settings)
-        userDefault.set(data, forKey: offlineSettingsKey)
-        logger.info("Saved offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
+        let context = coreDataManager.context
+
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
+
+                    existingSettings.offlineEnabled = settings.enabled
+                    existingSettings.offlineMaxUnreadArticles = settings.maxUnreadArticles
+                    existingSettings.offlineSaveImages = settings.saveImages
+                    existingSettings.offlineLastSyncDate = settings.lastSyncDate
+
+                    try context.save()
+                    self.logger.info("Saved offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
+                    continuation.resume()
+                } catch {
+                    self.logger.error("Failed to save offline settings: \(error.localizedDescription)")
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
+
 }
