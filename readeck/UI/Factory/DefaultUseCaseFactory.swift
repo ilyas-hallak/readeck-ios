@@ -31,6 +31,10 @@ protocol UseCaseFactory {
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
+    func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase
+    func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
+    func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase
+    func makeClearCacheUseCase() -> PClearCacheUseCase
 }
 
 
@@ -179,5 +183,21 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {
         return CreateAnnotationUseCase(repository: annotationsRepository)
+    }
+
+    func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase {
+        return GetCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase {
+        return GetMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase {
+        return UpdateMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeClearCacheUseCase() -> PClearCacheUseCase {
+        return ClearCacheUseCase(settingsRepository: settingsRepository)
     }
 }

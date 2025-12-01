@@ -8,7 +8,7 @@
 import Foundation
 
 struct OfflineSettings: Codable {
-    var enabled: Bool = true
+    var enabled: Bool = false
     var maxUnreadArticles: Double = 20 // Double für Slider (Default: 20 Artikel)
     var saveImages: Bool = false
     var lastSyncDate: Date?

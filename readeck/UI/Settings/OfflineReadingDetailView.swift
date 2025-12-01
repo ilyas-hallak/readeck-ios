@@ -1,5 +1,5 @@
 //
-//  OfflineSettingsView.swift
+//  OfflineReadingDetailView.swift
 //  readeck
 //
 //  Created by Claude on 17.11.25.
@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-struct OfflineSettingsView: View {
+struct OfflineReadingDetailView: View {
     @State private var viewModel = OfflineSettingsViewModel()
     @EnvironmentObject var appSettings: AppSettings
 
     var body: some View {
-        Group {
+        List {
             Section {
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("Enable Offline Reading", isOn: $viewModel.offlineSettings.enabled)
@@ -67,7 +67,21 @@ struct OfflineSettingsView: View {
                             .foregroundColor(.secondary)
                             .padding(.top, 2)
                     }
+                }
+            } header: {
+                Text("Settings")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                    .textCase(nil)
+            } footer: {
+                Text("VPN connections are detected as active internet connections.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
+            if viewModel.offlineSettings.enabled {
+                Section {
                     // Sync button
                     Button(action: {
                         Task {
@@ -103,20 +117,27 @@ struct OfflineSettingsView: View {
                     }
                     .disabled(viewModel.isSyncing)
 
-                    // Cache stats
+                    // Cache stats with preview link
                     if viewModel.cachedArticlesCount > 0 {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Cached Articles")
-                                Text("\(viewModel.cachedArticlesCount) articles (\(viewModel.cacheSize))")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
+                        SettingsRowNavigationLink(
+                            icon: "doc.text.magnifyingglass",
+                            iconColor: .green,
+                            title: "Preview Cached Articles",
+                            subtitle: "\(viewModel.cachedArticlesCount) articles (\(viewModel.cacheSize))"
+                        ) {
+                            CachedArticlesPreviewView()
                         }
                     }
+                } header: {
+                    Text("Synchronization")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                        .textCase(nil)
+                }
 
-                    #if DEBUG
+                #if DEBUG
+                Section {
                     // Debug: Toggle offline mode simulation
                     VStack(alignment: .leading, spacing: 4) {
                         Toggle(isOn: Binding(
@@ -139,12 +160,19 @@ struct OfflineSettingsView: View {
                             }
                         }
                     }
-                    #endif
+                } header: {
+                    Text("Debug")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                        .textCase(nil)
                 }
-            } header: {
-                Text("Offline Reading")
+                #endif
             }
         }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Offline Reading")
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.loadSettings()
         }
