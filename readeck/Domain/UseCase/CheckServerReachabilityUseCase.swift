@@ -2,7 +2,7 @@
 //  CheckServerReachabilityUseCase.swift
 //  readeck
 //
-//  Created by Claude Code
+//  Created by Ilyas Hallak
 
 import Foundation
 

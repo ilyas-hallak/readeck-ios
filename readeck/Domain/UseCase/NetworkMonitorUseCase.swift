@@ -2,7 +2,7 @@
 //  NetworkMonitorUseCase.swift
 //  readeck
 //
-//  Created by Claude on 18.11.25.
+//  Created by Ilyas Hallak on 18.11.25.
 //
 
 import Foundation

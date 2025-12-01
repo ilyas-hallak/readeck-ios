@@ -2,14 +2,14 @@
 //  OfflineSettings.swift
 //  readeck
 //
-//  Created by Claude on 08.11.25.
+//  Created by Ilyas Hallak on 08.11.25.
 //
 
 import Foundation
 
 struct OfflineSettings: Codable {
     var enabled: Bool = false
-    var maxUnreadArticles: Double = 20 // Double für Slider (Default: 20 Artikel)
+    var maxUnreadArticles: Double = 20
     var saveImages: Bool = false
     var lastSyncDate: Date?
 

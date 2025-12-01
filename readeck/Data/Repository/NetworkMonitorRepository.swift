@@ -2,7 +2,7 @@
 //  NetworkMonitorRepository.swift
 //  readeck
 //
-//  Created by Claude on 18.11.25.
+//  Created by Ilyas Hallak on 18.11.25.
 //
 
 import Foundation
@@ -25,7 +25,7 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
 
     // MARK: - Properties
 
-    private let monitor = NWPathMonitor()
+    private let monitor: NWPathMonitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.readeck.networkmonitor")
     private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
     private var hasPathConnection = true
