@@ -15,14 +15,14 @@ struct OfflineReadingDetailView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 4) {
-                    Toggle("Enable Offline Reading", isOn: $viewModel.offlineSettings.enabled)
+                    Toggle("Enable Offline Reading".localized, isOn: $viewModel.offlineSettings.enabled)
                         .onChange(of: viewModel.offlineSettings.enabled) {
                             Task {
                                 await viewModel.saveSettings()
                             }
                         }
 
-                    Text("Automatically download articles for offline use.")
+                    Text("Automatically download articles for offline use.".localized)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
@@ -32,7 +32,7 @@ struct OfflineReadingDetailView: View {
                     // Max articles slider
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Maximum Articles")
+                            Text("Maximum Articles".localized)
                             Spacer()
                             Text("\(viewModel.offlineSettings.maxUnreadArticlesInt)")
                                 .font(.caption)
@@ -44,7 +44,7 @@ struct OfflineReadingDetailView: View {
                             in: 0...100,
                             step: 10
                         ) {
-                            Text("Max. Articles Offline")
+                            Text("Max. Articles Offline".localized)
                         }
                         .onChange(of: viewModel.offlineSettings.maxUnreadArticles) {
                             Task {
@@ -55,27 +55,27 @@ struct OfflineReadingDetailView: View {
 
                     // Save images toggle
                     VStack(alignment: .leading, spacing: 4) {
-                        Toggle("Save Images", isOn: $viewModel.offlineSettings.saveImages)
+                        Toggle("Save Images".localized, isOn: $viewModel.offlineSettings.saveImages)
                             .onChange(of: viewModel.offlineSettings.saveImages) {
                                 Task {
                                     await viewModel.saveSettings()
                                 }
                             }
 
-                        Text("Also download images for offline use.")
+                        Text("Also download images for offline use.".localized)
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .padding(.top, 2)
                     }
                 }
             } header: {
-                Text("Settings")
+                Text("Settings".localized)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                     .textCase(nil)
             } footer: {
-                Text("VPN connections are detected as active internet connections.")
+                Text("VPN connections are detected as active internet connections.".localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -98,7 +98,7 @@ struct OfflineReadingDetailView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Sync Now")
+                                Text("Sync Now".localized)
                                     .foregroundColor(viewModel.isSyncing ? .secondary : .blue)
 
                                 if let progress = viewModel.syncProgress {
@@ -122,14 +122,14 @@ struct OfflineReadingDetailView: View {
                         SettingsRowNavigationLink(
                             icon: "doc.text.magnifyingglass",
                             iconColor: .green,
-                            title: "Preview Cached Articles",
-                            subtitle: "\(viewModel.cachedArticlesCount) articles (\(viewModel.cacheSize))"
+                            title: "Preview Cached Articles".localized,
+                            subtitle: String(format: "%lld articles (%@)".localized, viewModel.cachedArticlesCount, viewModel.cacheSize)
                         ) {
                             CachedArticlesPreviewView()
                         }
                     }
                 } header: {
-                    Text("Synchronization")
+                    Text("Synchronization".localized)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
@@ -151,9 +151,9 @@ struct OfflineReadingDetailView: View {
                                     .foregroundColor(.orange)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Simulate Offline Mode")
+                                    Text("Simulate Offline Mode".localized)
                                         .foregroundColor(.orange)
-                                    Text("DEBUG: Toggle network status")
+                                    Text("DEBUG: Toggle network status".localized)
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -161,7 +161,7 @@ struct OfflineReadingDetailView: View {
                         }
                     }
                 } header: {
-                    Text("Debug")
+                    Text("Debug".localized)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
@@ -171,7 +171,7 @@ struct OfflineReadingDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Offline Reading")
+        .navigationTitle("Offline Reading".localized)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.loadSettings()

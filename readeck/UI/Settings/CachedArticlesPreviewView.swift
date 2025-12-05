@@ -29,7 +29,7 @@ struct CachedArticlesPreviewView: View {
                 cachedBookmarksList
             }
         }
-        .navigationTitle("Cached Articles")
+        .navigationTitle("Cached Articles".localized)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(
             item: Binding<String?>(
@@ -79,14 +79,14 @@ struct CachedArticlesPreviewView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
                         .font(.caption)
-                    Text("\(viewModel.cachedBookmarks.count) articles cached")
+                    Text(String(format: "%lld articles cached".localized, viewModel.cachedBookmarks.count))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 .textCase(nil)
                 .padding(.bottom, 4)
             } footer: {
-                Text("These articles are available offline. You can read them without an internet connection.")
+                Text("These articles are available offline. You can read them without an internet connection.".localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -107,11 +107,11 @@ struct CachedArticlesPreviewView: View {
                 .tint(.accentColor)
 
             VStack(spacing: 8) {
-                Text("Loading Cached Articles")
+                Text("Loading Cached Articles".localized)
                     .font(.headline)
                     .foregroundColor(.primary)
 
-                Text("Please wait...")
+                Text("Please wait...".localized)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -128,7 +128,7 @@ struct CachedArticlesPreviewView: View {
                 .foregroundColor(.orange)
 
             VStack(spacing: 8) {
-                Text("Unable to load cached articles")
+                Text("Unable to load cached articles".localized)
                     .font(.headline)
                     .foregroundColor(.primary)
 
@@ -138,7 +138,7 @@ struct CachedArticlesPreviewView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Button("Try Again") {
+            Button("Try Again".localized) {
                 Task {
                     await viewModel.loadCachedBookmarks()
                 }
@@ -159,12 +159,12 @@ struct CachedArticlesPreviewView: View {
                 .foregroundColor(.secondary.opacity(0.5))
 
             VStack(spacing: 8) {
-                Text("No Cached Articles")
+                Text("No Cached Articles".localized)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
 
-                Text("Enable offline reading and sync to cache articles for offline access")
+                Text("Enable offline reading and sync to cache articles for offline access".localized)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -176,7 +176,7 @@ struct CachedArticlesPreviewView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption)
-                    Text("Use 'Sync Now' to download articles")
+                    Text("Use 'Sync Now' to download articles".localized)
                         .font(.caption)
                 }
                 .foregroundColor(.accentColor)

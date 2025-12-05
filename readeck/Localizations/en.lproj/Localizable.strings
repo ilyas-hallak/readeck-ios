@@ -161,3 +161,27 @@
 "Your current server connection and login credentials." = "Your current server connection and login credentials.";
 "Your Password" = "Your Password";
 "Your Username" = "Your Username";
+
+/* Offline Reading */
+"Enable Offline Reading" = "Enable Offline Reading";
+"Offline Reading" = "Offline Reading";
+"Automatically download articles for offline use." = "Automatically download articles for offline use.";
+"Maximum Articles" = "Maximum Articles";
+"Max. Articles Offline" = "Max. Articles Offline";
+"Save Images" = "Save Images";
+"Also download images for offline use." = "Also download images for offline use.";
+"Sync Now" = "Sync Now";
+"Last synced: %@" = "Last synced: %@";
+"Preview Cached Articles" = "Preview Cached Articles";
+"%lld articles (%@)" = "%1$lld articles (%2$@)";
+"Cached Articles" = "Cached Articles";
+"%lld articles cached" = "%lld articles cached";
+"These articles are available offline. You can read them without an internet connection." = "These articles are available offline. You can read them without an internet connection.";
+"Loading Cached Articles" = "Loading Cached Articles";
+"Please wait..." = "Please wait...";
+"Unable to load cached articles" = "Unable to load cached articles";
+"No Cached Articles" = "No Cached Articles";
+"Enable offline reading and sync to cache articles for offline access" = "Enable offline reading and sync to cache articles for offline access";
+"Use 'Sync Now' to download articles" = "Use 'Sync Now' to download articles";
+"Simulate Offline Mode" = "Simulate Offline Mode";
+"DEBUG: Toggle network status" = "DEBUG: Toggle network status";

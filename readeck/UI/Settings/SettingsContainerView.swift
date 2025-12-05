@@ -21,7 +21,7 @@ struct SettingsContainerView: View {
             AppearanceSettingsView()
 
             Section {
-                Toggle("Enable Offline Reading", isOn: $offlineViewModel.offlineSettings.enabled)
+                Toggle("Enable Offline Reading".localized, isOn: $offlineViewModel.offlineSettings.enabled)
                     .onChange(of: offlineViewModel.offlineSettings.enabled) {
                         Task {
                             await offlineViewModel.saveSettings()
@@ -44,7 +44,7 @@ struct SettingsContainerView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Sync Now")
+                                Text("Sync Now".localized)
                                     .foregroundColor(offlineViewModel.isSyncing ? .secondary : .blue)
 
                                 if let progress = offlineViewModel.syncProgress {
@@ -66,16 +66,16 @@ struct SettingsContainerView: View {
                     SettingsRowNavigationLink(
                         icon: "arrow.down.circle.fill",
                         iconColor: .blue,
-                        title: "Offline Reading",
-                        subtitle: offlineViewModel.cachedArticlesCount > 0 ? "\(offlineViewModel.cachedArticlesCount) articles cached" : nil
+                        title: "Offline Reading".localized,
+                        subtitle: offlineViewModel.cachedArticlesCount > 0 ? String(format: "%lld articles cached".localized, offlineViewModel.cachedArticlesCount) : nil
                     ) {
                         OfflineReadingDetailView()
                     }
                 }
             } header: {
-                Text("Offline Reading")
+                Text("Offline Reading".localized)
             } footer: {
-                Text("Automatically download articles for offline use. VPN connections are detected as active internet connections.")
+                Text("Automatically download articles for offline use.".localized + " " + "VPN connections are detected as active internet connections.".localized)
             }
 
             CacheSettingsView()
