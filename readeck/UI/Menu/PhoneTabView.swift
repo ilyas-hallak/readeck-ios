@@ -206,9 +206,9 @@ struct PhoneTabView: View {
             } else {
                 Section {
                     VStack {
-                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state) {
+                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state, onSyncTapped: {
                             await offlineBookmarksViewModel.syncOfflineBookmarks()
-                        }
+                        })
                     }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())

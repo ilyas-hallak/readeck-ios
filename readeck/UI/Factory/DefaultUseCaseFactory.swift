@@ -25,6 +25,16 @@ protocol UseCaseFactory {
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase
+    func makeSettingsRepository() -> PSettingsRepository
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
+    func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase
+    func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
+    func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase
+    func makeClearCacheUseCase() -> PClearCacheUseCase
 }
 
 
@@ -38,6 +48,8 @@ class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
+    private let offlineCacheRepository: POfflineCacheRepository = OfflineCacheRepository()
+    private let networkMonitorRepository: PNetworkMonitorRepository = NetworkMonitorRepository()
 
     static let shared = DefaultUseCaseFactory()
 
@@ -143,5 +155,49 @@ class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
         return DeleteAnnotationUseCase(repository: annotationsRepository)
+    }
+
+    func makeSettingsRepository() -> PSettingsRepository {
+        return settingsRepository
+    }
+
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase {
+        return OfflineCacheSyncUseCase(
+            offlineCacheRepository: offlineCacheRepository,
+            bookmarksRepository: bookmarksRepository,
+            settingsRepository: settingsRepository
+        )
+    }
+
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase {
+        return NetworkMonitorUseCase(repository: networkMonitorRepository)
+    }
+
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase {
+        return GetCachedBookmarksUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase {
+        return GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {
+        return CreateAnnotationUseCase(repository: annotationsRepository)
+    }
+
+    func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase {
+        return GetCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase {
+        return GetMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase {
+        return UpdateMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeClearCacheUseCase() -> PClearCacheUseCase {
+        return ClearCacheUseCase(settingsRepository: settingsRepository)
     }
 }

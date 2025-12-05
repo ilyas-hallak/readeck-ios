@@ -45,16 +45,7 @@ struct SettingsGeneralView: View {
                 Text("Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.")
             }
 
-            #if DEBUG
-            Section {
-                Toggle("Automatic sync", isOn: $viewModel.autoSyncEnabled)
-                if viewModel.autoSyncEnabled {
-                    Stepper("Sync interval: \(viewModel.syncInterval) minutes", value: $viewModel.syncInterval, in: 1...60)
-                }
-            } header: {
-                Text("Sync Settings")
-            }
-
+            #if DEBUG            
             Section {
                 Toggle("Safari Reader Mode", isOn: $viewModel.enableReaderMode)
                 Toggle("Automatically mark articles as read", isOn: $viewModel.autoMarkAsRead)

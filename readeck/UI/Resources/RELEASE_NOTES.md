@@ -4,6 +4,53 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 2.0.0
+
+### Offline Reading
+
+- **Read your articles without internet connection** - the feature you've been waiting for!
+- Automatic background sync keeps your favorite articles cached
+- Choose how many articles to cache (up to 200)
+- Cache syncs automatically every 4 hours
+- Manual sync button for instant updates
+- Smart FIFO cleanup automatically removes old cached articles
+- Article images are pre-downloaded for offline viewing
+- Cached articles load instantly, even without network
+
+### Smart Network Monitoring
+
+- **Automatic offline detection** with reliable network monitoring
+- Visual indicator shows when you're offline
+- App automatically loads cached articles when offline
+- Cache-first loading for instant article access
+- Improved VPN handling without false-positives
+- Network status checks interface availability for accuracy
+
+### Offline Settings
+
+- **New dedicated offline settings screen**
+- Enable or disable offline mode
+- Adjust number of cached articles with slider
+- View last sync timestamp
+- Manual sync button
+- Toggle settings work instantly
+
+### Performance & Architecture
+
+- Clean architecture with dedicated cache repository layer
+- Efficient CoreData integration for cached content
+- Kingfisher image prefetching for smooth offline experience
+- Background sync doesn't block app startup
+- Reactive updates with Combine framework
+
+### Developer Features (DEBUG)
+
+- Offline mode simulation toggle for testing
+- Detailed sync logging for troubleshooting
+- Visual debug banner (green=online, red=offline)
+
+---
+
 ## Version 1.2.0
 
 ### Annotations & Highlighting

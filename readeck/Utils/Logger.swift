@@ -39,6 +39,7 @@ enum LogCategory: String, CaseIterable, Codable {
     case general = "General"
     case manual = "Manual"
     case viewModel = "ViewModel"
+    case sync = "Sync"
 }
 
 class LogConfiguration: ObservableObject {
@@ -260,6 +261,7 @@ extension Logger {
     static let general = Logger(category: .general)
     static let manual = Logger(category: .manual)
     static let viewModel = Logger(category: .viewModel)
+    static let sync = Logger(category: .sync)
 }
 
 // MARK: - Performance Measurement Helper

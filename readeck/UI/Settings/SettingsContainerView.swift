@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SettingsContainerView: View {
+    @State private var offlineViewModel = OfflineSettingsViewModel()
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -19,11 +20,67 @@ struct SettingsContainerView: View {
         List {
             AppearanceSettingsView()
 
-            ReadingSettingsView()
+            Section {
+                Toggle("Enable Offline Reading".localized, isOn: $offlineViewModel.offlineSettings.enabled)
+                    .onChange(of: offlineViewModel.offlineSettings.enabled) {
+                        Task {
+                            await offlineViewModel.saveSettings()
+                        }
+                    }
+
+                if offlineViewModel.offlineSettings.enabled {
+                    Button(action: {
+                        Task {
+                            await offlineViewModel.syncNow()
+                        }
+                    }) {
+                        HStack {
+                            if offlineViewModel.isSyncing {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .foregroundColor(.blue)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Sync Now".localized)
+                                    .foregroundColor(offlineViewModel.isSyncing ? .secondary : .blue)
+
+                                if let progress = offlineViewModel.syncProgress {
+                                    Text(progress)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                } else if let lastSync = offlineViewModel.offlineSettings.lastSyncDate {
+                                    Text("Last synced: \(lastSync.formatted(.relative(presentation: .named)))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+
+                            Spacer()
+                        }
+                    }
+                    .disabled(offlineViewModel.isSyncing)
+
+                    SettingsRowNavigationLink(
+                        icon: "arrow.down.circle.fill",
+                        iconColor: .blue,
+                        title: "Offline Reading".localized,
+                        subtitle: offlineViewModel.cachedArticlesCount > 0 ? String(format: "%lld articles cached".localized, offlineViewModel.cachedArticlesCount) : nil
+                    ) {
+                        OfflineReadingDetailView()
+                    }
+                }
+            } header: {
+                Text("Offline Reading".localized)
+            } footer: {
+                Text("Automatically download articles for offline use.".localized + " " + "VPN connections are detected as active internet connections.".localized)
+            }
 
             CacheSettingsView()
 
-            SyncSettingsView()
+            ReadingSettingsView()
 
             SettingsServerView()
 
@@ -42,11 +99,23 @@ struct SettingsContainerView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
+        .task {
+            await offlineViewModel.loadSettings()
+        }
     }
 
     @ViewBuilder
     private var debugSettingsSection: some View {
         Section {
+            SettingsRowNavigationLink(
+                icon: "wrench.and.screwdriver.fill",
+                iconColor: .orange,
+                title: "Debug Menu",
+                subtitle: "Network simulation, data management & more"
+            ) {
+                DebugMenuView()
+            }
+
             SettingsRowNavigationLink(
                 icon: "list.bullet.rectangle",
                 iconColor: .blue,

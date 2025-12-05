@@ -5,45 +5,53 @@ import SwiftUI
 struct BookmarksView: View {
 
     // MARK: States
-    
-    @State private var viewModel: BookmarksViewModel
+
+    @State private var viewModel = BookmarksViewModel()
     @State private var showingAddBookmark = false
     @State private var selectedBookmarkId: String?
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
-    
+
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
     @EnvironmentObject var playerUIState: PlayerUIState
+    @EnvironmentObject var appSettings: AppSettings
     let tag: String?
-    
+
     // MARK: Environments
-    
+
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
-    
+
     // MARK: Initializer
-    
-    init(viewModel: BookmarksViewModel = .init(), state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
+
+    init(state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
         self.state = state
         self.type = type
         self._selectedBookmark = selectedBookmark
         self.tag = tag
-        self.viewModel = viewModel
     }
 
     var body: some View {
         ZStack {
-            if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
-                skeletonLoadingView
-            } else if shouldShowCenteredState {
-                centeredStateView
-            } else {
-                bookmarksList
+            VStack(spacing: 0) {
+                // Offline banner
+                if !appSettings.isNetworkConnected && (viewModel.bookmarks?.bookmarks.isEmpty == false) {
+                    offlineBanner
+                }
+
+                // Main content
+                if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
+                    skeletonLoadingView
+                } else if shouldShowCenteredState {
+                    centeredStateView
+                } else {
+                    bookmarksList
+                }
             }
-            
+
             // FAB Button - only show for "Unread" and when not in error/loading state
             if (state == .unread || state == .all) && !shouldShowCenteredState && !viewModel.isInitialLoading {
                 fabButton
@@ -67,10 +75,17 @@ struct BookmarksView: View {
                 AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
             }
         )
-        .onAppear {
-            Task {
-                await viewModel.loadBookmarks(state: state, type: type, tag: tag)
-            }
+        .task {
+            // Set appSettings reference
+            viewModel.appSettings = appSettings
+
+            // Wait briefly for initial network status to be set
+            // NetworkMonitor checks status synchronously in init, but the publisher
+            // might not have propagated to appSettings yet
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+
+            Logger.ui.info("📲 BookmarksView.task - Loading bookmarks, isNetworkConnected: \(appSettings.isNetworkConnected)")
+            await viewModel.loadBookmarks(state: state, type: type, tag: tag)
         }
         .onChange(of: showingAddBookmark) { oldValue, newValue in
             // Refresh bookmarks when sheet is dismissed
@@ -78,7 +93,21 @@ struct BookmarksView: View {
                 Task {
                     // Wait a bit for the server to process the new bookmark
                     try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                    
+
+                    await viewModel.refreshBookmarks()
+                }
+            }
+        }
+        .onChange(of: appSettings.isNetworkConnected) { oldValue, newValue in
+            // Network status changed
+            if !newValue && oldValue {
+                // Lost network connection - load cached bookmarks
+                Task {
+                    await viewModel.loadCachedBookmarksFromUI()
+                }
+            } else if newValue && !oldValue {
+                // Regained network connection - refresh from server
+                Task {
                     await viewModel.refreshBookmarks()
                 }
             }
@@ -86,11 +115,16 @@ struct BookmarksView: View {
     }
     
     // MARK: - Computed Properties
-    
+
     private var shouldShowCenteredState: Bool {
         let isEmpty = viewModel.bookmarks?.bookmarks.isEmpty == true
         let hasError = viewModel.errorMessage != nil
-        return (isEmpty && viewModel.isLoading) || hasError
+        let isOfflineNonUnread = !appSettings.isNetworkConnected && state != .unread
+
+        // Show centered state when:
+        // 1. Empty AND has error, OR
+        // 2. Offline mode in non-Unread tabs (Archive/Starred/All)
+        return (isEmpty && hasError) || isOfflineNonUnread
     }
     
     // MARK: - View Components
@@ -99,13 +133,15 @@ struct BookmarksView: View {
     private var centeredStateView: some View {
         VStack(spacing: 20) {
             Spacer()
-            
-            if viewModel.isLoading {
+
+            if !appSettings.isNetworkConnected && state != .unread {
+                offlineUnavailableView
+            } else if viewModel.isLoading {
                 loadingView
             } else if let errorMessage = viewModel.errorMessage {
                 errorView(message: errorMessage)
             }
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -134,23 +170,74 @@ struct BookmarksView: View {
     }
     
     @ViewBuilder
+    private var offlineUnavailableView: some View {
+        VStack(spacing: 20) {
+            // Icon stack
+            ZStack {
+                Image(systemName: "cloud.slash")
+                    .font(.system(size: 48))
+                    .foregroundColor(.secondary.opacity(0.3))
+                    .offset(x: -8, y: 8)
+
+                Image(systemName: "wifi.slash")
+                    .font(.system(size: 48))
+                    .foregroundColor(.orange)
+            }
+
+            VStack(spacing: 8) {
+                Text("Offline Mode")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+
+                Text("\(state.displayName) Not Available")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+
+                Text("Only unread articles are cached for offline reading")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
+            }
+
+            // Hint to switch to Unread tab
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.left")
+                        .font(.caption)
+                    Text("Switch to Unread to view cached articles")
+                        .font(.caption)
+                }
+                .foregroundColor(.accentColor)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.accentColor.opacity(0.1))
+                .clipShape(Capsule())
+            }
+            .padding(.top, 8)
+        }
+        .padding(.horizontal, 40)
+    }
+
+    @ViewBuilder
     private func errorView(message: String) -> some View {
         VStack(spacing: 16) {
             Image(systemName: viewModel.isNetworkError ? "wifi.slash" : "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.orange)
-            
+
             VStack(spacing: 8) {
                 Text(viewModel.isNetworkError ? "No internet connection" : "Unable to load bookmarks")
                     .font(.headline)
                     .foregroundColor(.primary)
-                
+
                 Text(viewModel.isNetworkError ? "Please check your internet connection and try again" : message)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
-            
+
             Button("Try Again") {
                 Task {
                     await viewModel.retryLoading()
@@ -277,6 +364,30 @@ struct BookmarksView: View {
     }
     
     @ViewBuilder
+    private var offlineBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "wifi.slash")
+                .font(.body)
+                .foregroundColor(.secondary)
+
+            Text("Offline Mode – Showing cached articles")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemGray6))
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundColor(Color(.separator)),
+            alignment: .bottom
+        )
+    }
+
+    @ViewBuilder
     private var fabButton: some View {
         VStack {
             Spacer()
@@ -300,13 +411,4 @@ struct BookmarksView: View {
             }
         }
     }
-}
-
-#Preview {
-    BookmarksView(
-        viewModel: .init(MockUseCaseFactory()),
-        state: .archived,
-        type: [.article],
-        selectedBookmark: .constant(nil),
-        tag: nil)
 }

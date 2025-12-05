@@ -14,6 +14,10 @@ struct readeckApp: App {
     @StateObject private var appSettings = AppSettings()
     @Environment(\.scenePhase) private var scenePhase
 
+    #if DEBUG
+    @State private var showDebugMenu = false
+    #endif
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -27,6 +31,15 @@ struct readeckApp: App {
             .environmentObject(appSettings)
             .environment(\.managedObjectContext, CoreDataManager.shared.context)
             .preferredColorScheme(appSettings.theme.colorScheme)
+            #if DEBUG
+            .onShake {
+                showDebugMenu = true
+            }
+            .sheet(isPresented: $showDebugMenu) {
+                DebugMenuView()
+                    .environmentObject(appSettings)
+            }
+            #endif
             .onAppear {
                 #if DEBUG
                 NFX.sharedInstance().start()
@@ -34,6 +47,7 @@ struct readeckApp: App {
                 Task {
                     await loadAppSettings()
                 }
+                appViewModel.bindNetworkStatus(to: appSettings)
             }
             .onReceive(NotificationCenter.default.publisher(for: .settingsChanged)) { _ in
                 Task {
@@ -55,61 +69,6 @@ struct readeckApp: App {
         let settings = try? await settingsRepository.loadSettings()
         await MainActor.run {
             appSettings.settings = settings
-        }
-    }
-}
-
-
-struct TestView: View {
-    var body: some View {
-        if #available(iOS 26.0, *) {
-            Text("hello")
-                .toolbar {
-                    ToolbarSpacer(.flexible)
-
-                    ToolbarItem {
-                        Button {
-                            
-                        } label: {
-                            Label("Favorite", systemImage: "share")
-                                .symbolVariant(.none)
-                        }
-                    }
-
-                    ToolbarSpacer(.fixed)
-                    
-                    ToolbarItemGroup {
-                        Button {
-                            
-                        } label: {
-                            Label("Favorite", systemImage: "heart")
-                                .symbolVariant(.none)
-                        }
-                        
-                        Button("Info", systemImage: "info") {
-                            
-                        }
-                    }
-                    
-                    ToolbarItemGroup(placement: .bottomBar) {
-                        Spacer()
-                        Button {
-                            
-                        } label: {
-                            Label("Favorite", systemImage: "heart")
-                                .symbolVariant(.none)
-                        }
-                        
-                        Button("Info", systemImage: "info") {
-                            
-                        }
-                    }
-                    
-                }
-                .toolbar(removing: .title)
-                .ignoresSafeArea(edges: .top)
-        } else {
-            Text("hello1")
         }
     }
 }

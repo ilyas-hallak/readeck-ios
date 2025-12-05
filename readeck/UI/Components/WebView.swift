@@ -410,6 +410,7 @@ struct WebView: UIViewRepresentable {
         let greenColor = AnnotationColor.green.cssColor(isDark: isDarkMode)
         let blueColor = AnnotationColor.blue.cssColor(isDark: isDarkMode)
         let redColor = AnnotationColor.red.cssColor(isDark: isDarkMode)
+        let highlightLabel = NSLocalizedString("Highlight", comment: "")
 
         return """
         // Create annotation color overlay
@@ -465,9 +466,9 @@ struct WebView: UIViewRepresentable {
             `;
             overlay.appendChild(content);
 
-            // Add "Markierung" label
+            // Add localized label
             const label = document.createElement('span');
-            label.textContent = 'Markierung';
+            label.textContent = '\(highlightLabel)';
             label.style.cssText = `
                 color: black;
                 font-size: 16px;
