@@ -104,6 +104,7 @@ struct SettingsContainerView: View {
         }
     }
 
+    #if DEBUG
     @ViewBuilder
     private var debugSettingsSection: some View {
         Section {
@@ -147,6 +148,7 @@ struct SettingsContainerView: View {
             }
         }
     }
+    #endif
 
     @ViewBuilder
     private var appInfoSection: some View {
