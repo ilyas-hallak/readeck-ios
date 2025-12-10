@@ -74,6 +74,68 @@ struct WebView: UIViewRepresentable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
+                /* Load custom fonts from app bundle */
+                @font-face {
+                    font-family: 'Literata';
+                    src: local('Literata-Regular');
+                    font-weight: normal;
+                }
+                @font-face {
+                    font-family: 'Literata';
+                    src: local('Literata-Bold');
+                    font-weight: bold;
+                }
+                @font-face {
+                    font-family: 'Merriweather';
+                    src: local('Merriweather-Regular');
+                    font-weight: normal;
+                }
+                @font-face {
+                    font-family: 'Merriweather';
+                    src: local('Merriweather-Bold');
+                    font-weight: bold;
+                }
+                @font-face {
+                    font-family: 'Source Serif 4';
+                    src: local('SourceSerif4-Regular');
+                    font-weight: normal;
+                }
+                @font-face {
+                    font-family: 'Source Serif 4';
+                    src: local('SourceSerif4-Bold');
+                    font-weight: bold;
+                }
+                @font-face {
+                    font-family: 'Lato';
+                    src: local('Lato-Regular');
+                    font-weight: normal;
+                }
+                @font-face {
+                    font-family: 'Lato';
+                    src: local('Lato-Bold');
+                    font-weight: bold;
+                }
+                @font-face {
+                    font-family: 'Montserrat';
+                    src: local('Montserrat-Regular');
+                    font-weight: normal;
+                }
+                @font-face {
+                    font-family: 'Montserrat';
+                    src: local('Montserrat-Bold');
+                    font-weight: bold;
+                }
+                @font-face {
+                    font-family: 'Source Sans 3';
+                    src: local('SourceSans3-Regular');
+                    font-weight: normal;
+                }
+                @font-face {
+                    font-family: 'Source Sans 3';
+                    src: local('SourceSans3-Bold');
+                    font-weight: bold;
+                }
+
                 :root {
                     --background-color: \(isDarkMode ? "#000000" : "#ffffff");
                     --text-color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
@@ -356,14 +418,37 @@ struct WebView: UIViewRepresentable {
 
     private func getFontFamily(from fontFamily: FontFamily) -> String {
         switch fontFamily {
+        // Apple System Fonts
         case .system:
             return "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        case .newYork:
+            return "'New York', 'Times New Roman', Georgia, serif"
+        case .avenirNext:
+            return "'Avenir Next', Avenir, 'Helvetica Neue', sans-serif"
+        case .monospace:
+            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
+
+        // Google Serif Fonts
+        case .literata:
+            return "'Literata', Georgia, 'Times New Roman', serif"
+        case .merriweather:
+            return "'Merriweather', Georgia, 'Times New Roman', serif"
+        case .sourceSerif:
+            return "'Source Serif 4', 'Source Serif Pro', Georgia, serif"
+
+        // Google Sans Serif Fonts
+        case .lato:
+            return "'Lato', 'Helvetica Neue', Arial, sans-serif"
+        case .montserrat:
+            return "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
+        case .sourceSans:
+            return "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', sans-serif"
+
+        // Legacy
         case .serif:
             return "'Times New Roman', Times, 'Liberation Serif', serif"
         case .sansSerif:
             return "'Helvetica Neue', Helvetica, Arial, sans-serif"
-        case .monospace:
-            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
         }
     }
 

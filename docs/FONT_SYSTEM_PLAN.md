@@ -1,8 +1,8 @@
 # Font System Erweiterung - Konzept & Implementierungsplan
 
-**Datum:** 27. November 2025
+**Datum:** 5. Dezember 2025
 **Status:** Geplant
-**Ziel:** Erweiterte Font-Auswahl mit 11 hochwertigen Schriftarten für bessere Lesbarkeit
+**Ziel:** Erweiterte Font-Auswahl mit 10 hochwertigen Schriftarten für bessere Lesbarkeit
 
 ---
 
@@ -14,9 +14,9 @@
 - ❌ **Sans Serif:** Helvetica Neue (Standard)
 - ❌ **Monospace:** Menlo (Apple)
 
-### Neue Situation (11 Fonts)
-- ✅ **5 Apple System Fonts** (bereits in iOS enthalten, 0 KB)
-- ✅ **8 Google Fonts** (OFL 1.1 lizenziert, ~1-2 MB)
+### Neue Situation (10 Fonts)
+- ✅ **4 Apple System Fonts** (bereits in iOS enthalten, 0 KB)
+- ✅ **6 Google Fonts** (OFL 1.1 lizenziert, ~1.5 MB)
 
 ---
 
@@ -29,33 +29,22 @@
 
 ---
 
-## 📚 Font-Übersicht (11 Fonts Total)
+## 📚 Font-Übersicht (10 Fonts Total)
 
-### Serif Fonts (5 Schriftarten)
+### Serif Fonts (4 Schriftarten)
 
-#### 1. **New York** (Apple System Font)
+#### 1. **New York** (Apple System Font) ⭐
 - **Quelle:** In iOS 13+ enthalten
 - **Lizenz:** Apple proprietär (frei für iOS Apps)
 - **Eigenschaften:**
   - 6 Gewichte
   - Variable optische Größen
   - Unterstützt Latin, Greek, Cyrillic
+  - Wird in Apple Books und News verwendet
 - **Verwendung:** Premium Serif für Apple-native Ästhetik
 - **App-Größe:** 0 KB (bereits in iOS)
 
-#### 2. **Lora** (Google Font)
-- **Quelle:** [GitHub - cyrealtype/Lora-Cyrillic](https://github.com/cyrealtype/Lora-Cyrillic)
-- **Google Fonts:** [fonts.google.com/specimen/Lora](https://fonts.google.com/specimen/Lora)
-- **Lizenz:** SIL Open Font License 1.1
-- **Designer:** Olga Karpushina, Alexei Vanyashin (Cyreal)
-- **Eigenschaften:**
-  - Gut ausbalancierte Brushes
-  - Optimiert für Bildschirm-Lesbarkeit
-  - Variable Font verfügbar
-- **Verwendung:** Elegante, lesbare Serif für Artikel
-- **App-Größe:** ~200-300 KB
-
-#### 3. **Literata** (Google Font) ⭐
+#### 2. **Literata** (Google Font) ⭐
 - **Quelle:** [GitHub - googlefonts/literata](https://github.com/googlefonts/literata)
 - **Google Fonts:** [fonts.google.com/specimen/Literata](https://fonts.google.com/specimen/Literata)
 - **Lizenz:** SIL Open Font License 1.1
@@ -67,7 +56,7 @@
 - **Verwendung:** **Readeck Web-UI Match** - Hauptschrift für Artikel
 - **App-Größe:** ~250-350 KB
 
-#### 4. **Merriweather** (Google Font)
+#### 3. **Merriweather** (Google Font)
 - **Quelle:** [GitHub - SorkinType/Merriweather](https://github.com/SorkinType/Merriweather)
 - **Google Fonts:** [fonts.google.com/specimen/Merriweather](https://fonts.google.com/specimen/Merriweather)
 - **Lizenz:** SIL Open Font License 1.1
@@ -79,7 +68,7 @@
 - **Verwendung:** **Readeck Web-UI Match** - Alternative Serif
 - **App-Größe:** ~200-300 KB
 
-#### 5. **Source Serif** (Adobe/Google Font)
+#### 4. **Source Serif** (Adobe/Google Font)
 - **Quelle:** [GitHub - adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif)
 - **Google Fonts:** [fonts.google.com/specimen/Source+Serif+4](https://fonts.google.com/specimen/Source+Serif+4)
 - **Lizenz:** SIL Open Font License 1.1
@@ -96,7 +85,7 @@
 
 ### Sans Serif Fonts (5 Schriftarten)
 
-#### 6. **SF Pro** (San Francisco - Apple System Font)
+#### 5. **SF Pro** (San Francisco - Apple System Font) ⭐
 - **Quelle:** In iOS enthalten
 - **Lizenz:** Apple proprietär (frei für iOS Apps)
 - **Eigenschaften:**
@@ -106,6 +95,17 @@
   - Unterstützt 150+ Sprachen
   - Dynamic optical sizes
 - **Verwendung:** Standard UI Font
+- **App-Größe:** 0 KB (bereits in iOS)
+
+#### 6. **Avenir Next** (Apple System Font) ⭐
+- **Quelle:** In iOS enthalten
+- **Lizenz:** Apple proprietär (frei für iOS Apps)
+- **Eigenschaften:**
+  - Moderne geometrische Sans
+  - 12 Gewichte
+  - Sehr beliebt (Apple Marketing)
+  - Optimiert für Lesbarkeit
+- **Verwendung:** Premium Sans für moderne Ästhetik
 - **App-Größe:** 0 KB (bereits in iOS)
 
 #### 7. **Lato** (Google Font)

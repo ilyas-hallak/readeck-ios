@@ -496,6 +496,7 @@ struct BookmarkDetailView2: View {
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
                 .padding(.horizontal, 4)
+                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
             }
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")

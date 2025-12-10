@@ -116,6 +116,7 @@ struct BookmarkDetailLegacyView: View {
                                 .frame(height: webViewHeight)
                                 .cornerRadius(14)
                                 .padding(.horizontal, 4)
+                                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
                             } else if viewModel.isLoadingArticle {
                                 ProgressView("Loading article...")
                                     .frame(maxWidth: .infinity, alignment: .center)
@@ -392,6 +393,7 @@ struct BookmarkDetailLegacyView: View {
             .cornerRadius(14)
             .padding(.horizontal, 4)
             .animation(.easeInOut, value: webViewHeight)
+            .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
                 .frame(maxWidth: .infinity, alignment: .center)

@@ -134,6 +134,15 @@ struct SettingsContainerView: View {
             ) {
                 LoggingConfigurationView()
             }
+
+            SettingsRowNavigationLink(
+                icon: "textformat",
+                iconColor: .green,
+                title: "Font Debug",
+                subtitle: "View available fonts"
+            ) {
+                FontDebugView()
+            }
         } header: {
             HStack {
                 Text("Debug Settings")

@@ -28,6 +28,10 @@ struct FontSettingsView: View {
                     }
                 }
 
+                Text("font.web.match.hint".localized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Picker("Font size", selection: $viewModel.selectedFontSize) {
                     ForEach(FontSize.allCases, id: \.self) { size in
                         Text(size.displayName).tag(size)

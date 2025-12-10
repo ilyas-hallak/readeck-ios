@@ -188,5 +188,9 @@
 "Enable offline reading and sync to cache articles for offline access" = "Aktiviere Offline-Lesen und synchronisiere, um Artikel für den Offline-Zugriff zu cachen";
 "Use 'Sync Now' to download articles" = "Verwende 'Jetzt synchronisieren', um Artikel herunterzuladen";
 "Simulate Offline Mode" = "Offline-Modus simulieren";
+
+/* Font Settings */
+"font.web.match.hint" = "* Entspricht den Readeck Web-Schriften";
+
 "DEBUG: Toggle network status" = "DEBUG: Netzwerkstatus umschalten";
 
