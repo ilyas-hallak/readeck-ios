@@ -7,7 +7,6 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 ## Version 2.0.0
 
 ### 📖 Offline Reading - The Feature You've Been Waiting For!
-**Read your articles without internet connection**: the feature you've been waiting for!
 
 **Read your articles without internet connection**
 - enable offline reading in settings, the default is off
@@ -32,7 +31,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Clear cache with one tap
 - Monitor cache usage in settings
 
-### ✍️ Extended Font Selection
+### Extended Font Selection
 
 **10 new beautiful fonts for better reading**
 - New serif fonts: Literata, Merriweather, Source Serif
@@ -42,13 +41,13 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Improved font rendering in article reader
 - Font changes take effect immediately
 
-### 🎨 Annotations & Highlighting Improvements
+### Annotations & Highlighting Improvements
 
 - **Localized highlight button** - now appears in your device language
 - Improved annotation creation through API integration
 - Better error handling for annotation sync
 
-### 📄 Open Source Licenses
+### Open Source Licenses
 
 - **New licenses view** in settings
 - View all open-source fonts and their licenses
@@ -57,6 +56,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ### ⚡️ Performance & Improvements
 
+- **VPN & Private Network support** - Connect to your Readeck server via VPN (like Tailscale) or private networks. Supports HTTP connections and self-signed certificates for home/private server setups
 - Various stability improvements
 
 
