@@ -6,48 +6,59 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ## Version 2.0.0
 
-### Offline Reading
+### 📖 Offline Reading - The Feature You've Been Waiting For!
+**Read your articles without internet connection**: the feature you've been waiting for!
 
-- **Read your articles without internet connection** - the feature you've been waiting for!
-- Automatic background sync keeps your favorite articles cached
-- Choose how many articles to cache (up to 200)
-- Cache syncs automatically every 4 hours
-- Manual sync button for instant updates
-- Smart FIFO cleanup automatically removes old cached articles
-- Article images are pre-downloaded for offline viewing
-- Cached articles load instantly, even without network
+**Read your articles without internet connection**
+- enable offline reading in settings, the default is off
+- Automatic background sync keeps your unread articles cached and ready
+- Cache syncs automatically every 4 hours when you open the app
+- Manual sync button for instant updates anytime
+- Article images are pre-downloaded for offline viewing (optional)
+- Smart cleanup removes old cached articles automatically
 
-### Smart Network Monitoring
-
-- **Automatic offline detection** with reliable network monitoring
-- Visual indicator shows when you're offline
+**Smart offline experience**
+- Visual offline banner shows when network is unavailable
 - App automatically loads cached articles when offline
-- Cache-first loading for instant article access
-- Improved VPN handling without false-positives
-- Network status checks interface availability for accuracy
+- Cache-first loading for instant article access and better performance
+- Choose how many articles to cache (5-100 articles)
+- Note: When using a VPN, the app will show as online even if you are in Flight Mode
 
-### Offline Settings
+**Offline settings & management**
+- New dedicated offline settings screen
+- Enable or disable offline mode with toggle
+- View cache size and last sync timestamp
+- **Preview cached articles**: see which articles are available offline
+- Clear cache with one tap
+- Monitor cache usage in settings
 
-- **New dedicated offline settings screen**
-- Enable or disable offline mode
-- Adjust number of cached articles with slider
-- View last sync timestamp
-- Manual sync button
-- Toggle settings work instantly
+### ✍️ Extended Font Selection
 
-### Performance & Architecture
+**10 new beautiful fonts for better reading**
+- New serif fonts: Literata, Merriweather, Source Serif
+- New sans-serif fonts: Lato, Montserrat, Source Sans
+- Apple system fonts: SF Pro, New York, Charter
+- All fonts are open-source (OFL 1.1 licensed)
+- Improved font rendering in article reader
+- Font changes take effect immediately
 
-- Clean architecture with dedicated cache repository layer
-- Efficient CoreData integration for cached content
-- Kingfisher image prefetching for smooth offline experience
-- Background sync doesn't block app startup
-- Reactive updates with Combine framework
+### 🎨 Annotations & Highlighting Improvements
 
-### Developer Features (DEBUG)
+- **Localized highlight button** - now appears in your device language
+- Improved annotation creation through API integration
+- Better error handling for annotation sync
 
-- Offline mode simulation toggle for testing
-- Detailed sync logging for troubleshooting
-- Visual debug banner (green=online, red=offline)
+### 📄 Open Source Licenses
+
+- **New licenses view** in settings
+- View all open-source fonts and their licenses
+- Direct links to license files
+- Full transparency about used libraries
+
+### ⚡️ Performance & Improvements
+
+- Various stability improvements
+
 
 ---
 
