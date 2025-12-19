@@ -14,32 +14,43 @@ struct ShareBookmarkView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 0) {
-                        logoSection
-                        serverStatusSection
-                        urlSection
-                        tagManagementSection
-                            .id(AddBookmarkFieldFocus.labels)
-                        titleSection
-                            .id(AddBookmarkFieldFocus.title)
-                        statusSection
-                        Spacer(minLength: 100) // Space for button
-                    }
+            if !viewModel.isConfigured || viewModel.sessionExpired {
+                // Show setup required screen
+                VStack(spacing: 24) {
+                    logoSection
+                    setupRequiredSection
+                    Spacer()
                 }
-                .padding(.bottom, max(0, keyboardHeight - 120))                
-                .onChange(of: focusedField) { newField, _ in
-                    guard let field = newField else { return }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            proxy.scrollTo(field, anchor: .center)
+                .padding()
+            } else {
+                // Normal UI
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            logoSection
+                            serverStatusSection
+                            urlSection
+                            tagManagementSection
+                                .id(AddBookmarkFieldFocus.labels)
+                            titleSection
+                                .id(AddBookmarkFieldFocus.title)
+                            statusSection
+                            Spacer(minLength: 100) // Space for button
+                        }
+                    }
+                    .padding(.bottom, max(0, keyboardHeight - 120))
+                    .onChange(of: focusedField) { newField, _ in
+                        guard let field = newField else { return }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                proxy.scrollTo(field, anchor: .center)
+                            }
                         }
                     }
                 }
+
+                saveButtonSection
             }
-            
-            saveButtonSection
         }
         .background(Color(.systemGroupedBackground))
         .ignoresSafeArea(.keyboard, edges: .bottom)
@@ -71,6 +82,31 @@ struct ShareBookmarkView: View {
             .frame(height: 40)
             .padding(.top, 24)
             .opacity(0.9)
+    }
+
+    @ViewBuilder
+    private var setupRequiredSection: some View {
+        VStack(spacing: 20) {
+            Image(systemName: viewModel.sessionExpired ? "person.crop.circle.badge.exclamationmark" : "exclamationmark.triangle")
+                .font(.system(size: 60))
+                .foregroundColor(.orange)
+                .padding(.top, 40)
+
+            VStack(spacing: 12) {
+                Text(viewModel.sessionExpired ? "Session Expired" : "Setup Required")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.primary)
+
+                Text(viewModel.sessionExpired
+                     ? "Please log in via the Readeck app to continue saving bookmarks."
+                     : "Please complete the setup in the Readeck app before using the share extension.")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
     
     @ViewBuilder

@@ -54,17 +54,17 @@ class LogConfiguration: ObservableObject {
 
     private init() {
         // First time setup: Enable logging in DEBUG builds with sensible defaults
-        #if DEBUG
-        if UserDefaults.standard.object(forKey: "LogConfigurationInitialized") == nil {
-            isLoggingEnabled = true
-            showPerformanceLogs = true
-            showTimestamps = true
-            includeSourceLocation = true
-            globalMinLevel = .debug
-            UserDefaults.standard.set(true, forKey: "LogConfigurationInitialized")
-            saveConfiguration()
+        if Bundle.main.isDebugBuild {
+            if UserDefaults.standard.object(forKey: "LogConfigurationInitialized") == nil {
+                isLoggingEnabled = true
+                showPerformanceLogs = true
+                showTimestamps = true
+                includeSourceLocation = true
+                globalMinLevel = .debug
+                UserDefaults.standard.set(true, forKey: "LogConfigurationInitialized")
+                saveConfiguration()
+            }
         }
-        #endif
 
         loadConfiguration()
     }
@@ -184,7 +184,7 @@ struct Logger {
     // MARK: - Store Log
 
     private func storeLog(message: String, level: LogLevel, file: String, function: String, line: Int) {
-        #if DEBUG
+        guard Bundle.main.isDebugBuild else { return }
         guard config.isLoggingEnabled else { return }
         let entry = LogEntry(
             level: level,
@@ -197,7 +197,6 @@ struct Logger {
         Task {
             await LogStore.shared.addEntry(entry)
         }
-        #endif
     }
     
     // MARK: - Convenience Methods

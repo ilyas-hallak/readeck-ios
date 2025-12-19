@@ -86,12 +86,10 @@ struct SettingsContainerView: View {
 
             LegalPrivacySettingsView()
 
-            // Debug-only Logging Configuration
-            #if DEBUG
-            if Bundle.main.isDebugBuild {
+            // Debug-only Settings Section
+            if !Bundle.main.isProduction {
                 debugSettingsSection
             }
-            #endif
 
             // App Info Section
             appInfoSection
@@ -104,7 +102,6 @@ struct SettingsContainerView: View {
         }
     }
 
-    #if DEBUG
     @ViewBuilder
     private var debugSettingsSection: some View {
         Section {
@@ -112,42 +109,16 @@ struct SettingsContainerView: View {
                 icon: "wrench.and.screwdriver.fill",
                 iconColor: .orange,
                 title: "Debug Menu",
-                subtitle: "Network simulation, data management & more"
+                subtitle: "Network simulation, logging & more"
             ) {
                 DebugMenuView()
-            }
-
-            SettingsRowNavigationLink(
-                icon: "list.bullet.rectangle",
-                iconColor: .blue,
-                title: "Debug Logs",
-                subtitle: "View all debug messages"
-            ) {
-                DebugLogViewer()
-            }
-
-            SettingsRowNavigationLink(
-                icon: "slider.horizontal.3",
-                iconColor: .purple,
-                title: "Logging Configuration",
-                subtitle: "Configure log levels and categories"
-            ) {
-                LoggingConfigurationView()
-            }
-
-            SettingsRowNavigationLink(
-                icon: "textformat",
-                iconColor: .green,
-                title: "Font Debug",
-                subtitle: "View available fonts"
-            ) {
-                FontDebugView()
+                    .environmentObject(AppSettings())
             }
         } header: {
             HStack {
                 Text("Debug Settings")
                 Spacer()
-                Text("DEBUG BUILD")
+                Text(Bundle.main.isTestFlightBuild ? "TESTFLIGHT" : "DEBUG BUILD")
                     .font(.caption2)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -155,9 +126,10 @@ struct SettingsContainerView: View {
                     .foregroundColor(.orange)
                     .clipShape(Capsule())
             }
+        } footer: {
+            Text("Debug menu is also accessible via shake gesture")
         }
     }
-    #endif
 
     @ViewBuilder
     private var appInfoSection: some View {

@@ -248,18 +248,18 @@ struct BookmarkDetailView2: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        
-        #if DEBUG
-        // Toggle button (left)
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button(action: {
-                useNativeWebView.toggle()
-            }) {
-                Image(systemName: "sparkles")
-                    .foregroundColor(.accentColor)
+
+        if Bundle.main.isDebugBuild {
+            // Toggle button (left)
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    useNativeWebView.toggle()
+                }) {
+                    Image(systemName: "sparkles")
+                        .foregroundColor(.accentColor)
+                }
             }
         }
-        #endif
 
         // Top toolbar (right)
         ToolbarItem(placement: .navigationBarTrailing) {

@@ -76,6 +76,9 @@ class SimpleAPI {
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
+                    logger.error("Authentication failed: 401 Unauthorized")
+                    showStatus("Session expired. Please log in via the Readeck app.", true)
+                    return
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")
@@ -123,12 +126,15 @@ class SimpleAPI {
             }
             
             logger.logNetworkRequest(method: "GET", url: "/api/bookmarks/labels", statusCode: httpResponse.statusCode)
-            
+
             guard 200...299 ~= httpResponse.statusCode else {
                 if httpResponse.statusCode == 401 {
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
+                    logger.error("Authentication failed: 401 Unauthorized")
+                    showStatus("Session expired. Please log in via the Readeck app.", true)
+                    return nil
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")

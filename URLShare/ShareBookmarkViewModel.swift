@@ -11,6 +11,8 @@ class ShareBookmarkViewModel: ObservableObject {
     @Published var isSaving: Bool = false
     @Published var searchText: String = ""
     @Published var isServerReachable: Bool = true
+    @Published var isConfigured: Bool = true
+    @Published var sessionExpired: Bool = false
     let tagSortOrder: TagSortOrder = .byCount  // Share Extension always uses byCount
     let extensionContext: NSExtensionContext?
 
@@ -21,6 +23,13 @@ class ShareBookmarkViewModel: ObservableObject {
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
         logger.info("ShareBookmarkViewModel initialized with extension context: \(extensionContext != nil)")
+
+        // Check if app is configured by verifying token exists
+        checkConfiguration()
+
+        // Setup notification observer for 401 errors
+        setupNotificationObservers()
+
         extractSharedContent()
     }
     
@@ -174,6 +183,30 @@ class ShareBookmarkViewModel: ObservableObject {
         searchText = ""
     }
 
+    private func checkConfiguration() {
+        let token = KeychainHelper.shared.loadToken()
+        let endpoint = KeychainHelper.shared.loadEndpoint()
+
+        if token == nil || token?.isEmpty == true || endpoint == nil || endpoint?.isEmpty == true {
+            logger.warning("Share extension opened but app is not configured (missing token or endpoint)")
+            isConfigured = false
+        } else {
+            logger.info("Share extension opened with valid configuration")
+            isConfigured = true
+        }
+    }
+
+    private func setupNotificationObservers() {
+        NotificationCenter.default.addObserver(
+            forName: .unauthorizedAPIResponse,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.logger.warning("Received 401 Unauthorized - session expired")
+            self?.sessionExpired = true
+        }
+    }
+
     private func completeExtensionRequest() {
         logger.debug("Completing extension request")
         guard let context = extensionContext else {
@@ -188,5 +221,9 @@ class ShareBookmarkViewModel: ObservableObject {
                 self?.logger.info("Extension request completed successfully")
             }
         }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 } 

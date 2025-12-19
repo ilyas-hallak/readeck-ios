@@ -57,15 +57,15 @@ class AppViewModel {
     }
     
     private func handleUnauthorizedResponse() async {
-        print("AppViewModel: Handling 401 Unauthorized - logging out user")
-        
+        Logger.viewModel.info("Handling 401 Unauthorized - logging out user")
+
         do {
             try await factory.makeLogoutUseCase().execute()
             loadSetupStatus()
-            
-            print("AppViewModel: User successfully logged out due to 401 error")
+
+            Logger.viewModel.info("User successfully logged out due to 401 error")
         } catch {
-            print("AppViewModel: Error during logout: \(error)")
+            Logger.viewModel.error("Error during logout: \(error.localizedDescription)")
         }
     }
     
@@ -106,22 +106,34 @@ class AppViewModel {
     }
 
     private func syncTagsOnAppStart() async {
+        // Don't sync if onboarding is not complete (no token/endpoint available)
+        guard settingsRepository.hasFinishedSetup else {
+            Logger.sync.debug("Skipping tag sync - onboarding not completed")
+            return
+        }
+
         let now = Date()
 
         // Check if last sync was less than 2 minutes ago
         if let lastSync = lastAppStartTagSyncTime,
            now.timeIntervalSince(lastSync) < 120 {
-            print("AppViewModel: Skipping tag sync - last sync was less than 2 minutes ago")
+            Logger.sync.debug("Skipping tag sync - last sync was less than 2 minutes ago")
             return
         }
 
         // Sync tags from server to Core Data
-        print("AppViewModel: Syncing tags on app start")
+        Logger.sync.info("Syncing tags on app start")
         try? await syncTagsUseCase.execute()
         lastAppStartTagSyncTime = now
     }
 
     private func syncOfflineArticlesIfNeeded() {
+        // Don't sync if onboarding is not complete (no token/endpoint available)
+        guard settingsRepository.hasFinishedSetup else {
+            Logger.sync.debug("Skipping offline sync - onboarding not completed")
+            return
+        }
+
         // Run offline sync in background without blocking app start
         Task.detached(priority: .background) { [weak self] in
             guard let self = self else { return }

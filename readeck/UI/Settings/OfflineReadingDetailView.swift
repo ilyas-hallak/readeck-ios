@@ -136,38 +136,38 @@ struct OfflineReadingDetailView: View {
                         .textCase(nil)
                 }
 
-                #if DEBUG
-                Section {
-                    // Debug: Toggle offline mode simulation
-                    VStack(alignment: .leading, spacing: 4) {
-                        Toggle(isOn: Binding(
-                            get: { !appSettings.isNetworkConnected },
-                            set: { isOffline in
-                                appSettings.isNetworkConnected = !isOffline
-                            }
-                        )) {
-                            HStack {
-                                Image(systemName: "airplane")
-                                    .foregroundColor(.orange)
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Simulate Offline Mode".localized)
+                if Bundle.main.isDebugBuild {
+                    Section {
+                        // Debug: Toggle offline mode simulation
+                        VStack(alignment: .leading, spacing: 4) {
+                            Toggle(isOn: Binding(
+                                get: { !appSettings.isNetworkConnected },
+                                set: { isOffline in
+                                    appSettings.isNetworkConnected = !isOffline
+                                }
+                            )) {
+                                HStack {
+                                    Image(systemName: "airplane")
                                         .foregroundColor(.orange)
-                                    Text("DEBUG: Toggle network status".localized)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Simulate Offline Mode".localized)
+                                            .foregroundColor(.orange)
+                                        Text("DEBUG: Toggle network status".localized)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
                             }
                         }
+                    } header: {
+                        Text("Debug".localized)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                            .textCase(nil)
                     }
-                } header: {
-                    Text("Debug".localized)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                        .textCase(nil)
                 }
-                #endif
             }
         }
         .listStyle(.insetGrouped)
