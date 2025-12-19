@@ -9,13 +9,45 @@ import SwiftUI
 
 struct OnboardingServerView: View {
     @State private var viewModel = SettingsServerViewModel()
+    @State private var showLoginFields = false
 
     var body: some View {
+        classicLoginForm
+    }
+
+    private var buttonEnabled: Bool {
+        if showLoginFields {
+            // Phase 2: Need endpoint, username, and password
+            return !viewModel.endpoint.isEmpty && !viewModel.username.isEmpty && !viewModel.password.isEmpty
+        } else {
+            // Phase 1: Only need endpoint
+            return !viewModel.endpoint.isEmpty
+        }
+    }
+
+    private var classicLoginForm: some View {
         VStack(spacing: 20) {
-            SectionHeader(title: "Server Settings".localized, icon: "server.rack")
+            // Readeck Logo with green background
+            ZStack {
+                Circle()
+                    .fill(Color("green"))
+                    .frame(width: 80, height: 80)
+
+                Image("readeck")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 50, height: 50)
+                    .foregroundColor(.white)
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 8)
+
+            Text(showLoginFields ? "Enter your credentials" : "Enter your Readeck server")
+                .font(.title2)
+                .fontWeight(.bold)
                 .padding(.bottom, 4)
 
-            Text("Enter your Readeck server details to get started.")
+            Text(showLoginFields ? "Please provide your username and password." : "Enter your server endpoint to get started.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -73,28 +105,31 @@ struct OnboardingServerView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                // Username
-                VStack(alignment: .leading, spacing: 8) {
-                    TextField("",
-                              text: $viewModel.username,
-                              prompt: Text("Username").foregroundColor(.secondary))
-                        .textFieldStyle(.roundedBorder)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .onChange(of: viewModel.username) {
-                            viewModel.clearMessages()
-                        }
-                }
+                // Username & Password - only show when showLoginFields is true
+                if showLoginFields {
+                    // Username
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("",
+                                  text: $viewModel.username,
+                                  prompt: Text("Username").foregroundColor(.secondary))
+                            .textFieldStyle(.roundedBorder)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .onChange(of: viewModel.username) {
+                                viewModel.clearMessages()
+                            }
+                    }
 
-                // Password
-                VStack(alignment: .leading, spacing: 8) {
-                    SecureField("",
-                                text: $viewModel.password,
-                                prompt: Text("Password").foregroundColor(.secondary))
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: viewModel.password) {
-                            viewModel.clearMessages()
-                        }
+                    // Password
+                    VStack(alignment: .leading, spacing: 8) {
+                        SecureField("",
+                                    text: $viewModel.password,
+                                    prompt: Text("Password").foregroundColor(.secondary))
+                            .textFieldStyle(.roundedBorder)
+                            .onChange(of: viewModel.password) {
+                                viewModel.clearMessages()
+                            }
+                    }
                 }
             }
 
@@ -122,7 +157,24 @@ struct OnboardingServerView: View {
             VStack(spacing: 10) {
                 Button(action: {
                     Task {
-                        await viewModel.saveServerSettings()
+                        if !showLoginFields {
+                            // Phase 1: Check server for OAuth support
+                            await viewModel.checkServerOAuthSupport()
+                            if viewModel.serverSupportsOAuth {
+                                // Try OAuth login
+                                await viewModel.loginWithOAuth()
+                                // If OAuth fails, error message is shown, user can fallback to classic
+                                if viewModel.errorMessage != nil {
+                                    showLoginFields = true
+                                }
+                            } else {
+                                // No OAuth → show login fields for classic auth
+                                showLoginFields = true
+                            }
+                        } else {
+                            // Phase 2: Classic login
+                            await viewModel.saveServerSettings()
+                        }
                     }
                 }) {
                     HStack {
@@ -131,16 +183,16 @@ struct OnboardingServerView: View {
                                 .scaleEffect(0.8)
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         }
-                        Text(viewModel.isLoading ? "Saving..." : (viewModel.isLoggedIn ? "Re-login & Save" : "Login & Save"))
+                        Text(viewModel.isLoading ? (showLoginFields ? "Logging in..." : "Checking...") : (showLoginFields ? "Login & Save" : "Continue"))
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(viewModel.canLogin ? Color.accentColor : Color.gray)
+                    .background(buttonEnabled ? Color.accentColor : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                 }
-                .disabled(!viewModel.canLogin || viewModel.isLoading)
+                .disabled(!buttonEnabled || viewModel.isLoading)
             }
         }
         .task {

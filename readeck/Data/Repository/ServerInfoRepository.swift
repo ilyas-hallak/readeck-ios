@@ -38,7 +38,7 @@ class ServerInfoRepository: PServerInfoRepository {
 
         // Perform actual check
         do {
-            let info = try await apiClient.getServerInfo()
+            let info = try await apiClient.getServerInfo(endpoint: nil)
             let serverInfo = ServerInfo(from: info)
             updateCache(serverInfo: serverInfo)
             logger.info("Server reachability checked: true (version: \(info.version))")
@@ -51,23 +51,28 @@ class ServerInfoRepository: PServerInfoRepository {
         }
     }
 
-    func getServerInfo() async throws -> ServerInfo {
-        // Check cache first
-        if let cached = getCachedServerInfo() {
+    func getServerInfo(endpoint: String? = nil) async throws -> ServerInfo {
+        // Check cache first (only if no custom endpoint provided)
+        if endpoint == nil, let cached = getCachedServerInfo() {
             logger.debug("Server info from cache")
             return cached
         }
 
-        // Check rate limiting
-        if isRateLimited(), let cached = cachedServerInfo {
+        // Check rate limiting (only if no custom endpoint provided)
+        if endpoint == nil, isRateLimited(), let cached = cachedServerInfo {
             logger.debug("Server info check rate limited, using cached value")
             return cached
         }
 
         // Fetch fresh info
-        let dto = try await apiClient.getServerInfo()
+        let dto = try await apiClient.getServerInfo(endpoint: endpoint)
         let serverInfo = ServerInfo(from: dto)
-        updateCache(serverInfo: serverInfo)
+
+        // Only update cache if using default endpoint
+        if endpoint == nil {
+            updateCache(serverInfo: serverInfo)
+        }
+
         logger.info("Server info fetched: version \(dto.version)")
         return serverInfo
     }

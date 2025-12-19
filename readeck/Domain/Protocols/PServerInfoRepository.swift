@@ -6,5 +6,5 @@
 
 protocol PServerInfoRepository {
     func checkServerReachability() async -> Bool
-    func getServerInfo() async throws -> ServerInfo
+    func getServerInfo(endpoint: String?) async throws -> ServerInfo
 }

@@ -21,6 +21,10 @@ protocol PAPI {
     func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto]
     func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> AnnotationDto
     func deleteAnnotation(bookmarkId: String, annotationId: String) async throws
+
+    // OAuth methods
+    func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto
+    func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto
 }
 
 class API: PAPI {
@@ -529,6 +533,87 @@ class API: PAPI {
 
         logger.logNetworkRequest(method: "DELETE", url: url.absoluteString, statusCode: httpResponse.statusCode)
         logger.info("Successfully deleted annotation: \(annotationId)")
+    }
+
+    // MARK: - OAuth Methods
+
+    func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto {
+        logger.info("Registering OAuth client for endpoint: \(endpoint)")
+        guard let url = URL(string: "\(endpoint)/api/oauth/client") else {
+            logger.error("Invalid URL for OAuth client registration: \(endpoint)")
+            throw APIError.invalidURL
+        }
+
+        let requestData = try JSONEncoder().encode(request)
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        urlRequest.httpBody = requestData
+
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString)
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for OAuth client registration")
+            throw APIError.invalidResponse
+        }
+
+        guard 200...299 ~= httpResponse.statusCode else {
+            logger.logNetworkError(method: "POST", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        let clientResponse = try JSONDecoder().decode(OAuthClientResponseDto.self, from: data)
+        logger.info("Successfully registered OAuth client: \(clientResponse.clientId)")
+        return clientResponse
+    }
+
+    func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto {
+        logger.info("Exchanging OAuth authorization code for access token")
+        guard let url = URL(string: "\(endpoint)/api/oauth/token") else {
+            logger.error("Invalid URL for OAuth token exchange: \(endpoint)")
+            throw APIError.invalidURL
+        }
+
+        // OAuth token requests typically use application/x-www-form-urlencoded
+        let formData = [
+            "grant_type": request.grantType,
+            "client_id": request.clientId,
+            "code": request.code,
+            "code_verifier": request.codeVerifier,
+            "redirect_uri": request.redirectUri
+        ]
+
+        let formBody = formData.map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")" }
+            .joined(separator: "&")
+
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        urlRequest.httpBody = formBody.data(using: .utf8)
+
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString)
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for OAuth token exchange")
+            throw APIError.invalidResponse
+        }
+
+        guard 200...299 ~= httpResponse.statusCode else {
+            logger.logNetworkError(method: "POST", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        let tokenResponse = try JSONDecoder().decode(OAuthTokenResponseDto.self, from: data)
+        logger.info("Successfully exchanged authorization code for access token")
+        return tokenResponse
     }
 }
 

@@ -1,13 +1,12 @@
 import Foundation
 
 struct ServerInfoDto: Codable {
-    let version: String
-    let buildDate: String?
-    let userAgent: String?
+    let version: VersionInfo
+    let features: [String]?
 
-    enum CodingKeys: String, CodingKey {
-        case version
-        case buildDate = "build_date"
-        case userAgent = "user_agent"
+    struct VersionInfo: Codable {
+        let canonical: String
+        let release: String
+        let build: String
     }
 }

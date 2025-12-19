@@ -10,6 +10,8 @@
 		5D2B7FB92DFA27A400EBDB2B /* URLShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */ = {isa = PBXBuildFile; productRef = 5D348CC22E0C9F4F00D0AF21 /* netfox */; };
 		5D48E6022EB402F50043F90F /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5D48E6012EB402F50043F90F /* MarkdownUI */; };
+		5D5230352EF2A4F4002FDEDE /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 5D5230342EF2A4F4002FDEDE /* AppAuth */; };
+		5D5230372EF2A4F4002FDEDE /* AppAuthCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5D5230362EF2A4F4002FDEDE /* AppAuthCore */; };
 		5D9D95492E623668009AF769 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 5D9D95482E623668009AF769 /* Kingfisher */; };
 		5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 5DA241FA2E17C3B3007531C3 /* RswiftLibrary */; };
 /* End PBXBuildFile section */
@@ -81,6 +83,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Assets.xcassets,
+				Data/API/DTOs/OAuthTokenResponseDto.swift,
 				Data/CoreData/CoreDataManager.swift,
 				"Data/Extensions/NSManagedObjectContext+SafeFetch.swift",
 				Data/KeychainHelper.swift,
@@ -94,6 +97,8 @@
 				Domain/Model/TagSortOrder.swift,
 				Domain/Model/Theme.swift,
 				Domain/Model/UrlOpener.swift,
+				Domain/Models/AuthenticationMethod.swift,
+				Domain/Models/OAuthToken.swift,
 				readeck.xcdatamodeld,
 				Splash.storyboard,
 				UI/Components/Constants.swift,
@@ -103,8 +108,9 @@
 				UI/Components/UnifiedLabelChip.swift,
 				UI/Extension/FontSizeExtension.swift,
 				UI/Models/AppSettings.swift,
-				"UI/Utils 2/Logger.swift",
-				"UI/Utils 2/LogStore.swift",
+				UI/Utils/BuildEnvironment.swift,
+				UI/Utils/Logger.swift,
+				UI/Utils/LogStore.swift,
 				UI/Utils/NotificationNames.swift,
 			);
 			target = 5D2B7FAE2DFA27A400EBDB2B /* URLShare */;
@@ -160,10 +166,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5D5230352EF2A4F4002FDEDE /* AppAuth in Frameworks */,
 				5D9D95492E623668009AF769 /* Kingfisher in Frameworks */,
 				5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */,
 				5DA241FB2E17C3B3007531C3 /* RswiftLibrary in Frameworks */,
 				5D48E6022EB402F50043F90F /* MarkdownUI in Frameworks */,
+				5D5230372EF2A4F4002FDEDE /* AppAuthCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +264,8 @@
 				5DA241FA2E17C3B3007531C3 /* RswiftLibrary */,
 				5D9D95482E623668009AF769 /* Kingfisher */,
 				5D48E6012EB402F50043F90F /* MarkdownUI */,
+				5D5230342EF2A4F4002FDEDE /* AppAuth */,
+				5D5230362EF2A4F4002FDEDE /* AppAuthCore */,
 			);
 			productName = readeck;
 			productReference = 5D45F9C82DF858680048D5B8 /* readeck.app */;
@@ -348,6 +358,7 @@
 				5DA241F92E17C3B3007531C3 /* XCRemoteSwiftPackageReference "R.swift" */,
 				5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				5D48E6002EB402F50043F90F /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				5D5230332EF2A4F4002FDEDE /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5D45F9C92DF858680048D5B8 /* Products */;
@@ -640,7 +651,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -684,7 +695,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -877,6 +888,14 @@
 				minimumVersion = 2.4.1;
 			};
 		};
+		5D5230332EF2A4F4002FDEDE /* XCRemoteSwiftPackageReference "AppAuth-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/openid/AppAuth-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		5D9D95472E623668009AF769 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -905,6 +924,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5D48E6002EB402F50043F90F /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
 			productName = MarkdownUI;
+		};
+		5D5230342EF2A4F4002FDEDE /* AppAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D5230332EF2A4F4002FDEDE /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuth;
+		};
+		5D5230362EF2A4F4002FDEDE /* AppAuthCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D5230332EF2A4F4002FDEDE /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuthCore;
 		};
 		5D9D95482E623668009AF769 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;

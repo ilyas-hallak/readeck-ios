@@ -24,7 +24,11 @@ class MockUseCaseFactory: UseCaseFactory {
     func makeCheckServerReachabilityUseCase() -> any PCheckServerReachabilityUseCase {
         MockCheckServerReachabilityUseCase()
     }
-    
+
+    func makeGetServerInfoUseCase() -> any PGetServerInfoUseCase {
+        MockGetServerInfoUseCase()
+    }
+
     func makeOfflineBookmarkSyncUseCase() -> any POfflineBookmarkSyncUseCase {
         MockOfflineBookmarkSyncUseCase()
     }
@@ -302,7 +306,13 @@ class MockCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
     }
 
     func getServerInfo() async throws -> ServerInfo {
-        return ServerInfo(version: "1.0.0", buildDate: nil, userAgent: nil, isReachable: true)
+        return ServerInfo(version: "1.0.0", isReachable: true, features: [])
+    }
+}
+
+class MockGetServerInfoUseCase: PGetServerInfoUseCase {
+    func execute(endpoint: String? = nil) async throws -> ServerInfo {
+        return ServerInfo(version: "1.0.0", isReachable: true, features: ["oauth"])
     }
 }
 
@@ -455,4 +465,52 @@ class MockUpdateMaxCacheSizeUseCase: PUpdateMaxCacheSizeUseCase {
 
 class MockClearCacheUseCase: PClearCacheUseCase {
     func execute() async throws {}
+}
+
+// MARK: - OAuth Mock Extensions
+extension MockUseCaseFactory {
+    func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
+        MockLoginWithOAuthUseCase()
+    }
+
+    func makeAuthRepository() -> PAuthRepository {
+        MockAuthRepository()
+    }
+}
+
+class MockLoginWithOAuthUseCase: PLoginWithOAuthUseCase {
+    func execute(endpoint: String) async throws -> OAuthToken {
+        return OAuthToken(
+            accessToken: "mock_access_token",
+            tokenType: "Bearer",
+            scope: "read write",
+            expiresIn: 3600,
+            refreshToken: "mock_refresh_token",
+            createdAt: Date()
+        )
+    }
+}
+
+class MockAuthRepository: PAuthRepository {
+    func login(endpoint: String, username: String, password: String) async throws -> User {
+        return User(id: "mock_user", token: "mock_token")
+    }
+
+    func logout() async throws {}
+
+    func getCurrentSettings() async throws -> Settings? {
+        return nil
+    }
+
+    func loginWithOAuth(endpoint: String, token: OAuthToken) async throws {
+        // Mock: No need to fetch profile in mock
+    }
+
+    func getAuthenticationMethod() async -> AuthenticationMethod? {
+        return .apiToken
+    }
+
+    func switchToClassicAuth(endpoint: String, username: String, password: String) async throws -> User {
+        return User(id: "mock_user", token: "mock_token")
+    }
 }

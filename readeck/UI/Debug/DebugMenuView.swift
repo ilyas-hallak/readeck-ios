@@ -5,8 +5,8 @@
 //  Created by Ilyas Hallak on 21.11.25.
 //
 
-#if DEBUG
 import SwiftUI
+import netfox
 
 struct DebugMenuView: View {
     @Environment(\.dismiss) private var dismiss
@@ -20,10 +20,56 @@ struct DebugMenuView: View {
                 Section {
                     networkSimulationToggle
                     networkStatusInfo
+
+                    Button {
+                        NFX.sharedInstance().show()
+                    } label: {
+                        Label("Show NetFox", systemImage: "network")
+                            .foregroundColor(.blue)
+                    }
+
+                    HStack {
+                        Text("NetFox Status")
+                        Spacer()
+                        Text(viewModel.isNetFoxRunning ? "Running" : "Stopped")
+                            .font(.caption)
+                            .foregroundColor(viewModel.isNetFoxRunning ? .green : .secondary)
+                    }
                 } header: {
                     Text("Network Debugging")
                 } footer: {
-                    Text("Simulate offline mode to test offline reading features")
+                    Text("Simulate offline mode and monitor network requests with NetFox")
+                }
+
+                // MARK: - Logging Section
+                Section {
+                    Toggle("Enable Logging", isOn: $viewModel.isLoggingEnabled)
+                        .tint(.green)
+                        .onChange(of: viewModel.isLoggingEnabled) { _, newValue in
+                            viewModel.updateLoggingStatus(enabled: newValue)
+                        }
+
+                    if viewModel.isLoggingEnabled {
+                        NavigationLink {
+                            DebugLogViewer()
+                        } label: {
+                            Label("Debug Logs", systemImage: "doc.text.magnifyingglass")
+                        }
+
+                        Button(role: .destructive) {
+                            viewModel.clearLogs()
+                        } label: {
+                            Label("Clear All Logs", systemImage: "trash")
+                        }
+                    }
+                } header: {
+                    Text("Logging")
+                } footer: {
+                    if viewModel.isLoggingEnabled {
+                        Text("View and manage application logs")
+                    } else {
+                        Text("Enable logging to capture debug messages")
+                    }
                 }
 
                 // MARK: - Offline Debugging Section
@@ -49,25 +95,6 @@ struct DebugMenuView: View {
                     Text("Select a cached bookmark to diagnose offline image issues")
                 }
 
-                // MARK: - Logging Section
-                Section {
-                    NavigationLink {
-                        DebugLogViewer()
-                    } label: {
-                        Label("View Logs", systemImage: "doc.text.magnifyingglass")
-                    }
-
-                    Button(role: .destructive) {
-                        viewModel.clearLogs()
-                    } label: {
-                        Label("Clear All Logs", systemImage: "trash")
-                    }
-                } header: {
-                    Text("Logging")
-                } footer: {
-                    Text("View and manage application logs")
-                }
-
                 // MARK: - Data Section
                 Section {
                     cacheInfo
@@ -88,6 +115,23 @@ struct DebugMenuView: View {
                     Text("Data Management")
                 } footer: {
                     Text("⚠️ Reset Core Data will delete all local bookmarks and cache")
+                }
+
+                // MARK: - Advanced Section
+                Section {
+                    NavigationLink {
+                        LoggingConfigurationView()
+                    } label: {
+                        Label("Logging Configuration", systemImage: "slider.horizontal.3")
+                    }
+
+                    NavigationLink {
+                        FontDebugView()
+                    } label: {
+                        Label("Font Debug", systemImage: "textformat")
+                    }
+                } header: {
+                    Text("Advanced")
                 }
 
                 // MARK: - App Info Section
@@ -113,6 +157,14 @@ struct DebugMenuView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+
+                    HStack {
+                        Text("Build Type")
+                        Spacer()
+                        Text(viewModel.buildType)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 } header: {
                     Text("App Information")
                 }
@@ -128,6 +180,7 @@ struct DebugMenuView: View {
             }
             .task {
                 await viewModel.loadCacheInfo()
+                viewModel.checkNetFoxStatus()
             }
             .alert("Clear Offline Cache?", isPresented: $viewModel.showResetCacheAlert) {
                 Button("Cancel", role: .cancel) { }
@@ -216,10 +269,13 @@ class DebugMenuViewModel: ObservableObject {
     @Published var cacheSize = "0 KB"
     @Published var selectedBookmarkId: String?
     @Published var cachedBookmarks: [Bookmark] = []
+    @Published var isLoggingEnabled = false
+    @Published var isNetFoxRunning = false
 
     private let offlineCacheRepository = OfflineCacheRepository()
     private let coreDataManager = CoreDataManager.shared
     private let logger = Logger.general
+    private let logConfig = LogConfiguration.shared
 
     var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
@@ -231,6 +287,33 @@ class DebugMenuViewModel: ObservableObject {
 
     var bundleId: String {
         Bundle.main.bundleIdentifier ?? "Unknown"
+    }
+
+    var buildType: String {
+        if Bundle.main.isDebugBuild {
+            return "Debug"
+        } else if Bundle.main.isTestFlightBuild {
+            return "TestFlight"
+        } else if Bundle.main.isProduction {
+            return "Production"
+        } else {
+            return "Unknown"
+        }
+    }
+
+    init() {
+        isLoggingEnabled = logConfig.isLoggingEnabled
+    }
+
+    func checkNetFoxStatus() {
+        // NetFox doesn't provide a direct API to check if it's running
+        // We'll just assume it's running if we're in a non-production build
+        isNetFoxRunning = !Bundle.main.isProduction
+    }
+
+    func updateLoggingStatus(enabled: Bool) {
+        logConfig.isLoggingEnabled = enabled
+        logger.info("Logging \(enabled ? "enabled" : "disabled") via Debug Menu")
     }
 
     func loadCacheInfo() async {
@@ -260,8 +343,10 @@ class DebugMenuViewModel: ObservableObject {
     }
 
     func clearLogs() {
-        // TODO: Implement log clearing when we add persistent logging
-        logger.info("Logs cleared via Debug Menu")
+        Task {
+            await LogStore.shared.clear()
+            logger.info("Logs cleared via Debug Menu")
+        }
     }
 
     func resetCoreData() {
@@ -315,4 +400,3 @@ extension View {
     DebugMenuView()
         .environmentObject(AppSettings())
 }
-#endif

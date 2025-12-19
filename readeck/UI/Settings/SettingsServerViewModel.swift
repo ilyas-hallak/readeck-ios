@@ -4,34 +4,43 @@ import SwiftUI
 
 @Observable
 class SettingsServerViewModel {
-    
+
     // MARK: - Use Cases
-    
+
     private let loginUseCase: PLoginUseCase
     private let logoutUseCase: PLogoutUseCase
     private let saveServerSettingsUseCase: PSaveServerSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
-    
+    private let getServerInfoUseCase: PGetServerInfoUseCase
+    private let loginWithOAuthUseCase: PLoginWithOAuthUseCase
+    private let authRepository: PAuthRepository
+
     // MARK: - Server Settings
     var endpoint = ""
     var username = ""
     var password = ""
     var isLoading = false
     var isLoggedIn = false
-    
+
+    // MARK: - OAuth Support
+    var serverSupportsOAuth = false
+
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
-    
+
     private var hasFinishedSetup: Bool {
         SettingsRepository().hasFinishedSetup
     }
-    
+
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.loginUseCase = factory.makeLoginUseCase()
         self.logoutUseCase = factory.makeLogoutUseCase()
         self.saveServerSettingsUseCase = factory.makeSaveServerSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+        self.getServerInfoUseCase = factory.makeGetServerInfoUseCase()
+        self.loginWithOAuthUseCase = factory.makeLoginWithOAuthUseCase()
+        self.authRepository = factory.makeAuthRepository()
     }
     
     var isSetupMode: Bool {
@@ -101,4 +110,54 @@ class SettingsServerViewModel {
     var canLogin: Bool {
         !username.isEmpty && !password.isEmpty
     }
-} 
+
+    // MARK: - OAuth Methods
+
+    @MainActor
+    func checkServerOAuthSupport() async {
+        guard !endpoint.isEmpty else {
+            serverSupportsOAuth = false
+            return
+        }
+
+        let normalizedEndpoint = EndpointValidator.normalize(endpoint)
+
+        do {
+            let serverInfo = try await getServerInfoUseCase.execute(endpoint: normalizedEndpoint)
+            serverSupportsOAuth = serverInfo.supportsOAuth
+        } catch {
+            serverSupportsOAuth = false
+        }
+    }
+
+    @MainActor
+    func loginWithOAuth() async {
+        guard !endpoint.isEmpty else {
+            errorMessage = "Please enter a server endpoint."
+            return
+        }
+
+        clearMessages()
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let normalizedEndpoint = EndpointValidator.normalize(endpoint)
+            let token = try await loginWithOAuthUseCase.execute(endpoint: normalizedEndpoint)
+
+            // Save OAuth token and mark as logged in
+            try await authRepository.loginWithOAuth(endpoint: normalizedEndpoint, token: token)
+
+            // Update local endpoint with normalized version
+            endpoint = normalizedEndpoint
+
+            isLoggedIn = true
+            successMessage = "Successfully logged in with OAuth."
+            try await SettingsRepository().saveHasFinishedSetup(true)
+            NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
+        } catch {
+            errorMessage = "OAuth login failed: \(error.localizedDescription)"
+            isLoggedIn = false
+        }
+    }
+}

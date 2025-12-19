@@ -8,7 +8,6 @@
 import SwiftUI
 import UIKit
 
-#if DEBUG
 struct FontDebugView: View {
     @State private var availableFonts: [String: [String]] = [:]
 
@@ -68,4 +67,3 @@ struct FontDebugView: View {
 #Preview {
     FontDebugView()
 }
-#endif

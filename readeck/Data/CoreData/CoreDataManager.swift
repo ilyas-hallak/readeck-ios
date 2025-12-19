@@ -76,7 +76,6 @@ class CoreDataManager {
         }
     }
 
-    #if DEBUG
     func resetDatabase() throws {
         logger.warning("⚠️ Resetting Core Data database - ALL DATA WILL BE DELETED")
 
@@ -103,7 +102,6 @@ class CoreDataManager {
 
         logger.info("Core Data database files deleted successfully")
     }
-    #endif
     
     private func setupInMemoryStore(container: NSPersistentContainer) {
         logger.warning("Setting up in-memory Core Data store as fallback")
