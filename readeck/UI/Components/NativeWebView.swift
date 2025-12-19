@@ -190,66 +190,7 @@ struct NativeWebView: View {
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
                 /* Load custom fonts from app bundle */
-                @font-face {
-                    font-family: 'Literata';
-                    src: local('Literata-Regular');
-                    font-weight: normal;
-                }
-                @font-face {
-                    font-family: 'Literata';
-                    src: local('Literata-Bold');
-                    font-weight: bold;
-                }
-                @font-face {
-                    font-family: 'Merriweather';
-                    src: local('Merriweather-Regular');
-                    font-weight: normal;
-                }
-                @font-face {
-                    font-family: 'Merriweather';
-                    src: local('Merriweather-Bold');
-                    font-weight: bold;
-                }
-                @font-face {
-                    font-family: 'Source Serif 4';
-                    src: local('SourceSerif4-Regular');
-                    font-weight: normal;
-                }
-                @font-face {
-                    font-family: 'Source Serif 4';
-                    src: local('SourceSerif4-Bold');
-                    font-weight: bold;
-                }
-                @font-face {
-                    font-family: 'Lato';
-                    src: local('Lato-Regular');
-                    font-weight: normal;
-                }
-                @font-face {
-                    font-family: 'Lato';
-                    src: local('Lato-Bold');
-                    font-weight: bold;
-                }
-                @font-face {
-                    font-family: 'Montserrat';
-                    src: local('Montserrat-Regular');
-                    font-weight: normal;
-                }
-                @font-face {
-                    font-family: 'Montserrat';
-                    src: local('Montserrat-Bold');
-                    font-weight: bold;
-                }
-                @font-face {
-                    font-family: 'Source Sans 3';
-                    src: local('SourceSans3-Regular');
-                    font-weight: normal;
-                }
-                @font-face {
-                    font-family: 'Source Sans 3';
-                    src: local('SourceSans3-Bold');
-                    font-weight: bold;
-                }
+                \(generateFontFaceCSS())
 
                 * {
                     max-width: 100%;
@@ -445,6 +386,36 @@ struct NativeWebView: View {
         }
     }
     
+    private func generateFontFaceCSS() -> String {
+        var css = ""
+
+        // Iterate through all font families from the enum
+        for fontFamily in FontFamily.allCases {
+            // Only process fonts that need to be loaded (Google fonts)
+            guard let fileNames = fontFamily.fontFileNames,
+                  let cssFamilyName = fontFamily.cssFontFamily else {
+                continue
+            }
+
+            // Generate @font-face rules for each weight variant
+            for (fileName, weight) in fileNames {
+                if let fontPath = Bundle.main.path(forResource: fileName, ofType: "ttf") {
+                    let fileURL = URL(fileURLWithPath: fontPath).absoluteString
+                    css += """
+                    @font-face {
+                        font-family: '\(cssFamilyName)';
+                        src: url('\(fileURL)') format('truetype');
+                        font-weight: \(weight);
+                    }
+
+                    """
+                }
+            }
+        }
+
+        return css
+    }
+
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
         case .small: return 14

@@ -69,6 +69,61 @@ enum FontFamily: String, CaseIterable {
             return false
         }
     }
+
+    /// Returns the font file names (without extension) for this font family
+    /// These correspond to the files listed in Info.plist under UIAppFonts
+    var fontFileNames: [(fileName: String, weight: String)]? {
+        switch self {
+        case .literata:
+            return [
+                ("Literata-Regular", "normal"),
+                ("Literata-Bold", "bold")
+            ]
+        case .merriweather:
+            return [
+                ("Merriweather-Regular", "normal"),
+                ("Merriweather-Bold", "bold")
+            ]
+        case .sourceSerif:
+            return [
+                ("SourceSerif4-Regular", "normal"),
+                ("SourceSerif4-Bold", "bold")
+            ]
+        case .lato:
+            return [
+                ("Lato-Regular", "normal"),
+                ("Lato-Bold", "bold")
+            ]
+        case .montserrat:
+            return [
+                ("Montserrat-Regular", "normal"),
+                ("Montserrat-Bold", "bold")
+            ]
+        case .sourceSans:
+            return [
+                ("SourceSans3-Regular", "normal"),
+                ("SourceSans3-Bold", "bold")
+            ]
+        // System fonts don't need to be loaded via @font-face
+        case .system, .newYork, .avenirNext, .monospace, .serif, .sansSerif:
+            return nil
+        }
+    }
+
+    /// Returns the CSS font-family name used in @font-face declarations
+    var cssFontFamily: String? {
+        switch self {
+        case .literata: return "Literata"
+        case .merriweather: return "Merriweather"
+        case .sourceSerif: return "Source Serif 4"
+        case .lato: return "Lato"
+        case .montserrat: return "Montserrat"
+        case .sourceSans: return "Source Sans 3"
+        // System fonts don't need CSS font-family names
+        case .system, .newYork, .avenirNext, .monospace, .serif, .sansSerif:
+            return nil
+        }
+    }
 }
 
 enum FontCategory {
