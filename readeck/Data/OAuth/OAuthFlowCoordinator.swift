@@ -27,8 +27,8 @@ class OAuthFlowCoordinator {
 
     /// Executes the complete OAuth flow
     /// - Parameter endpoint: Server endpoint URL
-    /// - Returns: OAuth access token
-    func executeOAuthFlow(endpoint: String) async throws -> OAuthToken {
+    /// - Returns: (OAuth access token, Client ID)
+    func executeOAuthFlow(endpoint: String) async throws -> (OAuthToken, String) {
         logger.info("🔐 Starting OAuth flow for endpoint: \(endpoint)")
 
         // Phase 1: Register client and generate PKCE
@@ -100,10 +100,13 @@ class OAuthFlowCoordinator {
         logger.info("✅ Access token obtained successfully")
         logger.info("🎉 OAuth flow completed!")
 
+        // Save client ID before cleanup
+        let clientId = savedClient.clientId
+
         // Clean up state
         cleanup()
 
-        return token
+        return (token, clientId)
     }
 
     /// Cancels the ongoing OAuth flow

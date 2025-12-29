@@ -143,10 +143,10 @@ class SettingsServerViewModel {
 
         do {
             let normalizedEndpoint = EndpointValidator.normalize(endpoint)
-            let token = try await loginWithOAuthUseCase.execute(endpoint: normalizedEndpoint)
+            let (token, clientId) = try await loginWithOAuthUseCase.execute(endpoint: normalizedEndpoint)
 
-            // Save OAuth token and mark as logged in
-            try await authRepository.loginWithOAuth(endpoint: normalizedEndpoint, token: token)
+            // Save OAuth token, client ID and mark as logged in
+            try await authRepository.loginWithOAuth(endpoint: normalizedEndpoint, token: token, clientId: clientId)
 
             // Update local endpoint with normalized version
             endpoint = normalizedEndpoint

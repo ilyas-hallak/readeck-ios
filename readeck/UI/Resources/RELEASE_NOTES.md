@@ -54,6 +54,23 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Direct links to license files
 - Full transparency about used libraries
 
+### Modern Login with OAuth 2.0
+
+**Easier and more secure login**
+- Login through your browser instead of username and password
+- More secure authentication method
+- Works automatically if your server supports it
+- Seamless fallback to classic login for older servers
+- No configuration needed - the app detects the best login method
+
+### Improved Setup Experience
+
+**Better onboarding and sharing**
+- Smoother onboarding flow when setting up the app
+- Share Extension shows helpful messages when you're not logged in
+- Clearer error messages if your session has expired
+- Prevents sync issues during initial setup
+
 ### ⚡️ Performance & Improvements
 
 - **VPN & Private Network support** - Connect to your Readeck server via VPN (like Tailscale) or private networks. Supports HTTP connections and self-signed certificates for home/private server setups

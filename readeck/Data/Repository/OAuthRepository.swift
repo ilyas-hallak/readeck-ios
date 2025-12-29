@@ -47,11 +47,26 @@ class OAuthRepository: POAuthRepository {
         logger.info("Exchanging authorization code for access token")
 
         let request = OAuthTokenRequestDto(
-            grantType: "authorization_code",
             clientId: clientId,
             code: code,
             codeVerifier: codeVerifier,
             redirectUri: redirectUri
+        )
+
+        let response = try await api.exchangeOAuthToken(endpoint: endpoint, request: request)
+        return OAuthToken(from: response)
+    }
+
+    func refreshToken(
+        endpoint: String,
+        clientId: String,
+        refreshToken: String
+    ) async throws -> OAuthToken {
+        logger.info("Refreshing OAuth access token")
+
+        let request = OAuthTokenRequestDto(
+            clientId: clientId,
+            refreshToken: refreshToken
         )
 
         let response = try await api.exchangeOAuthToken(endpoint: endpoint, request: request)

@@ -25,4 +25,12 @@ protocol POAuthRepository {
     ///   - redirectUri: Redirect URI (must match the one used in authorization request)
     /// - Returns: OAuth access token
     func exchangeToken(endpoint: String, clientId: String, code: String, codeVerifier: String, redirectUri: String) async throws -> OAuthToken
+
+    /// Refreshes an expired OAuth access token using a refresh token
+    /// - Parameters:
+    ///   - endpoint: Server endpoint URL
+    ///   - clientId: OAuth client ID
+    ///   - refreshToken: Refresh token from previous token response
+    /// - Returns: New OAuth access token
+    func refreshToken(endpoint: String, clientId: String, refreshToken: String) async throws -> OAuthToken
 }

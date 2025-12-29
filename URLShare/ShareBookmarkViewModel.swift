@@ -184,15 +184,38 @@ class ShareBookmarkViewModel: ObservableObject {
     }
 
     private func checkConfiguration() {
-        let token = KeychainHelper.shared.loadToken()
         let endpoint = KeychainHelper.shared.loadEndpoint()
 
-        if token == nil || token?.isEmpty == true || endpoint == nil || endpoint?.isEmpty == true {
-            logger.warning("Share extension opened but app is not configured (missing token or endpoint)")
+        // Check if endpoint exists first
+        guard let endpoint = endpoint, !endpoint.isEmpty else {
+            logger.warning("Share extension opened but app is not configured (missing endpoint)")
             isConfigured = false
+            return
+        }
+
+        // Check authentication method and corresponding token
+        let authMethod = KeychainHelper.shared.loadAuthMethod()
+
+        if authMethod == .oauth {
+            // OAuth authentication - check OAuth token
+            let oauthToken = KeychainHelper.shared.loadOAuthToken()
+            if oauthToken == nil {
+                logger.warning("Share extension opened but OAuth token is missing")
+                isConfigured = false
+            } else {
+                logger.info("Share extension opened with valid OAuth configuration")
+                isConfigured = true
+            }
         } else {
-            logger.info("Share extension opened with valid configuration")
-            isConfigured = true
+            // Classic authentication (API token) or no auth method set
+            let token = KeychainHelper.shared.loadToken()
+            if token == nil || token?.isEmpty == true {
+                logger.warning("Share extension opened but app is not configured (missing API token)")
+                isConfigured = false
+            } else {
+                logger.info("Share extension opened with valid classic authentication")
+                isConfigured = true
+            }
         }
     }
 

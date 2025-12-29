@@ -77,6 +77,15 @@ class KeychainHelper {
     }
 
     @discardableResult
+    func saveOAuthClientId(_ clientId: String) -> Bool {
+        saveString(clientId, forKey: "readeck_oauth_client_id")
+    }
+
+    func loadOAuthClientId() -> String? {
+        loadString(forKey: "readeck_oauth_client_id")
+    }
+
+    @discardableResult
     func clearCredentials() -> Bool {
         let tokenCleared = saveString("", forKey: "readeck_token")
         let endpointCleared = saveString("", forKey: "readeck_endpoint")
@@ -85,7 +94,8 @@ class KeychainHelper {
 
         let oauthTokenCleared = saveString("", forKey: "readeck_oauth_token")
         let authMethodCleared = saveString("", forKey: "readeck_auth_method")
-        return tokenCleared && endpointCleared && usernameCleared && passwordCleared && oauthTokenCleared && authMethodCleared
+        let oauthClientIdCleared = saveString("", forKey: "readeck_oauth_client_id")
+        return tokenCleared && endpointCleared && usernameCleared && passwordCleared && oauthTokenCleared && authMethodCleared && oauthClientIdCleared
     }
     
     // MARK: - Private generic helpers

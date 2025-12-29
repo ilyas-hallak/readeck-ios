@@ -479,8 +479,8 @@ extension MockUseCaseFactory {
 }
 
 class MockLoginWithOAuthUseCase: PLoginWithOAuthUseCase {
-    func execute(endpoint: String) async throws -> OAuthToken {
-        return OAuthToken(
+    func execute(endpoint: String) async throws -> (OAuthToken, String) {
+        let token = OAuthToken(
             accessToken: "mock_access_token",
             tokenType: "Bearer",
             scope: "read write",
@@ -488,6 +488,7 @@ class MockLoginWithOAuthUseCase: PLoginWithOAuthUseCase {
             refreshToken: "mock_refresh_token",
             createdAt: Date()
         )
+        return (token, "mock_client_id")
     }
 }
 
@@ -502,7 +503,7 @@ class MockAuthRepository: PAuthRepository {
         return nil
     }
 
-    func loginWithOAuth(endpoint: String, token: OAuthToken) async throws {
+    func loginWithOAuth(endpoint: String, token: OAuthToken, clientId: String) async throws {
         // Mock: No need to fetch profile in mock
     }
 

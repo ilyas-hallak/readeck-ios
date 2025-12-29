@@ -27,10 +27,11 @@ class AuthRepository: PAuthRepository {
         return try await settingsRepository.loadSettings()
     }
     
-    func loginWithOAuth(endpoint: String, token: OAuthToken) async throws {
-        // Save OAuth token, auth method, and endpoint
+    func loginWithOAuth(endpoint: String, token: OAuthToken, clientId: String) async throws {
+        // Save OAuth token, auth method, client ID, and endpoint
         await api.tokenProvider.setOAuthToken(token)
         await api.tokenProvider.setAuthMethod(.oauth)
+        await api.tokenProvider.setOAuthClientId(clientId)
         await api.tokenProvider.setEndpoint(endpoint)
 
         // Fetch username from user profile

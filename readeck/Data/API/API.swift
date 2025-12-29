@@ -572,20 +572,36 @@ class API: PAPI {
     }
 
     func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto {
-        logger.info("Exchanging OAuth authorization code for access token")
+        let isRefresh = request.grantType == "refresh_token"
+        logger.info(isRefresh ? "Refreshing OAuth access token" : "Exchanging OAuth authorization code for access token")
+
         guard let url = URL(string: "\(endpoint)/api/oauth/token") else {
             logger.error("Invalid URL for OAuth token exchange: \(endpoint)")
             throw APIError.invalidURL
         }
 
-        // OAuth token requests typically use application/x-www-form-urlencoded
-        let formData = [
+        // Build form data based on grant type
+        var formData: [String: String] = [
             "grant_type": request.grantType,
-            "client_id": request.clientId,
-            "code": request.code,
-            "code_verifier": request.codeVerifier,
-            "redirect_uri": request.redirectUri
+            "client_id": request.clientId
         ]
+
+        // Add fields based on grant type
+        if isRefresh {
+            if let refreshToken = request.refreshToken {
+                formData["refresh_token"] = refreshToken
+            }
+        } else {
+            if let code = request.code {
+                formData["code"] = code
+            }
+            if let codeVerifier = request.codeVerifier {
+                formData["code_verifier"] = codeVerifier
+            }
+            if let redirectUri = request.redirectUri {
+                formData["redirect_uri"] = redirectUri
+            }
+        }
 
         let formBody = formData.map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")" }
             .joined(separator: "&")
@@ -601,7 +617,7 @@ class API: PAPI {
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid HTTP response for OAuth token exchange")
+            logger.error("Invalid HTTP response for OAuth token \(isRefresh ? "refresh" : "exchange")")
             throw APIError.invalidResponse
         }
 
@@ -612,7 +628,7 @@ class API: PAPI {
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString, statusCode: httpResponse.statusCode)
         let tokenResponse = try JSONDecoder().decode(OAuthTokenResponseDto.self, from: data)
-        logger.info("Successfully exchanged authorization code for access token")
+        logger.info("Successfully \(isRefresh ? "refreshed" : "exchanged") OAuth token")
         return tokenResponse
     }
 }
