@@ -16,6 +16,8 @@ struct NativeWebView: View {
     var onScrollToPosition: ((CGFloat) -> Void)? = nil
 
     @State private var webPage = WebPage()
+    @State private var annotationPollingTask: Task<Void, Never>?
+    @State private var scrollPollingTask: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -32,9 +34,6 @@ struct NativeWebView: View {
             .onChange(of: colorScheme) { _, _ in
                 loadStyledContent()
             }
-            .onChange(of: selectedAnnotationId) { _, _ in
-                loadStyledContent()
-            }
             .onChange(of: webPage.isLoading) { _, isLoading in
                 if !isLoading {
                     // Update height when content finishes loading
@@ -45,16 +44,24 @@ struct NativeWebView: View {
                     }
                 }
             }
+            .onDisappear {
+                // Cancel polling tasks to prevent memory leaks
+                annotationPollingTask?.cancel()
+                scrollPollingTask?.cancel()
+            }
     }
 
     private func setupAnnotationMessageHandler() {
+        // Cancel any existing polling task
+        annotationPollingTask?.cancel()
+
         guard let onAnnotationCreated = onAnnotationCreated else { return }
 
         // Poll for annotation messages from JavaScript
-        Task { @MainActor in
+        annotationPollingTask = Task { @MainActor in
             let page = webPage
 
-            while true {
+            while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
 
                 let script = """
@@ -86,13 +93,16 @@ struct NativeWebView: View {
     }
 
     private func setupScrollToPositionHandler() {
+        // Cancel any existing polling task
+        scrollPollingTask?.cancel()
+
         guard let onScrollToPosition = onScrollToPosition else { return }
 
         // Poll for scroll position messages from JavaScript
-        Task { @MainActor in
+        scrollPollingTask = Task { @MainActor in
             let page = webPage
 
-            while true {
+            while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
 
                 let script = """

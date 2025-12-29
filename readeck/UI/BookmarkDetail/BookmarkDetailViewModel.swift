@@ -71,11 +71,11 @@ class BookmarkDetailViewModel {
     }
     
     @MainActor
-    func loadArticleContent(id: String) async {
+    func loadArticleContent(id: String, forceRefresh: Bool = false) async {
         isLoadingArticle = true
 
-        // First, try to load from cache
-        if let cachedHTML = getCachedArticleUseCase.execute(id: id) {
+        // First, try to load from cache (unless force refresh)
+        if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
             articleContent = cachedHTML
             processArticleContent()
             isLoadingArticle = false
@@ -89,8 +89,8 @@ class BookmarkDetailViewModel {
             return
         }
 
-        // If not cached, fetch from server
-        Logger.viewModel.info("📡 Fetching article \(id) from server (not in cache)")
+        // If not cached or force refresh, fetch from server
+        Logger.viewModel.info("📡 Fetching article \(id) from server \(forceRefresh ? "(force refresh)" : "(not in cache)")")
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
@@ -134,6 +134,7 @@ class BookmarkDetailViewModel {
     @MainActor
     func refreshBookmarkDetail(id: String) async {
         await loadBookmarkDetail(id: id)
+        await loadArticleContent(id: id, forceRefresh: true)
     }
     
     func addBookmarkToSpeechQueue() {
