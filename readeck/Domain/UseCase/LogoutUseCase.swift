@@ -12,11 +12,11 @@ protocol PLogoutUseCase {
 }
 
 class LogoutUseCase: PLogoutUseCase {
-    private let settingsRepository: SettingsRepository
+    private let settingsRepository: PSettingsRepository
     private let tokenManager: TokenManager
-    
+
     init(
-        settingsRepository: SettingsRepository = SettingsRepository(),
+        settingsRepository: PSettingsRepository,
         tokenManager: TokenManager = TokenManager.shared
     ) {
         self.settingsRepository = settingsRepository

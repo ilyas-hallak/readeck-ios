@@ -66,7 +66,7 @@ struct readeckApp: App {
     }
 
     private func loadAppSettings() async {
-        let settingsRepository = SettingsRepository()
+        let settingsRepository = DefaultUseCaseFactory.shared.makeSettingsRepository()
         let settings = try? await settingsRepository.loadSettings()
         await MainActor.run {
             appSettings.settings = settings

@@ -14,6 +14,7 @@ class SettingsServerViewModel {
     private let getServerInfoUseCase: PGetServerInfoUseCase
     private let loginWithOAuthUseCase: PLoginWithOAuthUseCase
     private let authRepository: PAuthRepository
+    private let settingsRepository: PSettingsRepository
 
     // MARK: - Server Settings
     var endpoint = ""
@@ -30,7 +31,7 @@ class SettingsServerViewModel {
     var successMessage: String?
 
     private var hasFinishedSetup: Bool {
-        SettingsRepository().hasFinishedSetup
+        settingsRepository.hasFinishedSetup
     }
 
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
@@ -41,6 +42,7 @@ class SettingsServerViewModel {
         self.getServerInfoUseCase = factory.makeGetServerInfoUseCase()
         self.loginWithOAuthUseCase = factory.makeLoginWithOAuthUseCase()
         self.authRepository = factory.makeAuthRepository()
+        self.settingsRepository = factory.makeSettingsRepository()
     }
     
     var isSetupMode: Bool {
@@ -82,7 +84,7 @@ class SettingsServerViewModel {
 
             isLoggedIn = true
             successMessage = "Server settings saved and successfully logged in."
-            try await SettingsRepository().saveHasFinishedSetup(true)
+            try await settingsRepository.saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
         } catch {
             errorMessage = "Connection or login failed: \(error.localizedDescription)"
@@ -153,7 +155,7 @@ class SettingsServerViewModel {
 
             isLoggedIn = true
             successMessage = "Successfully logged in with OAuth."
-            try await SettingsRepository().saveHasFinishedSetup(true)
+            try await settingsRepository.saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
         } catch {
             errorMessage = "OAuth login failed: \(error.localizedDescription)"

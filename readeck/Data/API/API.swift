@@ -29,22 +29,18 @@ protocol PAPI {
 
 class API: PAPI {
     let tokenProvider: TokenProvider
-    private var cachedBaseURL: String?
     private let logger = Logger.network
-    
+
     init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
         self.tokenProvider = tokenProvider
     }
-    
+
     private var baseURL: String {
         get async {
-            if let cached = cachedBaseURL, cached.isEmpty == false {
-                return cached
-            }
+            // Always get endpoint from tokenProvider (it has its own cache)
             guard let url = await tokenProvider.getEndpoint() else {
                 return ""
             }
-            cachedBaseURL = url
             return url
         }
     }
