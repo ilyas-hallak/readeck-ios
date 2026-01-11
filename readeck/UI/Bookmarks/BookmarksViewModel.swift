@@ -216,6 +216,22 @@ class BookmarksViewModel {
     }
     
     @MainActor
+    func resetReadProgress(bookmark: Bookmark) async {
+        do {
+            try await updateBookmarkUseCase.updateReadProgress(
+                bookmarkId: bookmark.id,
+                progress: 0,
+                anchor: nil
+            )
+            
+            await loadBookmarks(state: currentState)
+            
+        } catch {
+            errorMessage = "Error resetting reading progress"
+        }
+    }
+    
+    @MainActor
     func deleteBookmarkWithUndo(bookmark: Bookmark) {
         // Don't remove from UI immediately - just mark as pending
         let pendingDelete = PendingDelete(bookmark: bookmark)
