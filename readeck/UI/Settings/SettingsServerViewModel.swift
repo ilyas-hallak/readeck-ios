@@ -19,6 +19,13 @@ class SettingsServerViewModel {
     var isLoading = false
     var isLoggedIn = false
     
+    var customHeaders: [String: String] = [:]
+    var showingHeadersSection = false
+    
+    var editingHeaderKey: String? = nil
+    var editingHeaderKeyValue: String = ""
+    var editingHeaderValue: String = ""
+    
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
@@ -47,6 +54,12 @@ class SettingsServerViewModel {
                 password = settings.password ?? ""
                 isLoggedIn = settings.isLoggedIn
             }
+            // Load custom headers from Keychain
+            if let headers = KeychainHelper.shared.loadCustomHeaders() {
+                customHeaders = headers
+            } else {
+                customHeaders = [:]
+            }
         } catch {
             errorMessage = "Error loading settings"
         }
@@ -65,6 +78,9 @@ class SettingsServerViewModel {
             // Normalize endpoint before saving
             let normalizedEndpoint = normalizeEndpoint(endpoint)
 
+            // Save custom headers to Keychain BEFORE login so they're available during login
+            _ = KeychainHelper.shared.saveCustomHeaders(customHeaders)
+
             let user = try await loginUseCase.execute(endpoint: normalizedEndpoint, username: username.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
             try await saveServerSettingsUseCase.execute(endpoint: normalizedEndpoint, username: username, password: password, token: user.token)
 
@@ -73,6 +89,7 @@ class SettingsServerViewModel {
 
             isLoggedIn = true
             successMessage = "Server settings saved and successfully logged in."
+            
             try await SettingsRepository().saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
         } catch {
@@ -145,5 +162,61 @@ class SettingsServerViewModel {
     
     var canLogin: Bool {
         !username.isEmpty && !password.isEmpty
+    }
+    
+    @MainActor
+    func addHeader(key: String, value: String) {
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKey.isEmpty && HTTPHeadersHelper.isHeaderNameAllowed(trimmedKey) else {
+            return
+        }
+        var newHeaders = customHeaders
+        newHeaders[trimmedKey] = value
+        customHeaders = newHeaders
+    }
+    
+    @MainActor
+    func removeHeader(key: String) {
+        var newHeaders = customHeaders
+        newHeaders.removeValue(forKey: key)
+        customHeaders = newHeaders
+    }
+    
+    @MainActor
+    func updateHeader(key: String, value: String) {
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKey.isEmpty && HTTPHeadersHelper.isHeaderNameAllowed(trimmedKey) else {
+            return
+        }
+        var newHeaders = customHeaders
+        newHeaders[trimmedKey] = value
+        customHeaders = newHeaders
+    }
+    
+    // MARK: - Header Editing Methods
+    
+    @MainActor
+    func startEditingHeader(key: String) {
+        editingHeaderKey = key
+        editingHeaderKeyValue = key
+        editingHeaderValue = customHeaders[key] ?? ""
+    }
+    
+    @MainActor
+    func cancelEditingHeader() {
+        editingHeaderKey = nil
+        editingHeaderKeyValue = ""
+        editingHeaderValue = ""
+    }
+    
+    @MainActor
+    func finishEditingHeader(originalKey: String, newKey: String, newValue: String) {
+        if newKey != originalKey {
+            removeHeader(key: originalKey)
+            addHeader(key: newKey, value: newValue)
+        } else {
+            updateHeader(key: originalKey, value: newValue)
+        }
+        cancelEditingHeader()
     }
 } 

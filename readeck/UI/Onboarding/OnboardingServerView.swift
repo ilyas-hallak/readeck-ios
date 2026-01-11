@@ -96,6 +96,33 @@ struct OnboardingServerView: View {
                             viewModel.clearMessages()
                         }
                 }
+                
+                // Custom HTTP Headers Section
+                CustomHeadersSectionView(
+                    customHeaders: $viewModel.customHeaders,
+                    showingHeadersSection: $viewModel.showingHeadersSection,
+                    editingHeaderKey: $viewModel.editingHeaderKey,
+                    editingHeaderKeyValue: $viewModel.editingHeaderKeyValue,
+                    editingHeaderValue: $viewModel.editingHeaderValue,
+                    onAddHeader: { key, value in
+                        viewModel.addHeader(key: key, value: value)
+                    },
+                    onUpdateHeader: { key, value in
+                        viewModel.updateHeader(key: key, value: value)
+                    },
+                    onRemoveHeader: { key in
+                        viewModel.removeHeader(key: key)
+                    },
+                    onStartEditingHeader: { key in
+                        viewModel.startEditingHeader(key: key)
+                    },
+                    onCancelEditingHeader: {
+                        viewModel.cancelEditingHeader()
+                    },
+                    onFinishEditingHeader: { originalKey, newKey, newValue in
+                        viewModel.finishEditingHeader(originalKey: originalKey, newKey: newKey, newValue: newValue)
+                    }
+                )
             }
 
             // Messages
