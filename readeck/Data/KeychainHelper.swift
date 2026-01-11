@@ -44,12 +44,32 @@ class KeychainHelper {
     }
     
     @discardableResult
+    func saveCustomHeaders(_ headers: [String: String]) -> Bool {
+        guard let jsonData = try? JSONEncoder().encode(headers),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            return false
+        }
+        return saveString(jsonString, forKey: "readeck_custom_headers")
+    }
+    
+    func loadCustomHeaders() -> [String: String]? {
+        guard let jsonString = loadString(forKey: "readeck_custom_headers"),
+              !jsonString.isEmpty,
+              let jsonData = jsonString.data(using: .utf8),
+              let headers = try? JSONDecoder().decode([String: String].self, from: jsonData) else {
+            return nil
+        }
+        return headers
+    }
+    
+    @discardableResult
     func clearCredentials() -> Bool {
         let tokenCleared = saveString("", forKey: "readeck_token")
         let endpointCleared = saveString("", forKey: "readeck_endpoint")
         let usernameCleared = saveString("", forKey: "readeck_username")
         let passwordCleared = saveString("", forKey: "readeck_password")
-        return tokenCleared && endpointCleared && usernameCleared && passwordCleared
+        let headersCleared = saveString("", forKey: "readeck_custom_headers")
+        return tokenCleared && endpointCleared && usernameCleared && passwordCleared && headersCleared
     }
     
     // MARK: - Private generic helpers

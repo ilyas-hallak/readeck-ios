@@ -11,6 +11,7 @@ struct CachedAsyncImage: View {
     var body: some View {
         if let url {
             KFImage(url)
+                .requestModifier(AuthenticatedImageRequestModifier())
                 .placeholder {
                     Color.gray.opacity(0.3)
                 }
@@ -22,5 +23,20 @@ struct CachedAsyncImage: View {
                 .resizable()
                 .scaledToFill()
         }
+    }
+}
+
+/// Request modifier that adds Authorization header and custom headers to image requests
+struct AuthenticatedImageRequestModifier: ImageDownloadRequestModifier {
+    func modified(for request: URLRequest) -> URLRequest? {
+        var modifiedRequest = request
+        
+        if let token = KeychainHelper.shared.loadToken() {
+            modifiedRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &modifiedRequest)
+        
+        return modifiedRequest
     }
 }

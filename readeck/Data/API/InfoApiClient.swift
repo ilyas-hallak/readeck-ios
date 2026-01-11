@@ -34,6 +34,8 @@ class InfoApiClient: PInfoApiClient {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
+
         logger.logNetworkRequest(method: "GET", url: url.absoluteString)
 
         let (data, response) = try await URLSession.shared.data(for: request)
