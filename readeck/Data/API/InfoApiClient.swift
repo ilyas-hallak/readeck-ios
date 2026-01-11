@@ -31,7 +31,7 @@ class InfoApiClient: PInfoApiClient {
         request.timeoutInterval = 5.0
 
         if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
         logger.logNetworkRequest(method: "GET", url: url.absoluteString)
