@@ -8,6 +8,7 @@ class BookmarksViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
+    private let logger = Logger.viewModel
     
     var bookmarks: BookmarksPage?
     var isLoading = false
@@ -121,6 +122,7 @@ class BookmarksViewModel {
         hasMoreData = true
 
         do {
+            logger.debug("Loading bookmarks - state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"), search: \(searchQuery.isEmpty ? "none" : searchQuery)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
                 limit: limit,
@@ -132,21 +134,9 @@ class BookmarksViewModel {
             bookmarks = newBookmarks
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
             isNetworkError = false
+            logger.info("Successfully loaded \(newBookmarks.bookmarks.count) bookmarks")
         } catch {
-            // Check if it's a network error
-            if let urlError = error as? URLError {
-                switch urlError.code {
-                case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
-                    isNetworkError = true
-                    errorMessage = "No internet connection"
-                default:
-                    isNetworkError = false
-                    errorMessage = "Error loading bookmarks"
-                }
-            } else {
-                isNetworkError = false
-                errorMessage = "Error loading bookmarks"
-            }
+            handleError(error, context: "load bookmarks (state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"))")
             // Don't clear bookmarks on error - keep existing data visible
         }
 
@@ -165,6 +155,7 @@ class BookmarksViewModel {
 
         do {
             offset += limit // inc. offset
+            logger.debug("Loading more bookmarks - offset: \(offset), limit: \(limit)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: currentState,
                 limit: limit,
@@ -174,21 +165,9 @@ class BookmarksViewModel {
                 tag: currentTag)
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
+            logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
         } catch {
-            // Check if it's a network error
-            if let urlError = error as? URLError {
-                switch urlError.code {
-                case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
-                    isNetworkError = true
-                    errorMessage = "No internet connection"
-                default:
-                    isNetworkError = false
-                    errorMessage = "Error loading more bookmarks"
-                }
-            } else {
-                isNetworkError = false
-                errorMessage = "Error loading more bookmarks"
-            }
+            handleError(error, context: "load more bookmarks (offset: \(offset), limit: \(limit))")
         }
 
         isLoading = false
@@ -321,6 +300,60 @@ class BookmarksViewModel {
     @MainActor
     private func loadCardLayout() async {
         cardLayoutStyle = await loadCardLayoutUseCase.execute()
+    }
+    
+    // MARK: - Error Handling Helpers
+    
+    private func formatServerErrorMessage(statusCode: Int) -> String {
+        switch statusCode {
+        case 401:
+            return "Session expired. Please log in again."
+        case 403:
+            return "Access denied. Please check your permissions."
+        case 404:
+            return "Bookmarks endpoint not found."
+        case 500...599:
+            return "Server error (code: \(statusCode)). Please try again later."
+        default:
+            return "Server error (code: \(statusCode)). Please try again."
+        }
+    }
+    
+    private func handleError(_ error: Error, context: String) {
+        logger.error("Failed to \(context): \(error.localizedDescription)")
+        
+        // Handle APIError cases
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .invalidURL:
+                errorMessage = "Invalid server URL. Please check your settings."
+                logger.error("Invalid URL error - endpoint may be missing or malformed")
+            case .invalidResponse:
+                errorMessage = "Server returned invalid data. Please try again."
+                logger.error("Invalid response error - server data may be corrupted")
+            case .serverError(let statusCode):
+                errorMessage = formatServerErrorMessage(statusCode: statusCode)
+                logger.error("Server error with status code: \(statusCode)")
+            }
+            isNetworkError = false
+        } else if let urlError = error as? URLError {
+            // Handle network-level errors
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
+                isNetworkError = true
+                errorMessage = "No internet connection"
+                logger.error("Network connection error: \(urlError.localizedDescription)")
+            default:
+                isNetworkError = false
+                errorMessage = "Network error: \(urlError.localizedDescription)"
+                logger.error("URLError: \(urlError.localizedDescription)")
+            }
+        } else {
+            // Fallback for unknown errors
+            isNetworkError = false
+            errorMessage = "Error loading bookmarks: \(error.localizedDescription)"
+            logger.error("Unknown error type: \(type(of: error)) - \(error.localizedDescription)")
+        }
     }
 }
 
