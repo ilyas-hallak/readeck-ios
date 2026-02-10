@@ -23,8 +23,21 @@ protocol UseCaseFactory {
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase
+    func makeGetServerInfoUseCase() -> PGetServerInfoUseCase
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase
+    func makeSettingsRepository() -> PSettingsRepository
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
+    func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase
+    func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
+    func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase
+    func makeClearCacheUseCase() -> PClearCacheUseCase
+    func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase
+    func makeAuthRepository() -> PAuthRepository
 }
 
 
@@ -32,12 +45,16 @@ protocol UseCaseFactory {
 class DefaultUseCaseFactory: UseCaseFactory {
     private let tokenProvider = KeychainTokenProvider()
     private lazy var api: PAPI = API(tokenProvider: tokenProvider)
-    private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository)
+    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider)
+    private lazy var getUserProfileUseCase: PGetUserProfileUseCase = GetUserProfileUseCase(profileApiClient: profileApiClient)
+    private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     private let settingsRepository: PSettingsRepository = SettingsRepository()
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
+    private let offlineCacheRepository: POfflineCacheRepository = OfflineCacheRepository()
+    private let networkMonitorRepository: PNetworkMonitorRepository = NetworkMonitorRepository()
 
     static let shared = DefaultUseCaseFactory()
 
@@ -137,11 +154,71 @@ class DefaultUseCaseFactory: UseCaseFactory {
         return CheckServerReachabilityUseCase(repository: serverInfoRepository)
     }
 
+    func makeGetServerInfoUseCase() -> PGetServerInfoUseCase {
+        return GetServerInfoUseCase(repository: serverInfoRepository)
+    }
+
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
         return GetBookmarkAnnotationsUseCase(repository: annotationsRepository)
     }
 
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
         return DeleteAnnotationUseCase(repository: annotationsRepository)
+    }
+
+    func makeSettingsRepository() -> PSettingsRepository {
+        return settingsRepository
+    }
+
+    func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase {
+        return OfflineCacheSyncUseCase(
+            offlineCacheRepository: offlineCacheRepository,
+            bookmarksRepository: bookmarksRepository,
+            settingsRepository: settingsRepository
+        )
+    }
+
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase {
+        return NetworkMonitorUseCase(repository: networkMonitorRepository)
+    }
+
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase {
+        return GetCachedBookmarksUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase {
+        return GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {
+        return CreateAnnotationUseCase(repository: annotationsRepository)
+    }
+
+    func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase {
+        return GetCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase {
+        return GetMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase {
+        return UpdateMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeClearCacheUseCase() -> PClearCacheUseCase {
+        return ClearCacheUseCase(settingsRepository: settingsRepository)
+    }
+
+    private lazy var oauthRepository: POAuthRepository = OAuthRepository(api: api)
+    private lazy var oauthManager: OAuthManager = OAuthManager(repository: oauthRepository)
+
+    @MainActor func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
+        let coordinator = OAuthFlowCoordinator(manager: oauthManager)
+        return LoginWithOAuthUseCase(oauthCoordinator: coordinator)
+    }
+
+    func makeAuthRepository() -> PAuthRepository {
+        return authRepository
     }
 }

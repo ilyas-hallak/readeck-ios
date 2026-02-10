@@ -4,6 +4,81 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 2.0.0
+
+### 📖 Offline Reading - The Feature You've Been Waiting For!
+
+**Read your articles without internet connection**
+- enable offline reading in settings, the default is off
+- Automatic background sync keeps your unread articles cached and ready
+- Cache syncs automatically every 4 hours when you open the app
+- Manual sync button for instant updates anytime
+- Article images are pre-downloaded for offline viewing (optional)
+- Smart cleanup removes old cached articles automatically
+
+**Smart offline experience**
+- Visual offline banner shows when network is unavailable
+- App automatically loads cached articles when offline
+- Cache-first loading for instant article access and better performance
+- Choose how many articles to cache (5-100 articles)
+- Note: When using a VPN, the app will show as online even if you are in Flight Mode
+
+**Offline settings & management**
+- New dedicated offline settings screen
+- Enable or disable offline mode with toggle
+- View cache size and last sync timestamp
+- **Preview cached articles**: see which articles are available offline
+- Clear cache with one tap
+- Monitor cache usage in settings
+
+### Extended Font Selection
+
+**10 new beautiful fonts for better reading**
+- New serif fonts: Literata, Merriweather, Source Serif
+- New sans-serif fonts: Lato, Montserrat, Source Sans
+- Apple system fonts: SF Pro, New York, Charter
+- All fonts are open-source (OFL 1.1 licensed)
+- Improved font rendering in article reader
+- Font changes take effect immediately
+
+### Annotations & Highlighting Improvements
+
+- **Localized highlight button** - now appears in your device language
+- Improved annotation creation through API integration
+- Better error handling for annotation sync
+
+### Open Source Licenses
+
+- **New licenses view** in settings
+- View all open-source fonts and their licenses
+- Direct links to license files
+- Full transparency about used libraries
+
+### Modern Login with OAuth 2.0
+
+**Easier and more secure login**
+- Login through your browser instead of username and password
+- More secure authentication method
+- Works automatically if your server supports it
+- Seamless fallback to classic login for older servers
+- No configuration needed - the app detects the best login method
+
+### Improved Setup Experience
+
+**Better onboarding and sharing**
+- Smoother onboarding flow when setting up the app
+- Share Extension shows helpful messages when you're not logged in
+- Clearer error messages if your session has expired
+- Prevents sync issues during initial setup
+
+### ⚡️ Performance & Improvements
+
+- **VPN & Private Network support** - Connect to your Readeck server via VPN (like Tailscale) or private networks. Supports HTTP connections and self-signed certificates for home/private server setups
+- Various stability improvements
+
+
+---
+
 ## Version 1.2.0
 
 ### Annotations & Highlighting

@@ -2,9 +2,9 @@
 //  PServerInfoRepository.swift
 //  readeck
 //
-//  Created by Claude Code
+//  Created by Ilyas Hallak
 
 protocol PServerInfoRepository {
     func checkServerReachability() async -> Bool
-    func getServerInfo() async throws -> ServerInfo
+    func getServerInfo(endpoint: String?) async throws -> ServerInfo
 }

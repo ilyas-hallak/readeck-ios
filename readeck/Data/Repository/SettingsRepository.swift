@@ -1,21 +1,6 @@
 import Foundation
 import CoreData
-
-protocol PSettingsRepository {
-    func saveSettings(_ settings: Settings) async throws
-    func loadSettings() async throws -> Settings?
-    func clearSettings() async throws
-    func saveToken(_ token: String) async throws
-    func saveUsername(_ username: String) async throws
-    func savePassword(_ password: String) async throws
-    func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws
-    func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws
-    func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws
-    func loadCardLayoutStyle() async throws -> CardLayoutStyle
-    func saveTagSortOrder(_ tagSortOrder: TagSortOrder) async throws
-    func loadTagSortOrder() async throws -> TagSortOrder
-    var hasFinishedSetup: Bool { get }
-}
+import Kingfisher
 
 class SettingsRepository: PSettingsRepository {
     private let coreDataManager = CoreDataManager.shared
@@ -283,6 +268,108 @@ class SettingsRepository: PSettingsRepository {
                 } catch {
                     continuation.resume(throwing: error)
                 }
+            }
+        }
+    }
+
+    // MARK: - Offline Settings
+
+    private let logger = Logger.data
+
+    func loadOfflineSettings() async throws -> OfflineSettings {
+        let context = coreDataManager.context
+
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    fetchRequest.fetchLimit = 1
+
+                    let settingEntities = try context.fetch(fetchRequest)
+                    let settingEntity = settingEntities.first
+
+                    let settings = OfflineSettings(
+                        enabled: settingEntity?.offlineEnabled ?? false,
+                        maxUnreadArticles: settingEntity?.offlineMaxUnreadArticles ?? 20,
+                        saveImages: settingEntity?.offlineSaveImages ?? true,
+                        lastSyncDate: settingEntity?.offlineLastSyncDate
+                    )
+
+                    self.logger.debug("Loaded offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
+                    continuation.resume(returning: settings)
+                } catch {
+                    self.logger.error("Failed to load offline settings: \(error.localizedDescription)")
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    func saveOfflineSettings(_ settings: OfflineSettings) async throws {
+        let context = coreDataManager.context
+
+        return try await withCheckedThrowingContinuation { continuation in
+            context.perform {
+                do {
+                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+                    let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
+
+                    existingSettings.offlineEnabled = settings.enabled
+                    existingSettings.offlineMaxUnreadArticles = settings.maxUnreadArticles
+                    existingSettings.offlineSaveImages = settings.saveImages
+                    existingSettings.offlineLastSyncDate = settings.lastSyncDate
+
+                    try context.save()
+                    self.logger.info("Saved offline settings: enabled=\(settings.enabled), max=\(settings.maxUnreadArticlesInt)")
+                    continuation.resume()
+                } catch {
+                    self.logger.error("Failed to save offline settings: \(error.localizedDescription)")
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    // MARK: - Cache Settings
+
+    private let maxCacheSizeKey = "KingfisherMaxCacheSize"
+
+    func getCacheSize() async throws -> UInt {
+        return try await withCheckedThrowingContinuation { continuation in
+            KingfisherManager.shared.cache.calculateDiskStorageSize { result in
+                switch result {
+                case .success(let size):
+                    continuation.resume(returning: size)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    func getMaxCacheSize() async throws -> UInt {
+        if let savedSize = userDefault.object(forKey: maxCacheSizeKey) as? UInt {
+            return savedSize
+        } else {
+            // Default: 200 MB
+            let defaultBytes = UInt(200 * 1024 * 1024)
+            userDefault.set(defaultBytes, forKey: maxCacheSizeKey)
+            return defaultBytes
+        }
+    }
+
+    func updateMaxCacheSize(_ sizeInBytes: UInt) async throws {
+        KingfisherManager.shared.cache.diskStorage.config.sizeLimit = sizeInBytes
+        userDefault.set(sizeInBytes, forKey: maxCacheSizeKey)
+        logger.info("Updated max cache size to \(sizeInBytes) bytes")
+    }
+
+    func clearCache() async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            KingfisherManager.shared.cache.clearDiskCache {
+                KingfisherManager.shared.cache.clearMemoryCache()
+                self.logger.info("Cache cleared successfully")
+                continuation.resume()
             }
         }
     }

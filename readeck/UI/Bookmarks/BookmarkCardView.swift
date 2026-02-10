@@ -144,7 +144,10 @@ struct BookmarkCardView: View {
     
     private var compactLayoutView: some View {
         HStack(alignment: .top, spacing: 12) {
-            CachedAsyncImage(url: imageURL)
+            CachedAsyncImage(
+                url: imageURL,
+                cacheKey: "bookmark-\(bookmark.id)-hero"
+            )
                 .aspectRatio(contentMode: .fill)
                 .frame(width: 80, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -195,7 +198,10 @@ struct BookmarkCardView: View {
     private var magazineLayoutView: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomTrailing) {
-                CachedAsyncImage(url: imageURL)
+                CachedAsyncImage(
+                    url: imageURL,
+                    cacheKey: "bookmark-\(bookmark.id)-hero"
+                )
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -275,7 +281,10 @@ struct BookmarkCardView: View {
     private var naturalLayoutView: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomTrailing) {
-                CachedAsyncImage(url: imageURL)
+                CachedAsyncImage(
+                    url: imageURL,
+                    cacheKey: "bookmark-\(bookmark.id)-hero"
+                )
                     .aspectRatio(contentMode: .fill)
                     .frame(width: UIScreen.main.bounds.width - 32)
                     .clipped()

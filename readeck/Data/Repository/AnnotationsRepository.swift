@@ -1,10 +1,16 @@
 import Foundation
 
 class AnnotationsRepository: PAnnotationsRepository {
+    
     private let api: PAPI
 
     init(api: PAPI) {
         self.api = api
+    }
+    
+    func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> Annotation {
+        try await api.createAnnotation(bookmarkId: bookmarkId, color: color, startOffset: startOffset, endOffset: endOffset, startSelector: startSelector, endSelector: endSelector)
+            .toDomain()
     }
 
     func fetchAnnotations(bookmarkId: String) async throws -> [Annotation] {
@@ -25,4 +31,6 @@ class AnnotationsRepository: PAnnotationsRepository {
     func deleteAnnotation(bookmarkId: String, annotationId: String) async throws {
         try await api.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
     }
+    
+    
 }

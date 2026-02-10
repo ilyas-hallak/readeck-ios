@@ -74,6 +74,9 @@ struct WebView: UIViewRepresentable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
+                /* Load custom fonts from app bundle */
+                \(generateFontFaceCSS())
+
                 :root {
                     --background-color: \(isDarkMode ? "#000000" : "#ffffff");
                     --text-color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
@@ -345,6 +348,36 @@ struct WebView: UIViewRepresentable {
         WebViewCoordinator()
     }
     
+    private func generateFontFaceCSS() -> String {
+        var css = ""
+
+        // Iterate through all font families from the enum
+        for fontFamily in FontFamily.allCases {
+            // Only process fonts that need to be loaded (Google fonts)
+            guard let fileNames = fontFamily.fontFileNames,
+                  let cssFamilyName = fontFamily.cssFontFamily else {
+                continue
+            }
+
+            // Generate @font-face rules for each weight variant
+            for (fileName, weight) in fileNames {
+                if let fontPath = Bundle.main.path(forResource: fileName, ofType: "ttf") {
+                    let fileURL = URL(fileURLWithPath: fontPath).absoluteString
+                    css += """
+                    @font-face {
+                        font-family: '\(cssFamilyName)';
+                        src: url('\(fileURL)') format('truetype');
+                        font-weight: \(weight);
+                    }
+
+                    """
+                }
+            }
+        }
+
+        return css
+    }
+
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
         case .small: return 14
@@ -356,14 +389,37 @@ struct WebView: UIViewRepresentable {
 
     private func getFontFamily(from fontFamily: FontFamily) -> String {
         switch fontFamily {
+        // Apple System Fonts
         case .system:
             return "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        case .newYork:
+            return "'New York', 'Times New Roman', Georgia, serif"
+        case .avenirNext:
+            return "'Avenir Next', Avenir, 'Helvetica Neue', sans-serif"
+        case .monospace:
+            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
+
+        // Google Serif Fonts
+        case .literata:
+            return "'Literata', Georgia, 'Times New Roman', serif"
+        case .merriweather:
+            return "'Merriweather', Georgia, 'Times New Roman', serif"
+        case .sourceSerif:
+            return "'Source Serif 4', 'Source Serif Pro', Georgia, serif"
+
+        // Google Sans Serif Fonts
+        case .lato:
+            return "'Lato', 'Helvetica Neue', Arial, sans-serif"
+        case .montserrat:
+            return "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
+        case .sourceSans:
+            return "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', sans-serif"
+
+        // Legacy
         case .serif:
             return "'Times New Roman', Times, 'Liberation Serif', serif"
         case .sansSerif:
             return "'Helvetica Neue', Helvetica, Arial, sans-serif"
-        case .monospace:
-            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
         }
     }
 
@@ -410,6 +466,7 @@ struct WebView: UIViewRepresentable {
         let greenColor = AnnotationColor.green.cssColor(isDark: isDarkMode)
         let blueColor = AnnotationColor.blue.cssColor(isDark: isDarkMode)
         let redColor = AnnotationColor.red.cssColor(isDark: isDarkMode)
+        let highlightLabel = NSLocalizedString("Highlight", comment: "")
 
         return """
         // Create annotation color overlay
@@ -465,9 +522,9 @@ struct WebView: UIViewRepresentable {
             `;
             overlay.appendChild(content);
 
-            // Add "Markierung" label
+            // Add localized label
             const label = document.createElement('span');
-            label.textContent = 'Markierung';
+            label.textContent = '\(highlightLabel)';
             label.style.cssText = `
                 color: black;
                 font-size: 16px;

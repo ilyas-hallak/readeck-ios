@@ -77,7 +77,61 @@ extension ResourceDto {
 
 // MARK: - BookmarkEntity to Domain Mapping
 extension BookmarkEntity {
-    
+    func toDomain() -> Bookmark? {
+        guard let id = self.id,
+              let title = self.title,
+              let url = self.url,
+              let href = self.href,
+              let created = self.created,
+              let update = self.update,
+              let siteName = self.siteName,
+              let site = self.site else {
+            return nil
+        }
+
+        // Reconstruct hero image from cached URL for offline access
+        let heroImage: ImageResource? = self.heroImageURL.flatMap { urlString in
+            ImageResource(src: urlString, height: 0, width: 0)
+        }
+
+        let resources = BookmarkResources(
+            article: nil,
+            icon: nil,
+            image: heroImage,
+            log: nil,
+            props: nil,
+            thumbnail: nil
+        )
+
+        return Bookmark(
+            id: id,
+            title: title,
+            url: url,
+            href: href,
+            description: self.desc ?? "",
+            authors: self.authors?.components(separatedBy: ",") ?? [],
+            created: created,
+            published: self.published,
+            updated: update,
+            siteName: siteName,
+            site: site,
+            readingTime: Int(self.readingTime),
+            wordCount: Int(self.wordCount),
+            hasArticle: self.hasArticle,
+            isArchived: self.isArchived,
+            isDeleted: self.hasDeleted,
+            isMarked: self.isMarked,
+            labels: [],
+            lang: self.lang,
+            loaded: self.loaded,
+            readProgress: Int(self.readProgress),
+            documentType: self.documentType ?? "",
+            state: Int(self.state),
+            textDirection: self.textDirection ?? "",
+            type: self.type ?? "",
+            resources: resources
+        )
+    }
 }
 
 // MARK: - Domain to BookmarkEntity Mapping
@@ -128,6 +182,13 @@ private extension BookmarkEntity {
         self.textDirection = bookmark.textDirection
         self.type = bookmark.type
         self.state = Int16(bookmark.state)
+
+        // Save hero image URL for offline access
+        if let heroImageUrl = bookmark.resources.image?.src {
+            self.heroImageURL = heroImageUrl
+        } else if let thumbnailUrl = bookmark.resources.thumbnail?.src {
+            self.heroImageURL = thumbnailUrl
+        }
     }
 }
 

@@ -8,7 +8,8 @@ class BookmarkDetailViewModel {
     private let loadSettingsUseCase: PLoadSettingsUseCase
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
-    private let api: PAPI
+    private let getCachedArticleUseCase: PGetCachedArticleUseCase
+    private let createAnnotationUseCase: PCreateAnnotationUseCase
 
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -31,7 +32,8 @@ class BookmarkDetailViewModel {
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
-        self.api = API()
+        self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
+        self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.factory = factory
 
         readProgressSubject
@@ -69,17 +71,40 @@ class BookmarkDetailViewModel {
     }
     
     @MainActor
-    func loadArticleContent(id: String) async {
+    func loadArticleContent(id: String, forceRefresh: Bool = false) async {
         isLoadingArticle = true
 
+        // First, try to load from cache (unless force refresh)
+        if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
+            articleContent = cachedHTML
+            processArticleContent()
+            isLoadingArticle = false
+            Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
+
+            // Debug: Check for Base64 images
+            let base64Count = countOccurrences(in: cachedHTML, of: "data:image/")
+            let httpCount = countOccurrences(in: cachedHTML, of: "src=\"http")
+            Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
+
+            return
+        }
+
+        // If not cached or force refresh, fetch from server
+        Logger.viewModel.info("📡 Fetching article \(id) from server \(forceRefresh ? "(force refresh)" : "(not in cache)")")
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
+            Logger.viewModel.info("✅ Fetched article from server (\(articleContent.utf8.count) bytes)")
         } catch {
             errorMessage = "Error loading article"
+            Logger.viewModel.error("❌ Failed to load article: \(error.localizedDescription)")
         }
 
         isLoadingArticle = false
+    }
+
+    private func countOccurrences(in text: String, of substring: String) -> Int {
+        return text.components(separatedBy: substring).count - 1
     }
 
     private func processArticleContent() {
@@ -109,6 +134,7 @@ class BookmarkDetailViewModel {
     @MainActor
     func refreshBookmarkDetail(id: String) async {
         await loadBookmarkDetail(id: id)
+        await loadArticleContent(id: id, forceRefresh: true)
     }
     
     func addBookmarkToSpeechQueue() {
@@ -148,7 +174,7 @@ class BookmarkDetailViewModel {
     @MainActor
     func createAnnotation(bookmarkId: String, color: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async {
         do {
-            let annotation = try await api.createAnnotation(
+            let annotation = try await createAnnotationUseCase.execute(
                 bookmarkId: bookmarkId,
                 color: color,
                 startOffset: startOffset,
@@ -156,9 +182,9 @@ class BookmarkDetailViewModel {
                 startSelector: startSelector,
                 endSelector: endSelector
             )
-            print("✅ Annotation created: \(annotation.id)")
+            Logger.viewModel.info("✅ Annotation created: \(annotation.id)")
         } catch {
-            print("❌ Failed to create annotation: \(error)")
+            Logger.viewModel.error("❌ Failed to create annotation: \(error.localizedDescription)")
             errorMessage = "Error creating annotation"
         }
     }

@@ -75,6 +75,33 @@ class CoreDataManager {
             }
         }
     }
+
+    func resetDatabase() throws {
+        logger.warning("⚠️ Resetting Core Data database - ALL DATA WILL BE DELETED")
+
+        guard let store = persistentContainer.persistentStoreCoordinator.persistentStores.first else {
+            throw NSError(domain: "CoreDataManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No persistent store found"])
+        }
+
+        guard let storeURL = store.url else {
+            throw NSError(domain: "CoreDataManager", code: -2, userInfo: [NSLocalizedDescriptionKey: "Store URL not found"])
+        }
+
+        // Remove the persistent store
+        try persistentContainer.persistentStoreCoordinator.remove(store)
+
+        // Delete the store files
+        try FileManager.default.removeItem(at: storeURL)
+
+        // Also delete related files (-wal, -shm)
+        let walURL = storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal")
+        let shmURL = storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm")
+
+        try? FileManager.default.removeItem(at: walURL)
+        try? FileManager.default.removeItem(at: shmURL)
+
+        logger.info("Core Data database files deleted successfully")
+    }
     
     private func setupInMemoryStore(container: NSPersistentContainer) {
         logger.warning("Setting up in-memory Core Data store as fallback")

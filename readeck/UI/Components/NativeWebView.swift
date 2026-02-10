@@ -16,6 +16,8 @@ struct NativeWebView: View {
     var onScrollToPosition: ((CGFloat) -> Void)? = nil
 
     @State private var webPage = WebPage()
+    @State private var annotationPollingTask: Task<Void, Never>?
+    @State private var scrollPollingTask: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -32,9 +34,6 @@ struct NativeWebView: View {
             .onChange(of: colorScheme) { _, _ in
                 loadStyledContent()
             }
-            .onChange(of: selectedAnnotationId) { _, _ in
-                loadStyledContent()
-            }
             .onChange(of: webPage.isLoading) { _, isLoading in
                 if !isLoading {
                     // Update height when content finishes loading
@@ -45,16 +44,24 @@ struct NativeWebView: View {
                     }
                 }
             }
+            .onDisappear {
+                // Cancel polling tasks to prevent memory leaks
+                annotationPollingTask?.cancel()
+                scrollPollingTask?.cancel()
+            }
     }
 
     private func setupAnnotationMessageHandler() {
+        // Cancel any existing polling task
+        annotationPollingTask?.cancel()
+
         guard let onAnnotationCreated = onAnnotationCreated else { return }
 
         // Poll for annotation messages from JavaScript
-        Task { @MainActor in
+        annotationPollingTask = Task { @MainActor in
             let page = webPage
 
-            while true {
+            while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
 
                 let script = """
@@ -86,13 +93,16 @@ struct NativeWebView: View {
     }
 
     private func setupScrollToPositionHandler() {
+        // Cancel any existing polling task
+        scrollPollingTask?.cancel()
+
         guard let onScrollToPosition = onScrollToPosition else { return }
 
         // Poll for scroll position messages from JavaScript
-        Task { @MainActor in
+        scrollPollingTask = Task { @MainActor in
             let page = webPage
 
-            while true {
+            while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
 
                 let script = """
@@ -189,6 +199,9 @@ struct NativeWebView: View {
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
+                /* Load custom fonts from app bundle */
+                \(generateFontFaceCSS())
+
                 * {
                     max-width: 100%;
                     box-sizing: border-box;
@@ -383,6 +396,36 @@ struct NativeWebView: View {
         }
     }
     
+    private func generateFontFaceCSS() -> String {
+        var css = ""
+
+        // Iterate through all font families from the enum
+        for fontFamily in FontFamily.allCases {
+            // Only process fonts that need to be loaded (Google fonts)
+            guard let fileNames = fontFamily.fontFileNames,
+                  let cssFamilyName = fontFamily.cssFontFamily else {
+                continue
+            }
+
+            // Generate @font-face rules for each weight variant
+            for (fileName, weight) in fileNames {
+                if let fontPath = Bundle.main.path(forResource: fileName, ofType: "ttf") {
+                    let fileURL = URL(fileURLWithPath: fontPath).absoluteString
+                    css += """
+                    @font-face {
+                        font-family: '\(cssFamilyName)';
+                        src: url('\(fileURL)') format('truetype');
+                        font-weight: \(weight);
+                    }
+
+                    """
+                }
+            }
+        }
+
+        return css
+    }
+
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
         case .small: return 14
@@ -394,14 +437,31 @@ struct NativeWebView: View {
 
     private func getFontFamily(from fontFamily: FontFamily) -> String {
         switch fontFamily {
+        // Apple System Fonts
         case .system: return "-apple-system, BlinkMacSystemFont, sans-serif"
+        case .newYork: return "'New York', 'Times New Roman', Georgia, serif"
+        case .avenirNext: return "'Avenir Next', Avenir, 'Helvetica Neue', sans-serif"
+        case .monospace: return "'SF Mono', Menlo, Monaco, monospace"
+
+        // Google Serif Fonts
+        case .literata: return "'Literata', Georgia, 'Times New Roman', serif"
+        case .merriweather: return "'Merriweather', Georgia, 'Times New Roman', serif"
+        case .sourceSerif: return "'Source Serif 4', 'Source Serif Pro', Georgia, serif"
+
+        // Google Sans Serif Fonts
+        case .lato: return "'Lato', 'Helvetica Neue', Arial, sans-serif"
+        case .montserrat: return "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
+        case .sourceSans: return "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', sans-serif"
+
+        // Legacy
         case .serif: return "'Times New Roman', Times, serif"
         case .sansSerif: return "'Helvetica Neue', Helvetica, Arial, sans-serif"
-        case .monospace: return "'SF Mono', Menlo, Monaco, monospace"
         }
     }
 
     private func generateAnnotationOverlayJS(isDarkMode: Bool) -> String {
+        let highlightLabel = NSLocalizedString("Highlight", comment: "")
+
         return """
         // Create annotation color overlay
         (function() {
@@ -456,9 +516,9 @@ struct NativeWebView: View {
             `;
             overlay.appendChild(content);
 
-            // Add "Markierung" label
+            // Add localized label
             const label = document.createElement('span');
-            label.textContent = 'Markierung';
+            label.textContent = '\(highlightLabel)';
             label.style.cssText = `
                 color: black;
                 font-size: 16px;

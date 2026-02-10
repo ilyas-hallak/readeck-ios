@@ -6,7 +6,6 @@
 //
 
 import XCTest
-import SnapshotHelper
 
 final class readeckUITests: XCTestCase {
 
@@ -16,7 +15,7 @@ final class readeckUITests: XCTestCase {
         // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
 
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
+        // In UI tests it's important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
     }
 
     override func tearDownWithError() throws {
@@ -27,9 +26,7 @@ final class readeckUITests: XCTestCase {
     func testExample() throws {
         // UI tests must launch the application that they test.
         let app = XCUIApplication()
-        setupSnapshot(app)
         app.launch()
-        snapshot("01LaunchScreen")
 
         // Use XCTAssert and related functions to verify your tests produce the correct results.
     }

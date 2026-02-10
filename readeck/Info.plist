@@ -15,6 +15,8 @@
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 		<key>NSExceptionRequiresForwardSecrecy</key>
@@ -31,5 +33,20 @@
 		<key>UIImageName</key>
 		<string>splash</string>
 	</dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Literata-Regular.ttf</string>
+		<string>Literata-Bold.ttf</string>
+		<string>Merriweather-Regular.ttf</string>
+		<string>Merriweather-Bold.ttf</string>
+		<string>SourceSerif4-Regular.ttf</string>
+		<string>SourceSerif4-Bold.ttf</string>
+		<string>Lato-Regular.ttf</string>
+		<string>Lato-Bold.ttf</string>
+		<string>Montserrat-Regular.ttf</string>
+		<string>Montserrat-Bold.ttf</string>
+		<string>SourceSans3-Regular.ttf</string>
+		<string>SourceSans3-Bold.ttf</string>
+	</array>
 </dict>
 </plist>
