@@ -127,10 +127,19 @@ class API: PAPI {
         
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
+            // Try to extract error message from response body
+            if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                throw APIError.serverErrorWithMessage(statusCode: httpResponse.statusCode, message: errorResponse.message)
+            }
             throw APIError.serverError(httpResponse.statusCode)
         }
-        
+
         return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    private struct APIErrorResponse: Codable {
+        let status: Int
+        let message: String
     }
     
     // Separate Methode für String-Requests (HTML/Text)
@@ -641,6 +650,7 @@ enum APIError: Error {
     case invalidURL
     case invalidResponse
     case serverError(Int)
+    case serverErrorWithMessage(statusCode: Int, message: String)
 }
 
 extension APIError: LocalizedError {
@@ -652,6 +662,8 @@ extension APIError: LocalizedError {
             return "Invalid server response"
         case .serverError(let statusCode):
             return "Server error: HTTP \(statusCode)"
+        case .serverErrorWithMessage(_, let message):
+            return message
         }
     }
 }

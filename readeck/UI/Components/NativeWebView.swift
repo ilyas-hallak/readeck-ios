@@ -291,9 +291,12 @@ struct NativeWebView: View {
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
+                    display: inline;
                     border-radius: 3px;
                     padding: 2px 0;
                     transition: background-color 0.3s ease, box-shadow 0.3s ease;
+                    -webkit-box-decoration-break: clone;
+                    box-decoration-break: clone;
                 }
 
                 /* Yellow annotations */
@@ -660,6 +663,40 @@ struct NativeWebView: View {
                 return 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             }
 
+            function getTextNodesInRange(range) {
+                const textNodes = [];
+                const startContainer = range.startContainer;
+                const endContainer = range.endContainer;
+
+                // If start and end are the same text node, just return it
+                if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+                    return [startContainer];
+                }
+
+                const walker = document.createTreeWalker(
+                    range.commonAncestorContainer,
+                    NodeFilter.SHOW_TEXT,
+                    null
+                );
+
+                let foundStart = false;
+                let node;
+
+                while (node = walker.nextNode()) {
+                    if (node === startContainer) {
+                        foundStart = true;
+                    }
+                    if (foundStart && node.textContent.trim().length > 0) {
+                        textNodes.push(node);
+                    }
+                    if (node === endContainer) {
+                        break;
+                    }
+                }
+
+                return textNodes;
+            }
+
             function handleColorSelection(color) {
                 if (!currentRange || !currentSelection) return;
 
@@ -671,19 +708,30 @@ struct NativeWebView: View {
                 const startOffset = calculateOffsetInElement(currentRange.startContainer, currentRange.startOffset);
                 const endOffset = calculateOffsetInElement(currentRange.endContainer, currentRange.endOffset);
 
-                // Create annotation element
-                const annotation = document.createElement('rd-annotation');
-                annotation.setAttribute('data-annotation-color', color);
-                annotation.setAttribute('data-annotation-id-value', generateTempId());
+                const tempId = generateTempId();
 
                 // Wrap selection in annotation
                 try {
+                    // Try surroundContents for simple single-element selections
+                    const annotation = document.createElement('rd-annotation');
+                    annotation.setAttribute('data-annotation-color', color);
+                    annotation.setAttribute('data-annotation-id-value', tempId);
                     currentRange.surroundContents(annotation);
                 } catch (e) {
-                    // If surroundContents fails (e.g., partial element selection), extract and wrap
-                    const fragment = currentRange.extractContents();
-                    annotation.appendChild(fragment);
-                    currentRange.insertNode(annotation);
+                    // For complex selections spanning multiple elements: wrap each text node individually
+                    const textNodes = getTextNodesInRange(currentRange);
+                    textNodes.forEach((node, index) => {
+                        const wrapper = document.createElement('rd-annotation');
+                        wrapper.setAttribute('data-annotation-color', color);
+                        wrapper.setAttribute('data-annotation-id-value', tempId);
+                        if (index > 0) {
+                            wrapper.setAttribute('data-annotation-continued', 'true');
+                        }
+
+                        const parent = node.parentNode;
+                        parent.insertBefore(wrapper, node);
+                        wrapper.appendChild(node);
+                    });
                 }
 
                 // For NativeWebView: use global variable for polling
