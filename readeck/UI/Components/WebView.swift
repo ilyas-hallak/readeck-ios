@@ -50,7 +50,12 @@ struct WebView: UIViewRepresentable {
 
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
-        let fontFamily = getFontFamily(from: settings.fontFamily ?? .serif)
+        let selectedFontFamily = settings.fontFamily ?? .serif
+        let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
+        let codeFontFamily = selectedFontFamily == .monospace
+            ? "var(--font-family)"
+            : "'SF Mono', Menlo, Monaco, Consolas, monospace"
+        Logger.ui.debug("WebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
 
         // Clean up problematic HTML that kills performance
         let cleanedHTML = htmlContent
@@ -74,8 +79,8 @@ struct WebView: UIViewRepresentable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
-                /* Load custom fonts from app bundle */
-                \(generateFontFaceCSS())
+                /* Load selected custom font from app bundle */
+                \(fontCSS.fontFaceCSS)
 
                 :root {
                     --background-color: \(isDarkMode ? "#000000" : "#ffffff");
@@ -90,14 +95,14 @@ struct WebView: UIViewRepresentable {
                     
                     /* Font Settings from Settings */
                     --base-font-size: \(fontSize)px;
-                    --font-family: \(fontFamily);
+                    --font-family: \(fontCSS.fontStackCSS);
                 }
                 
                 body {
                     font-family: var(--font-family);
                     line-height: 1.8;
                     margin: 0;
-                    padding: 16px;
+                    padding: 16px 16px 100px;
                     background-color: var(--background-color);
                     color: var(--text-color);
                     font-size: var(--base-font-size);
@@ -106,13 +111,16 @@ struct WebView: UIViewRepresentable {
                     -webkit-touch-callout: default;
                     user-select: text;
                 }
+
+                body, article, p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, div, a {
+                    font-family: var(--font-family) !important;
+                }
                 
                 h1, h2, h3, h4, h5, h6 {
                     color: var(--heading-color);
                     margin-top: 24px;
                     margin-bottom: 12px;
                     font-weight: 600;
-                    font-family: var(--font-family);
                 }
                 h1 { font-size: calc(var(--base-font-size) * 1.5); }
                 h2 { font-size: calc(var(--base-font-size) * 1.25); }
@@ -123,7 +131,6 @@ struct WebView: UIViewRepresentable {
                 
                 p {
                     margin-bottom: 16px;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
                 }
                 
@@ -137,7 +144,6 @@ struct WebView: UIViewRepresentable {
                 a {
                     color: var(--link-color);
                     text-decoration: none;
-                    font-family: var(--font-family);
                 }
                 a:hover {
                     text-decoration: underline;
@@ -152,8 +158,11 @@ struct WebView: UIViewRepresentable {
                     background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)");
                     border-radius: 4px;
                     padding: 12px 16px;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
+                }
+
+                code, pre, kbd, samp {
+                    font-family: \(codeFontFamily) !important;
                 }
                 
                 code {
@@ -161,7 +170,6 @@ struct WebView: UIViewRepresentable {
                     color: var(--code-text);
                     padding: 2px 6px;
                     border-radius: 4px;
-                    font-family: \(settings.fontFamily == .monospace ? "var(--font-family)" : "'SF Mono', Menlo, Monaco, Consolas, monospace");
                     font-size: calc(var(--base-font-size) * 0.875);
                 }
                 
@@ -171,7 +179,6 @@ struct WebView: UIViewRepresentable {
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
-                    font-family: \(settings.fontFamily == .monospace ? "var(--font-family)" : "'SF Mono', Menlo, Monaco, Consolas, monospace");
                     font-size: calc(var(--base-font-size) * 0.875);
                     border: 1px solid var(--separator-color);
                 }
@@ -179,7 +186,7 @@ struct WebView: UIViewRepresentable {
                 pre code {
                     background-color: transparent;
                     padding: 0;
-                    font-family: inherit;
+                    font-family: inherit !important;
                 }
                 
                 hr {
@@ -193,7 +200,6 @@ struct WebView: UIViewRepresentable {
                     width: 100%;
                     border-collapse: collapse;
                     margin: 16px 0;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
                 }
                 
@@ -211,7 +217,6 @@ struct WebView: UIViewRepresentable {
                 ul, ol {
                     padding-left: 20px;
                     margin-bottom: 16px;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
                 }
                 
@@ -350,36 +355,6 @@ struct WebView: UIViewRepresentable {
     func makeCoordinator() -> WebViewCoordinator {
         WebViewCoordinator()
     }
-    
-    private func generateFontFaceCSS() -> String {
-        var css = ""
-
-        // Iterate through all font families from the enum
-        for fontFamily in FontFamily.allCases {
-            // Only process fonts that need to be loaded (Google fonts)
-            guard let fileNames = fontFamily.fontFileNames,
-                  let cssFamilyName = fontFamily.cssFontFamily else {
-                continue
-            }
-
-            // Generate @font-face rules for each weight variant
-            for (fileName, weight) in fileNames {
-                if let fontPath = Bundle.main.path(forResource: fileName, ofType: "ttf") {
-                    let fileURL = URL(fileURLWithPath: fontPath).absoluteString
-                    css += """
-                    @font-face {
-                        font-family: '\(cssFamilyName)';
-                        src: url('\(fileURL)') format('truetype');
-                        font-weight: \(weight);
-                    }
-
-                    """
-                }
-            }
-        }
-
-        return css
-    }
 
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
@@ -387,42 +362,6 @@ struct WebView: UIViewRepresentable {
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
-        }
-    }
-
-    private func getFontFamily(from fontFamily: FontFamily) -> String {
-        switch fontFamily {
-        // Apple System Fonts
-        case .system:
-            return "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        case .newYork:
-            return "'New York', 'Times New Roman', Georgia, serif"
-        case .avenirNext:
-            return "'Avenir Next', Avenir, 'Helvetica Neue', sans-serif"
-        case .monospace:
-            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
-
-        // Google Serif Fonts
-        case .literata:
-            return "'Literata', Georgia, 'Times New Roman', serif"
-        case .merriweather:
-            return "'Merriweather', Georgia, 'Times New Roman', serif"
-        case .sourceSerif:
-            return "'Source Serif 4', 'Source Serif Pro', Georgia, serif"
-
-        // Google Sans Serif Fonts
-        case .lato:
-            return "'Lato', 'Helvetica Neue', Arial, sans-serif"
-        case .montserrat:
-            return "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
-        case .sourceSans:
-            return "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', sans-serif"
-
-        // Legacy
-        case .serif:
-            return "'Times New Roman', Times, 'Liberation Serif', serif"
-        case .sansSerif:
-            return "'Helvetica Neue', Helvetica, Arial, sans-serif"
         }
     }
 

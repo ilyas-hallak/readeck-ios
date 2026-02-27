@@ -225,7 +225,7 @@ struct BookmarkDetailLegacyView: View {
         .toolbar {
             // Toggle button (left)
             ToolbarItem(placement: .navigationBarLeading) {
-                if #available(iOS 26.0, *) {
+                if #available(iOS 26.0, *), !ProcessInfo.processInfo.isiOSAppOnMac {
                     Button(action: {
                         useNativeWebView.toggle()
                     }) {

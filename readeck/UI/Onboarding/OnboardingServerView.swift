@@ -10,9 +10,56 @@ import SwiftUI
 struct OnboardingServerView: View {
     @State private var viewModel = SettingsServerViewModel()
     @State private var showLoginFields = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
-        classicLoginForm
+        GeometryReader { geometry in
+            ScrollView {
+                VStack {
+                    onboardingContent
+                }
+                .frame(maxWidth: .infinity, minHeight: geometry.size.height, alignment: .center)
+                .padding(.vertical, 20)
+                .padding(.horizontal, isWideLayout ? 24 : 0)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .background(
+                Group {
+                    if isWideLayout {
+                        Color(.systemGroupedBackground).ignoresSafeArea()
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
+        }
+        .task {
+            await viewModel.loadServerSettings()
+        }
+    }
+
+    private var isWideLayout: Bool {
+        horizontalSizeClass == .regular
+    }
+
+    @ViewBuilder
+    private var onboardingContent: some View {
+        if isWideLayout {
+            classicLoginForm
+                .frame(maxWidth: 620)
+                .padding(28)
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(Color(.systemBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color(.separator).opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 18, x: 0, y: 10)
+        } else {
+            classicLoginForm
+        }
     }
 
     private var buttonEnabled: Bool {
@@ -194,9 +241,6 @@ struct OnboardingServerView: View {
                 }
                 .disabled(!buttonEnabled || viewModel.isLoading)
             }
-        }
-        .task {
-            await viewModel.loadServerSettings()
         }
     }
 }
