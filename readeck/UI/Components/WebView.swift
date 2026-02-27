@@ -50,7 +50,12 @@ struct WebView: UIViewRepresentable {
 
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
-        let fontFamily = getFontFamily(from: settings.fontFamily ?? .serif)
+        let selectedFontFamily = settings.fontFamily ?? .serif
+        let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
+        let codeFontFamily = selectedFontFamily == .monospace
+            ? "var(--font-family)"
+            : "'SF Mono', Menlo, Monaco, Consolas, monospace"
+        Logger.ui.debug("WebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
 
         // Clean up problematic HTML that kills performance
         let cleanedHTML = htmlContent
@@ -74,6 +79,9 @@ struct WebView: UIViewRepresentable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
+                /* Load selected custom font from app bundle */
+                \(fontCSS.fontFaceCSS)
+
                 :root {
                     --background-color: \(isDarkMode ? "#000000" : "#ffffff");
                     --text-color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
@@ -87,14 +95,14 @@ struct WebView: UIViewRepresentable {
                     
                     /* Font Settings from Settings */
                     --base-font-size: \(fontSize)px;
-                    --font-family: \(fontFamily);
+                    --font-family: \(fontCSS.fontStackCSS);
                 }
                 
                 body {
                     font-family: var(--font-family);
                     line-height: 1.8;
                     margin: 0;
-                    padding: 16px;
+                    padding: 16px 16px 100px;
                     background-color: var(--background-color);
                     color: var(--text-color);
                     font-size: var(--base-font-size);
@@ -103,13 +111,16 @@ struct WebView: UIViewRepresentable {
                     -webkit-touch-callout: default;
                     user-select: text;
                 }
+
+                body, article, p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, div, a {
+                    font-family: var(--font-family) !important;
+                }
                 
                 h1, h2, h3, h4, h5, h6 {
                     color: var(--heading-color);
                     margin-top: 24px;
                     margin-bottom: 12px;
                     font-weight: 600;
-                    font-family: var(--font-family);
                 }
                 h1 { font-size: calc(var(--base-font-size) * 1.5); }
                 h2 { font-size: calc(var(--base-font-size) * 1.25); }
@@ -120,7 +131,6 @@ struct WebView: UIViewRepresentable {
                 
                 p {
                     margin-bottom: 16px;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
                 }
                 
@@ -134,7 +144,6 @@ struct WebView: UIViewRepresentable {
                 a {
                     color: var(--link-color);
                     text-decoration: none;
-                    font-family: var(--font-family);
                 }
                 a:hover {
                     text-decoration: underline;
@@ -149,8 +158,11 @@ struct WebView: UIViewRepresentable {
                     background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)");
                     border-radius: 4px;
                     padding: 12px 16px;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
+                }
+
+                code, pre, kbd, samp {
+                    font-family: \(codeFontFamily) !important;
                 }
                 
                 code {
@@ -158,7 +170,6 @@ struct WebView: UIViewRepresentable {
                     color: var(--code-text);
                     padding: 2px 6px;
                     border-radius: 4px;
-                    font-family: \(settings.fontFamily == .monospace ? "var(--font-family)" : "'SF Mono', Menlo, Monaco, Consolas, monospace");
                     font-size: calc(var(--base-font-size) * 0.875);
                 }
                 
@@ -168,7 +179,6 @@ struct WebView: UIViewRepresentable {
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
-                    font-family: \(settings.fontFamily == .monospace ? "var(--font-family)" : "'SF Mono', Menlo, Monaco, Consolas, monospace");
                     font-size: calc(var(--base-font-size) * 0.875);
                     border: 1px solid var(--separator-color);
                 }
@@ -176,7 +186,7 @@ struct WebView: UIViewRepresentable {
                 pre code {
                     background-color: transparent;
                     padding: 0;
-                    font-family: inherit;
+                    font-family: inherit !important;
                 }
                 
                 hr {
@@ -190,7 +200,6 @@ struct WebView: UIViewRepresentable {
                     width: 100%;
                     border-collapse: collapse;
                     margin: 16px 0;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
                 }
                 
@@ -208,7 +217,6 @@ struct WebView: UIViewRepresentable {
                 ul, ol {
                     padding-left: 20px;
                     margin-bottom: 16px;
-                    font-family: var(--font-family);
                     font-size: var(--base-font-size);
                 }
                 
@@ -248,9 +256,12 @@ struct WebView: UIViewRepresentable {
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
+                    display: inline;
                     border-radius: 3px;
                     padding: 2px 0;
                     transition: background-color 0.3s ease, box-shadow 0.3s ease;
+                    -webkit-box-decoration-break: clone;
+                    box-decoration-break: clone;
                 }
 
                 /* Yellow annotations */
@@ -344,26 +355,13 @@ struct WebView: UIViewRepresentable {
     func makeCoordinator() -> WebViewCoordinator {
         WebViewCoordinator()
     }
-    
+
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
         case .small: return 14
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
-        }
-    }
-
-    private func getFontFamily(from fontFamily: FontFamily) -> String {
-        switch fontFamily {
-        case .system:
-            return "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        case .serif:
-            return "'Times New Roman', Times, 'Liberation Serif', serif"
-        case .sansSerif:
-            return "'Helvetica Neue', Helvetica, Arial, sans-serif"
-        case .monospace:
-            return "'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
         }
     }
 
@@ -410,6 +408,7 @@ struct WebView: UIViewRepresentable {
         let greenColor = AnnotationColor.green.cssColor(isDark: isDarkMode)
         let blueColor = AnnotationColor.blue.cssColor(isDark: isDarkMode)
         let redColor = AnnotationColor.red.cssColor(isDark: isDarkMode)
+        let highlightLabel = NSLocalizedString("Highlight", comment: "")
 
         return """
         // Create annotation color overlay
@@ -465,9 +464,9 @@ struct WebView: UIViewRepresentable {
             `;
             overlay.appendChild(content);
 
-            // Add "Markierung" label
+            // Add localized label
             const label = document.createElement('span');
-            label.textContent = 'Markierung';
+            label.textContent = '\(highlightLabel)';
             label.style.cssText = `
                 color: black;
                 font-size: 16px;
@@ -609,6 +608,40 @@ struct WebView: UIViewRepresentable {
                 return 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             }
 
+            function getTextNodesInRange(range) {
+                const textNodes = [];
+                const startContainer = range.startContainer;
+                const endContainer = range.endContainer;
+
+                // If start and end are the same text node, just return it
+                if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+                    return [startContainer];
+                }
+
+                const walker = document.createTreeWalker(
+                    range.commonAncestorContainer,
+                    NodeFilter.SHOW_TEXT,
+                    null
+                );
+
+                let foundStart = false;
+                let node;
+
+                while (node = walker.nextNode()) {
+                    if (node === startContainer) {
+                        foundStart = true;
+                    }
+                    if (foundStart && node.textContent.trim().length > 0) {
+                        textNodes.push(node);
+                    }
+                    if (node === endContainer) {
+                        break;
+                    }
+                }
+
+                return textNodes;
+            }
+
             function handleColorSelection(color) {
                 if (!currentRange || !currentSelection) return;
 
@@ -620,19 +653,30 @@ struct WebView: UIViewRepresentable {
                 const startOffset = calculateOffsetInElement(currentRange.startContainer, currentRange.startOffset);
                 const endOffset = calculateOffsetInElement(currentRange.endContainer, currentRange.endOffset);
 
-                // Create annotation element
-                const annotation = document.createElement('rd-annotation');
-                annotation.setAttribute('data-annotation-color', color);
-                annotation.setAttribute('data-annotation-id-value', generateTempId());
+                const tempId = generateTempId();
 
                 // Wrap selection in annotation
                 try {
+                    // Try surroundContents for simple single-element selections
+                    const annotation = document.createElement('rd-annotation');
+                    annotation.setAttribute('data-annotation-color', color);
+                    annotation.setAttribute('data-annotation-id-value', tempId);
                     currentRange.surroundContents(annotation);
                 } catch (e) {
-                    // If surroundContents fails (e.g., partial element selection), extract and wrap
-                    const fragment = currentRange.extractContents();
-                    annotation.appendChild(fragment);
-                    currentRange.insertNode(annotation);
+                    // For complex selections spanning multiple elements: wrap each text node individually
+                    const textNodes = getTextNodesInRange(currentRange);
+                    textNodes.forEach((node, index) => {
+                        const wrapper = document.createElement('rd-annotation');
+                        wrapper.setAttribute('data-annotation-color', color);
+                        wrapper.setAttribute('data-annotation-id-value', tempId);
+                        if (index > 0) {
+                            wrapper.setAttribute('data-annotation-continued', 'true');
+                        }
+
+                        const parent = node.parentNode;
+                        parent.insertBefore(wrapper, node);
+                        wrapper.appendChild(node);
+                    });
                 }
 
                 // Send to Swift with selectors

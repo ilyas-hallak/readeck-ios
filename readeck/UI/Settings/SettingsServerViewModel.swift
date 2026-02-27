@@ -4,20 +4,28 @@ import SwiftUI
 
 @Observable
 class SettingsServerViewModel {
-    
+
     // MARK: - Use Cases
-    
+
     private let loginUseCase: PLoginUseCase
     private let logoutUseCase: PLogoutUseCase
     private let saveServerSettingsUseCase: PSaveServerSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
-    
+    private let getServerInfoUseCase: PGetServerInfoUseCase
+    private let loginWithOAuthUseCase: PLoginWithOAuthUseCase
+    private let authRepository: PAuthRepository
+    private let settingsRepository: PSettingsRepository
+
     // MARK: - Server Settings
     var endpoint = ""
     var username = ""
     var password = ""
     var isLoading = false
     var isLoggedIn = false
+
+    // MARK: - OAuth Support
+    var serverSupportsOAuth = false
+
     
     var customHeaders: [String: String] = [:]
     var showingHeadersSection = false
@@ -29,16 +37,20 @@ class SettingsServerViewModel {
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
-    
+
     private var hasFinishedSetup: Bool {
-        SettingsRepository().hasFinishedSetup
+        settingsRepository.hasFinishedSetup
     }
-    
+
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.loginUseCase = factory.makeLoginUseCase()
         self.logoutUseCase = factory.makeLogoutUseCase()
         self.saveServerSettingsUseCase = factory.makeSaveServerSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+        self.getServerInfoUseCase = factory.makeGetServerInfoUseCase()
+        self.loginWithOAuthUseCase = factory.makeLoginWithOAuthUseCase()
+        self.authRepository = factory.makeAuthRepository()
+        self.settingsRepository = factory.makeSettingsRepository()
     }
     
     var isSetupMode: Bool {
@@ -76,7 +88,7 @@ class SettingsServerViewModel {
         defer { isLoading = false }
         do {
             // Normalize endpoint before saving
-            let normalizedEndpoint = normalizeEndpoint(endpoint)
+            let normalizedEndpoint = EndpointValidator.normalize(endpoint)
 
             // Save custom headers to Keychain BEFORE login so they're available during login
             _ = KeychainHelper.shared.saveCustomHeaders(customHeaders)
@@ -89,58 +101,12 @@ class SettingsServerViewModel {
 
             isLoggedIn = true
             successMessage = "Server settings saved and successfully logged in."
-            
-            try await SettingsRepository().saveHasFinishedSetup(true)
+            try await settingsRepository.saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
         } catch {
             errorMessage = "Connection or login failed: \(error.localizedDescription)"
             isLoggedIn = false
         }
-    }
-
-    // MARK: - Endpoint Normalization
-
-    private func normalizeEndpoint(_ endpoint: String) -> String {
-        var normalized = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // Remove query parameters
-        if let queryIndex = normalized.firstIndex(of: "?") {
-            normalized = String(normalized[..<queryIndex])
-        }
-
-        // Parse URL components
-        guard var urlComponents = URLComponents(string: normalized) else {
-            // If parsing fails, try adding https:// and parse again
-            normalized = "https://" + normalized
-            guard var urlComponents = URLComponents(string: normalized) else {
-                return normalized
-            }
-            return buildNormalizedURL(from: urlComponents)
-        }
-
-        return buildNormalizedURL(from: urlComponents)
-    }
-
-    private func buildNormalizedURL(from components: URLComponents) -> String {
-        var urlComponents = components
-
-        // Ensure scheme is http or https, default to https
-        if urlComponents.scheme == nil {
-            urlComponents.scheme = "https"
-        } else if urlComponents.scheme != "http" && urlComponents.scheme != "https" {
-            urlComponents.scheme = "https"
-        }
-
-        // Remove trailing slash from path if present
-        if urlComponents.path.hasSuffix("/") {
-            urlComponents.path = String(urlComponents.path.dropLast())
-        }
-
-        // Remove query parameters (already done above, but double check)
-        urlComponents.query = nil
-        urlComponents.fragment = nil
-
-        return urlComponents.string ?? components.string ?? ""
     }
     
     @MainActor
@@ -163,6 +129,57 @@ class SettingsServerViewModel {
     var canLogin: Bool {
         !username.isEmpty && !password.isEmpty
     }
+
+    // MARK: - OAuth Methods
+
+    @MainActor
+    func checkServerOAuthSupport() async {
+        guard !endpoint.isEmpty else {
+            serverSupportsOAuth = false
+            return
+        }
+
+        let normalizedEndpoint = EndpointValidator.normalize(endpoint)
+
+        do {
+            let serverInfo = try await getServerInfoUseCase.execute(endpoint: normalizedEndpoint)
+            serverSupportsOAuth = serverInfo.supportsOAuth
+        } catch {
+            serverSupportsOAuth = false
+        }
+    }
+
+    @MainActor
+    func loginWithOAuth() async {
+        guard !endpoint.isEmpty else {
+            errorMessage = "Please enter a server endpoint."
+            return
+        }
+
+        clearMessages()
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let normalizedEndpoint = EndpointValidator.normalize(endpoint)
+            let (token, clientId) = try await loginWithOAuthUseCase.execute(endpoint: normalizedEndpoint)
+
+            // Save OAuth token, client ID and mark as logged in
+            try await authRepository.loginWithOAuth(endpoint: normalizedEndpoint, token: token, clientId: clientId)
+
+            // Update local endpoint with normalized version
+            endpoint = normalizedEndpoint
+
+            isLoggedIn = true
+            successMessage = "Successfully logged in with OAuth."
+            try await settingsRepository.saveHasFinishedSetup(true)
+            NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
+        } catch {
+            errorMessage = "OAuth login failed: \(error.localizedDescription)"
+            isLoggedIn = false
+        }
+    }
+}
     
     @MainActor
     func addHeader(key: String, value: String) {

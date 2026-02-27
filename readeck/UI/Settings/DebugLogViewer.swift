@@ -13,7 +13,7 @@ struct DebugLogViewer: View {
     @State private var selectedCategory: LogCategory?
     @State private var searchText = ""
     @State private var showShareSheet = false
-    @State private var exportText = ""
+    @State private var exportURL: URL?
     @State private var autoScroll = true
     @State private var showFilters = false
     @StateObject private var logConfig = LogConfiguration.shared
@@ -113,7 +113,9 @@ struct DebugLogViewer: View {
             await refreshLogs()
         }
         .sheet(isPresented: $showShareSheet) {
-            ActivityView(activityItems: [exportText])
+            if let url = exportURL {
+                ActivityView(activityItems: [url])
+            }
         }
     }
 
@@ -329,9 +331,21 @@ struct DebugLogViewer: View {
     }
 
     private func exportLogs() async {
-        exportText = await LogStore.shared.exportAsText()
-        showShareSheet = true
-        logger.info("Exported debug logs")
+        do {
+            let (zipData, filename) = try await LogStore.shared.exportAsZippedData()
+
+            // Write to temporary file
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileURL = tempDir.appendingPathComponent(filename)
+
+            try zipData.write(to: fileURL)
+
+            exportURL = fileURL
+            showShareSheet = true
+            logger.info("Exported debug logs as ZIP: \(filename)")
+        } catch {
+            logger.error("Failed to export logs: \(error.localizedDescription)")
+        }
     }
 
     private func levelName(for level: LogLevel) -> String {

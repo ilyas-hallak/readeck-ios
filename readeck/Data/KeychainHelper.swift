@@ -43,6 +43,48 @@ class KeychainHelper {
         loadString(forKey: "readeck_password")
     }
     
+    // MARK: - OAuth Token Storage
+    // Note: OAuth is only available in the main app target, not in URLShare extension
+
+    @discardableResult
+    func saveOAuthToken(_ token: OAuthToken) -> Bool {
+        guard let data = try? JSONEncoder().encode(token),
+              let jsonString = String(data: data, encoding: .utf8) else {
+            return false
+        }
+        return saveString(jsonString, forKey: "readeck_oauth_token")
+    }
+
+    func loadOAuthToken() -> OAuthToken? {
+        guard let jsonString = loadString(forKey: "readeck_oauth_token"),
+              let data = jsonString.data(using: .utf8),
+              let token = try? JSONDecoder().decode(OAuthToken.self, from: data) else {
+            return nil
+        }
+        return token
+    }
+
+    @discardableResult
+    func saveAuthMethod(_ method: AuthenticationMethod) -> Bool {
+        saveString(method.rawValue, forKey: "readeck_auth_method")
+    }
+
+    func loadAuthMethod() -> AuthenticationMethod? {
+        guard let rawValue = loadString(forKey: "readeck_auth_method") else {
+            return nil
+        }
+        return AuthenticationMethod(rawValue: rawValue)
+    }
+
+    @discardableResult
+    func saveOAuthClientId(_ clientId: String) -> Bool {
+        saveString(clientId, forKey: "readeck_oauth_client_id")
+    }
+
+    func loadOAuthClientId() -> String? {
+        loadString(forKey: "readeck_oauth_client_id")
+    }
+
     @discardableResult
     func saveCustomHeaders(_ headers: [String: String]) -> Bool {
         guard let jsonData = try? JSONEncoder().encode(headers),
@@ -68,8 +110,12 @@ class KeychainHelper {
         let endpointCleared = saveString("", forKey: "readeck_endpoint")
         let usernameCleared = saveString("", forKey: "readeck_username")
         let passwordCleared = saveString("", forKey: "readeck_password")
+
+        let oauthTokenCleared = saveString("", forKey: "readeck_oauth_token")
+        let authMethodCleared = saveString("", forKey: "readeck_auth_method")
+        let oauthClientIdCleared = saveString("", forKey: "readeck_oauth_client_id")
         let headersCleared = saveString("", forKey: "readeck_custom_headers")
-        return tokenCleared && endpointCleared && usernameCleared && passwordCleared && headersCleared
+        return tokenCleared && endpointCleared && usernameCleared && passwordCleared && oauthTokenCleared && authMethodCleared && oauthClientIdCleared && headersCleared
     }
     
     // MARK: - Private generic helpers

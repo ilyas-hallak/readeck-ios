@@ -39,6 +39,7 @@ enum LogCategory: String, CaseIterable, Codable {
     case general = "General"
     case manual = "Manual"
     case viewModel = "ViewModel"
+    case sync = "Sync"
 }
 
 class LogConfiguration: ObservableObject {
@@ -53,17 +54,17 @@ class LogConfiguration: ObservableObject {
 
     private init() {
         // First time setup: Enable logging in DEBUG builds with sensible defaults
-        #if DEBUG
-        if UserDefaults.standard.object(forKey: "LogConfigurationInitialized") == nil {
-            isLoggingEnabled = true
-            showPerformanceLogs = true
-            showTimestamps = true
-            includeSourceLocation = true
-            globalMinLevel = .debug
-            UserDefaults.standard.set(true, forKey: "LogConfigurationInitialized")
-            saveConfiguration()
+        if Bundle.main.isDebugBuild {
+            if UserDefaults.standard.object(forKey: "LogConfigurationInitialized") == nil {
+                isLoggingEnabled = true
+                showPerformanceLogs = true
+                showTimestamps = true
+                includeSourceLocation = true
+                globalMinLevel = .debug
+                UserDefaults.standard.set(true, forKey: "LogConfigurationInitialized")
+                saveConfiguration()
+            }
         }
-        #endif
 
         loadConfiguration()
     }
@@ -183,7 +184,7 @@ struct Logger {
     // MARK: - Store Log
 
     private func storeLog(message: String, level: LogLevel, file: String, function: String, line: Int) {
-        #if DEBUG
+        guard Bundle.main.isDebugBuild else { return }
         guard config.isLoggingEnabled else { return }
         let entry = LogEntry(
             level: level,
@@ -196,7 +197,6 @@ struct Logger {
         Task {
             await LogStore.shared.addEntry(entry)
         }
-        #endif
     }
     
     // MARK: - Convenience Methods
@@ -260,6 +260,7 @@ extension Logger {
     static let general = Logger(category: .general)
     static let manual = Logger(category: .manual)
     static let viewModel = Logger(category: .viewModel)
+    static let sync = Logger(category: .sync)
 }
 
 // MARK: - Performance Measurement Helper
@@ -297,18 +298,6 @@ extension DateFormatter {
 extension Dictionary {
     func mapKeys<T>(_ transform: (Key) throws -> T) rethrows -> [T: Value] {
         return try Dictionary<T, Value>(uniqueKeysWithValues: map { (try transform($0.key), $0.value) })
-    }
-}
-
-// MARK: - Debug Build Detection
-
-extension Bundle {
-    var isDebugBuild: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
-        #endif
     }
 }
 

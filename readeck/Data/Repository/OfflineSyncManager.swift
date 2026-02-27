@@ -2,7 +2,13 @@ import Foundation
 import CoreData
 import SwiftUI
 
-class OfflineSyncManager: ObservableObject, @unchecked Sendable {
+protocol POfflineSyncManager {
+    func syncOfflineBookmarks() async
+    func getOfflineBookmarks() -> [ArticleURLEntity]
+    func deleteOfflineBookmark(_ entity: ArticleURLEntity)
+}
+
+open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     static let shared = OfflineSyncManager()
 
     @Published var isSyncing = false
@@ -10,36 +16,21 @@ class OfflineSyncManager: ObservableObject, @unchecked Sendable {
 
     private let coreDataManager = CoreDataManager.shared
     private let api: PAPI
-    private let checkServerReachabilityUseCase: PCheckServerReachabilityUseCase
 
-    init(api: PAPI = API(),
-         checkServerReachabilityUseCase: PCheckServerReachabilityUseCase = DefaultUseCaseFactory.shared.makeCheckServerReachabilityUseCase()) {
+    init(api: PAPI = API()) {
         self.api = api
-        self.checkServerReachabilityUseCase = checkServerReachabilityUseCase
     }
     
     // MARK: - Sync Methods
     
     func syncOfflineBookmarks() async {
-        // First check if server is reachable
-        guard await checkServerReachabilityUseCase.execute() else {
-            await MainActor.run {
-                isSyncing = false
-                syncStatus = "Server not reachable. Cannot sync."
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                self.syncStatus = nil
-            }
-            return
-        }
-        
         await MainActor.run {
             isSyncing = true
             syncStatus = "Syncing bookmarks with server..."
         }
-        
+
         let offlineBookmarks = getOfflineBookmarks()
-        
+
         guard !offlineBookmarks.isEmpty else {
             await MainActor.run {
                 isSyncing = false
@@ -50,48 +41,61 @@ class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             }
             return
         }
-        
+
         var successCount = 0
         var failedCount = 0
-        
+
         for bookmark in offlineBookmarks {
             guard let url = bookmark.url else {
                 failedCount += 1
                 continue
             }
-            
+
             let tags = bookmark.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
             let title = bookmark.title ?? ""
-            
+
             do {
-                // Try to upload via API
                 let dto = CreateBookmarkRequestDto(url: url, title: title, labels: tags.isEmpty ? nil : tags)
                 _ = try await api.createBookmark(createRequest: dto)
-                
-                // If successful, delete from offline storage
+
                 deleteOfflineBookmark(bookmark)
                 successCount += 1
-                
+
                 await MainActor.run {
                     syncStatus = "Synced \(successCount) bookmarks..."
                 }
-                
+
             } catch {
                 print("Failed to sync bookmark: \(url) - \(error)")
                 failedCount += 1
+
+                // If first sync attempt fails, server is likely unreachable - abort
+                if successCount == 0 && failedCount == 1 {
+                    await MainActor.run {
+                        isSyncing = false
+                        syncStatus = "Server not reachable. Cannot sync."
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        self.syncStatus = nil
+                    }
+                    return
+                }
             }
         }
-        
+
         await MainActor.run {
             isSyncing = false
-            if failedCount == 0 {
-                syncStatus = "✅ Successfully synced \(successCount) bookmarks"
-            } else {
-                syncStatus = "⚠️ Synced \(successCount), failed \(failedCount) bookmarks"
+            if successCount > 0 {
+                if failedCount == 0 {
+                    syncStatus = "✅ Successfully synced \(successCount) bookmarks"
+                } else {
+                    syncStatus = "⚠️ Synced \(successCount), failed \(failedCount) bookmarks"
+                }
+            } else if failedCount > 0 {
+                syncStatus = "❌ Sync failed - check your connection"
             }
         }
-        
-        // Clear status after a few seconds
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             self.syncStatus = nil
         }
@@ -100,8 +104,8 @@ class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     func getOfflineBookmarksCount() -> Int {
         return getOfflineBookmarks().count
     }
-    
-    private func getOfflineBookmarks() -> [ArticleURLEntity] {
+
+    open func getOfflineBookmarks() -> [ArticleURLEntity] {
         do {
             let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
             return try coreDataManager.context.safeFetch(fetchRequest)
@@ -110,12 +114,12 @@ class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             return []
         }
     }
-    
-    private func deleteOfflineBookmark(_ entity: ArticleURLEntity) {
+
+    open func deleteOfflineBookmark(_ entity: ArticleURLEntity) {
         do {
             try coreDataManager.context.safePerform { [weak self] in
                 guard let self = self else { return }
-                
+
                 self.coreDataManager.context.delete(entity)
                 self.coreDataManager.save()
             }

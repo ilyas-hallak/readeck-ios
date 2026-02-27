@@ -18,6 +18,7 @@ import Combine
 
 class AppSettings: ObservableObject {
     @Published var settings: Settings?
+    @Published var isNetworkConnected: Bool = true
 
     var enableTTS: Bool {
         settings?.enableTTS ?? false

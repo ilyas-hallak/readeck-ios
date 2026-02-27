@@ -8,16 +8,22 @@
     </entity>
     <entity name="BookmarkEntity" representedClassName="BookmarkEntity" syncable="YES" codeGenerationType="class">
         <attribute name="authors" optional="YES" attributeType="String"/>
+        <attribute name="cachedDate" optional="YES" attributeType="Date" usesScalarValueType="NO" indexed="YES"/>
+        <attribute name="cacheSize" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="created" optional="YES" attributeType="String"/>
         <attribute name="desc" optional="YES" attributeType="String"/>
         <attribute name="documentType" optional="YES" attributeType="String"/>
         <attribute name="hasArticle" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="hasDeleted" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="heroImageURL" optional="YES" attributeType="String"/>
         <attribute name="href" optional="YES" attributeType="String"/>
+        <attribute name="htmlContent" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="imageURLs" optional="YES" attributeType="String"/>
         <attribute name="isArchived" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="isMarked" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="lang" optional="YES" attributeType="String"/>
+        <attribute name="lastAccessDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="loaded" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="published" optional="YES" attributeType="String"/>
         <attribute name="readingTime" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
@@ -55,6 +61,10 @@
         <attribute name="enableTTS" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="fontFamily" optional="YES" attributeType="String"/>
         <attribute name="fontSize" optional="YES" attributeType="String"/>
+        <attribute name="offlineEnabled" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="offlineLastSyncDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="offlineMaxUnreadArticles" optional="YES" attributeType="Double" defaultValueString="20" usesScalarValueType="YES"/>
+        <attribute name="offlineSaveImages" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="tagSortOrder" optional="YES" attributeType="String"/>
         <attribute name="theme" optional="YES" attributeType="String"/>
         <attribute name="token" optional="YES" attributeType="String"/>

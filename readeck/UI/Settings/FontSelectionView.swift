@@ -61,6 +61,10 @@ struct FontSelectionView: View {
                     }
                 }
 
+                Text("font.web.match.hint".localized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Font size")
                         .font(.subheadline)

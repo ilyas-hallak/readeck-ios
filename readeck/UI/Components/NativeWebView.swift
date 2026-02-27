@@ -16,6 +16,8 @@ struct NativeWebView: View {
     var onScrollToPosition: ((CGFloat) -> Void)? = nil
 
     @State private var webPage = WebPage()
+    @State private var annotationPollingTask: Task<Void, Never>?
+    @State private var scrollPollingTask: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -32,9 +34,6 @@ struct NativeWebView: View {
             .onChange(of: colorScheme) { _, _ in
                 loadStyledContent()
             }
-            .onChange(of: selectedAnnotationId) { _, _ in
-                loadStyledContent()
-            }
             .onChange(of: webPage.isLoading) { _, isLoading in
                 if !isLoading {
                     // Update height when content finishes loading
@@ -45,16 +44,24 @@ struct NativeWebView: View {
                     }
                 }
             }
+            .onDisappear {
+                // Cancel polling tasks to prevent memory leaks
+                annotationPollingTask?.cancel()
+                scrollPollingTask?.cancel()
+            }
     }
 
     private func setupAnnotationMessageHandler() {
+        // Cancel any existing polling task
+        annotationPollingTask?.cancel()
+
         guard let onAnnotationCreated = onAnnotationCreated else { return }
 
         // Poll for annotation messages from JavaScript
-        Task { @MainActor in
+        annotationPollingTask = Task { @MainActor in
             let page = webPage
 
-            while true {
+            while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
 
                 let script = """
@@ -86,13 +93,16 @@ struct NativeWebView: View {
     }
 
     private func setupScrollToPositionHandler() {
+        // Cancel any existing polling task
+        scrollPollingTask?.cancel()
+
         guard let onScrollToPosition = onScrollToPosition else { return }
 
         // Poll for scroll position messages from JavaScript
-        Task { @MainActor in
+        scrollPollingTask = Task { @MainActor in
             let page = webPage
 
-            while true {
+            while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 100_000_000) // Check every 0.1s
 
                 let script = """
@@ -181,7 +191,12 @@ struct NativeWebView: View {
     private func loadStyledContent() {
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
-        let fontFamily = getFontFamily(from: settings.fontFamily ?? .serif)
+        let selectedFontFamily = settings.fontFamily ?? .serif
+        let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
+        let codeFontFamily = selectedFontFamily == .monospace
+            ? "var(--font-family)"
+            : "'SF Mono', Menlo, Monaco, Consolas, monospace"
+        Logger.ui.debug("NativeWebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
         
         let styledHTML = """
         <html>
@@ -189,6 +204,9 @@ struct NativeWebView: View {
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
+                /* Load selected custom font from app bundle */
+                \(fontCSS.fontFaceCSS)
+
                 * {
                     max-width: 100%;
                     box-sizing: border-box;
@@ -200,10 +218,10 @@ struct NativeWebView: View {
                 }
 
                 body {
-                    font-family: \(fontFamily);
+                    font-family: \(fontCSS.fontStackCSS);
                     line-height: 1.8;
                     margin: 0;
-                    padding: 16px;
+                    padding: 16px 16px 100px;
                     background-color: \(isDarkMode ? "#000000" : "#ffffff");
                     color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
                     font-size: \(fontSize)px;
@@ -214,6 +232,10 @@ struct NativeWebView: View {
                     width: 100%;
                     word-wrap: break-word;
                     overflow-wrap: break-word;
+                }
+
+                body, article, p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, div, a {
+                    font-family: \(fontCSS.fontStackCSS) !important;
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
@@ -246,13 +268,16 @@ struct NativeWebView: View {
                     background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)"); 
                     border-radius: 4px; 
                 }
+
+                code, pre, kbd, samp {
+                    font-family: \(codeFontFamily) !important;
+                }
                 
                 code { 
                     background-color: \(isDarkMode ? "#1C1C1E" : "#f5f5f5"); 
                     color: \(isDarkMode ? "#ffffff" : "#000000"); 
                     padding: 2px 6px; 
                     border-radius: 4px; 
-                    font-family: 'SF Mono', monospace; 
                 }
                 
                 pre {
@@ -264,7 +289,10 @@ struct NativeWebView: View {
                     max-width: 100%;
                     white-space: pre-wrap;
                     word-wrap: break-word;
-                    font-family: 'SF Mono', monospace;
+                }
+
+                pre code {
+                    font-family: inherit !important;
                 }
                 
                 ul, ol { padding-left: 20px; margin-bottom: 16px; }
@@ -278,9 +306,12 @@ struct NativeWebView: View {
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
+                    display: inline;
                     border-radius: 3px;
                     padding: 2px 0;
                     transition: background-color 0.3s ease, box-shadow 0.3s ease;
+                    -webkit-box-decoration-break: clone;
+                    box-decoration-break: clone;
                 }
 
                 /* Yellow annotations */
@@ -392,16 +423,9 @@ struct NativeWebView: View {
         }
     }
 
-    private func getFontFamily(from fontFamily: FontFamily) -> String {
-        switch fontFamily {
-        case .system: return "-apple-system, BlinkMacSystemFont, sans-serif"
-        case .serif: return "'Times New Roman', Times, serif"
-        case .sansSerif: return "'Helvetica Neue', Helvetica, Arial, sans-serif"
-        case .monospace: return "'SF Mono', Menlo, Monaco, monospace"
-        }
-    }
-
     private func generateAnnotationOverlayJS(isDarkMode: Bool) -> String {
+        let highlightLabel = NSLocalizedString("Highlight", comment: "")
+
         return """
         // Create annotation color overlay
         (function() {
@@ -456,9 +480,9 @@ struct NativeWebView: View {
             `;
             overlay.appendChild(content);
 
-            // Add "Markierung" label
+            // Add localized label
             const label = document.createElement('span');
-            label.textContent = 'Markierung';
+            label.textContent = '\(highlightLabel)';
             label.style.cssText = `
                 color: black;
                 font-size: 16px;
@@ -600,6 +624,40 @@ struct NativeWebView: View {
                 return 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             }
 
+            function getTextNodesInRange(range) {
+                const textNodes = [];
+                const startContainer = range.startContainer;
+                const endContainer = range.endContainer;
+
+                // If start and end are the same text node, just return it
+                if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+                    return [startContainer];
+                }
+
+                const walker = document.createTreeWalker(
+                    range.commonAncestorContainer,
+                    NodeFilter.SHOW_TEXT,
+                    null
+                );
+
+                let foundStart = false;
+                let node;
+
+                while (node = walker.nextNode()) {
+                    if (node === startContainer) {
+                        foundStart = true;
+                    }
+                    if (foundStart && node.textContent.trim().length > 0) {
+                        textNodes.push(node);
+                    }
+                    if (node === endContainer) {
+                        break;
+                    }
+                }
+
+                return textNodes;
+            }
+
             function handleColorSelection(color) {
                 if (!currentRange || !currentSelection) return;
 
@@ -611,19 +669,30 @@ struct NativeWebView: View {
                 const startOffset = calculateOffsetInElement(currentRange.startContainer, currentRange.startOffset);
                 const endOffset = calculateOffsetInElement(currentRange.endContainer, currentRange.endOffset);
 
-                // Create annotation element
-                const annotation = document.createElement('rd-annotation');
-                annotation.setAttribute('data-annotation-color', color);
-                annotation.setAttribute('data-annotation-id-value', generateTempId());
+                const tempId = generateTempId();
 
                 // Wrap selection in annotation
                 try {
+                    // Try surroundContents for simple single-element selections
+                    const annotation = document.createElement('rd-annotation');
+                    annotation.setAttribute('data-annotation-color', color);
+                    annotation.setAttribute('data-annotation-id-value', tempId);
                     currentRange.surroundContents(annotation);
                 } catch (e) {
-                    // If surroundContents fails (e.g., partial element selection), extract and wrap
-                    const fragment = currentRange.extractContents();
-                    annotation.appendChild(fragment);
-                    currentRange.insertNode(annotation);
+                    // For complex selections spanning multiple elements: wrap each text node individually
+                    const textNodes = getTextNodesInRange(currentRange);
+                    textNodes.forEach((node, index) => {
+                        const wrapper = document.createElement('rd-annotation');
+                        wrapper.setAttribute('data-annotation-color', color);
+                        wrapper.setAttribute('data-annotation-id-value', tempId);
+                        if (index > 0) {
+                            wrapper.setAttribute('data-annotation-continued', 'true');
+                        }
+
+                        const parent = node.parentNode;
+                        parent.insertBefore(wrapper, node);
+                        wrapper.appendChild(node);
+                    });
                 }
 
                 // For NativeWebView: use global variable for polling

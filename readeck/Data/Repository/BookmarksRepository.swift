@@ -6,12 +6,12 @@ class BookmarksRepository: PBookmarksRepository {
     init(api: PAPI) {
         self.api = api
     }
-    
+
     func fetchBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPage {
         let bookmarkDtos = try await api.getBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag)
         return bookmarkDtos.toDomain()
     }
-    
+
     func fetchBookmark(id: String) async throws -> BookmarkDetail {
         let bookmarkDetailDto = try await api.getBookmark(id: id)
         return BookmarkDetail(
@@ -35,32 +35,32 @@ class BookmarksRepository: PBookmarksRepository {
             readProgress: bookmarkDetailDto.readProgress
         )
     }
-    
+
     func fetchBookmarkArticle(id: String) async throws -> String {
         return try await api.getBookmarkArticle(id: id)
     }
-    
+
     func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String {
         let dto = CreateBookmarkRequestDto(
             url: createRequest.url,
             title: createRequest.title,
             labels: createRequest.labels
         )
-        
+
         let response = try await api.createBookmark(createRequest: dto)
-        
+
         // Prüfe ob die Erstellung erfolgreich war
         guard response.status == 0 || response.status == 202 else {
             throw CreateBookmarkError.serverError(response.message)
         }
-        
+
         return response.message
     }
-    
+
     func deleteBookmark(id: String) async throws {
         try await api.deleteBookmark(id: id)
     }
-    
+
     func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws {
         let dto = UpdateBookmarkRequestDto(
             addLabels: updateRequest.addLabels,
@@ -73,10 +73,10 @@ class BookmarksRepository: PBookmarksRepository {
             removeLabels: updateRequest.removeLabels,
             title: updateRequest.title
         )
-        
+
         try await api.updateBookmark(id: id, updateRequest: dto)
     }
-    
+
     func searchBookmarks(search: String) async throws -> BookmarksPage {
         try await api.searchBookmarks(search: search).toDomain()
     }

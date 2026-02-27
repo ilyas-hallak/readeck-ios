@@ -26,78 +26,78 @@ struct AnnotationsListView: View {
     }
 
     var body: some View {
-        List {
-            switch viewState {
-            case .loading:
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
+        NavigationStack {
+            List {
+                switch viewState {
+                case .loading:
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+
+                case .empty:
+                    ContentUnavailableView(
+                        "No Annotations",
+                        systemImage: "pencil.slash",
+                        description: Text("This bookmark has no annotations yet.")
+                    )
+
+                case .loaded(let annotations):
+                    ForEach(annotations) { annotation in
+                        Button(action: {
+                            onAnnotationTap?(annotation.id)
+                            dismiss()
+                        }) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                if !annotation.text.isEmpty {
+                                    Text(annotation.text)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                }
+
+                                Text(formatDate(annotation.created))
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.vertical, 4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                Task {
+                                    await viewModel.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotation.id)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+
+                case .error:
+                    EmptyView()
                 }
-
-            case .empty:
-                ContentUnavailableView(
-                    "No Annotations",
-                    systemImage: "pencil.slash",
-                    description: Text("This bookmark has no annotations yet.")
-                )
-
-            case .loaded(let annotations):
-                ForEach(annotations) { annotation in
-                    Button(action: {
-                        onAnnotationTap?(annotation.id)
+            }
+            .navigationTitle("Annotations")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
                         dismiss()
-                    }) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            if !annotation.text.isEmpty {
-                                Text(annotation.text)
-                                    .font(.body)
-                                    .foregroundColor(.primary)
-                            }
-
-                            Text(formatDate(annotation.created))
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        }
-                        .padding(.vertical, 4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            Task {
-                                await viewModel.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotation.id)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
                     }
                 }
-
-            case .error:
-                EmptyView()
             }
-        }
-        .navigationTitle("Annotations")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
+            .task {
+                await viewModel.loadAnnotations(for: bookmarkId)
+            }
+            .alert("Error", isPresented: $viewModel.showErrorAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
                 }
-            }
-        }
-        .task {
-            await viewModel.loadAnnotations(for: bookmarkId)
-        }
-        .alert("Error", isPresented: $viewModel.showErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
             }
         }
     }

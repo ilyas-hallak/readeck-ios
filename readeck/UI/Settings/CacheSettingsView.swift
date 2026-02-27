@@ -1,24 +1,22 @@
 import SwiftUI
-import Kingfisher
 
 struct CacheSettingsView: View {
-    @State private var cacheSize: String = "0 MB"
-    @State private var maxCacheSize: Double = 200
-    @State private var isClearing: Bool = false
-    @State private var showClearAlert: Bool = false
+    @State private var viewModel = CacheSettingsViewModel()
 
     var body: some View {
         Section {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Current Cache Size")
-                    Text("\(cacheSize) / \(Int(maxCacheSize)) MB max")
+                    Text("\(viewModel.cacheSize) / \(Int(viewModel.maxCacheSize)) MB max")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 Spacer()
                 Button("Refresh") {
-                    updateCacheSize()
+                    Task {
+                        await viewModel.updateCacheSize()
+                    }
                 }
                 .font(.caption)
                 .foregroundColor(.blue)
@@ -28,24 +26,26 @@ struct CacheSettingsView: View {
                 HStack {
                     Text("Max Cache Size")
                     Spacer()
-                    Text("\(Int(maxCacheSize)) MB")
+                    Text("\(Int(viewModel.maxCacheSize)) MB")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
 
-                Slider(value: $maxCacheSize, in: 50...1200, step: 50) {
+                Slider(value: $viewModel.maxCacheSize, in: 50...1200, step: 50) {
                     Text("Max Cache Size")
                 }
-                .onChange(of: maxCacheSize) { _, newValue in
-                    updateMaxCacheSize(newValue)
+                .onChange(of: viewModel.maxCacheSize) { _, newValue in
+                    Task {
+                        await viewModel.updateMaxCacheSize(newValue)
+                    }
                 }
             }
 
             Button(action: {
-                showClearAlert = true
+                viewModel.showClearAlert = true
             }) {
                 HStack {
-                    if isClearing {
+                    if viewModel.isClearing {
                         ProgressView()
                             .scaleEffect(0.8)
                     } else {
@@ -55,7 +55,7 @@ struct CacheSettingsView: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Clear Cache")
-                            .foregroundColor(isClearing ? .secondary : .red)
+                            .foregroundColor(viewModel.isClearing ? .secondary : .red)
                         Text("Remove all cached images")
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -64,68 +64,23 @@ struct CacheSettingsView: View {
                     Spacer()
                 }
             }
-            .disabled(isClearing)
+            .disabled(viewModel.isClearing)
         } header: {
             Text("Cache Settings")
         }
-        .onAppear {
-            updateCacheSize()
-            loadMaxCacheSize()
+        .task {
+            await viewModel.loadCacheSettings()
         }
-        .alert("Clear Cache", isPresented: $showClearAlert) {
+        .alert("Clear Cache", isPresented: $viewModel.showClearAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Clear", role: .destructive) {
-                clearCache()
+                Task {
+                    await viewModel.clearCache()
+                }
             }
         } message: {
             Text("This will remove all cached images. They will be downloaded again when needed.")
         }
-    }
-
-    private func updateCacheSize() {
-        KingfisherManager.shared.cache.calculateDiskStorageSize { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let size):
-                    let mbSize = Double(size) / (1024 * 1024)
-                    self.cacheSize = String(format: "%.1f MB", mbSize)
-                case .failure:
-                    self.cacheSize = "Unknown"
-                }
-            }
-        }
-    }
-
-    private func loadMaxCacheSize() {
-        let savedSize = UserDefaults.standard.object(forKey: "KingfisherMaxCacheSize") as? UInt
-        if let savedSize = savedSize {
-            maxCacheSize = Double(savedSize) / (1024 * 1024)
-            KingfisherManager.shared.cache.diskStorage.config.sizeLimit = savedSize
-        } else {
-            maxCacheSize = 200
-            let defaultBytes = UInt(200 * 1024 * 1024)
-            KingfisherManager.shared.cache.diskStorage.config.sizeLimit = defaultBytes
-            UserDefaults.standard.set(defaultBytes, forKey: "KingfisherMaxCacheSize")
-        }
-    }
-
-    private func updateMaxCacheSize(_ newSize: Double) {
-        let bytes = UInt(newSize * 1024 * 1024)
-        KingfisherManager.shared.cache.diskStorage.config.sizeLimit = bytes
-        UserDefaults.standard.set(bytes, forKey: "KingfisherMaxCacheSize")
-    }
-
-    private func clearCache() {
-        isClearing = true
-
-        KingfisherManager.shared.cache.clearDiskCache {
-            DispatchQueue.main.async {
-                self.isClearing = false
-                self.updateCacheSize()
-            }
-        }
-
-        KingfisherManager.shared.cache.clearMemoryCache()
     }
 }
 

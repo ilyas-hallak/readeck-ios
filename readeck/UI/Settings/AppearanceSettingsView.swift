@@ -20,7 +20,7 @@ struct AppearanceSettingsView: View {
     ) {
         self.loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
         self.saveCardLayoutUseCase = factory.makeSaveCardLayoutUseCase()
-        self.settingsRepository = SettingsRepository()
+        self.settingsRepository = factory.makeSettingsRepository()
         self.fontViewModel = fontViewModel
         self.generalViewModel = generalViewModel
     }

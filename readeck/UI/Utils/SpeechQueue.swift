@@ -8,6 +8,7 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let url: String
     let labels: [String]?
     let imageUrl: String?
+    let language: String
 }
 
 extension BookmarkDetail {
@@ -18,7 +19,8 @@ extension BookmarkDetail {
             content: content ?? self.content,
             url: url,
             labels: labels,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            language: lang.isEmpty ? "en" : lang
         )
     }
 }
@@ -27,26 +29,60 @@ class SpeechQueue: ObservableObject {
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
     private let ttsManager: TTSManager
-    private let language: String
     private let queueKey = "tts_queue"
-    
+
     static let shared = SpeechQueue()
-    
+
+    // Convert ISO 639-1 language codes (e.g., "de", "en") to BCP 47 (e.g., "de-DE", "en-US")
+    private func convertToBCP47(_ isoCode: String) -> String {
+        let mapping: [String: String] = [
+            "de": "de-DE",
+            "en": "en-US",
+            "es": "es-ES",
+            "fr": "fr-FR",
+            "it": "it-IT",
+            "pt": "pt-PT",
+            "nl": "nl-NL",
+            "pl": "pl-PL",
+            "ru": "ru-RU",
+            "ja": "ja-JP",
+            "zh": "zh-CN",
+            "ko": "ko-KR",
+            "ar": "ar-SA",
+            "tr": "tr-TR",
+            "sv": "sv-SE",
+            "da": "da-DK",
+            "no": "nb-NO",
+            "fi": "fi-FI",
+            "cs": "cs-CZ",
+            "hu": "hu-HU",
+            "ro": "ro-RO",
+            "sk": "sk-SK",
+            "uk": "uk-UA",
+            "el": "el-GR",
+            "he": "he-IL",
+            "hi": "hi-IN",
+            "th": "th-TH",
+            "id": "id-ID",
+            "vi": "vi-VN"
+        ]
+        return mapping[isoCode.lowercased()] ?? "en-US"
+    }
+
     @Published var queueItems: [SpeechQueueItem] = []
     @Published var currentText: String = ""
     @Published var hasItems: Bool = false
-    
+
     var queueCount: Int {
         return queueItems.count
     }
-    
+
     var currentItem: SpeechQueueItem? {
         return queueItems.first
     }
-    
-    private init(ttsManager: TTSManager = .shared, language: String = "de-DE") {
+
+    private init(ttsManager: TTSManager = .shared) {
         self.ttsManager = ttsManager
-        self.language = language
         loadQueue()
         updatePublishedProperties()
     }
@@ -96,7 +132,8 @@ class SpeechQueue: ObservableObject {
         saveQueue()
         let currentIndex = queueItems.count - queue.count
         let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
-        ttsManager.speak(text: textToSpeak, language: language, utteranceIndex: currentIndex, totalUtterances: queueItems.count)
+        let languageCode = convertToBCP47(next.language)
+        ttsManager.speak(text: textToSpeak, language: languageCode, utteranceIndex: currentIndex, totalUtterances: queueItems.count)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.waitForSpeechToFinish()
         }

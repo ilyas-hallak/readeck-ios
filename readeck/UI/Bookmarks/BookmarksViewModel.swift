@@ -8,7 +8,9 @@ class BookmarksViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
-    
+    private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
+    weak var appSettings: AppSettings?
+
     var bookmarks: BookmarksPage?
     var isLoading = false
     var isInitialLoading = true
@@ -18,7 +20,7 @@ class BookmarksViewModel {
     var currentType = [BookmarkType.article]
     var currentTag: String? = nil
     var cardLayoutStyle: CardLayoutStyle = .magazine
-    
+
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -28,8 +30,7 @@ class BookmarksViewModel {
 
     // Prevent concurrent updates
     private var isUpdating = false
-    
-    
+
     private var cancellables = Set<AnyCancellable>()
     private var limit = 50
     private var offset = 0
@@ -47,9 +48,10 @@ class BookmarksViewModel {
         updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
-        
+        getCachedBookmarksUseCase = factory.makeGetCachedBookmarksUseCase()
+
         setupNotificationObserver()
-        
+
         Task {
             await loadCardLayout()
         }
@@ -67,7 +69,7 @@ class BookmarksViewModel {
                 }
             }
             .store(in: &cancellables)
-        
+
         // Listen for
         NotificationCenter.default
             .publisher(for: .addBookmarkFromShare)
@@ -107,7 +109,10 @@ class BookmarksViewModel {
     
     @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
-        guard !isUpdating else { return }
+        guard !isUpdating else {
+            Logger.viewModel.debug("⏭️ Skipping loadBookmarks - already updating")
+            return
+        }
         isUpdating = true
         defer { isUpdating = false }
 
@@ -120,6 +125,19 @@ class BookmarksViewModel {
         offset = 0
         hasMoreData = true
 
+        // Check if offline BEFORE making API call
+        Logger.viewModel.info("🔍 Checking network status - appSettings: \(appSettings != nil), isNetworkConnected: \(appSettings?.isNetworkConnected ?? false)")
+        if let appSettings, !appSettings.isNetworkConnected {
+            Logger.viewModel.info("📱 Device is offline - loading cached bookmarks")
+            isNetworkError = true
+            errorMessage = "No internet connection"
+            await loadCachedBookmarks()
+            isLoading = false
+            isInitialLoading = false
+            return
+        }
+
+        Logger.viewModel.info("🌐 Device appears online - making API request")
         do {
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
@@ -139,6 +157,8 @@ class BookmarksViewModel {
                 case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
                     isNetworkError = true
                     errorMessage = "No internet connection"
+                    // Try to load cached bookmarks
+                    await loadCachedBookmarks()
                 default:
                     isNetworkError = false
                     errorMessage = "Error loading bookmarks"
@@ -152,6 +172,48 @@ class BookmarksViewModel {
 
         isLoading = false
         isInitialLoading = false
+    }
+
+    @MainActor
+    private func loadCachedBookmarks() async {
+        Logger.viewModel.info("📱 loadCachedBookmarks called for state: \(currentState.displayName)")
+
+        // Only load cached bookmarks for "Unread" tab
+        // Other tabs (Archive, Starred, All) should show "offline unavailable" message
+        guard currentState == .unread else {
+            Logger.viewModel.info("📱 Skipping cache load for '\(currentState.displayName)' tab - only Unread is cached")
+            return
+        }
+
+        do {
+            Logger.viewModel.info("📱 Fetching cached bookmarks from use case...")
+            let cachedBookmarks = try await getCachedBookmarksUseCase.execute()
+            Logger.viewModel.info("📱 Retrieved \(cachedBookmarks.count) cached bookmarks")
+
+            if !cachedBookmarks.isEmpty {
+                // Create a BookmarksPage from cached bookmarks
+                bookmarks = BookmarksPage(
+                    bookmarks: cachedBookmarks,
+                    currentPage: 1,
+                    totalCount: cachedBookmarks.count,
+                    totalPages: 1,
+                    links: nil
+                )
+                hasMoreData = false
+                Logger.viewModel.info("✅ Loaded \(cachedBookmarks.count) cached bookmarks for offline mode")
+            } else {
+                Logger.viewModel.warning("⚠️ No cached bookmarks found")
+            }
+        } catch {
+            Logger.viewModel.error("Failed to load cached bookmarks: \(error.localizedDescription)")
+        }
+    }
+
+    @MainActor
+    func loadCachedBookmarksFromUI() async {
+        isNetworkError = true
+        errorMessage = "No internet connection"
+        await loadCachedBookmarks()
     }
     
     @MainActor

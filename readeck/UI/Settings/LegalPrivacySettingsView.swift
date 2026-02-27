@@ -4,6 +4,7 @@ struct LegalPrivacySettingsView: View {
     @State private var showingPrivacyPolicy = false
     @State private var showingLegalNotice = false
     @State private var showReleaseNotes = false
+    @State private var showingLicenses = false
 
     var body: some View {
         Group {
@@ -40,6 +41,18 @@ struct LegalPrivacySettingsView: View {
                 }) {
                     HStack {
                         Text(NSLocalizedString("Legal Notice", comment: ""))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Button(action: {
+                    showingLicenses = true
+                }) {
+                    HStack {
+                        Text("Open Source Licenses")
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -86,6 +99,9 @@ struct LegalPrivacySettingsView: View {
         }
         .sheet(isPresented: $showReleaseNotes) {
             ReleaseNotesView()
+        }
+        .sheet(isPresented: $showingLicenses) {
+            OpenSourceLicensesView()
         }
     }
 }

@@ -2,7 +2,7 @@
 //  CheckServerReachabilityUseCase.swift
 //  readeck
 //
-//  Created by Claude Code
+//  Created by Ilyas Hallak
 
 import Foundation
 
@@ -23,6 +23,6 @@ class CheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
     }
 
     func getServerInfo() async throws -> ServerInfo {
-        return try await repository.getServerInfo()
+        return try await repository.getServerInfo(endpoint: nil)
     }
 }
