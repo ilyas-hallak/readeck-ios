@@ -24,49 +24,44 @@ struct CustomHeadersSectionView: View {
     @State private var newHeaderValue: String = ""
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+            // Schlichterer Disclosure-Button
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(.easeInOut(duration: 0.15)) {
                     showingHeadersSection.toggle()
                 }
             }) {
-                HStack {
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
+                HStack(spacing: 6) {
+                    Image(systemName: showingHeadersSection ? "chevron.down" : "chevron.right")
+                        .font(.caption2)
                         .foregroundColor(.secondary)
-                        .rotationEffect(.degrees(showingHeadersSection ? 90 : 0))
                     Text("Custom HTTP Headers")
-                        .font(.body)
-                    Spacer()
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     if !customHeaders.isEmpty {
-                        Text("\(customHeaders.count)")
+                        Text("(\(customHeaders.count))")
                             .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.accentColor.opacity(0.2))
-                            .foregroundColor(.accentColor)
-                            .clipShape(Capsule())
+                            .foregroundColor(.secondary)
                     }
+                    Spacer()
                 }
-                .foregroundColor(.primary)
             }
             .buttonStyle(.plain)
             
             if showingHeadersSection {
-                // Helper text
-                Text("Configure custom HTTP headers for proxy authentication.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 10) {
+                    // Schlichterer Helper-Text
+                    Text("For proxy authentication or special server configurations.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .padding(.bottom, 4)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    // Existing headers list
+                    // Existing headers list - schlichter dargestellt
                     if !customHeaders.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 6) {
                             ForEach(Array(customHeaders.keys.sorted()), id: \.self) { key in
                                 if editingHeaderKey == key {
-                                    // Edit mode - use unified component
+                                    // Edit mode
                                     InlineHeaderFormView(
                                         headerKey: $editingHeaderKeyValue,
                                         headerValue: $editingHeaderValue,
@@ -74,51 +69,53 @@ struct CustomHeadersSectionView: View {
                                             onCancelEditingHeader()
                                         },
                                         onAdd: {
-                                            // Handle save: check if key changed
                                             let originalKey = key
                                             let newKey = editingHeaderKeyValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                                            
                                             onFinishEditingHeader(originalKey, newKey, editingHeaderValue)
                                         },
                                         mode: .edit(originalKey: key)
                                     )
                                 } else {
-                                    // Display mode
-                                    HStack(alignment: .top, spacing: 12) {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                    // Display mode - schlichter
+                                    HStack(alignment: .center, spacing: 8) {
+                                        VStack(alignment: .leading, spacing: 2) {
                                             Text(key)
-                                                .font(.subheadline)
-                                                .fontWeight(.medium)
-                                            Text(customHeaders[key] ?? "")
                                                 .font(.caption)
+                                                .foregroundColor(.primary)
+                                            Text(customHeaders[key] ?? "")
+                                                .font(.caption2)
                                                 .foregroundColor(.secondary)
-                                                .lineLimit(2)
+                                                .lineLimit(1)
                                         }
                                         Spacer()
+                                        // Schlichtere Buttons
                                         Button(action: {
                                             onStartEditingHeader(key)
                                         }) {
                                             Image(systemName: "pencil")
-                                                .font(.caption)
-                                                .foregroundColor(.accentColor)
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
                                         }
                                         .buttonStyle(.plain)
                                         Button(action: {
                                             onRemoveHeader(key)
                                         }) {
-                                            Image(systemName: "trash")
-                                                .font(.caption)
-                                                .foregroundColor(.red)
+                                            Image(systemName: "minus.circle")
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
                                         }
                                         .buttonStyle(.plain)
                                     }
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 8)
+                                    .background(Color(.systemGray6).opacity(0.5))
+                                    .cornerRadius(6)
                                 }
                             }
                         }
-                        .padding(.vertical, 8)
                     }
                     
+                    // Add new header - nur wenn nicht im Edit-Modus
                     if editingHeaderKey == nil {
                         InlineHeaderFormView(
                             headerKey: $newHeaderKey,
@@ -136,9 +133,9 @@ struct CustomHeadersSectionView: View {
                         )
                     }
                 }
-                .padding(.top, 4)
+                .padding(.leading, 4)
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 4)
     }
 }

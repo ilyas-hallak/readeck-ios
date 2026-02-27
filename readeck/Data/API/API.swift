@@ -555,6 +555,9 @@ class API: PAPI {
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = requestData
+        
+        // Apply custom headers (e.g., for proxy authentication)
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString)
 
@@ -616,6 +619,9 @@ class API: PAPI {
         urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = formBody.data(using: .utf8)
+        
+        // Apply custom headers (e.g., for proxy authentication)
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString)
 

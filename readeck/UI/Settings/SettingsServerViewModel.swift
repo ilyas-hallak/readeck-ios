@@ -162,6 +162,10 @@ class SettingsServerViewModel {
 
         do {
             let normalizedEndpoint = EndpointValidator.normalize(endpoint)
+            
+            // Save custom headers to Keychain BEFORE OAuth login so they're available during the OAuth flow
+            _ = KeychainHelper.shared.saveCustomHeaders(customHeaders)
+            
             let (token, clientId) = try await loginWithOAuthUseCase.execute(endpoint: normalizedEndpoint)
 
             // Save OAuth token, client ID and mark as logged in
@@ -179,7 +183,6 @@ class SettingsServerViewModel {
             isLoggedIn = false
         }
     }
-}
     
     @MainActor
     func addHeader(key: String, value: String) {
@@ -236,4 +239,4 @@ class SettingsServerViewModel {
         }
         cancelEditingHeader()
     }
-} 
+}

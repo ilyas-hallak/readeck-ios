@@ -17,7 +17,6 @@ struct CachedAsyncImage: View {
     var body: some View {
         if let url {
             imageView(for: url)
-                .requestModifier(AuthenticatedImageRequestModifier())
                 .task {
                     await checkCache(for: url)
                 }
@@ -39,6 +38,7 @@ struct CachedAsyncImage: View {
 
     private func onlineImageView(url: URL) -> some View {
         KFImage(url)
+            .requestModifier(AuthenticatedImageRequestModifier())
             .cacheOriginalImage()
             .diskCacheExpiration(.never)
             .placeholder { Color.gray.opacity(0.3) }

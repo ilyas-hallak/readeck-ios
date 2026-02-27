@@ -21,7 +21,7 @@ class InfoApiClient: PInfoApiClient {
     func getServerInfo(endpoint: String? = nil) async throws -> ServerInfoDto {
         let baseEndpoint = try await resolveEndpoint(endpoint)
         let url = try buildInfoURL(baseEndpoint: baseEndpoint)
-        let request = try await buildInfoRequest(url: url, useStoredEndpoint: endpoint == nil)
+        var request = try await buildInfoRequest(url: url, useStoredEndpoint: endpoint == nil)
 
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
 
