@@ -22,7 +22,9 @@ struct CardLayoutSelectionView: View {
                 ) {
                     selectedCardLayout = layout
                     onSave()
-                    dismiss()
+                    if UIDevice.current.userInterfaceIdiom == .phone {
+                        dismiss()
+                    }
                 }
             }
         }
