@@ -40,8 +40,6 @@ protocol UseCaseFactory {
     func makeAuthRepository() -> PAuthRepository
 }
 
-
-
 class DefaultUseCaseFactory: UseCaseFactory {
     private let tokenProvider = KeychainTokenProvider()
     private lazy var api: PAPI = API(tokenProvider: tokenProvider)

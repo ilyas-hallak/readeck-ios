@@ -8,6 +8,7 @@ class BookmarksViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
+    private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
     private let logger = Logger.viewModel
     
     var bookmarks: BookmarksPage?
@@ -20,6 +21,8 @@ class BookmarksViewModel {
     var currentTag: String? = nil
     var cardLayoutStyle: CardLayoutStyle = .magazine
 
+    weak var appSettings: AppSettings?
+    
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -408,6 +411,8 @@ class BookmarksViewModel {
             case .serverError(let statusCode):
                 errorMessage = formatServerErrorMessage(statusCode: statusCode)
                 logger.error("Server error with status code: \(statusCode)")
+            case .serverErrorWithMessage(statusCode: let statusCode, message: let message):
+                logger.error("Server error with status code: \(statusCode), and message: \(message)")
             }
             isNetworkError = false
         } else if let urlError = error as? URLError {
