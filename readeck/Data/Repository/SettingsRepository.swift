@@ -6,7 +6,12 @@ class SettingsRepository: PSettingsRepository {
     private let coreDataManager = CoreDataManager.shared
     private let userDefault = UserDefaults.standard
     private let keychainHelper = KeychainHelper.shared
-    
+    private let tokenProvider: TokenProvider
+
+    init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
+        self.tokenProvider = tokenProvider
+    }
+
     var hasFinishedSetup: Bool {
         get {
             return userDefault.value(forKey: "hasFinishedSetup") as? Bool ?? false
@@ -17,18 +22,20 @@ class SettingsRepository: PSettingsRepository {
     }
     
     func saveSettings(_ settings: Settings) async throws {
-        // Save credentials to keychain
+        // Save credentials using TokenProvider to ensure cache is updated
         if let endpoint = settings.endpoint, !endpoint.isEmpty {
-            keychainHelper.saveEndpoint(endpoint)
+            await tokenProvider.setEndpoint(endpoint)
         }
+        if let token = settings.token, !token.isEmpty {
+            await tokenProvider.setToken(token)
+        }
+
+        // Save username and password directly (not in TokenProvider)
         if let username = settings.username, !username.isEmpty {
             keychainHelper.saveUsername(username)
         }
         if let password = settings.password, !password.isEmpty {
             keychainHelper.savePassword(password)
-        }
-        if let token = settings.token, !token.isEmpty {
-            keychainHelper.saveToken(token)
         }
         
         // Save UI preferences to Core Data
@@ -144,9 +151,9 @@ class SettingsRepository: PSettingsRepository {
     }
     
     func saveToken(_ token: String) async throws {
-        // Save to keychain only
-        keychainHelper.saveToken(token)
-        
+        // Use TokenProvider to ensure cache is updated
+        await tokenProvider.setToken(token)
+
         // Wenn ein Token gespeichert wird, Setup als abgeschlossen markieren
         if !token.isEmpty {
             self.hasFinishedSetup = true
@@ -158,11 +165,14 @@ class SettingsRepository: PSettingsRepository {
     }
     
     func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws {
-        keychainHelper.saveEndpoint(endpoint)
+        // Use TokenProvider to ensure cache is updated
+        await tokenProvider.setEndpoint(endpoint)
+        await tokenProvider.setToken(token)
+
+        // Also save username and password directly (not in TokenProvider)
         keychainHelper.saveUsername(username)
         keychainHelper.savePassword(password)
-        keychainHelper.saveToken(token)
-        
+
         if !token.isEmpty {
             self.hasFinishedSetup = true
             DispatchQueue.main.async {

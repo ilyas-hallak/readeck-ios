@@ -22,13 +22,7 @@ struct CardLayoutSelectionView: View {
                 ) {
                     selectedCardLayout = layout
                     onSave()
-
-                    // readeck/readeck-ios#19
-                    // 
-                    // On iPad, dismiss() causes the right side of settings
-                    // screen to go blank.
-                    // Fix: Call dismiss on phones only.
-                    if UIDevice.isPhone {
+                    if UIDevice.current.userInterfaceIdiom == .phone {
                         dismiss()
                     }
                 }

@@ -114,7 +114,9 @@ struct AddBookmarkView: View {
     @ViewBuilder
     private var urlField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField("https://example.com", text: $viewModel.url)
+            TextField("",
+                      text: $viewModel.url,
+                      prompt: Text(verbatim: "https://example.com"))
                 .textFieldStyle(CustomTextFieldStyle())
                 .keyboardType(.URL)
                 .autocapitalization(.none)

@@ -73,6 +73,14 @@ After installing the app:
 
 Notice: Local Network Addresses are supported. If you use external Domains, you need to add a HTTPS Certificate to your readeck server. Apple does not allow to use HTTP on iOS for external domains in release versions. If you want to use HTTP, you are free to use the beta version of the app, where the HTTP is supported.
 
+### Custom HTTP Headers
+
+The app supports custom HTTP headers for advanced configurations such as proxy authentication. 
+A common scenario is when serving Readeck behind something like Pangolin.
+These headers will be included in all API requests to your server.
+
+**Note:** Content-Type and Authorization headers are protected and cannot be customized, as they are managed automatically by the app for proper API communication.
+
 ## Share Extension
 
 The app includes a Share Extension that allows adding bookmarks directly from Safari:
