@@ -49,7 +49,7 @@ class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var getUserProfileUseCase: PGetUserProfileUseCase = GetUserProfileUseCase(profileApiClient: profileApiClient)
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
-    private let settingsRepository: PSettingsRepository = SettingsRepository()
+    private lazy var settingsRepository: PSettingsRepository = SettingsRepository(tokenProvider: tokenProvider)
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
@@ -89,7 +89,7 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
     
     func makeLogoutUseCase() -> PLogoutUseCase {
-        return LogoutUseCase()
+        return LogoutUseCase(settingsRepository: settingsRepository)
     }
 
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase {
@@ -105,7 +105,7 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeSaveServerSettingsUseCase() -> PSaveServerSettingsUseCase {
-        return SaveServerSettingsUseCase(repository: SettingsRepository())
+        return SaveServerSettingsUseCase(repository: settingsRepository)
     }
     
     func makeAddLabelsToBookmarkUseCase() -> PAddLabelsToBookmarkUseCase {

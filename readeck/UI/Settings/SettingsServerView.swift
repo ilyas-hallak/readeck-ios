@@ -25,6 +25,31 @@ struct SettingsServerView: View {
                 value: viewModel.username.isEmpty ? "Not set" : viewModel.username
             )
 
+            if !viewModel.customHeaders.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    // Main row with icon and title
+                    HStack(spacing: 12) {
+                        Image(systemName: "list.bullet.rectangle")
+                            .foregroundColor(.accentColor)
+                            .frame(width: 24)
+                        Text("Custom Headers")
+                            .foregroundColor(.primary)
+                        Spacer()
+                    }
+                    
+                    // List of headers in small text
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(Array(viewModel.customHeaders.keys.sorted()), id: \.self) { key in
+                            Text("\(key): \(viewModel.customHeaders[key] ?? "")")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.leading, 36) // Align with title text
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+
             SettingsRowButton(
                 icon: "rectangle.portrait.and.arrow.right",
                 iconColor: .red,

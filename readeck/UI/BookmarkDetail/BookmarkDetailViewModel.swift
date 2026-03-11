@@ -118,6 +118,24 @@ class BookmarkDetailViewModel {
         isLoadingArticle = false
     }
 
+    @MainActor
+    private func refreshArticleInBackground(id: String) async {
+        Logger.viewModel.info("🔄 Background refresh for article \(id) to check for annotations")
+        do {
+            let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
+            let serverHasAnnotations = serverHTML.contains("<rd-annotation")
+
+            // Only update if server has different annotation state
+            if serverHasAnnotations != hasAnnotations || serverHasAnnotations {
+                articleContent = serverHTML
+                processArticleContent()
+                Logger.viewModel.info("✅ Updated article with server content (annotations: \(hasAnnotations))")
+            }
+        } catch {
+            Logger.viewModel.debug("Background refresh failed (offline?): \(error.localizedDescription)")
+        }
+    }
+
     private func countOccurrences(in text: String, of substring: String) -> Int {
         return text.components(separatedBy: substring).count - 1
     }
@@ -198,9 +216,15 @@ class BookmarkDetailViewModel {
                 endSelector: endSelector
             )
             Logger.viewModel.info("✅ Annotation created: \(annotation.id)")
+            hasAnnotations = true
         } catch {
             Logger.viewModel.error("❌ Failed to create annotation: \(error.localizedDescription)")
-            errorMessage = "Error creating annotation"
+            // Check for specific error messages from server
+            if error.localizedDescription.contains("overlapping") {
+                errorMessage = NSLocalizedString("This text overlaps with an existing highlight", comment: "Overlapping annotation error")
+            } else {
+                errorMessage = NSLocalizedString("Error creating highlight", comment: "Generic annotation error")
+            }
         }
     }
 }

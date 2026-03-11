@@ -9,7 +9,10 @@ struct BookmarkDetailView: View {
 
     var body: some View {
         if #available(iOS 26.0, *) {
-            if useNativeWebView {
+            if Bundle.main.isProduction {
+                // Temporary production stopper: use legacy renderer until native font loading is proven stable.
+                BookmarkDetailLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
+            } else if useNativeWebView {
                 // Use modern SwiftUI-native implementation on iOS 26+
                 BookmarkDetailView2(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
             } else {

@@ -31,7 +31,7 @@
 "All" = "Alle";
 "Unread" = "Ungelesen";
 "Favorites" = "Favoriten";
-"Archive" = "Archiv";
+"Archive Tab" = "Archiv";
 "Search" = "Suchen";
 "Settings" = "Einstellungen";
 "Articles" = "Artikel";
@@ -193,4 +193,3 @@
 "font.web.match.hint" = "* Entspricht den Readeck Web-Schriften";
 
 "DEBUG: Toggle network status" = "DEBUG: Netzwerkstatus umschalten";
-

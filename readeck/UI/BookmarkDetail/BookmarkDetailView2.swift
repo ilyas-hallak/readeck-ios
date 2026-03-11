@@ -20,6 +20,7 @@ struct BookmarkDetailView2: View {
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
+    @State private var showingErrorAlert = false
 
     // MARK: - Envs
 
