@@ -86,6 +86,21 @@ class BookmarkDetailViewModel {
             let httpCount = countOccurrences(in: cachedHTML, of: "src=\"http")
             Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
 
+            // Refresh from server in background to pick up annotations
+            // that may have been added since the article was cached
+            Task {
+                do {
+                    let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
+                    if serverHTML.contains("<rd-annotation") && !cachedHTML.contains("<rd-annotation") {
+                        Logger.viewModel.info("🔄 Server has annotations not in cache, updating")
+                        articleContent = serverHTML
+                        processArticleContent()
+                    }
+                } catch {
+                    Logger.viewModel.info("⚠️ Background refresh failed: \(error.localizedDescription)")
+                }
+            }
+
             return
         }
 
