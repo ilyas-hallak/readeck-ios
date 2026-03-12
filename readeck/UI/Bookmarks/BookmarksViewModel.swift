@@ -70,6 +70,16 @@ class BookmarksViewModel {
             }
             .store(in: &cancellables)
 
+        // Listen for settings changed (including sort order)
+        NotificationCenter.default
+            .publisher(for: .settingsChanged)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.refreshBookmarks()
+                }
+            }
+            .store(in: &cancellables)
+
         // Listen for
         NotificationCenter.default
             .publisher(for: .addBookmarkFromShare)
@@ -99,7 +109,7 @@ class BookmarksViewModel {
         let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             Task {
-                await self.loadBookmarks(state: self.currentState)
+                await self.loadBookmarks(state: self.currentState, type: self.currentType, tag: self.currentTag)
             }
         }
         
@@ -139,13 +149,15 @@ class BookmarksViewModel {
 
         Logger.viewModel.info("🌐 Device appears online - making API request")
         do {
+            let sortToken = buildSortToken()
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
                 limit: limit,
                 offset: offset,
                 search: searchQuery,
                 type: type,
-                tag: tag
+                tag: tag,
+                sort: sortToken
             )
             bookmarks = newBookmarks
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
@@ -178,8 +190,8 @@ class BookmarksViewModel {
     private func loadCachedBookmarks() async {
         Logger.viewModel.info("📱 loadCachedBookmarks called for state: \(currentState.displayName)")
 
-        // Only load cached bookmarks for "Unread" tab
-        // Other tabs (Archive, Starred, All) should show "offline unavailable" message
+        // Only load cached bookmarks for \"Unread\" tab
+        // Other tabs (Archive, Starred, All) should show \"offline unavailable\" message
         guard currentState == .unread else {
             Logger.viewModel.info("📱 Skipping cache load for '\(currentState.displayName)' tab - only Unread is cached")
             return
@@ -227,13 +239,15 @@ class BookmarksViewModel {
 
         do {
             offset += limit // inc. offset
+            let sortToken = buildSortToken()
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: currentState,
                 limit: limit,
                 offset: offset,
                 search: nil,
                 type: currentType,
-                tag: currentTag)
+                tag: currentTag,
+                sort: sortToken)
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
         } catch {
@@ -258,7 +272,7 @@ class BookmarksViewModel {
     
     @MainActor
     func refreshBookmarks() async {
-        await loadBookmarks(state: currentState)
+        await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
     }
     
     @MainActor
@@ -266,6 +280,18 @@ class BookmarksViewModel {
         errorMessage = nil
         isNetworkError = false
         await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
+    }
+
+    private func buildSortToken() -> String? {
+        guard let appSettings = appSettings else { return nil }
+        // Search usually has its own relevance sorting
+        if !searchQuery.isEmpty {
+            return nil
+        }
+        
+        let field = appSettings.bookmarkSortField.rawValue
+        let direction = appSettings.bookmarkSortDirection == .descending ? "-" : ""
+        return "\(direction)\(field)"
     }
     
     @MainActor
@@ -276,7 +302,7 @@ class BookmarksViewModel {
                 isArchived: !bookmark.isArchived
             )
             
-            await loadBookmarks(state: currentState)
+            await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
             
         } catch {
             errorMessage = "Error archiving bookmark"
@@ -291,7 +317,7 @@ class BookmarksViewModel {
                 isMarked: !bookmark.isMarked
             )
             
-            await loadBookmarks(state: currentState)
+            await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
             
         } catch {
             errorMessage = "Error marking bookmark"
@@ -349,9 +375,6 @@ class BookmarksViewModel {
                 
                 pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
                 
-                // Trigger UI update by modifying the dictionary
-                self.pendingDeletes[bookmarkId] = pendingDelete
-                
                 if pendingDelete.progress >= 1.0 {
                     timer.invalidate()
                 }
@@ -361,6 +384,7 @@ class BookmarksViewModel {
         pendingDeletes[bookmarkId]?.timer = timer
     }
     
+    @MainActor
     private func executeDelete(bookmark: Bookmark) async {
         do {
             try await deleteBookmarkUseCase.execute(bookmarkId: bookmark.id)
@@ -369,31 +393,26 @@ class BookmarksViewModel {
                 bookmarks?.bookmarks.removeAll { $0.id == bookmark.id }
             }
         } catch {
-            // If delete fails, restore the bookmark
-            await MainActor.run {
-                errorMessage = "Error deleting bookmark"
-                if var currentBookmarks = bookmarks?.bookmarks {
-                    currentBookmarks.insert(bookmark, at: 0)
-                    bookmarks?.bookmarks = currentBookmarks
-                }
-            }
+            errorMessage = "Error deleting bookmark"
         }
     }
-    
+
     @MainActor
-    private func loadCardLayout() async {
+    func loadCardLayout() async {
         cardLayoutStyle = await loadCardLayoutUseCase.execute()
     }
 }
 
-class PendingDelete: Identifiable {
-    let id = UUID()
+@Observable
+final class PendingDelete: Identifiable {
+    let id: String
     let bookmark: Bookmark
     var progress: Double = 0.0
     var timer: Timer?
     var deleteTask: Task<Void, Never>?
     
     init(bookmark: Bookmark) {
+        self.id = bookmark.id
         self.bookmark = bookmark
     }
 }

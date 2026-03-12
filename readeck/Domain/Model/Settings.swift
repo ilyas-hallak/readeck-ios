@@ -19,6 +19,8 @@ struct Settings {
     var theme: Theme? = nil
     var cardLayoutStyle: CardLayoutStyle? = nil
     var tagSortOrder: TagSortOrder? = nil
+    var bookmarkSortField: BookmarkSortField? = nil
+    var bookmarkSortDirection: BookmarkSortDirection? = nil
 
     var urlOpener: UrlOpener? = nil
 
@@ -28,5 +30,29 @@ struct Settings {
 
     mutating func setToken(_ newToken: String) {
         token = newToken
+    }
+}
+
+enum BookmarkSortField: String, CaseIterable {
+    case created = "created"
+    case published = "published"
+
+    var displayName: String {
+        switch self {
+        case .created: return "Created"
+        case .published: return "Published"
+        }
+    }
+}
+
+enum BookmarkSortDirection: String, CaseIterable {
+    case ascending = "asc"
+    case descending = "desc"
+
+    var displayName: String {
+        switch self {
+        case .ascending: return "Ascending"
+        case .descending: return "Descending"
+        }
     }
 }

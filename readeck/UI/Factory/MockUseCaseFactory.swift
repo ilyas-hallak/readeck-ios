@@ -200,7 +200,7 @@ class MockReadBookmarkUseCase: PReadBookmarkUseCase {
 }
 
 class MockGetBookmarksUseCase: PGetBookmarksUseCase {
-    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage {
+    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage {
         BookmarksPage(bookmarks: [
             Bookmark.mock
         ], currentPage: 1, totalCount: 0, totalPages: 1, links: nil)

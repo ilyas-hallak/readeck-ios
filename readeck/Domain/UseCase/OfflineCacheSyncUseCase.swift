@@ -86,7 +86,8 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
                 offset: 0,
                 search: nil,
                 type: nil,
-                tag: nil
+                tag: nil,
+                sort: nil
             )
 
             let bookmarks = page.bookmarks

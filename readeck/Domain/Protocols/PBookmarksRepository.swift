@@ -7,7 +7,7 @@
 
 protocol PBookmarksRepository {
     // Bookmark API methods
-    func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage
+    func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage
     func fetchBookmark(id: String) async throws -> BookmarkDetail
     func fetchBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String
