@@ -17,7 +17,7 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
         case .all: return NSLocalizedString("All", comment: "")
         case .unread: return NSLocalizedString("Unread", comment: "")
         case .favorite: return NSLocalizedString("Favorites", comment: "")
-        case .archived: return NSLocalizedString("Archive", comment: "")
+        case .archived: return NSLocalizedString("Archive Tab", comment: "")
         case .search: return NSLocalizedString("Search", comment: "")
         case .settings: return NSLocalizedString("Settings", comment: "")
         case .article: return NSLocalizedString("Articles", comment: "")

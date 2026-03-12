@@ -106,6 +106,8 @@ class SimpleAPI {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "authorization")
         }
 
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
+
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
             if let httpResponse = response as? HTTPURLResponse,
@@ -145,6 +147,7 @@ class SimpleAPI {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
         request.httpBody = requestData
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -202,6 +205,7 @@ class SimpleAPI {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {

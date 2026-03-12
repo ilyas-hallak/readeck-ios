@@ -50,174 +50,183 @@ struct BookmarkDetailLegacyView: View {
         self.viewModel = viewModel
     }
     
+    @ViewBuilder
+    private func scrollViewContent(geometry: GeometryProxy) -> some View {
+        // Invisible GeometryReader to track scroll offset
+        GeometryReader { scrollGeo in
+            Color.clear.preference(
+                key: ScrollOffsetPreferenceKey.self,
+                value: CGPoint(
+                    x: scrollGeo.frame(in: .named("scrollView")).minX,
+                    y: scrollGeo.frame(in: .named("scrollView")).minY
+                )
+            )
+        }
+        .frame(height: 0)
+
+        VStack(spacing: 0) {
+            ZStack(alignment: .top) {
+                headerView(width: geometry.size.width)
+                VStack(alignment: .leading, spacing: 16) {
+                Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                titleSection
+                Divider().padding(.horizontal)
+                if showJumpToProgressButton {
+                    JumpButton(containerHeight: geometry.size.height)
+                }
+                if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
+                    WebView(
+                        htmlContent: viewModel.articleContent,
+                        settings: settings,
+                        onHeightChange: { height in
+                            if webViewHeight != height {
+                                webViewHeight = height
+                            }
+                        },
+                        selectedAnnotationId: viewModel.selectedAnnotationId,
+                        onAnnotationCreated: { color, text, startOffset, endOffset, startSelector, endSelector in
+                            Task {
+                                await viewModel.createAnnotation(
+                                    bookmarkId: bookmarkId,
+                                    color: color,
+                                    text: text,
+                                    startOffset: startOffset,
+                                    endOffset: endOffset,
+                                    startSelector: startSelector,
+                                    endSelector: endSelector
+                                )
+                            }
+                        },
+                        onScrollToPosition: { position in
+                            // Calculate scroll position: add header height and webview offset
+                            let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                            let targetPosition = imageHeight + position
+
+                            // Scroll to the annotation
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                scrollPosition = ScrollPosition(y: targetPosition)
+                            }
+                        }
+                    )
+                    .frame(height: webViewHeight)
+                    .cornerRadius(14)
+                    .padding(.horizontal, 4)
+                } else if viewModel.isLoadingArticle {
+                    ProgressView("Loading article...")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
+                } else {
+                    Button(action: {
+                        URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                    }) {
+                        HStack {
+                            Image(systemName: "safari")
+                            Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+                        }
+                        .font(.title3.bold())
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.horizontal)
+                    .padding(.top, 0)
+                }
+
+                if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                    VStack(alignment: .center) {
+                        archiveSection
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            .animation(.easeInOut, value: viewModel.articleContent)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+
+            // Invisible marker to measure total content height - placed AFTER all content
+            Color.clear
+                .frame(height: 1)
+                .background(
+                    GeometryReader { endGeo in
+                        Color.clear.preference(
+                            key: ContentHeightPreferenceKey.self,
+                            value: endGeo.frame(in: .named("scrollView")).maxY
+                        )
+                    }
+                )
+        }
+    }
+    
+    @ViewBuilder
+    private func scrollableContent(geometry: GeometryProxy) -> some View {
+        ScrollView {
+            scrollViewContent(geometry: geometry)
+        }
+        .coordinateSpace(name: "scrollView")
+        .clipped()
+        .ignoresSafeArea(edges: .top)
+        .scrollPosition($scrollPosition)
+        .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
+            contentEndPosition = endPosition
+
+            let containerHeight = geometry.size.height
+
+            // Update initial position if content grows (WebView still loading) or first time
+            // We always take the maximum position seen (when scrolled to top, this is total content height)
+            if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
+                initialContentEndPosition = endPosition
+                print("📏 Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
+            }
+
+            // Calculate progress from how much the end marker has moved up
+            guard initialContentEndPosition > 0 else {
+                print("⏳ Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
+                return
+            }
+
+            let totalScrollableDistance = initialContentEndPosition - containerHeight
+
+            guard totalScrollableDistance > 0 else {
+                print("⚠️ Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
+                return
+            }
+
+            // How far has the marker moved from its initial position?
+            let scrolled = initialContentEndPosition - endPosition
+            let rawProgress = scrolled / totalScrollableDistance
+            var progress = min(max(rawProgress, 0), 1)
+
+            // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
+            if lastSentProgress >= 0.995 {
+                progress = max(progress, 1.0)
+            }
+
+            print("📊 Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
+
+            // Check if we should update: threshold OR reaching 100% for first time
+            let threshold: Double = 0.03
+            let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
+            let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
+
+            if shouldUpdate {
+                print("✅ Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
+                lastSentProgress = progress
+                readingProgress = progress
+                viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+            }
+        }
+        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
+            // Not needed anymore, we track via ContentHeightPreferenceKey
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             ProgressView(value: readingProgress)
                 .progressViewStyle(LinearProgressViewStyle())
                 .frame(height: 3)
             GeometryReader { geometry in
-                ScrollView {
-                    // Invisible GeometryReader to track scroll offset
-                    GeometryReader { scrollGeo in
-                        Color.clear.preference(
-                            key: ScrollOffsetPreferenceKey.self,
-                            value: CGPoint(
-                                x: scrollGeo.frame(in: .named("scrollView")).minX,
-                                y: scrollGeo.frame(in: .named("scrollView")).minY
-                            )
-                        )
-                    }
-                    .frame(height: 0)
-
-                    VStack(spacing: 0) {
-                        ZStack(alignment: .top) {
-                            headerView(width: geometry.size.width)
-                            VStack(alignment: .leading, spacing: 16) {
-                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
-                            titleSection
-                            Divider().padding(.horizontal)
-                            if showJumpToProgressButton {
-                                JumpButton(containerHeight: geometry.size.height)
-                            }
-                            if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
-                                WebView(
-                                    htmlContent: viewModel.articleContent,
-                                    settings: settings,
-                                    onHeightChange: { height in
-                                        if webViewHeight != height {
-                                            webViewHeight = height
-                                        }
-                                    },
-                                    selectedAnnotationId: viewModel.selectedAnnotationId,
-                                    onAnnotationCreated: { color, text, startOffset, endOffset, startSelector, endSelector in
-                                        Task {
-                                            await viewModel.createAnnotation(
-                                                bookmarkId: bookmarkId,
-                                                color: color,
-                                                text: text,
-                                                startOffset: startOffset,
-                                                endOffset: endOffset,
-                                                startSelector: startSelector,
-                                                endSelector: endSelector
-                                            )
-                                        }
-                                    },
-                                    onScrollToPosition: { position in
-                                        // Calculate scroll position: add header height and webview offset
-                                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
-                                        let targetPosition = imageHeight + position
-
-                                        // Scroll to the annotation
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            scrollPosition = ScrollPosition(y: targetPosition)
-                                        }
-                                    }
-                                )
-                                .frame(height: webViewHeight)
-                                .cornerRadius(14)
-                                .padding(.horizontal, 4)
-                                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
-                            } else if viewModel.isLoadingArticle {
-                                ProgressView("Loading article...")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding()
-                            } else {
-                                Button(action: {
-                                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                                }) {
-                                    HStack {
-                                        Image(systemName: "safari")
-                                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                                    }
-                                    .font(.title3.bold())
-                                    .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .padding(.horizontal)
-                                .padding(.top, 0)
-                            }
-
-                            if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                                VStack(alignment: .center) {
-                                    archiveSection
-                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                        .animation(.easeInOut, value: viewModel.articleContent)
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-
-                        // Invisible marker to measure total content height - placed AFTER all content
-                        Color.clear
-                            .frame(height: 1)
-                            .background(
-                                GeometryReader { endGeo in
-                                    Color.clear.preference(
-                                        key: ContentHeightPreferenceKey.self,
-                                        value: endGeo.frame(in: .named("scrollView")).maxY
-                                    )
-                                }
-                            )
-                    }
-                }
-                .coordinateSpace(name: "scrollView")
-                .clipped()
-                .ignoresSafeArea(edges: .top)
-                .scrollPosition($scrollPosition)
-                .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
-                    contentEndPosition = endPosition
-
-                    let containerHeight = geometry.size.height
-
-                    // Update initial position if content grows (WebView still loading) or first time
-                    // We always take the maximum position seen (when scrolled to top, this is total content height)
-                    if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
-                        initialContentEndPosition = endPosition
-                        print("📏 Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
-                    }
-
-                    // Calculate progress from how much the end marker has moved up
-                    guard initialContentEndPosition > 0 else {
-                        print("⏳ Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
-                        return
-                    }
-
-                    let totalScrollableDistance = initialContentEndPosition - containerHeight
-
-                    guard totalScrollableDistance > 0 else {
-                        print("⚠️ Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
-                        return
-                    }
-
-                    // How far has the marker moved from its initial position?
-                    let scrolled = initialContentEndPosition - endPosition
-                    let rawProgress = scrolled / totalScrollableDistance
-                    var progress = min(max(rawProgress, 0), 1)
-
-                    // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
-                    if lastSentProgress >= 0.995 {
-                        progress = max(progress, 1.0)
-                    }
-
-                    print("📊 Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
-
-                    // Check if we should update: threshold OR reaching 100% for first time
-                    let threshold: Double = 0.03
-                    let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
-                    let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
-
-                    if shouldUpdate {
-                        print("✅ Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
-                        lastSentProgress = progress
-                        readingProgress = progress
-                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
-                    }
-                }
-                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
-                    // Not needed anymore, we track via ContentHeightPreferenceKey
-                }
+                scrollableContent(geometry: geometry)
             }
         }
         .frame(maxWidth: .infinity)
@@ -225,7 +234,7 @@ struct BookmarkDetailLegacyView: View {
         .toolbar {
             // Toggle button (left)
             ToolbarItem(placement: .navigationBarLeading) {
-                if #available(iOS 26.0, *) {
+                if #available(iOS 26.0, *), !ProcessInfo.processInfo.isiOSAppOnMac {
                     Button(action: {
                         useNativeWebView.toggle()
                     }) {

@@ -1,0 +1,24 @@
+//
+//  GetCachedBookmarksUseCase.swift
+//  readeck
+//
+//  Created by Ilyas Hallak on 30.11.25.
+//
+
+import Foundation
+
+protocol PGetCachedBookmarksUseCase {
+    func execute() async throws -> [Bookmark]
+}
+
+class GetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
+    private let offlineCacheRepository: POfflineCacheRepository
+
+    init(offlineCacheRepository: POfflineCacheRepository) {
+        self.offlineCacheRepository = offlineCacheRepository
+    }
+
+    func execute() async throws -> [Bookmark] {
+        return try await offlineCacheRepository.getCachedBookmarks()
+    }
+}

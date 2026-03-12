@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PadSidebarView: View {
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selectedTab: SidebarTab = .unread
     @State private var selectedBookmark: Bookmark?
     @State private var selectedTag: BookmarkLabel?
@@ -18,7 +19,7 @@ struct PadSidebarView: View {
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
     
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             List {
                 ForEach(sidebarTabs, id: \.self) { tab in
                     Button(action: {
@@ -118,9 +119,19 @@ struct PadSidebarView: View {
         } detail: {
             if let bookmark = selectedBookmark, selectedTab != .settings {
                 BookmarkDetailView(bookmarkId: bookmark.id)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                withAnimation {
+                                    columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
+                                }
+                            } label: {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            }
+                        }
+                    }
             } else if selectedTab == .settings {
-                Text(selectedTab == .settings ? "" : "Select a bookmark or tag")
-                    .foregroundColor(.gray)
+                Text("").foregroundColor(.gray)
             }
         }
         .background(Color(R.color.menu_sidebar_bg))

@@ -191,7 +191,12 @@ struct NativeWebView: View {
     private func loadStyledContent() {
         let isDarkMode = colorScheme == .dark
         let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
-        let fontFamily = getFontFamily(from: settings.fontFamily ?? .serif)
+        let selectedFontFamily = settings.fontFamily ?? .serif
+        let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
+        let codeFontFamily = selectedFontFamily == .monospace
+            ? "var(--font-family)"
+            : "'SF Mono', Menlo, Monaco, Consolas, monospace"
+        Logger.ui.debug("NativeWebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
         
         let styledHTML = """
         <html>
@@ -199,8 +204,8 @@ struct NativeWebView: View {
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
             <meta name="color-scheme" content="\(isDarkMode ? "dark" : "light")">
             <style>
-                /* Load custom fonts from app bundle */
-                \(generateFontFaceCSS())
+                /* Load selected custom font from app bundle */
+                \(fontCSS.fontFaceCSS)
 
                 * {
                     max-width: 100%;
@@ -213,10 +218,10 @@ struct NativeWebView: View {
                 }
 
                 body {
-                    font-family: \(fontFamily);
+                    font-family: \(fontCSS.fontStackCSS);
                     line-height: 1.8;
                     margin: 0;
-                    padding: 16px;
+                    padding: 16px 16px 100px;
                     background-color: \(isDarkMode ? "#000000" : "#ffffff");
                     color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
                     font-size: \(fontSize)px;
@@ -227,6 +232,10 @@ struct NativeWebView: View {
                     width: 100%;
                     word-wrap: break-word;
                     overflow-wrap: break-word;
+                }
+
+                body, article, p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, div, a {
+                    font-family: \(fontCSS.fontStackCSS) !important;
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
@@ -259,13 +268,16 @@ struct NativeWebView: View {
                     background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)"); 
                     border-radius: 4px; 
                 }
+
+                code, pre, kbd, samp {
+                    font-family: \(codeFontFamily) !important;
+                }
                 
                 code { 
                     background-color: \(isDarkMode ? "#1C1C1E" : "#f5f5f5"); 
                     color: \(isDarkMode ? "#ffffff" : "#000000"); 
                     padding: 2px 6px; 
                     border-radius: 4px; 
-                    font-family: 'SF Mono', monospace; 
                 }
                 
                 pre {
@@ -277,7 +289,10 @@ struct NativeWebView: View {
                     max-width: 100%;
                     white-space: pre-wrap;
                     word-wrap: break-word;
-                    font-family: 'SF Mono', monospace;
+                }
+
+                pre code {
+                    font-family: inherit !important;
                 }
                 
                 ul, ol { padding-left: 20px; margin-bottom: 16px; }
@@ -291,9 +306,12 @@ struct NativeWebView: View {
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
+                    display: inline;
                     border-radius: 3px;
                     padding: 2px 0;
                     transition: background-color 0.3s ease, box-shadow 0.3s ease;
+                    -webkit-box-decoration-break: clone;
+                    box-decoration-break: clone;
                 }
 
                 /* Yellow annotations */
@@ -396,66 +414,12 @@ struct NativeWebView: View {
         }
     }
     
-    private func generateFontFaceCSS() -> String {
-        var css = ""
-
-        // Iterate through all font families from the enum
-        for fontFamily in FontFamily.allCases {
-            // Only process fonts that need to be loaded (Google fonts)
-            guard let fileNames = fontFamily.fontFileNames,
-                  let cssFamilyName = fontFamily.cssFontFamily else {
-                continue
-            }
-
-            // Generate @font-face rules for each weight variant
-            for (fileName, weight) in fileNames {
-                if let fontPath = Bundle.main.path(forResource: fileName, ofType: "ttf") {
-                    let fileURL = URL(fileURLWithPath: fontPath).absoluteString
-                    css += """
-                    @font-face {
-                        font-family: '\(cssFamilyName)';
-                        src: url('\(fileURL)') format('truetype');
-                        font-weight: \(weight);
-                    }
-
-                    """
-                }
-            }
-        }
-
-        return css
-    }
-
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
         case .small: return 14
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
-        }
-    }
-
-    private func getFontFamily(from fontFamily: FontFamily) -> String {
-        switch fontFamily {
-        // Apple System Fonts
-        case .system: return "-apple-system, BlinkMacSystemFont, sans-serif"
-        case .newYork: return "'New York', 'Times New Roman', Georgia, serif"
-        case .avenirNext: return "'Avenir Next', Avenir, 'Helvetica Neue', sans-serif"
-        case .monospace: return "'SF Mono', Menlo, Monaco, monospace"
-
-        // Google Serif Fonts
-        case .literata: return "'Literata', Georgia, 'Times New Roman', serif"
-        case .merriweather: return "'Merriweather', Georgia, 'Times New Roman', serif"
-        case .sourceSerif: return "'Source Serif 4', 'Source Serif Pro', Georgia, serif"
-
-        // Google Sans Serif Fonts
-        case .lato: return "'Lato', 'Helvetica Neue', Arial, sans-serif"
-        case .montserrat: return "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
-        case .sourceSans: return "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', sans-serif"
-
-        // Legacy
-        case .serif: return "'Times New Roman', Times, serif"
-        case .sansSerif: return "'Helvetica Neue', Helvetica, Arial, sans-serif"
         }
     }
 
@@ -660,6 +624,40 @@ struct NativeWebView: View {
                 return 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             }
 
+            function getTextNodesInRange(range) {
+                const textNodes = [];
+                const startContainer = range.startContainer;
+                const endContainer = range.endContainer;
+
+                // If start and end are the same text node, just return it
+                if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+                    return [startContainer];
+                }
+
+                const walker = document.createTreeWalker(
+                    range.commonAncestorContainer,
+                    NodeFilter.SHOW_TEXT,
+                    null
+                );
+
+                let foundStart = false;
+                let node;
+
+                while (node = walker.nextNode()) {
+                    if (node === startContainer) {
+                        foundStart = true;
+                    }
+                    if (foundStart && node.textContent.trim().length > 0) {
+                        textNodes.push(node);
+                    }
+                    if (node === endContainer) {
+                        break;
+                    }
+                }
+
+                return textNodes;
+            }
+
             function handleColorSelection(color) {
                 if (!currentRange || !currentSelection) return;
 
@@ -671,19 +669,30 @@ struct NativeWebView: View {
                 const startOffset = calculateOffsetInElement(currentRange.startContainer, currentRange.startOffset);
                 const endOffset = calculateOffsetInElement(currentRange.endContainer, currentRange.endOffset);
 
-                // Create annotation element
-                const annotation = document.createElement('rd-annotation');
-                annotation.setAttribute('data-annotation-color', color);
-                annotation.setAttribute('data-annotation-id-value', generateTempId());
+                const tempId = generateTempId();
 
                 // Wrap selection in annotation
                 try {
+                    // Try surroundContents for simple single-element selections
+                    const annotation = document.createElement('rd-annotation');
+                    annotation.setAttribute('data-annotation-color', color);
+                    annotation.setAttribute('data-annotation-id-value', tempId);
                     currentRange.surroundContents(annotation);
                 } catch (e) {
-                    // If surroundContents fails (e.g., partial element selection), extract and wrap
-                    const fragment = currentRange.extractContents();
-                    annotation.appendChild(fragment);
-                    currentRange.insertNode(annotation);
+                    // For complex selections spanning multiple elements: wrap each text node individually
+                    const textNodes = getTextNodesInRange(currentRange);
+                    textNodes.forEach((node, index) => {
+                        const wrapper = document.createElement('rd-annotation');
+                        wrapper.setAttribute('data-annotation-color', color);
+                        wrapper.setAttribute('data-annotation-id-value', tempId);
+                        if (index > 0) {
+                            wrapper.setAttribute('data-annotation-continued', 'true');
+                        }
+
+                        const parent = node.parentNode;
+                        parent.insertBefore(wrapper, node);
+                        wrapper.appendChild(node);
+                    });
                 }
 
                 // For NativeWebView: use global variable for polling

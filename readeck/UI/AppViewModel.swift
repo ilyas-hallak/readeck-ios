@@ -12,7 +12,7 @@ import Combine
 @MainActor
 @Observable
 class AppViewModel {
-    private let settingsRepository = SettingsRepository()
+    private let settingsRepository: PSettingsRepository
     private let factory: UseCaseFactory
     private let syncTagsUseCase: PSyncTagsUseCase
     let networkMonitorUseCase: PNetworkMonitorUseCase
@@ -26,6 +26,7 @@ class AppViewModel {
 
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.factory = factory
+        self.settingsRepository = factory.makeSettingsRepository()
         self.syncTagsUseCase = factory.makeSyncTagsUseCase()
         self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
 
