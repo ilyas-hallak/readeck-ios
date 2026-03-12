@@ -3,11 +3,13 @@ import Foundation
 @Observable
 class TokenManager {
     static let shared = TokenManager()
-    
-    private let settingsRepository = SettingsRepository()
+
+    private let settingsRepository: PSettingsRepository
     private var cachedSettings: Settings?
-    
-    private init() {}
+
+    private init() {
+        self.settingsRepository = DefaultUseCaseFactory.shared.makeSettingsRepository()
+    }
     
     var currentToken: String? {
         cachedSettings?.token

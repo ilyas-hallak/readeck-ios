@@ -29,22 +29,18 @@ protocol PAPI {
 
 class API: PAPI {
     let tokenProvider: TokenProvider
-    private var cachedBaseURL: String?
     private let logger = Logger.network
-    
+
     init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
         self.tokenProvider = tokenProvider
     }
-    
+
     private var baseURL: String {
         get async {
-            if let cached = cachedBaseURL, cached.isEmpty == false {
-                return cached
-            }
+            // Always get endpoint from tokenProvider (it has its own cache)
             guard let url = await tokenProvider.getEndpoint() else {
                 return ""
             }
-            cachedBaseURL = url
             return url
         }
     }
@@ -56,6 +52,52 @@ class API: PAPI {
             }
         }
     }
+    
+    /// Unified request builder that ensures all headers are applied consistently
+    private func buildRequest(
+        url: String,
+        method: HTTPMethod,
+        body: Data? = nil,
+        useBaseURL: Bool = true,
+        additionalHeaders: [String: String] = [:]
+    ) async throws -> URLRequest {
+        let fullURL: String
+        if useBaseURL {
+            let baseURL = await self.baseURL
+            let fullEndpoint = url.hasPrefix("/api") ? url : "/api\(url)"
+            fullURL = "\(baseURL)\(fullEndpoint)"
+        } else {
+            // For login, url is already a full URL
+            fullURL = url
+        }
+        
+        guard let requestURL = URL(string: fullURL) else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = method.rawValue
+        
+        if body != nil {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        
+        if let token = await tokenProvider.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        for (key, value) in additionalHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
+        
+        if let body = body {
+            request.httpBody = body
+        }
+        
+        return request
+    }
         
     private func makeJSONRequestWithHeaders<T: Codable>(
         endpoint: String,
@@ -63,24 +105,12 @@ class API: PAPI {
         body: Data? = nil,
         responseType: T.Type
     ) async throws -> (T, HTTPURLResponse) {
-        let baseURL = await self.baseURL
-        let fullEndpoint = endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"
-        
-        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        if let body = body {
-            request.httpBody = body
-        }
+        let request = try await buildRequest(
+            url: endpoint,
+            method: method,
+            body: body,
+            useBaseURL: true
+        )
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -104,24 +134,12 @@ class API: PAPI {
         body: Data? = nil,
         responseType: T.Type
     ) async throws -> T {
-        let baseURL = await self.baseURL
-        let fullEndpoint = endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"
-        
-        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        if let body = body {
-            request.httpBody = body
-        }
+        let request = try await buildRequest(
+            url: endpoint,
+            method: method,
+            body: body,
+            useBaseURL: true
+        )
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -131,10 +149,19 @@ class API: PAPI {
         
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
+            // Try to extract error message from response body
+            if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
+                throw APIError.serverErrorWithMessage(statusCode: httpResponse.statusCode, message: errorResponse.message)
+            }
             throw APIError.serverError(httpResponse.statusCode)
         }
-        
+
         return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    private struct APIErrorResponse: Codable {
+        let status: Int
+        let message: String
     }
     
     // Separate Methode für String-Requests (HTML/Text)
@@ -142,19 +169,12 @@ class API: PAPI {
         endpoint: String,
         method: HTTPMethod = .GET
     ) async throws -> String {
-        let baseURL = await self.baseURL
-        let fullEndpoint = endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"
-        
-        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        
-        if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        let request = try await buildRequest(
+            url: endpoint,
+            method: method,
+            body: nil,
+            useBaseURL: true
+        )
         
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -182,19 +202,23 @@ class API: PAPI {
     
     func login(endpoint: String, username: String, password: String) async throws -> UserDto {
         logger.info("Attempting login for user: \(username) at endpoint: \(endpoint)")
-        guard let url = URL(string: endpoint + "/api/auth") else { 
-            logger.error("Invalid URL for login endpoint: \(endpoint)")
+        let loginEndpoint = endpoint + "/api/auth"
+        guard let _ = URL(string: loginEndpoint) else { 
+            logger.error("Invalid URL for login endpoint: \(loginEndpoint)")
             throw APIError.invalidURL 
         }
         
         let loginRequest = LoginRequestDto(application: "api doc", username: username, password: password)
         let requestData = try JSONEncoder().encode(loginRequest)
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = requestData
+        
+        let request = try await buildRequest(
+            url: loginEndpoint,
+            method: .POST,
+            body: requestData,
+            useBaseURL: false
+        )
 
-        logger.logNetworkRequest(method: "POST", url: url.absoluteString)
+        logger.logNetworkRequest(method: "POST", url: loginEndpoint)
         
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -205,11 +229,11 @@ class API: PAPI {
 
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
-            logger.logNetworkError(method: "POST", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            logger.logNetworkError(method: "POST", url: loginEndpoint, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
 
-        logger.logNetworkRequest(method: "POST", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.logNetworkRequest(method: "POST", url: loginEndpoint, statusCode: httpResponse.statusCode)
         logger.info("Login successful for user: \(username)")
         return try JSONDecoder().decode(UserDto.self, from: data)
     }
@@ -341,81 +365,67 @@ class API: PAPI {
     func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws {
         logger.info("Updating bookmark: \(id)")
         let requestData = try JSONEncoder().encode(updateRequest)
+        let endpoint = "/api/bookmarks/\(id)"
         
-        // Use makeJSONRequest but ignore the response since PATCH returns no body
+        let request = try await buildRequest(
+            url: endpoint,
+            method: .PATCH,
+            body: requestData,
+            useBaseURL: true,
+            additionalHeaders: ["Accept": "application/json"]
+        )
+        
         let baseURL = await self.baseURL
-        let fullEndpoint = "/api/bookmarks/\(id)"
-        
-        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
-            logger.error("Invalid URL: \(baseURL)\(fullEndpoint)")
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "PATCH"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
-        if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        request.httpBody = requestData
-        
-        logger.logNetworkRequest(method: "PATCH", url: url.absoluteString)
+        let fullURL = "\(baseURL)\(endpoint)"
+        logger.logNetworkRequest(method: "PATCH", url: fullURL)
         
         let (_, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid HTTP response for PATCH \(url.absoluteString)")
+            logger.error("Invalid HTTP response for PATCH \(fullURL)")
             throw APIError.invalidResponse
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
-            logger.logNetworkError(method: "PATCH", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            logger.logNetworkError(method: "PATCH", url: fullURL, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
         
-        logger.logNetworkRequest(method: "PATCH", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.logNetworkRequest(method: "PATCH", url: fullURL, statusCode: httpResponse.statusCode)
         logger.info("Successfully updated bookmark: \(id)")
     }
     
     func deleteBookmark(id: String) async throws {
         logger.info("Deleting bookmark: \(id)")
+        let endpoint = "/api/bookmarks/\(id)"
+        
+        let request = try await buildRequest(
+            url: endpoint,
+            method: .DELETE,
+            body: nil,
+            useBaseURL: true,
+            additionalHeaders: ["Accept": "application/json"]
+        )
         
         let baseURL = await self.baseURL
-        let fullEndpoint = "/api/bookmarks/\(id)"
-        
-        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
-            logger.error("Invalid URL: \(baseURL)\(fullEndpoint)")
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
-        if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString)
+        let fullURL = "\(baseURL)\(endpoint)"
+        logger.logNetworkRequest(method: "DELETE", url: fullURL)
         
         let (_, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid HTTP response for DELETE \(url.absoluteString)")
+            logger.error("Invalid HTTP response for DELETE \(fullURL)")
             throw APIError.invalidResponse
         }
         
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
-            logger.logNetworkError(method: "DELETE", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            logger.logNetworkError(method: "DELETE", url: fullURL, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
         
-        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.logNetworkRequest(method: "DELETE", url: fullURL, statusCode: httpResponse.statusCode)
         logger.info("Successfully deleted bookmark: \(id)")
     }
     
@@ -503,39 +513,34 @@ class API: PAPI {
 
     func deleteAnnotation(bookmarkId: String, annotationId: String) async throws {
         logger.info("Deleting annotation: \(annotationId) from bookmark: \(bookmarkId)")
+        let endpoint = "/api/bookmarks/\(bookmarkId)/annotations/\(annotationId)"
 
+        let request = try await buildRequest(
+            url: endpoint,
+            method: .DELETE,
+            body: nil,
+            useBaseURL: true,
+            additionalHeaders: ["Accept": "application/json"]
+        )
+        
         let baseURL = await self.baseURL
-        let fullEndpoint = "/api/bookmarks/\(bookmarkId)/annotations/\(annotationId)"
-
-        guard let url = URL(string: "\(baseURL)\(fullEndpoint)") else {
-            logger.error("Invalid URL: \(baseURL)\(fullEndpoint)")
-            throw APIError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-        if let token = await tokenProvider.getToken() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString)
+        let fullURL = "\(baseURL)\(endpoint)"
+        logger.logNetworkRequest(method: "DELETE", url: fullURL)
 
         let (_, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid HTTP response for DELETE \(url.absoluteString)")
+            logger.error("Invalid HTTP response for DELETE \(fullURL)")
             throw APIError.invalidResponse
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
-            logger.logNetworkError(method: "DELETE", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            logger.logNetworkError(method: "DELETE", url: fullURL, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
 
-        logger.logNetworkRequest(method: "DELETE", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.logNetworkRequest(method: "DELETE", url: fullURL, statusCode: httpResponse.statusCode)
         logger.info("Successfully deleted annotation: \(annotationId)")
     }
 
@@ -554,6 +559,9 @@ class API: PAPI {
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = requestData
+        
+        // Apply custom headers (e.g., for proxy authentication)
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString)
 
@@ -615,6 +623,9 @@ class API: PAPI {
         urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = formBody.data(using: .utf8)
+        
+        // Apply custom headers (e.g., for proxy authentication)
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString)
 
@@ -649,6 +660,7 @@ enum APIError: Error {
     case invalidURL
     case invalidResponse
     case serverError(Int)
+    case serverErrorWithMessage(statusCode: Int, message: String)
 }
 
 extension APIError: LocalizedError {
@@ -660,6 +672,8 @@ extension APIError: LocalizedError {
             return "Invalid server response"
         case .serverError(let statusCode):
             return "Server error: HTTP \(statusCode)"
+        case .serverErrorWithMessage(_, let message):
+            return message
         }
     }
 }

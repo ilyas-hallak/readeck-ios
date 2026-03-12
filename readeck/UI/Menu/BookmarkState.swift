@@ -22,7 +22,7 @@ enum BookmarkState: String, CaseIterable {
         case .favorite:
             return NSLocalizedString("Favorites", comment: "")
         case .archived:
-            return NSLocalizedString("Archive", comment: "")
+            return NSLocalizedString("Archive Tab", comment: "")
         }
     }
     
