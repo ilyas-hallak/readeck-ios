@@ -227,6 +227,7 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(enableTTS: Bool) async throws {}
     func execute(theme: Theme) async throws {}
     func execute(urlOpener: UrlOpener) async throws {}
+    func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
 }
 
 class MockGetBookmarkUseCase: PGetBookmarkUseCase {

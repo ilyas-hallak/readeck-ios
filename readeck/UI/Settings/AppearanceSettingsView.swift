@@ -4,8 +4,6 @@ struct AppearanceSettingsView: View {
     @State private var selectedCardLayout: CardLayoutStyle = .magazine
     @State private var selectedTheme: Theme = .system
     @State private var selectedTagSortOrder: TagSortOrder = .byCount
-    @State private var selectedBookmarkSortField: BookmarkSortField = .created
-    @State private var selectedBookmarkSortDirection: BookmarkSortDirection = .descending
     @State private var fontViewModel: FontSettingsViewModel
     @State private var generalViewModel: SettingsGeneralViewModel
 
@@ -105,22 +103,26 @@ struct AppearanceSettingsView: View {
 
                 // Bookmark Sort Order
                 VStack(alignment: .leading, spacing: 4) {
-                    Picker("Bookmark sort by", selection: $selectedBookmarkSortField) {
+                    Picker("Bookmark sort by", selection: $generalViewModel.bookmarkSortField) {
                         ForEach(BookmarkSortField.allCases, id: \.self) { field in
                             Text(field.displayName).tag(field)
                         }
                     }
-                    .onChange(of: selectedBookmarkSortField) {
-                        saveBookmarkSortSettings()
+                    .onChange(of: generalViewModel.bookmarkSortField) {
+                        Task {
+                            await generalViewModel.saveBookmarkSortSettings()
+                        }
                     }
 
-                    Picker("Sort direction", selection: $selectedBookmarkSortDirection) {
+                    Picker("Sort direction", selection: $generalViewModel.bookmarkSortDirection) {
                         ForEach(BookmarkSortDirection.allCases, id: \.self) { direction in
                             Text(direction.displayName).tag(direction)
                         }
                     }
-                    .onChange(of: selectedBookmarkSortDirection) {
-                        saveBookmarkSortSettings()
+                    .onChange(of: generalViewModel.bookmarkSortDirection) {
+                        Task {
+                            await generalViewModel.saveBookmarkSortSettings()
+                        }
                     }
 
                     Text("Affects how bookmarks are ordered in your lists.")
@@ -146,8 +148,6 @@ struct AppearanceSettingsView: View {
                 await MainActor.run {
                     selectedTheme = settings.theme ?? .system
                     selectedTagSortOrder = settings.tagSortOrder ?? .byCount
-                    selectedBookmarkSortField = settings.bookmarkSortField ?? .created
-                    selectedBookmarkSortDirection = settings.bookmarkSortDirection ?? .descending
                 }
             }
             selectedCardLayout = await loadCardLayoutUseCase.execute()
@@ -163,22 +163,6 @@ struct AppearanceSettingsView: View {
 
             // Notify app about theme change
             await MainActor.run {
-                NotificationCenter.default.post(name: .settingsChanged, object: nil)
-            }
-        }
-    }
-
-    private func saveBookmarkSortSettings() {
-        Task {
-            var settings = (try? await settingsRepository.loadSettings()) ?? Settings()
-            settings.bookmarkSortField = selectedBookmarkSortField
-            settings.bookmarkSortDirection = selectedBookmarkSortDirection
-            try? await settingsRepository.saveSettings(settings)
-
-            // Update AppSettings to trigger UI updates
-            await MainActor.run {
-                appSettings.settings?.bookmarkSortField = selectedBookmarkSortField
-                appSettings.settings?.bookmarkSortDirection = selectedBookmarkSortDirection
                 NotificationCenter.default.post(name: .settingsChanged, object: nil)
             }
         }
