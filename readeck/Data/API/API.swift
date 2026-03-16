@@ -10,7 +10,7 @@ import Foundation
 protocol PAPI {
     var tokenProvider: TokenProvider { get }
     func login(endpoint: String, username: String, password: String) async throws -> UserDto
-    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPageDto
+    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPageDto
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto
@@ -238,7 +238,7 @@ class API: PAPI {
         return try JSONDecoder().decode(UserDto.self, from: data)
     }
     
-    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPageDto {
+    func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil, sort: String? = nil) async throws -> BookmarksPageDto {
         logger.debug("Fetching bookmarks with state: \(state?.rawValue ?? "all"), limit: \(limit ?? 0), offset: \(offset ?? 0)")
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
@@ -281,7 +281,11 @@ class API: PAPI {
             let encodedTag = "\"\(tag)\""
             queryItems.append(URLQueryItem(name: "labels", value: encodedTag))
         }
-        
+
+        if let sort {
+            queryItems.append(URLQueryItem(name: "sort", value: sort))
+        }
+
         if !queryItems.isEmpty {
             let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
             endpoint += "?\(queryString)"
