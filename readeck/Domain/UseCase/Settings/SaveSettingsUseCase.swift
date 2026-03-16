@@ -5,6 +5,7 @@ protocol PSaveSettingsUseCase {
     func execute(enableTTS: Bool) async throws
     func execute(theme: Theme) async throws
     func execute(urlOpener: UrlOpener) async throws
+    func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws
 }
 
 class SaveSettingsUseCase: PSaveSettingsUseCase {
@@ -38,6 +39,15 @@ class SaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(urlOpener: UrlOpener) async throws {
         try await settingsRepository.saveSettings(
             .init(urlOpener: urlOpener)
+        )
+    }
+
+    func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {
+        try await settingsRepository.saveSettings(
+            .init(
+                bookmarkSortField: bookmarkSortField,
+                bookmarkSortDirection: bookmarkSortDirection
+            )
         )
     }
 }

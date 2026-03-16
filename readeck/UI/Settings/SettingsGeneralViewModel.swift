@@ -18,6 +18,10 @@ class SettingsGeneralViewModel {
     var autoMarkAsRead: Bool = false
     var urlOpener: UrlOpener = .inAppBrowser
     
+    // MARK: - Sort Settings
+    var bookmarkSortField: BookmarkSortField = .created
+    var bookmarkSortDirection: BookmarkSortDirection = .descending
+    
     // MARK: - Messages
     
     var errorMessage: String?
@@ -37,6 +41,8 @@ class SettingsGeneralViewModel {
                 enableTTS = settings.enableTTS ?? false
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
+                bookmarkSortField = settings.bookmarkSortField ?? .created
+                bookmarkSortDirection = settings.bookmarkSortDirection ?? .descending
                 autoSyncEnabled = false
             }
         } catch {
@@ -55,6 +61,20 @@ class SettingsGeneralViewModel {
             
             // send notification to apply settings to the app
             NotificationCenter.default.post(name: .settingsChanged, object: nil)
+        } catch {
+            errorMessage = "Error saving settings"
+        }
+    }
+    
+    @MainActor
+    func saveBookmarkSortSettings() async {
+        do {
+            try await saveSettingsUseCase.execute(
+                bookmarkSortField: bookmarkSortField,
+                bookmarkSortDirection: bookmarkSortDirection
+            )
+            NotificationCenter.default.post(name: .settingsChanged, object: nil)
+            successMessage = "Settings saved"
         } catch {
             errorMessage = "Error saving settings"
         }

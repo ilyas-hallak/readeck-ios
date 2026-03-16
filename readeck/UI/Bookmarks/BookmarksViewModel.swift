@@ -72,6 +72,16 @@ class BookmarksViewModel {
             }
             .store(in: &cancellables)
 
+        // Listen for settings changed (including sort order)
+        NotificationCenter.default
+            .publisher(for: .settingsChanged)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.refreshBookmarks()
+                }
+            }
+            .store(in: &cancellables)
+
         // Listen for
         NotificationCenter.default
             .publisher(for: .addBookmarkFromShare)
@@ -141,6 +151,7 @@ class BookmarksViewModel {
 
         Logger.viewModel.info("🌐 Device appears online - making API request")
         do {
+            let sortToken = buildSortToken()
             logger.debug("Loading bookmarks - state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"), search: \(searchQuery.isEmpty ? "none" : searchQuery)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
@@ -148,7 +159,8 @@ class BookmarksViewModel {
                 offset: offset,
                 search: searchQuery,
                 type: type,
-                tag: tag
+                tag: tag,
+                sort: sortToken
             )
             bookmarks = newBookmarks
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
@@ -216,6 +228,7 @@ class BookmarksViewModel {
 
         do {
             offset += limit // inc. offset
+            let sortToken = buildSortToken()
             logger.debug("Loading more bookmarks - offset: \(offset), limit: \(limit)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: currentState,
@@ -223,7 +236,8 @@ class BookmarksViewModel {
                 offset: offset,
                 search: nil,
                 type: currentType,
-                tag: currentTag)
+                tag: currentTag,
+                sort: sortToken)
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
             logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
@@ -244,6 +258,18 @@ class BookmarksViewModel {
         errorMessage = nil
         isNetworkError = false
         await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
+    }
+
+    private func buildSortToken() -> String? {
+        guard let appSettings = appSettings else { return nil }
+        // Search usually has its own relevance sorting
+        if !searchQuery.isEmpty {
+            return nil
+        }
+        
+        let field = appSettings.bookmarkSortField.rawValue
+        let direction = appSettings.bookmarkSortDirection == .descending ? "-" : ""
+        return "\(direction)\(field)"
     }
     
     @MainActor
@@ -373,8 +399,7 @@ class BookmarksViewModel {
             }
         }
     }
-    
-    @MainActor
+
     private func loadCardLayout() async {
         cardLayoutStyle = await loadCardLayoutUseCase.execute()
     }

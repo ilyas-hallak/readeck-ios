@@ -75,6 +75,14 @@ class SettingsRepository: PSettingsRepository {
                         existingSettings.tagSortOrder = tagSortOrder.rawValue
                     }
 
+                    if let bookmarkSortField = settings.bookmarkSortField {
+                        existingSettings.bookmarkSortField = bookmarkSortField.rawValue
+                    }
+
+                    if let bookmarkSortDirection = settings.bookmarkSortDirection {
+                        existingSettings.bookmarkSortDirection = bookmarkSortDirection.rawValue
+                    }
+
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -114,6 +122,8 @@ class SettingsRepository: PSettingsRepository {
                         theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue),
                         cardLayoutStyle: CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue),
                         tagSortOrder: TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue),
+                        bookmarkSortField: BookmarkSortField(rawValue: settingEntity?.bookmarkSortField ?? BookmarkSortField.created.rawValue),
+                        bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue)
                     )
                     continuation.resume(returning: settings)
