@@ -294,19 +294,10 @@ struct BookmarkDetailView2: View {
 
     private var fontSettingsSheet: some View {
         NavigationView {
-            VStack {
-                FontSettingsView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-
-                Spacer()
-            }
-            .navigationTitle("Font Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+            FontSelectionView()
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
                         showingFontSettings = false
                     }
                 }

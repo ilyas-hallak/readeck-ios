@@ -263,24 +263,15 @@ struct BookmarkDetailLegacyView: View {
             }
         }
         .sheet(isPresented: $showingFontSettings) {
-            NavigationView {                
-                VStack {
-                    FontSettingsView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                    
-                    Spacer()
-                }
-                .navigationTitle("Font Settings")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            showingFontSettings = false
+            NavigationView {
+                FontSelectionView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingFontSettings = false
+                            }
                         }
                     }
-                }
             }
         }
         .sheet(isPresented: $showingLabelsSheet) {

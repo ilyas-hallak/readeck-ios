@@ -31,6 +31,13 @@ class FontSettingsViewModel {
     // MARK: - Custom CSS
     var customCSS: String = ""
 
+    // MARK: - Computed Preview Properties
+    var previewLineSpacing: CGFloat {
+        // SwiftUI lineSpacing is extra space between lines, not the CSS line-height multiplier.
+        // CSS line-height 1.8 at 20px = 36px total line height, so extra = (1.8 - 1.0) * fontSize
+        return (lineHeight - 1.0) * fontSizeNumeric
+    }
+
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
