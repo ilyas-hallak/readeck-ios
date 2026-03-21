@@ -228,6 +228,7 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws {}
     func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool) async throws {}
     func execute(customCSS: String) async throws {}
+    func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws {}
     func execute(enableTTS: Bool) async throws {}
     func execute(theme: Theme) async throws {}
     func execute(urlOpener: UrlOpener) async throws {}

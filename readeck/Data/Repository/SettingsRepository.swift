@@ -96,6 +96,15 @@ class SettingsRepository: PSettingsRepository {
                     if let customCSS = settings.customCSS {
                         existingSettings.customCSS = customCSS
                     }
+                    if let readerColorTheme = settings.readerColorTheme {
+                        existingSettings.readerColorTheme = readerColorTheme.rawValue
+                    }
+                    if let customBackgroundColor = settings.customBackgroundColor {
+                        existingSettings.customBackgroundColor = customBackgroundColor
+                    }
+                    if let customTextColor = settings.customTextColor {
+                        existingSettings.customTextColor = customTextColor
+                    }
 
                     try context.save()
                     continuation.resume()
@@ -154,7 +163,10 @@ class SettingsRepository: PSettingsRepository {
                         hideProgressBar: settingEntity?.hideProgressBar,
                         hideWordCount: settingEntity?.hideWordCount,
                         hideHeroImage: settingEntity?.hideHeroImage,
-                        customCSS: settingEntity?.customCSS
+                        customCSS: settingEntity?.customCSS,
+                        readerColorTheme: ReaderColorTheme(rawValue: settingEntity?.readerColorTheme ?? ReaderColorTheme.system.rawValue),
+                        customBackgroundColor: settingEntity?.customBackgroundColor,
+                        customTextColor: settingEntity?.customTextColor
                     )
                     continuation.resume(returning: settings)
                 } catch {

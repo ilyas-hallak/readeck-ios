@@ -38,6 +38,7 @@ struct BookmarkDetailView2: View {
 
     var body: some View {
         mainView
+            .background(nativeBackgroundColor)
     }
 
     private var mainView: some View {
@@ -363,7 +364,7 @@ struct BookmarkDetailView2: View {
                 Text(viewModel.bookmarkDetail.title)
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(nativeTextColor)
                     .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
                 Spacer()
                 Button(action: {
@@ -371,7 +372,7 @@ struct BookmarkDetailView2: View {
                 }) {
                     Image(systemName: "safari")
                         .font(.title3)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(nativeSecondaryTextColor)
                 }
             }
             metaInfoSection
@@ -384,16 +385,16 @@ struct BookmarkDetailView2: View {
             if !viewModel.bookmarkDetail.authors.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "person")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(nativeSecondaryTextColor)
                     Text(viewModel.bookmarkDetail.authors.joined(separator: ", "))
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(nativeSecondaryTextColor)
                     Text("·")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(nativeSecondaryTextColor)
                     Text(formatDate(viewModel.bookmarkDetail.created))
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(nativeSecondaryTextColor)
                 }
             } else {
                 metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
@@ -448,13 +449,48 @@ struct BookmarkDetailView2: View {
         }
     }
 
+    // MARK: - Color Theme Helpers
+
+    private var nativeBackgroundColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return Color(.systemBackground)
+        case .custom:
+            if let hex = viewModel.settings?.customBackgroundColor {
+                return Color(hex: hex)
+            }
+            return Color(.systemBackground)
+        default:
+            return theme.backgroundColor ?? Color(.systemBackground)
+        }
+    }
+
+    private var nativeTextColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return .primary
+        case .custom:
+            if let hex = viewModel.settings?.customTextColor {
+                return Color(hex: hex)
+            }
+            return .primary
+        default:
+            return theme.textColor ?? .primary
+        }
+    }
+
+    private var nativeSecondaryTextColor: Color {
+        return nativeTextColor.opacity(0.6)
+    }
+
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(nativeSecondaryTextColor)
         }
     }
 
@@ -462,6 +498,7 @@ struct BookmarkDetailView2: View {
     private func metaRow(icon: String, @ViewBuilder content: () -> some View) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             content()
         }
     }
@@ -506,7 +543,7 @@ struct BookmarkDetailView2: View {
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
                 .padding(.horizontal, 4)
-                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSizeNumeric ?? 20)-\(settings.horizontalMargin ?? 16)-\(settings.lineHeight ?? 1.8)-\(settings.customCSS?.hashValue ?? 0)")
+                .id(settings.webViewIdentifier)
             }
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")

@@ -28,6 +28,7 @@ struct FontSelectionView: View {
             // Scrollable settings below
             List {
                 fontSection
+                colorThemeSection
                 readerLayoutSection
                 visibilitySection
                 customCSSSection
@@ -43,28 +44,41 @@ struct FontSelectionView: View {
 
     // MARK: - Preview
 
+    private var previewBackgroundColor: Color {
+        viewModel.effectiveBackgroundColor ?? Color(.systemBackground)
+    }
+
+    private var previewTextColor: Color {
+        viewModel.effectiveTextColor ?? .primary
+    }
+
+    private var previewSecondaryColor: Color {
+        (viewModel.effectiveTextColor ?? .secondary).opacity(0.6)
+    }
+
     private var readerPreview: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Simulated article preview with actual settings applied
             VStack(alignment: .leading, spacing: 0) {
                 Text("The Future of Reading Apps")
                     .font(viewModel.previewTitleFont)
                     .fontWeight(.semibold)
+                    .foregroundColor(previewTextColor)
                     .lineLimit(2)
                     .padding(.bottom, 4)
 
                 HStack(spacing: 4) {
                     Image(systemName: "person")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(previewSecondaryColor)
                     Text("Jane Doe · Mar 21, 2026")
                         .font(viewModel.previewCaptionFont)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(previewSecondaryColor)
                 }
                 .padding(.bottom, 8)
 
                 Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.")
                     .font(viewModel.previewBodyFont)
+                    .foregroundColor(previewTextColor)
                     .lineSpacing(viewModel.previewLineSpacing)
                     .lineLimit(5)
             }
@@ -72,7 +86,7 @@ struct FontSelectionView: View {
             .padding(.vertical, 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
+        .background(previewBackgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
     }
@@ -109,6 +123,82 @@ struct FontSelectionView: View {
         } header: {
             Text("Font")
         }
+    }
+
+    // MARK: - Color Theme Section
+
+    private var colorThemeSection: some View {
+        Section {
+            // Theme preset grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 10) {
+                ForEach(ReaderColorTheme.allCases, id: \.self) { theme in
+                    colorThemeButton(theme)
+                }
+            }
+            .padding(.vertical, 4)
+
+            // Custom color pickers (only when custom is selected)
+            if viewModel.readerColorTheme == .custom {
+                ColorPicker("Background", selection: $viewModel.customBackgroundColor, supportsOpacity: false)
+                    .onChange(of: viewModel.customBackgroundColor) {
+                        Task { await viewModel.saveColorTheme() }
+                    }
+                ColorPicker("Text", selection: $viewModel.customTextColor, supportsOpacity: false)
+                    .onChange(of: viewModel.customTextColor) {
+                        Task { await viewModel.saveColorTheme() }
+                    }
+            }
+        } header: {
+            Text("Color Theme")
+        }
+    }
+
+    private func colorThemeButton(_ theme: ReaderColorTheme) -> some View {
+        let isSelected = viewModel.readerColorTheme == theme
+        let bgColor = theme.backgroundColor ?? Color(.systemBackground)
+        let textColor = theme.textColor ?? .primary
+
+        return Button(action: {
+            viewModel.readerColorTheme = theme
+            Task { await viewModel.saveColorTheme() }
+        }) {
+            VStack(spacing: 4) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(theme == .custom ? Color.clear : bgColor)
+                    .overlay(
+                        Group {
+                            if theme == .custom {
+                                LinearGradient(
+                                    colors: [.red, .blue, .green, .yellow],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            } else {
+                                Text("Aa")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(textColor)
+                            }
+                        }
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: isSelected ? 2 : 1)
+                    )
+                    .frame(height: 40)
+
+                Text(theme.displayName)
+                    .font(.caption2)
+                    .foregroundColor(isSelected ? .accentColor : .secondary)
+                    .lineLimit(1)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Reader Layout Section

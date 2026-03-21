@@ -30,6 +30,23 @@ struct Settings {
     var hideWordCount: Bool? = nil
     var hideHeroImage: Bool? = nil
     var customCSS: String? = nil
+    var readerColorTheme: ReaderColorTheme? = nil
+    var customBackgroundColor: String? = nil  // hex string
+    var customTextColor: String? = nil        // hex string
+
+    var webViewIdentifier: String {
+        let parts: [String] = [
+            fontFamily?.rawValue ?? "system",
+            "\(fontSizeNumeric ?? 20)",
+            "\(horizontalMargin ?? 16)",
+            "\(lineHeight ?? 1.8)",
+            "\(customCSS?.hashValue ?? 0)",
+            readerColorTheme?.rawValue ?? "system",
+            customBackgroundColor ?? "",
+            customTextColor ?? ""
+        ]
+        return parts.joined(separator: "-")
+    }
 
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty

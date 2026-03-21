@@ -4,6 +4,16 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 2.1.0
+
+### Bug Fixes & Improvements
+
+- **Fix: Annotations now display correctly** when reopening articles (thanks @sibson)
+- **New: Reset reading progress** via context menu (thanks @astratto)
+- Improved error handling and stability fixes
+
+---
+
 ## Version 2.0.0
 
 ### 📖 Offline Reading - The Feature You've Been Waiting For!

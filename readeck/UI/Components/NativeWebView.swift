@@ -195,6 +195,22 @@ struct NativeWebView: View {
         let horizontalMargin = Int(settings.horizontalMargin ?? 16)
         let lineHeightValue = settings.lineHeight ?? 1.8
         let selectedFontFamily = settings.fontFamily ?? .serif
+
+        // Resolve color theme
+        let colorTheme = settings.readerColorTheme ?? .system
+        let resolvedBgColor: String
+        let resolvedTextColor: String
+        switch colorTheme {
+        case .system:
+            resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
+            resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
+        case .custom:
+            resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+        default:
+            resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+        }
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
             ? "var(--font-family)"
@@ -225,8 +241,8 @@ struct NativeWebView: View {
                     line-height: \(lineHeightValue);
                     margin: 0;
                     padding: 16px \(horizontalMargin)px 100px;
-                    background-color: \(isDarkMode ? "#000000" : "#ffffff");
-                    color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
+                    background-color: \(resolvedBgColor);
+                    color: \(resolvedTextColor);
                     font-size: \(fontSize)px;
                     -webkit-text-size-adjust: 100%;
                     -webkit-user-select: text;

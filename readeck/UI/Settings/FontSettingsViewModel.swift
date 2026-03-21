@@ -31,6 +31,28 @@ class FontSettingsViewModel {
     // MARK: - Custom CSS
     var customCSS: String = ""
 
+    // MARK: - Color Theme
+    var readerColorTheme: ReaderColorTheme = .system
+    var customBackgroundColor: Color = .white
+    var customTextColor: Color = .black
+
+    // MARK: - Computed Color Properties
+    var effectiveBackgroundColor: Color? {
+        switch readerColorTheme {
+        case .system: return nil
+        case .custom: return customBackgroundColor
+        default: return readerColorTheme.backgroundColor
+        }
+    }
+
+    var effectiveTextColor: Color? {
+        switch readerColorTheme {
+        case .system: return nil
+        case .custom: return customTextColor
+        default: return readerColorTheme.textColor
+        }
+    }
+
     // MARK: - Computed Preview Properties
     var previewLineSpacing: CGFloat {
         // SwiftUI lineSpacing is extra space between lines, not the CSS line-height multiplier.
@@ -182,6 +204,13 @@ class FontSettingsViewModel {
                 hideWordCount = settings.hideWordCount ?? false
                 hideHeroImage = settings.hideHeroImage ?? false
                 customCSS = settings.customCSS ?? ""
+                readerColorTheme = settings.readerColorTheme ?? .system
+                if let bgHex = settings.customBackgroundColor {
+                    customBackgroundColor = Color(hex: bgHex)
+                }
+                if let textHex = settings.customTextColor {
+                    customTextColor = Color(hex: textHex)
+                }
             }
         } catch {
             errorMessage = "Error loading font settings"
@@ -233,7 +262,22 @@ class FontSettingsViewModel {
             errorMessage = "Error saving custom CSS"
         }
     }
-    
+
+    @MainActor
+    func saveColorTheme() async {
+        do {
+            let bgHex = readerColorTheme == .custom ? customBackgroundColor.hexString : nil
+            let textHex = readerColorTheme == .custom ? customTextColor.hexString : nil
+            try await saveSettingsUseCase.execute(
+                readerColorTheme: readerColorTheme,
+                customBackgroundColor: bgHex,
+                customTextColor: textHex
+            )
+        } catch {
+            errorMessage = "Error saving color theme"
+        }
+    }
+
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
