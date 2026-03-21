@@ -35,7 +35,7 @@ struct AppearanceSettingsView: View {
                     HStack {
                         Text("Font")
                         Spacer()
-                        Text("\(fontViewModel.selectedFontFamily.displayName) · \(fontViewModel.selectedFontSize.displayName)")
+                        Text("\(fontViewModel.selectedFontFamily.displayName) · \(Int(fontViewModel.fontSizeNumeric))px")
                             .foregroundColor(.secondary)
                     }
                 }

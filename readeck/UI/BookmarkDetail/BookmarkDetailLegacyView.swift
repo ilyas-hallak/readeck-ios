@@ -52,9 +52,11 @@ struct BookmarkDetailLegacyView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ProgressView(value: readingProgress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .frame(height: 3)
+            if !(viewModel.settings?.hideProgressBar ?? false) {
+                ProgressView(value: readingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(height: 3)
+            }
             GeometryReader { geometry in
                 ScrollView {
                     // Invisible GeometryReader to track scroll offset
@@ -71,9 +73,11 @@ struct BookmarkDetailLegacyView: View {
 
                     VStack(spacing: 0) {
                         ZStack(alignment: .top) {
-                            headerView(width: geometry.size.width)
+                            if !(viewModel.settings?.hideHeroImage ?? false) {
+                                headerView(width: geometry.size.width)
+                            }
                             VStack(alignment: .leading, spacing: 16) {
-                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                            Color.clear.frame(width: geometry.size.width, height: (viewModel.bookmarkDetail.imageUrl.isEmpty || (viewModel.settings?.hideHeroImage ?? false)) ? 84 : headerHeight)
                             titleSection
                             Divider().padding(.horizontal)
                             if showJumpToProgressButton {
@@ -116,7 +120,7 @@ struct BookmarkDetailLegacyView: View {
                                 .frame(height: webViewHeight)
                                 .cornerRadius(14)
                                 .padding(.horizontal, 4)
-                                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
+                                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSizeNumeric ?? 20)-\(settings.horizontalMargin ?? 16)-\(settings.lineHeight ?? 1.8)-\(settings.customCSS?.hashValue ?? 0)")
                             } else if viewModel.isLoadingArticle {
                                 ProgressView("Loading article...")
                                     .frame(maxWidth: .infinity, alignment: .center)
@@ -367,12 +371,21 @@ struct BookmarkDetailLegacyView: View {
     
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(viewModel.bookmarkDetail.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.bottom, 2)
-                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+            HStack(alignment: .top) {
+                Text(viewModel.bookmarkDetail.title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                Spacer()
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    Image(systemName: "safari")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                }
+            }
             metaInfoSection
         }
         .padding(.horizontal)
@@ -391,7 +404,7 @@ struct BookmarkDetailLegacyView: View {
             .cornerRadius(14)
             .padding(.horizontal, 4)
             .animation(.easeInOut, value: webViewHeight)
-            .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
+            .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSizeNumeric ?? 20)-\(settings.horizontalMargin ?? 16)-\(settings.lineHeight ?? 1.8)-\(settings.customCSS?.hashValue ?? 0)")
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -416,11 +429,26 @@ struct BookmarkDetailLegacyView: View {
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
-                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Authors: " : "Author: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                HStack(spacing: 4) {
+                    Image(systemName: "person")
+                        .foregroundColor(.secondary)
+                    Text(viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text("·")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text(formatDate(viewModel.bookmarkDetail.created))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             }
-            metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
-            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
-            
+            if !(viewModel.settings?.hideWordCount ?? false) {
+                metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            }
+
             // Labels section
             if !viewModel.bookmarkDetail.labels.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
@@ -449,16 +477,6 @@ struct BookmarkDetailLegacyView: View {
                         }
                         .padding(.trailing, 8)
                     }
-                }
-            }
-            
-            metaRow(icon: "safari") {
-                Button(action: {
-                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                }) {
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
                 }
             }
             

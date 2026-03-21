@@ -75,6 +75,28 @@ class SettingsRepository: PSettingsRepository {
                         existingSettings.tagSortOrder = tagSortOrder.rawValue
                     }
 
+                    if let fontSizeNumeric = settings.fontSizeNumeric {
+                        existingSettings.fontSizeNumeric = fontSizeNumeric
+                    }
+                    if let horizontalMargin = settings.horizontalMargin {
+                        existingSettings.horizontalMargin = horizontalMargin
+                    }
+                    if let lineHeight = settings.lineHeight {
+                        existingSettings.lineHeight = lineHeight
+                    }
+                    if let hideProgressBar = settings.hideProgressBar {
+                        existingSettings.hideProgressBar = hideProgressBar
+                    }
+                    if let hideWordCount = settings.hideWordCount {
+                        existingSettings.hideWordCount = hideWordCount
+                    }
+                    if let hideHeroImage = settings.hideHeroImage {
+                        existingSettings.hideHeroImage = hideHeroImage
+                    }
+                    if let customCSS = settings.customCSS {
+                        existingSettings.customCSS = customCSS
+                    }
+
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -103,6 +125,17 @@ class SettingsRepository: PSettingsRepository {
                     let token = self.keychainHelper.loadToken()
                     
                     // Load UI preferences from Core Data
+                    // fontSizeNumeric: 0 means not set (use FontSize enum fallback)
+                    let storedFontSizeNumeric = settingEntity?.fontSizeNumeric ?? 0
+                    let fontSizeNumeric: Double? = storedFontSizeNumeric > 0 ? storedFontSizeNumeric : nil
+
+                    // horizontalMargin/lineHeight: 0 means not set (use defaults)
+                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? 0
+                    let horizontalMargin: Double? = storedHorizontalMargin > 0 ? storedHorizontalMargin : nil
+
+                    let storedLineHeight = settingEntity?.lineHeight ?? 0
+                    let lineHeight: Double? = storedLineHeight > 0 ? storedLineHeight : nil
+
                     let settings = Settings(
                         endpoint: endpoint,
                         username: username,
@@ -114,7 +147,14 @@ class SettingsRepository: PSettingsRepository {
                         theme: Theme(rawValue: settingEntity?.theme ?? Theme.system.rawValue),
                         cardLayoutStyle: CardLayoutStyle(rawValue: settingEntity?.cardLayoutStyle ?? CardLayoutStyle.magazine.rawValue),
                         tagSortOrder: TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue),
-                        urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue)
+                        urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
+                        fontSizeNumeric: fontSizeNumeric,
+                        horizontalMargin: horizontalMargin,
+                        lineHeight: lineHeight,
+                        hideProgressBar: settingEntity?.hideProgressBar,
+                        hideWordCount: settingEntity?.hideWordCount,
+                        hideHeroImage: settingEntity?.hideHeroImage,
+                        customCSS: settingEntity?.customCSS
                     )
                     continuation.resume(returning: settings)
                 } catch {

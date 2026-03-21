@@ -22,6 +22,15 @@ struct Settings {
 
     var urlOpener: UrlOpener? = nil
 
+    // Reader styling
+    var fontSizeNumeric: Double? = nil
+    var horizontalMargin: Double? = nil
+    var lineHeight: Double? = nil
+    var hideProgressBar: Bool? = nil
+    var hideWordCount: Bool? = nil
+    var hideHeroImage: Bool? = nil
+    var customCSS: String? = nil
+
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty
     }

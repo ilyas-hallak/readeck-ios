@@ -17,14 +17,27 @@ class FontSettingsViewModel {
     // MARK: - Font Settings
     var selectedFontFamily: FontFamily = .system
     var selectedFontSize: FontSize = .medium
-    
+    var fontSizeNumeric: Double = 20
+
+    // MARK: - Reader Layout
+    var horizontalMargin: Double = 16
+    var lineHeight: Double = 1.8
+
+    // MARK: - Visibility
+    var hideProgressBar: Bool = false
+    var hideWordCount: Bool = false
+    var hideHeroImage: Bool = false
+
+    // MARK: - Custom CSS
+    var customCSS: String = ""
+
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
 
     // MARK: - Computed Font Properties for Preview
     var previewTitleFont: Font {
-        let size = selectedFontSize.size
+        let size = fontSizeNumeric
 
         switch selectedFontFamily {
         // Apple System Fonts
@@ -60,9 +73,9 @@ class FontSettingsViewModel {
             return Font.custom("Helvetica Neue", size: size).weight(.semibold)
         }
     }
-    
+
     var previewBodyFont: Font {
-        let size = selectedFontSize.size
+        let size = fontSizeNumeric
 
         switch selectedFontFamily {
         // Apple System Fonts
@@ -100,7 +113,7 @@ class FontSettingsViewModel {
     }
 
     var previewCaptionFont: Font {
-        let captionSize = selectedFontSize.size * 0.85
+        let captionSize = fontSizeNumeric * 0.85
 
         switch selectedFontFamily {
         // Apple System Fonts
@@ -148,22 +161,69 @@ class FontSettingsViewModel {
             if let settings = try await loadSettingsUseCase.execute() {
                 selectedFontFamily = settings.fontFamily ?? .system
                 selectedFontSize = settings.fontSize ?? .medium
+
+                // Migration: if fontSizeNumeric not set, derive from enum
+                if let numeric = settings.fontSizeNumeric {
+                    fontSizeNumeric = numeric
+                } else {
+                    fontSizeNumeric = (settings.fontSize ?? .extraLarge).size
+                }
+
+                horizontalMargin = settings.horizontalMargin ?? 16
+                lineHeight = settings.lineHeight ?? 1.8
+                hideProgressBar = settings.hideProgressBar ?? false
+                hideWordCount = settings.hideWordCount ?? false
+                hideHeroImage = settings.hideHeroImage ?? false
+                customCSS = settings.customCSS ?? ""
             }
         } catch {
             errorMessage = "Error loading font settings"
         }
     }
-    
+
     @MainActor
     func saveFontSettings() async {
         do {
             try await saveSettingsUseCase.execute(
-                selectedFontFamily: selectedFontFamily, 
-                selectedFontSize: selectedFontSize
+                selectedFontFamily: selectedFontFamily,
+                fontSizeNumeric: fontSizeNumeric
             )
-            successMessage = "Font settings saved"
         } catch {
             errorMessage = "Error saving font settings"
+        }
+    }
+
+    @MainActor
+    func saveReaderLayout() async {
+        do {
+            try await saveSettingsUseCase.execute(
+                readerLayout: horizontalMargin,
+                lineHeight: lineHeight
+            )
+        } catch {
+            errorMessage = "Error saving reader layout"
+        }
+    }
+
+    @MainActor
+    func saveVisibilitySettings() async {
+        do {
+            try await saveSettingsUseCase.execute(
+                readerVisibility: hideProgressBar,
+                hideWordCount: hideWordCount,
+                hideHeroImage: hideHeroImage
+            )
+        } catch {
+            errorMessage = "Error saving visibility settings"
+        }
+    }
+
+    @MainActor
+    func saveCustomCSS() async {
+        do {
+            try await saveSettingsUseCase.execute(customCSS: customCSS)
+        } catch {
+            errorMessage = "Error saving custom CSS"
         }
     }
     

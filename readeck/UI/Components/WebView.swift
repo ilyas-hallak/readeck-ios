@@ -49,7 +49,9 @@ struct WebView: UIViewRepresentable {
         context.coordinator.onScrollToPosition = onScrollToPosition
 
         let isDarkMode = colorScheme == .dark
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let horizontalMargin = Int(settings.horizontalMargin ?? 16)
+        let lineHeightValue = settings.lineHeight ?? 1.8
         let selectedFontFamily = settings.fontFamily ?? .serif
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
@@ -100,9 +102,9 @@ struct WebView: UIViewRepresentable {
                 
                 body {
                     font-family: var(--font-family);
-                    line-height: 1.8;
+                    line-height: \(lineHeightValue);
                     margin: 0;
-                    padding: 16px 16px 100px;
+                    padding: 16px \(horizontalMargin)px 100px;
                     background-color: var(--background-color);
                     color: var(--text-color);
                     font-size: var(--base-font-size);
@@ -299,6 +301,8 @@ struct WebView: UIViewRepresentable {
                     background-color: \(AnnotationColor.red.cssColorWithOpacity(0.5));
                     box-shadow: 0 0 0 2px \(AnnotationColor.red.cssColorWithOpacity(0.6));
                 }
+                /* Custom user CSS */
+                \(settings.customCSS ?? "")
             </style>
         </head>
         <body>

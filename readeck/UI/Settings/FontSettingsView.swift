@@ -32,19 +32,73 @@ struct FontSettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Picker("Font size", selection: $viewModel.selectedFontSize) {
-                    ForEach(FontSize.allCases, id: \.self) { size in
-                        Text(size.displayName).tag(size)
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Font size")
+                        Spacer()
+                        Text("\(Int(viewModel.fontSizeNumeric))px")
+                            .foregroundColor(.secondary)
                     }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: viewModel.selectedFontSize) {
-                    Task {
-                        await viewModel.saveFontSettings()
-                    }
+                    Slider(value: $viewModel.fontSizeNumeric, in: 10...30, step: 1)
+                        .onChange(of: viewModel.fontSizeNumeric) {
+                            Task {
+                                await viewModel.saveFontSettings()
+                            }
+                        }
                 }
             } header: {
                 Text("Font Settings")
+            }
+
+            Section {
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Horizontal margin")
+                        Spacer()
+                        Text("\(Int(viewModel.horizontalMargin))px")
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $viewModel.horizontalMargin, in: 0...40, step: 1)
+                        .onChange(of: viewModel.horizontalMargin) {
+                            Task {
+                                await viewModel.saveReaderLayout()
+                            }
+                        }
+                }
+
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Line height")
+                        Spacer()
+                        Text(String(format: "%.1f", viewModel.lineHeight))
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $viewModel.lineHeight, in: 1.0...2.5, step: 0.1)
+                        .onChange(of: viewModel.lineHeight) {
+                            Task {
+                                await viewModel.saveReaderLayout()
+                            }
+                        }
+                }
+            } header: {
+                Text("Reader Layout")
+            }
+
+            Section {
+                Toggle("Hide progress bar", isOn: $viewModel.hideProgressBar)
+                    .onChange(of: viewModel.hideProgressBar) {
+                        Task { await viewModel.saveVisibilitySettings() }
+                    }
+                Toggle("Hide word count & reading time", isOn: $viewModel.hideWordCount)
+                    .onChange(of: viewModel.hideWordCount) {
+                        Task { await viewModel.saveVisibilitySettings() }
+                    }
+                Toggle("Hide hero image", isOn: $viewModel.hideHeroImage)
+                    .onChange(of: viewModel.hideHeroImage) {
+                        Task { await viewModel.saveVisibilitySettings() }
+                    }
+            } header: {
+                Text("Visibility")
             }
 
             Section {
@@ -65,6 +119,20 @@ struct FontSettingsView: View {
                 .padding(.vertical, 4)
             } header: {
                 Text("Preview")
+            }
+
+            Section {
+                TextEditor(text: $viewModel.customCSS)
+                    .font(.system(.caption, design: .monospaced))
+                    .frame(minHeight: 100)
+                    .onChange(of: viewModel.customCSS) {
+                        Task { await viewModel.saveCustomCSS() }
+                    }
+                Text("Custom CSS rules appended after all default styles. Use at your own risk.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } header: {
+                Text("Custom CSS")
             }
         }
         .task {

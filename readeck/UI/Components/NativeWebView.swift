@@ -175,11 +175,12 @@ struct NativeWebView: View {
     
     private func updateContentHeightFallback() {
         // Simplified fallback calculation
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let lineHeightValue = settings.lineHeight ?? 1.8
         let plainText = htmlContent.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         let characterCount = plainText.count
         let estimatedLines = max(1, characterCount / 80)
-        let textHeight = CGFloat(estimatedLines) * CGFloat(fontSize) * 1.8
+        let textHeight = CGFloat(estimatedLines) * CGFloat(fontSize) * lineHeightValue
         let finalHeight = max(400, min(textHeight + 100, 3000))
         
         print("🟡 NativeWebView - Using fallback height: \(finalHeight)px")
@@ -190,7 +191,9 @@ struct NativeWebView: View {
     
     private func loadStyledContent() {
         let isDarkMode = colorScheme == .dark
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let horizontalMargin = Int(settings.horizontalMargin ?? 16)
+        let lineHeightValue = settings.lineHeight ?? 1.8
         let selectedFontFamily = settings.fontFamily ?? .serif
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
@@ -219,9 +222,9 @@ struct NativeWebView: View {
 
                 body {
                     font-family: \(fontCSS.fontStackCSS);
-                    line-height: 1.8;
+                    line-height: \(lineHeightValue);
                     margin: 0;
-                    padding: 16px 16px 100px;
+                    padding: 16px \(horizontalMargin)px 100px;
                     background-color: \(isDarkMode ? "#000000" : "#ffffff");
                     color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
                     font-size: \(fontSize)px;
@@ -349,6 +352,8 @@ struct NativeWebView: View {
                     background-color: \(AnnotationColor.red.cssColorWithOpacity(0.5));
                     box-shadow: 0 0 0 2px \(AnnotationColor.red.cssColorWithOpacity(0.6));
                 }
+                /* Custom user CSS */
+                \(settings.customCSS ?? "")
             </style>
         </head>
         <body>
