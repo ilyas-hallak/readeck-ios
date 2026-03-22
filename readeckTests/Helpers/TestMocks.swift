@@ -87,6 +87,14 @@ class TestMockAPI: PAPI {
     func deleteAnnotation(bookmarkId: String, annotationId: String) async throws {
         fatalError("Not implemented for tests")
     }
+
+    func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto {
+        fatalError("Not implemented for tests")
+    }
+
+    func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto {
+        fatalError("Not implemented for tests")
+    }
 }
 
 // MARK: - Mock Token Provider
@@ -97,7 +105,12 @@ class TestMockTokenProvider: TokenProvider {
     func clearToken() async {}
     func getEndpoint() async -> String? { return "https://mock.example.com" }
     func setEndpoint(_ endpoint: String) async {}
-    func clearEndpoint() async {}
+    func getOAuthToken() async -> OAuthToken? { return nil }
+    func setOAuthToken(_ token: OAuthToken) async {}
+    func getAuthMethod() async -> AuthenticationMethod? { return .apiToken }
+    func setAuthMethod(_ method: AuthenticationMethod) async {}
+    func setOAuthClientId(_ clientId: String) async {}
+    func getOAuthClientId() async -> String? { return nil }
 }
 
 // MARK: - Test CoreData Manager
