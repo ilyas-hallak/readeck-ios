@@ -10,6 +10,7 @@ class BookmarkDetailViewModel {
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
+    private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
 
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -34,6 +35,7 @@ class BookmarkDetailViewModel {
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
+        self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
         self.factory = factory
 
         readProgressSubject
@@ -226,5 +228,20 @@ class BookmarkDetailViewModel {
                 errorMessage = NSLocalizedString("Error creating highlight", comment: "Generic annotation error")
             }
         }
+    }
+
+    @MainActor
+    func shareText(for bookmarkId: String) async -> String {
+        var annotations: [Annotation] = []
+        do {
+            annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: bookmarkId)
+        } catch {
+            // Silent fail — annotations are supplementary
+        }
+        var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
+        for annotation in annotations {
+            text += "\n\n> \(annotation.text)"
+        }
+        return text
     }
 }
