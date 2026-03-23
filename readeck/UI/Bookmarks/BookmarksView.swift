@@ -303,6 +303,17 @@ struct BookmarksView: View {
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
+                .contextMenu {
+                    if bookmark.readProgress > 0 {
+                        Button(role: .destructive) {
+                            Task {
+                                await viewModel.resetReadProgress(bookmark: bookmark)
+                            }
+                        } label: {
+                            Label("Reset progress", systemImage: "arrow.counterclockwise")
+                        }
+                    }
+                }
                 .listRowInsets(EdgeInsets(
                     top: viewModel.cardLayoutStyle == .compact ? 8 : 12,
                     leading: 16,

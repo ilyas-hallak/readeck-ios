@@ -100,6 +100,36 @@ struct AppearanceSettingsView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
                 }
+
+                // Bookmark Sort Order
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Bookmark sort by", selection: $generalViewModel.bookmarkSortField) {
+                        ForEach(BookmarkSortField.allCases, id: \.self) { field in
+                            Text(field.displayName).tag(field)
+                        }
+                    }
+                    .onChange(of: generalViewModel.bookmarkSortField) {
+                        Task {
+                            await generalViewModel.saveBookmarkSortSettings()
+                        }
+                    }
+
+                    Picker("Sort direction", selection: $generalViewModel.bookmarkSortDirection) {
+                        ForEach(BookmarkSortDirection.allCases, id: \.self) { direction in
+                            Text(direction.displayName).tag(direction)
+                        }
+                    }
+                    .onChange(of: generalViewModel.bookmarkSortDirection) {
+                        Task {
+                            await generalViewModel.saveBookmarkSortSettings()
+                        }
+                    }
+
+                    Text("Affects how bookmarks are ordered in your lists.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
             } header: {
                 Text("Appearance")
             }
