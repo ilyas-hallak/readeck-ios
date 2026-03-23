@@ -48,7 +48,7 @@ class TestMockAPI: PAPI {
         fatalError("Not implemented for tests")
     }
 
-    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPageDto {
+    func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPageDto {
         fatalError("Not implemented for tests")
     }
 
@@ -105,6 +105,8 @@ class TestMockTokenProvider: TokenProvider {
     func clearToken() async {}
     func getEndpoint() async -> String? { return "https://mock.example.com" }
     func setEndpoint(_ endpoint: String) async {}
+    func clearEndpoint() async {}
+
     func getOAuthToken() async -> OAuthToken? { return nil }
     func setOAuthToken(_ token: OAuthToken) async {}
     func getAuthMethod() async -> AuthenticationMethod? { return .apiToken }

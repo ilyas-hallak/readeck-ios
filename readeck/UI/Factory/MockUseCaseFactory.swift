@@ -200,7 +200,7 @@ class MockReadBookmarkUseCase: PReadBookmarkUseCase {
 }
 
 class MockGetBookmarksUseCase: PGetBookmarksUseCase {
-    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage {
+    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage {
         BookmarksPage(bookmarks: [
             Bookmark.mock
         ], currentPage: 1, totalCount: 0, totalPages: 1, links: nil)
@@ -232,6 +232,7 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(enableTTS: Bool) async throws {}
     func execute(theme: Theme) async throws {}
     func execute(urlOpener: UrlOpener) async throws {}
+    func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
 }
 
 class MockGetBookmarkUseCase: PGetBookmarkUseCase {

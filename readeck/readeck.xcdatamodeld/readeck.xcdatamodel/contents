@@ -57,6 +57,8 @@
         <attribute name="src" optional="YES" attributeType="String"/>
     </entity>
     <entity name="SettingEntity" representedClassName="SettingEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="bookmarkSortDirection" optional="YES" attributeType="String"/>
+        <attribute name="bookmarkSortField" optional="YES" attributeType="String"/>
         <attribute name="cardLayoutStyle" optional="YES" attributeType="String"/>
         <attribute name="customBackgroundColor" optional="YES" attributeType="String"/>
         <attribute name="customCSS" optional="YES" attributeType="String"/>

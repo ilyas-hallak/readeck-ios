@@ -7,8 +7,8 @@ class BookmarksRepository: PBookmarksRepository {
         self.api = api
     }
 
-    func fetchBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPage {
-        let bookmarkDtos = try await api.getBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag)
+    func fetchBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil, sort: String? = nil) async throws -> BookmarksPage {
+        let bookmarkDtos = try await api.getBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag, sort: sort)
         return bookmarkDtos.toDomain()
     }
 

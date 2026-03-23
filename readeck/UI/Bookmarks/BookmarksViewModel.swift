@@ -9,8 +9,8 @@ class BookmarksViewModel {
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
-    weak var appSettings: AppSettings?
-
+    private let logger = Logger.viewModel
+    
     var bookmarks: BookmarksPage?
     var isLoading = false
     var isInitialLoading = true
@@ -21,6 +21,8 @@ class BookmarksViewModel {
     var currentTag: String? = nil
     var cardLayoutStyle: CardLayoutStyle = .magazine
 
+    weak var appSettings: AppSettings?
+    
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -66,6 +68,16 @@ class BookmarksViewModel {
                     Task { @MainActor in
                         self.cardLayoutStyle = layout
                     }
+                }
+            }
+            .store(in: &cancellables)
+
+        // Listen for settings changed (including sort order)
+        NotificationCenter.default
+            .publisher(for: .settingsChanged)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.refreshBookmarks()
                 }
             }
             .store(in: &cancellables)
@@ -139,34 +151,23 @@ class BookmarksViewModel {
 
         Logger.viewModel.info("🌐 Device appears online - making API request")
         do {
+            let sortToken = buildSortToken()
+            logger.debug("Loading bookmarks - state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"), search: \(searchQuery.isEmpty ? "none" : searchQuery)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
                 limit: limit,
                 offset: offset,
                 search: searchQuery,
                 type: type,
-                tag: tag
+                tag: tag,
+                sort: sortToken
             )
             bookmarks = newBookmarks
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages // check if more data is available
             isNetworkError = false
+            logger.info("Successfully loaded \(newBookmarks.bookmarks.count) bookmarks")
         } catch {
-            // Check if it's a network error
-            if let urlError = error as? URLError {
-                switch urlError.code {
-                case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
-                    isNetworkError = true
-                    errorMessage = "No internet connection"
-                    // Try to load cached bookmarks
-                    await loadCachedBookmarks()
-                default:
-                    isNetworkError = false
-                    errorMessage = "Error loading bookmarks"
-                }
-            } else {
-                isNetworkError = false
-                errorMessage = "Error loading bookmarks"
-            }
+            handleError(error, context: "load bookmarks (state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"))")
             // Don't clear bookmarks on error - keep existing data visible
         }
 
@@ -227,30 +228,21 @@ class BookmarksViewModel {
 
         do {
             offset += limit // inc. offset
+            let sortToken = buildSortToken()
+            logger.debug("Loading more bookmarks - offset: \(offset), limit: \(limit)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: currentState,
                 limit: limit,
                 offset: offset,
                 search: nil,
                 type: currentType,
-                tag: currentTag)
+                tag: currentTag,
+                sort: sortToken)
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
+            logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
         } catch {
-            // Check if it's a network error
-            if let urlError = error as? URLError {
-                switch urlError.code {
-                case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
-                    isNetworkError = true
-                    errorMessage = "No internet connection"
-                default:
-                    isNetworkError = false
-                    errorMessage = "Error loading more bookmarks"
-                }
-            } else {
-                isNetworkError = false
-                errorMessage = "Error loading more bookmarks"
-            }
+            handleError(error, context: "load more bookmarks (offset: \(offset), limit: \(limit))")
         }
 
         isLoading = false
@@ -266,6 +258,18 @@ class BookmarksViewModel {
         errorMessage = nil
         isNetworkError = false
         await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
+    }
+
+    private func buildSortToken() -> String? {
+        guard let appSettings = appSettings else { return nil }
+        // Search usually has its own relevance sorting
+        if !searchQuery.isEmpty {
+            return nil
+        }
+        
+        let field = appSettings.bookmarkSortField.rawValue
+        let direction = appSettings.bookmarkSortDirection == .descending ? "-" : ""
+        return "\(direction)\(field)"
     }
     
     @MainActor
@@ -295,6 +299,22 @@ class BookmarksViewModel {
             
         } catch {
             errorMessage = "Error marking bookmark"
+        }
+    }
+    
+    @MainActor
+    func resetReadProgress(bookmark: Bookmark) async {
+        do {
+            try await updateBookmarkUseCase.updateReadProgress(
+                bookmarkId: bookmark.id,
+                progress: 0,
+                anchor: nil
+            )
+            
+            await loadBookmarks(state: currentState)
+            
+        } catch {
+            errorMessage = "Error resetting reading progress"
         }
     }
     
@@ -379,10 +399,65 @@ class BookmarksViewModel {
             }
         }
     }
-    
-    @MainActor
+
     private func loadCardLayout() async {
         cardLayoutStyle = await loadCardLayoutUseCase.execute()
+    }
+    
+    // MARK: - Error Handling Helpers
+    
+    private func formatServerErrorMessage(statusCode: Int) -> String {
+        switch statusCode {
+        case 401:
+            return "Session expired. Please log in again."
+        case 403:
+            return "Access denied. Please check your permissions."
+        case 404:
+            return "Bookmarks endpoint not found."
+        case 500...599:
+            return "Server error (code: \(statusCode)). Please try again later."
+        default:
+            return "Server error (code: \(statusCode)). Please try again."
+        }
+    }
+    
+    private func handleError(_ error: Error, context: String) {
+        logger.error("Failed to \(context): \(error.localizedDescription)")
+        
+        // Handle APIError cases
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .invalidURL:
+                errorMessage = "Invalid server URL. Please check your settings."
+                logger.error("Invalid URL error - endpoint may be missing or malformed")
+            case .invalidResponse:
+                errorMessage = "Server returned invalid data. Please try again."
+                logger.error("Invalid response error - server data may be corrupted")
+            case .serverError(let statusCode):
+                errorMessage = formatServerErrorMessage(statusCode: statusCode)
+                logger.error("Server error with status code: \(statusCode)")
+            case .serverErrorWithMessage(statusCode: let statusCode, message: let message):
+                logger.error("Server error with status code: \(statusCode), and message: \(message)")
+            }
+            isNetworkError = false
+        } else if let urlError = error as? URLError {
+            // Handle network-level errors
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost:
+                isNetworkError = true
+                errorMessage = "No internet connection"
+                logger.error("Network connection error: \(urlError.localizedDescription)")
+            default:
+                isNetworkError = false
+                errorMessage = "Network error: \(urlError.localizedDescription)"
+                logger.error("URLError: \(urlError.localizedDescription)")
+            }
+        } else {
+            // Fallback for unknown errors
+            isNetworkError = false
+            errorMessage = "Error loading bookmarks: \(error.localizedDescription)"
+            logger.error("Unknown error type: \(type(of: error)) - \(error.localizedDescription)")
+        }
     }
 }
 

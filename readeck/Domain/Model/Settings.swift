@@ -19,6 +19,8 @@ struct Settings {
     var theme: Theme? = nil
     var cardLayoutStyle: CardLayoutStyle? = nil
     var tagSortOrder: TagSortOrder? = nil
+    var bookmarkSortField: BookmarkSortField? = nil
+    var bookmarkSortDirection: BookmarkSortDirection? = nil
 
     var urlOpener: UrlOpener? = nil
 

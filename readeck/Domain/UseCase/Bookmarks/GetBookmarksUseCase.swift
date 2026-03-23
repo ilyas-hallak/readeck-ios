@@ -1,7 +1,7 @@
 import Foundation
 
 protocol PGetBookmarksUseCase {
-    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage
+    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage
 }
 
 class GetBookmarksUseCase: PGetBookmarksUseCase {
@@ -11,8 +11,8 @@ class GetBookmarksUseCase: PGetBookmarksUseCase {
         self.repository = repository
     }
     
-    func execute(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil) async throws -> BookmarksPage {
-        var allBookmarks = try await repository.fetchBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag)
+    func execute(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil, sort: String? = nil) async throws -> BookmarksPage {
+        var allBookmarks = try await repository.fetchBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag, sort: sort)
         
         if let state = state {
             allBookmarks.bookmarks = allBookmarks.bookmarks.filter { bookmark in

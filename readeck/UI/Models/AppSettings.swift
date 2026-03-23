@@ -36,6 +36,14 @@ class AppSettings: ObservableObject {
         settings?.tagSortOrder ?? .byCount
     }
 
+    var bookmarkSortField: BookmarkSortField {
+        settings?.bookmarkSortField ?? .created
+    }
+
+    var bookmarkSortDirection: BookmarkSortDirection {
+        settings?.bookmarkSortDirection ?? .descending
+    }
+
     init(settings: Settings? = nil) {
         self.settings = settings
     }
