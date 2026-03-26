@@ -240,7 +240,7 @@ class BookmarkDetailViewModel {
         }
         var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
         for annotation in annotations {
-            text += "\n\n> \(annotation.text)"
+            text += "\n\n  - \(annotation.text)"
         }
         return text
     }
