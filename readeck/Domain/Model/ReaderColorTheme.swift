@@ -11,8 +11,8 @@ enum ReaderColorTheme: String, CaseIterable {
     case nightBlue = "nightBlue"
     case mint = "mint"
     case solarizedLight = "solarizedLight"
-    case solarizedDark = "solarizedDark"
-    case gray = "gray"
+    case darkGray = "darkGray"
+    case mocha = "mocha"
     case custom = "custom"
 
     var displayName: String {
@@ -22,8 +22,8 @@ enum ReaderColorTheme: String, CaseIterable {
         case .nightBlue: return "Night Blue"
         case .mint: return "Mint"
         case .solarizedLight: return "Solarized Light"
-        case .solarizedDark: return "Solarized Dark"
-        case .gray: return "Gray"
+        case .darkGray: return "Dark Gray"
+        case .mocha: return "Mocha"
         case .custom: return "Custom"
         }
     }
@@ -35,8 +35,8 @@ enum ReaderColorTheme: String, CaseIterable {
         case .nightBlue: return Color(hex: "1B2838")
         case .mint: return Color(hex: "E8F5E9")
         case .solarizedLight: return Color(hex: "FDF6E3")
-        case .solarizedDark: return Color(hex: "002B36")
-        case .gray: return Color(hex: "2C2C2E")
+        case .darkGray: return Color(hex: "1C1C1E")
+        case .mocha: return Color(hex: "3B2F2F")
         case .custom: return nil
         }
     }
@@ -48,8 +48,8 @@ enum ReaderColorTheme: String, CaseIterable {
         case .nightBlue: return Color(hex: "C8D6E5")
         case .mint: return Color(hex: "2E4D3A")
         case .solarizedLight: return Color(hex: "657B83")
-        case .solarizedDark: return Color(hex: "839496")
-        case .gray: return Color(hex: "E5E5EA")
+        case .darkGray: return Color(hex: "E5E5EA")
+        case .mocha: return Color(hex: "D7CCC8")
         case .custom: return nil
         }
     }
@@ -61,8 +61,8 @@ enum ReaderColorTheme: String, CaseIterable {
         case .nightBlue: return "#1B2838"
         case .mint: return "#E8F5E9"
         case .solarizedLight: return "#FDF6E3"
-        case .solarizedDark: return "#002B36"
-        case .gray: return "#2C2C2E"
+        case .darkGray: return "#1C1C1E"
+        case .mocha: return "#3B2F2F"
         case .custom: return nil
         }
     }
@@ -74,15 +74,15 @@ enum ReaderColorTheme: String, CaseIterable {
         case .nightBlue: return "#C8D6E5"
         case .mint: return "#2E4D3A"
         case .solarizedLight: return "#657B83"
-        case .solarizedDark: return "#839496"
-        case .gray: return "#E5E5EA"
+        case .darkGray: return "#E5E5EA"
+        case .mocha: return "#D7CCC8"
         case .custom: return nil
         }
     }
 
     var isDark: Bool {
         switch self {
-        case .nightBlue, .solarizedDark, .gray: return true
+        case .nightBlue, .darkGray, .mocha: return true
         default: return false
         }
     }

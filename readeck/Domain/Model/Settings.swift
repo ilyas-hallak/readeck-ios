@@ -41,7 +41,7 @@ struct Settings {
             fontFamily?.rawValue ?? "system",
             "\(fontSizeNumeric ?? 20)",
             "\(horizontalMargin ?? 16)",
-            "\(lineHeight ?? 1.8)",
+            "\(lineHeight ?? 1.4)",
             "\(customCSS?.hashValue ?? 0)",
             readerColorTheme?.rawValue ?? "system",
             customBackgroundColor ?? "",

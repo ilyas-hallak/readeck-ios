@@ -146,7 +146,7 @@ struct NativeWebView: View {
 
                     // Update height if it's significantly different (> 5px like WebView)
                     if lastHeight == 0 || abs(cgHeight - lastHeight) > 5 {
-                        print("🟢 NativeWebView - JavaScript height updated: \(height)px on attempt \(attempt)")
+                        Logger.ui.debug("NativeWebView - JavaScript height updated: \(height)px on attempt \(attempt)")
                         DispatchQueue.main.async {
                             self.onHeightChange(cgHeight)
                         }
@@ -155,35 +155,35 @@ struct NativeWebView: View {
 
                     // If height seems stable (no change in last 2 attempts), we can exit early
                     if attempt >= 2 && lastHeight > 0 {
-                        print("🟢 NativeWebView - Height stabilized at \(lastHeight)px after \(attempt) attempts")
+                        Logger.ui.debug("NativeWebView - Height stabilized at \(lastHeight)px after \(attempt) attempts")
                         return
                     }
                 }
             } catch {
-                print("🟡 NativeWebView - JavaScript attempt \(attempt) failed: \(error)")
+                Logger.ui.warning("NativeWebView - JavaScript attempt \(attempt) failed: \(error)")
             }
         }
 
         // If no valid height was found, use fallback
         if lastHeight == 0 {
-            print("🔴 NativeWebView - No valid JavaScript height found, using fallback")
+            Logger.ui.error("NativeWebView - No valid JavaScript height found, using fallback")
             updateContentHeightFallback()
         } else {
-            print("🟢 NativeWebView - Final height: \(lastHeight)px")
+            Logger.ui.debug("NativeWebView - Final height: \(lastHeight)px")
         }
     }
     
     private func updateContentHeightFallback() {
         // Simplified fallback calculation
         let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
-        let lineHeightValue = settings.lineHeight ?? 1.8
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let plainText = htmlContent.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         let characterCount = plainText.count
         let estimatedLines = max(1, characterCount / 80)
         let textHeight = CGFloat(estimatedLines) * CGFloat(fontSize) * lineHeightValue
         let finalHeight = max(400, min(textHeight + 100, 3000))
         
-        print("🟡 NativeWebView - Using fallback height: \(finalHeight)px")
+        Logger.ui.warning("NativeWebView - Using fallback height: \(finalHeight)px")
         DispatchQueue.main.async {
             self.onHeightChange(finalHeight)
         }
@@ -193,23 +193,31 @@ struct NativeWebView: View {
         let isDarkMode = colorScheme == .dark
         let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
         let horizontalMargin = Int(settings.horizontalMargin ?? 16)
-        let lineHeightValue = settings.lineHeight ?? 1.8
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
 
         // Resolve color theme
         let colorTheme = settings.readerColorTheme ?? .system
         let resolvedBgColor: String
         let resolvedTextColor: String
+        let resolvedHeadingColor: String
+        let themeIsDark: Bool
         switch colorTheme {
         case .system:
             resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
             resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
+            resolvedHeadingColor = isDarkMode ? "#ffffff" : "#000000"
+            themeIsDark = isDarkMode
         case .custom:
             resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
             resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = isDarkMode
         default:
             resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
             resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = colorTheme.isDark
         }
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
@@ -258,7 +266,7 @@ struct NativeWebView: View {
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
-                    color: \(isDarkMode ? "#ffffff" : "#000000");
+                    color: \(resolvedHeadingColor);
                     margin-top: 24px;
                     margin-bottom: 12px;
                     font-weight: 600;
@@ -276,32 +284,32 @@ struct NativeWebView: View {
                     border-radius: 8px;
                     margin: 16px 0;
                 }
-                a { color: \(isDarkMode ? "#0A84FF" : "#007AFF"); text-decoration: none; }
+                a { color: \(themeIsDark ? "#0A84FF" : "#007AFF"); text-decoration: none; }
                 a:hover { text-decoration: underline; }
-                
-                blockquote { 
-                    border-left: 4px solid \(isDarkMode ? "#0A84FF" : "#007AFF"); 
-                    margin: 16px 0; 
-                    padding: 12px 16px; 
-                    font-style: italic; 
-                    background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)"); 
-                    border-radius: 4px; 
+
+                blockquote {
+                    border-left: 4px solid \(themeIsDark ? "#0A84FF" : "#007AFF");
+                    margin: 16px 0;
+                    padding: 12px 16px;
+                    font-style: italic;
+                    background-color: \(themeIsDark ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)");
+                    border-radius: 4px;
                 }
 
                 code, pre, kbd, samp {
                     font-family: \(codeFontFamily) !important;
                 }
                 
-                code { 
-                    background-color: \(isDarkMode ? "#1C1C1E" : "#f5f5f5"); 
-                    color: \(isDarkMode ? "#ffffff" : "#000000"); 
-                    padding: 2px 6px; 
-                    border-radius: 4px; 
+                code {
+                    background-color: \(themeIsDark ? "#1C1C1E" : "#f5f5f5");
+                    color: \(themeIsDark ? "#ffffff" : "#000000");
+                    padding: 2px 6px;
+                    border-radius: 4px;
                 }
-                
+
                 pre {
-                    background-color: \(isDarkMode ? "#1C1C1E" : "#f5f5f5");
-                    color: \(isDarkMode ? "#ffffff" : "#000000");
+                    background-color: \(themeIsDark ? "#1C1C1E" : "#f5f5f5");
+                    color: \(themeIsDark ? "#ffffff" : "#000000");
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
@@ -441,6 +449,7 @@ struct NativeWebView: View {
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
+        case .custom: return 20
         }
     }
 

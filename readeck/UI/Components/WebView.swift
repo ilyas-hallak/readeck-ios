@@ -51,7 +51,7 @@ struct WebView: UIViewRepresentable {
         let isDarkMode = colorScheme == .dark
         let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
         let horizontalMargin = Int(settings.horizontalMargin ?? 16)
-        let lineHeightValue = settings.lineHeight ?? 1.8
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
 
         // Resolve color theme
@@ -250,7 +250,8 @@ struct WebView: UIViewRepresentable {
                     margin-bottom: 4px;
                 }
                 
-                /* Dark mode media query als Fallback */
+                /* Media query fallbacks only for system theme */
+                \(colorTheme == .system ? """
                 @media (prefers-color-scheme: dark) {
                     :root {
                         --background-color: #000000;
@@ -264,8 +265,6 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #38383A;
                     }
                 }
-                
-                /* Light mode media query als Fallback */
                 @media (prefers-color-scheme: light) {
                     :root {
                         --background-color: #ffffff;
@@ -279,6 +278,7 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #e0e0e0;
                     }
                 }
+                """ : "")
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
@@ -390,6 +390,7 @@ struct WebView: UIViewRepresentable {
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
+        case .custom: return 20
         }
     }
 

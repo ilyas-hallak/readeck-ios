@@ -12,6 +12,7 @@ protocol PLogoutUseCase {
 }
 
 class LogoutUseCase: PLogoutUseCase {
+    private let logger = Logger.auth
     private let settingsRepository: PSettingsRepository
     private let tokenManager: TokenManager
 
@@ -41,6 +42,6 @@ class LogoutUseCase: PLogoutUseCase {
         // Note: We keep the endpoint for potential re-login
         // but clear the authentication data
         
-        print("LogoutUseCase: User logged out successfully")
+        logger.info("User logged out successfully")
     }
 } 

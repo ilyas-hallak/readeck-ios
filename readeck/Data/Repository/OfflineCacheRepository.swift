@@ -363,7 +363,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
                             continuation.resume(returning: nil)
                         }
                     case .failure(let error):
-                        print("❌ Kingfisher cache retrieval error: \(error)")
+                        self.logger.error("Kingfisher cache retrieval error: \(error)")
                         continuation.resume(returning: nil)
                     }
                 }

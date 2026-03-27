@@ -4,6 +4,7 @@ import AVFoundation
 import Combine
 
 class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    private let logger = Logger.general
     static let shared = TTSManager()
     private let synthesizer = AVSpeechSynthesizer()
     private let voiceManager = VoiceManager.shared
@@ -43,7 +44,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
                 object: nil
             )
         } catch {
-            print("Fehler beim Konfigurieren der Audio-Session: \(error)")
+            logger.error("Failed to configure audio session: \(error.localizedDescription)")
         }
     }
     
@@ -161,7 +162,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         do {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Fehler beim Aktivieren der Audio-Session im Hintergrund: \(error)")
+            logger.error("Failed to activate audio session in background: \(error.localizedDescription)")
         }
     }
     
@@ -169,7 +170,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         do {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Fehler beim Aktivieren der Audio-Session im Vordergrund: \(error)")
+            logger.error("Failed to activate audio session in foreground: \(error.localizedDescription)")
         }
     }
     
