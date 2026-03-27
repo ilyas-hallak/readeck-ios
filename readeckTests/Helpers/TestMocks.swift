@@ -109,7 +109,7 @@ class TestMockTokenProvider: TokenProvider {
 
     func getOAuthToken() async -> OAuthToken? { return nil }
     func setOAuthToken(_ token: OAuthToken) async {}
-    func getAuthMethod() async -> AuthenticationMethod? { return nil }
+    func getAuthMethod() async -> AuthenticationMethod? { return .apiToken }
     func setAuthMethod(_ method: AuthenticationMethod) async {}
     func setOAuthClientId(_ clientId: String) async {}
     func getOAuthClientId() async -> String? { return nil }
