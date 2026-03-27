@@ -285,7 +285,7 @@ struct SettingsRowLabel: View {
             subtitle: "Remove all cached images",
             destructive: true
         ) {
-            print("Clear cache tapped")
+            Logger.ui.debug("Clear cache tapped")
         }
     }
     .listStyle(.insetGrouped)

@@ -49,8 +49,34 @@ struct WebView: UIViewRepresentable {
         context.coordinator.onScrollToPosition = onScrollToPosition
 
         let isDarkMode = colorScheme == .dark
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let horizontalMargin = Int(settings.horizontalMargin ?? 16)
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
+
+        // Resolve color theme
+        let colorTheme = settings.readerColorTheme ?? .system
+        let resolvedBgColor: String
+        let resolvedTextColor: String
+        let resolvedHeadingColor: String
+        let themeIsDark: Bool
+        switch colorTheme {
+        case .system:
+            resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
+            resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
+            resolvedHeadingColor = isDarkMode ? "#ffffff" : "#000000"
+            themeIsDark = isDarkMode
+        case .custom:
+            resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = isDarkMode
+        default:
+            resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = colorTheme.isDark
+        }
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
             ? "var(--font-family)"
@@ -83,15 +109,15 @@ struct WebView: UIViewRepresentable {
                 \(fontCSS.fontFaceCSS)
 
                 :root {
-                    --background-color: \(isDarkMode ? "#000000" : "#ffffff");
-                    --text-color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
-                    --heading-color: \(isDarkMode ? "#ffffff" : "#000000");
-                    --link-color: \(isDarkMode ? "#0A84FF" : "#007AFF");
-                    --quote-color: \(isDarkMode ? "#8E8E93" : "#666666");
-                    --quote-border: \(isDarkMode ? "#0A84FF" : "#007AFF");
-                    --code-background: \(isDarkMode ? "#1C1C1E" : "#f5f5f5");
-                    --code-text: \(isDarkMode ? "#ffffff" : "#000000");
-                    --separator-color: \(isDarkMode ? "#38383A" : "#e0e0e0");
+                    --background-color: \(resolvedBgColor);
+                    --text-color: \(resolvedTextColor);
+                    --heading-color: \(resolvedHeadingColor);
+                    --link-color: \(themeIsDark ? "#0A84FF" : "#007AFF");
+                    --quote-color: \(themeIsDark ? "#8E8E93" : "#666666");
+                    --quote-border: \(themeIsDark ? "#0A84FF" : "#007AFF");
+                    --code-background: \(themeIsDark ? "#1C1C1E" : "#f5f5f5");
+                    --code-text: \(themeIsDark ? "#ffffff" : "#000000");
+                    --separator-color: \(themeIsDark ? "#38383A" : "#e0e0e0");
                     
                     /* Font Settings from Settings */
                     --base-font-size: \(fontSize)px;
@@ -100,9 +126,9 @@ struct WebView: UIViewRepresentable {
                 
                 body {
                     font-family: var(--font-family);
-                    line-height: 1.8;
+                    line-height: \(lineHeightValue);
                     margin: 0;
-                    padding: 16px 16px 100px;
+                    padding: 16px \(horizontalMargin)px 100px;
                     background-color: var(--background-color);
                     color: var(--text-color);
                     font-size: var(--base-font-size);
@@ -224,7 +250,8 @@ struct WebView: UIViewRepresentable {
                     margin-bottom: 4px;
                 }
                 
-                /* Dark mode media query als Fallback */
+                /* Media query fallbacks only for system theme */
+                \(colorTheme == .system ? """
                 @media (prefers-color-scheme: dark) {
                     :root {
                         --background-color: #000000;
@@ -238,8 +265,6 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #38383A;
                     }
                 }
-                
-                /* Light mode media query als Fallback */
                 @media (prefers-color-scheme: light) {
                     :root {
                         --background-color: #ffffff;
@@ -253,6 +278,7 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #e0e0e0;
                     }
                 }
+                """ : "")
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
@@ -299,6 +325,8 @@ struct WebView: UIViewRepresentable {
                     background-color: \(AnnotationColor.red.cssColorWithOpacity(0.5));
                     box-shadow: 0 0 0 2px \(AnnotationColor.red.cssColorWithOpacity(0.6));
                 }
+                /* Custom user CSS */
+                \(settings.customCSS ?? "")
             </style>
         </head>
         <body>
@@ -362,6 +390,7 @@ struct WebView: UIViewRepresentable {
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
+        case .custom: return 20
         }
     }
 

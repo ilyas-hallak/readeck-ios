@@ -30,8 +30,10 @@ class CoreDataManager {
         if let storeURL = storeURL {
             // Migrate existing database from app container to app group if needed
             migrateStoreToAppGroupIfNeeded(targetURL: storeURL)
-            
+
             let storeDescription = NSPersistentStoreDescription(url: storeURL)
+            storeDescription.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
+            storeDescription.setOption(true as NSNumber, forKey: NSInferMappingModelAutomaticallyOption)
             container.persistentStoreDescriptions = [storeDescription]
         }
         
