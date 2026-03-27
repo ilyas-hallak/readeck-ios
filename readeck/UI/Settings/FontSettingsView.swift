@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FontSettingsView: View {
     @State private var viewModel: FontSettingsViewModel
+    @State private var showCSSHelp = false
 
     init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
         self.viewModel = viewModel
@@ -128,11 +129,23 @@ struct FontSettingsView: View {
                     .onChange(of: viewModel.customCSS) {
                         Task { await viewModel.saveCustomCSS() }
                     }
-                Text("Custom CSS rules appended after all default styles. Use at your own risk.")
+                Text("css.help.hint".localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
             } header: {
-                Text("Custom CSS")
+                HStack {
+                    Text("Custom CSS")
+                    Spacer()
+                    Button {
+                        showCSSHelp = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .font(.subheadline)
+                    }
+                }
+            }
+            .sheet(isPresented: $showCSSHelp) {
+                CustomCSSHelpView(customCSS: $viewModel.customCSS)
             }
         }
         .task {
