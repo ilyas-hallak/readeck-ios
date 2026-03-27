@@ -72,3 +72,6 @@ documentation/
 
 # VS Code
 .vscode/
+
+# MCP config (contains tokens)
+.mcp.json

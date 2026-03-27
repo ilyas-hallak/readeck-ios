@@ -108,17 +108,45 @@ struct FontSelectionView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("Font size")
-                    Spacer()
-                    Text("\(Int(viewModel.fontSizeNumeric))px")
-                        .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Font size")
+
+                // S / M / L / XL / Custom picker
+                HStack(spacing: 8) {
+                    ForEach(FontSize.allCases, id: \.self) { size in
+                        Button(action: {
+                            viewModel.selectedFontSize = size
+                            if size != .custom {
+                                viewModel.fontSizeNumeric = size.size
+                            }
+                            Task { await viewModel.saveFontSettings() }
+                        }) {
+                            Text(size.displayName)
+                                .font(.subheadline)
+                                .fontWeight(viewModel.selectedFontSize == size ? .semibold : .regular)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(viewModel.selectedFontSize == size ? Color.accentColor : Color(.tertiarySystemFill))
+                                )
+                                .foregroundColor(viewModel.selectedFontSize == size ? .white : .primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                Slider(value: $viewModel.fontSizeNumeric, in: 10...30, step: 1)
-                    .onChange(of: viewModel.fontSizeNumeric) {
+
+                // Custom +/- controls
+                if viewModel.selectedFontSize == .custom {
+                    stepperRow(
+                        value: $viewModel.fontSizeNumeric,
+                        label: "\(Int(viewModel.fontSizeNumeric))px",
+                        range: 10...30,
+                        step: 1
+                    ) {
                         Task { await viewModel.saveFontSettings() }
                     }
+                }
             }
         } header: {
             Text("Font")
@@ -205,33 +233,82 @@ struct FontSelectionView: View {
 
     private var readerLayoutSection: some View {
         Section {
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("Horizontal margin")
-                    Spacer()
-                    Text("\(Int(viewModel.horizontalMargin))px")
-                        .foregroundColor(.secondary)
+            HStack {
+                Text("Horizontal margin")
+                Spacer()
+                stepperRow(
+                    value: $viewModel.horizontalMargin,
+                    label: "\(Int(viewModel.horizontalMargin))px",
+                    range: 0...40,
+                    step: 4
+                ) {
+                    Task { await viewModel.saveReaderLayout() }
                 }
-                Slider(value: $viewModel.horizontalMargin, in: 0...40, step: 1)
-                    .onChange(of: viewModel.horizontalMargin) {
-                        Task { await viewModel.saveReaderLayout() }
-                    }
             }
 
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("Line height")
-                    Spacer()
-                    Text(String(format: "%.1f", viewModel.lineHeight))
-                        .foregroundColor(.secondary)
+            HStack {
+                Text("Line height")
+                Spacer()
+                stepperRow(
+                    value: $viewModel.lineHeight,
+                    label: String(format: "%.1f", viewModel.lineHeight),
+                    range: 1.0...2.5,
+                    step: 0.1
+                ) {
+                    Task { await viewModel.saveReaderLayout() }
                 }
-                Slider(value: $viewModel.lineHeight, in: 1.0...2.5, step: 0.1)
-                    .onChange(of: viewModel.lineHeight) {
-                        Task { await viewModel.saveReaderLayout() }
-                    }
             }
         } header: {
             Text("Reader Layout")
+        }
+    }
+
+    // MARK: - Stepper Row
+
+    private func stepperRow(
+        value: Binding<Double>,
+        label: String,
+        range: ClosedRange<Double>,
+        step: Double,
+        onChanged: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 12) {
+            Button(action: {
+                let newValue = value.wrappedValue - step
+                if newValue >= range.lowerBound {
+                    value.wrappedValue = newValue
+                    onChanged()
+                }
+            }) {
+                Image(systemName: "minus")
+                    .font(.body.weight(.medium))
+                    .frame(width: 32, height: 32)
+                    .background(Color(.tertiarySystemFill))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(value.wrappedValue <= range.lowerBound)
+
+            Text(label)
+                .font(.subheadline)
+                .monospacedDigit()
+                .frame(minWidth: 44)
+
+            Button(action: {
+                let newValue = value.wrappedValue + step
+                if newValue <= range.upperBound {
+                    value.wrappedValue = newValue
+                    onChanged()
+                }
+            }) {
+                Image(systemName: "plus")
+                    .font(.body.weight(.medium))
+                    .frame(width: 32, height: 32)
+                    .background(Color(.tertiarySystemFill))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(value.wrappedValue >= range.upperBound)
         }
     }
 

@@ -21,7 +21,7 @@ class FontSettingsViewModel {
 
     // MARK: - Reader Layout
     var horizontalMargin: Double = 16
-    var lineHeight: Double = 1.8
+    var lineHeight: Double = 1.4
 
     // MARK: - Visibility
     var hideProgressBar: Bool = false
@@ -191,15 +191,17 @@ class FontSettingsViewModel {
                 selectedFontFamily = settings.fontFamily ?? .system
                 selectedFontSize = settings.fontSize ?? .medium
 
-                // Migration: if fontSizeNumeric not set, derive from enum
-                if let numeric = settings.fontSizeNumeric {
+                // Determine font size: custom uses numeric, presets use enum size
+                if let numeric = settings.fontSizeNumeric, selectedFontSize == .custom {
                     fontSizeNumeric = numeric
+                } else if selectedFontSize != .custom {
+                    fontSizeNumeric = selectedFontSize.size
                 } else {
-                    fontSizeNumeric = (settings.fontSize ?? .extraLarge).size
+                    fontSizeNumeric = 20
                 }
 
                 horizontalMargin = settings.horizontalMargin ?? 16
-                lineHeight = settings.lineHeight ?? 1.8
+                lineHeight = settings.lineHeight ?? 1.4
                 hideProgressBar = settings.hideProgressBar ?? false
                 hideWordCount = settings.hideWordCount ?? false
                 hideHeroImage = settings.hideHeroImage ?? false

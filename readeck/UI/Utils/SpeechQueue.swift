@@ -26,6 +26,7 @@ extension BookmarkDetail {
 }
 
 class SpeechQueue: ObservableObject {
+    private let logger = Logger.general
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
     private let ttsManager: TTSManager
@@ -102,7 +103,7 @@ class SpeechQueue: ObservableObject {
     }
     
     func stop() {
-        print("[SpeechQueue] stop() aufgerufen")
+        logger.debug("SpeechQueue stop() called")
         updatePublishedProperties()
         saveQueue()
         ttsManager.stop()
@@ -110,7 +111,7 @@ class SpeechQueue: ObservableObject {
     }
     
     func clear() {
-        print("[SpeechQueue] clear() aufgerufen")
+        logger.debug("SpeechQueue clear() called")
         queue.removeAll()
         updatePublishedProperties()
         saveQueue()
@@ -147,7 +148,7 @@ class SpeechQueue: ObservableObject {
         } else {
             if !queue.isEmpty {
                 queue.removeFirst()
-                print("[SpeechQueue] Artikel fertig abgespielt und aus Queue entfernt")
+                logger.debug("SpeechQueue article finished playing and removed from queue")
             }
             self.isProcessing = false
             self.updatePublishedProperties()
@@ -161,12 +162,10 @@ class SpeechQueue: ObservableObject {
         let defaults = UserDefaults.standard
         do {
             let data = try JSONEncoder().encode(queue)
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("[SpeechQueue] Speichere Queue (\(queue.count)) als JSON: \n\(jsonString)")
-            }
+            logger.debug("SpeechQueue saving queue (\(queue.count) items)")
             defaults.set(data, forKey: queueKey)
         } catch {
-            print("[SpeechQueue] Fehler beim Speichern der Queue:", error)
+            logger.error("SpeechQueue failed to save queue: \(error.localizedDescription)")
         }
     }
     
@@ -176,15 +175,15 @@ class SpeechQueue: ObservableObject {
             do {
                 let savedQueue = try JSONDecoder().decode([SpeechQueueItem].self, from: data)
                 queue = savedQueue
-                print("[SpeechQueue] Queue geladen (", queue.count, ")")
+                logger.debug("SpeechQueue loaded queue (\(queue.count) items)")
             } catch {
-                print("[SpeechQueue] Fehler beim Laden der Queue:", error)
+                logger.error("SpeechQueue failed to load queue: \(error.localizedDescription)")
                 defaults.removeObject(forKey: queueKey)
                 queue = []
             }
         }
         if queue.isEmpty {
-            print("[SpeechQueue] Queue ist nach dem Laden leer!")
+            logger.debug("SpeechQueue is empty after loading")
         }
     }
 }

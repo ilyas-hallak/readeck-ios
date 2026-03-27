@@ -23,6 +23,11 @@ class BookmarkDetailViewModel {
     var selectedAnnotationId: String?
     var hasAnnotations: Bool = false
 
+    var showProgressBar: Bool { settings?.hideProgressBar != true }
+    var showHeroImage: Bool { settings?.hideHeroImage != true }
+    var showWordCount: Bool { settings?.hideWordCount != true }
+    var hasVisibleHeroImage: Bool { showHeroImage && !bookmarkDetail.imageUrl.isEmpty }
+
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
     private let readProgressSubject = PassthroughSubject<(id: String, progress: Double, anchor: String?), Never>()

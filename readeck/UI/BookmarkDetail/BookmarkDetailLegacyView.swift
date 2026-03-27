@@ -68,7 +68,7 @@ struct BookmarkDetailLegacyView: View {
             ZStack(alignment: .top) {
                 headerView(width: geometry.size.width)
                 VStack(alignment: .leading, spacing: 16) {
-                Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                Color.clear.frame(width: geometry.size.width, height: viewModel.hasVisibleHeroImage ? headerHeight : 84)
                 titleSection
                 Divider().padding(.horizontal)
                 if showJumpToProgressButton {
@@ -99,7 +99,7 @@ struct BookmarkDetailLegacyView: View {
                         },
                         onScrollToPosition: { position in
                             // Calculate scroll position: add header height and webview offset
-                            let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                            let imageHeight: CGFloat = viewModel.hasVisibleHeroImage ? headerHeight : 84
                             let targetPosition = imageHeight + position
 
                             // Scroll to the annotation
@@ -175,19 +175,19 @@ struct BookmarkDetailLegacyView: View {
             // We always take the maximum position seen (when scrolled to top, this is total content height)
             if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
                 initialContentEndPosition = endPosition
-                print("📏 Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
+                Logger.ui.debug("Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
             }
 
             // Calculate progress from how much the end marker has moved up
             guard initialContentEndPosition > 0 else {
-                print("⏳ Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
+                Logger.ui.debug("Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
                 return
             }
 
             let totalScrollableDistance = initialContentEndPosition - containerHeight
 
             guard totalScrollableDistance > 0 else {
-                print("⚠️ Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
+                Logger.ui.debug("Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
                 return
             }
 
@@ -201,7 +201,7 @@ struct BookmarkDetailLegacyView: View {
                 progress = max(progress, 1.0)
             }
 
-            print("📊 Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
+            Logger.ui.debug("Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
 
             // Check if we should update: threshold OR reaching 100% for first time
             let threshold: Double = 0.03
@@ -209,7 +209,7 @@ struct BookmarkDetailLegacyView: View {
             let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
             if shouldUpdate {
-                print("✅ Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
+                Logger.ui.debug("Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
                 lastSentProgress = progress
                 readingProgress = progress
                 viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
@@ -228,7 +228,7 @@ struct BookmarkDetailLegacyView: View {
 
     private var mainContent: some View {
         VStack(spacing: 0) {
-            if !(viewModel.settings?.hideProgressBar ?? false) {
+            if viewModel.showProgressBar {
                 ProgressView(value: readingProgress)
                     .progressViewStyle(LinearProgressViewStyle())
                     .frame(height: 3)
@@ -249,11 +249,11 @@ struct BookmarkDetailLegacyView: View {
 
                     VStack(spacing: 0) {
                         ZStack(alignment: .top) {
-                            if !(viewModel.settings?.hideHeroImage ?? false) {
+                            if viewModel.showHeroImage {
                                 headerView(width: geometry.size.width)
                             }
                             VStack(alignment: .leading, spacing: 16) {
-                            Color.clear.frame(width: geometry.size.width, height: (viewModel.bookmarkDetail.imageUrl.isEmpty || (viewModel.settings?.hideHeroImage ?? false)) ? 84 : headerHeight)
+                            Color.clear.frame(width: geometry.size.width, height: viewModel.hasVisibleHeroImage ? headerHeight : 84)
                             titleSection
                             Divider().padding(.horizontal)
                             if showJumpToProgressButton {
@@ -284,7 +284,7 @@ struct BookmarkDetailLegacyView: View {
                                     },
                                     onScrollToPosition: { position in
                                         // Calculate scroll position: add header height and webview offset
-                                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                                        let imageHeight: CGFloat = viewModel.hasVisibleHeroImage ? headerHeight : 84
                                         let targetPosition = imageHeight + position
 
                                         // Scroll to the annotation
@@ -355,19 +355,19 @@ struct BookmarkDetailLegacyView: View {
                     // We always take the maximum position seen (when scrolled to top, this is total content height)
                     if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
                         initialContentEndPosition = endPosition
-                        print("📏 Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
+                        Logger.ui.debug("Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
                     }
 
                     // Calculate progress from how much the end marker has moved up
                     guard initialContentEndPosition > 0 else {
-                        print("⏳ Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
+                        Logger.ui.debug("Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
                         return
                     }
 
                     let totalScrollableDistance = initialContentEndPosition - containerHeight
 
                     guard totalScrollableDistance > 0 else {
-                        print("⚠️ Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
+                        Logger.ui.debug("Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
                         return
                     }
 
@@ -381,7 +381,7 @@ struct BookmarkDetailLegacyView: View {
                         progress = max(progress, 1.0)
                     }
 
-                    print("📊 Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
+                    Logger.ui.debug("Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
 
                     // Check if we should update: threshold OR reaching 100% for first time
                     let threshold: Double = 0.03
@@ -389,7 +389,7 @@ struct BookmarkDetailLegacyView: View {
                     let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
                     if shouldUpdate {
-                        print("✅ Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
+                        Logger.ui.debug("Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
                         lastSentProgress = progress
                         readingProgress = progress
                         viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
@@ -611,7 +611,7 @@ struct BookmarkDetailLegacyView: View {
             } else {
                 metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             }
-            if !(viewModel.settings?.hideWordCount ?? false) {
+            if viewModel.showWordCount {
                 metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
             }
 
