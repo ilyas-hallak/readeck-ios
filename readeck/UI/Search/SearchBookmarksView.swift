@@ -63,12 +63,10 @@ struct SearchBookmarksView: View {
                         }
                     }) {
                         BookmarkCardView(
-                            bookmark: bookmark, 
-                            currentState: .all, 
+                            bookmark: bookmark,
+                            currentState: .all,
                             layout: cardLayoutStyle,
-                            onArchive: {_ in }, 
-                            onDelete: {_ in }, 
-                            onToggleFavorite: {_ in }
+                            onSwipeAction: { _, _ in }
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
