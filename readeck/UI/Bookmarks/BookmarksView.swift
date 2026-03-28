@@ -277,18 +277,9 @@ struct BookmarksView: View {
                         currentState: state,
                         layout: viewModel.cardLayoutStyle,
                         pendingDelete: viewModel.pendingDeletes[bookmark.id],
-                        onArchive: { bookmark in
-                            Task {
-                                await viewModel.toggleArchive(bookmark: bookmark)
-                            }
-                        },
-                        onDelete: { bookmark in
-                            viewModel.deleteBookmarkWithUndo(bookmark: bookmark)
-                        },
-                        onToggleFavorite: { bookmark in
-                            Task {
-                                await viewModel.toggleFavorite(bookmark: bookmark)
-                            }
+                        swipeActionConfig: appSettings.swipeActionConfig,
+                        onSwipeAction: { action, bookmark in
+                            viewModel.handleSwipeAction(action, bookmark: bookmark)
                         },
                         onUndoDelete: { bookmarkId in
                             viewModel.undoDelete(bookmarkId: bookmarkId)
