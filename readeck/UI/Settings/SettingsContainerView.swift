@@ -82,6 +82,8 @@ struct SettingsContainerView: View {
 
             ReadingSettingsView()
 
+            SwipeActionsSettingsView()
+
             SettingsServerView()
 
             LegalPrivacySettingsView()
