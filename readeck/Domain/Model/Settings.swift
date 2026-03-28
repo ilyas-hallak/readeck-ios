@@ -24,6 +24,8 @@ struct Settings {
 
     var urlOpener: UrlOpener? = nil
 
+    var swipeActionConfig: SwipeActionConfig? = nil
+
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty
     }
