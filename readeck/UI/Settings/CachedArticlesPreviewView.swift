@@ -59,9 +59,7 @@ struct CachedArticlesPreviewView: View {
                             bookmark: bookmark,
                             currentState: .unread,
                             layout: .magazine,
-                            onArchive: { _ in },
-                            onDelete: { _ in },
-                            onToggleFavorite: { _ in }
+                            onSwipeAction: { _, _ in }
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
