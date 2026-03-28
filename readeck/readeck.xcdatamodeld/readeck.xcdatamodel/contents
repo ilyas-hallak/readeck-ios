@@ -67,6 +67,7 @@
         <attribute name="offlineLastSyncDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="offlineMaxUnreadArticles" optional="YES" attributeType="Double" defaultValueString="20" usesScalarValueType="YES"/>
         <attribute name="offlineSaveImages" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="swipeActionConfig" optional="YES" attributeType="String"/>
         <attribute name="tagSortOrder" optional="YES" attributeType="String"/>
         <attribute name="theme" optional="YES" attributeType="String"/>
         <attribute name="token" optional="YES" attributeType="String"/>

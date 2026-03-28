@@ -83,6 +83,14 @@ class SettingsRepository: PSettingsRepository {
                         existingSettings.bookmarkSortDirection = bookmarkSortDirection.rawValue
                     }
 
+                    if let swipeActionConfig = settings.swipeActionConfig {
+                        let encoder = JSONEncoder()
+                        if let jsonData = try? encoder.encode(swipeActionConfig),
+                           let jsonString = String(data: jsonData, encoding: .utf8) {
+                            existingSettings.swipeActionConfig = jsonString
+                        }
+                    }
+
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -110,6 +118,12 @@ class SettingsRepository: PSettingsRepository {
                     let password = self.keychainHelper.loadPassword()
                     let token = self.keychainHelper.loadToken()
                     
+                    var swipeActionConfig: SwipeActionConfig? = nil
+                    if let jsonString = settingEntity?.swipeActionConfig,
+                       let jsonData = jsonString.data(using: .utf8) {
+                        swipeActionConfig = try? JSONDecoder().decode(SwipeActionConfig.self, from: jsonData)
+                    }
+
                     // Load UI preferences from Core Data
                     let settings = Settings(
                         endpoint: endpoint,
@@ -124,7 +138,8 @@ class SettingsRepository: PSettingsRepository {
                         tagSortOrder: TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue),
                         bookmarkSortField: BookmarkSortField(rawValue: settingEntity?.bookmarkSortField ?? BookmarkSortField.created.rawValue),
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
-                        urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue)
+                        urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
+                        swipeActionConfig: swipeActionConfig
                     )
                     continuation.resume(returning: settings)
                 } catch {

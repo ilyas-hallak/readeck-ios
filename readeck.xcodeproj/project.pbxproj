@@ -96,6 +96,7 @@
 				Domain/Model/FontFamily.swift,
 				Domain/Model/FontSize.swift,
 				Domain/Model/Settings.swift,
+				Domain/Model/SwipeAction.swift,
 				Domain/Model/TagSortOrder.swift,
 				Domain/Model/Theme.swift,
 				Domain/Model/UrlOpener.swift,
