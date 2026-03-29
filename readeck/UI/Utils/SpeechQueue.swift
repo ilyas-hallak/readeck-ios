@@ -9,10 +9,13 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let labels: [String]?
     let imageUrl: String?
     let language: String
+    var lastCharacterIndex: Int = 0
+    var totalCharacters: Int = 0
 }
 
 extension BookmarkDetail {
     func toSpeechQueueItem(_ content: String? = nil) -> SpeechQueueItem {
+        let text = content ?? self.content ?? ""
         return SpeechQueueItem(
             id: self.id,
             title: title,
@@ -20,7 +23,9 @@ extension BookmarkDetail {
             url: url,
             labels: labels,
             imageUrl: imageUrl,
-            language: lang.isEmpty ? "en" : lang
+            language: lang.isEmpty ? "en" : lang,
+            lastCharacterIndex: 0,
+            totalCharacters: (title + "\n" + text).trimmingCharacters(in: .whitespacesAndNewlines).count
         )
     }
 }
@@ -30,6 +35,7 @@ class SpeechQueue: ObservableObject {
     private var isProcessing = false
     private let ttsManager: TTSManager
     private let queueKey = "tts_queue"
+    private var lastSaveTime: Date = .distantPast
 
     static let shared = SpeechQueue()
 
@@ -159,6 +165,25 @@ class SpeechQueue: ObservableObject {
         processQueue()
     }
     
+    // MARK: - Position Tracking
+
+    func updateCurrentPosition(_ characterIndex: Int) {
+        guard !queue.isEmpty else { return }
+        queue[0].lastCharacterIndex = characterIndex
+        queueItems = queue
+
+        // Save every 5 seconds
+        let now = Date()
+        if now.timeIntervalSince(lastSaveTime) >= 5.0 {
+            lastSaveTime = now
+            saveQueue()
+        }
+    }
+
+    func savePositionNow() {
+        saveQueue()
+    }
+
     // MARK: - Persistenz
     private func saveQueue() {
         let defaults = UserDefaults.standard
