@@ -24,7 +24,8 @@ struct BookmarkCardView: View {
     let onDelete: (Bookmark) -> Void
     let onToggleFavorite: (Bookmark) -> Void
     let onUndoDelete: ((String) -> Void)?
-    
+    var onPlayNext: ((Bookmark) -> Void)? = nil
+
     init(
         bookmark: Bookmark,
         currentState: BookmarkState,
@@ -33,7 +34,8 @@ struct BookmarkCardView: View {
         onArchive: @escaping (Bookmark) -> Void,
         onDelete: @escaping (Bookmark) -> Void,
         onToggleFavorite: @escaping (Bookmark) -> Void,
-        onUndoDelete: ((String) -> Void)? = nil
+        onUndoDelete: ((String) -> Void)? = nil,
+        onPlayNext: ((Bookmark) -> Void)? = nil
     ) {
         self.bookmark = bookmark
         self.currentState = currentState
@@ -43,6 +45,7 @@ struct BookmarkCardView: View {
         self.onDelete = onDelete
         self.onToggleFavorite = onToggleFavorite
         self.onUndoDelete = onUndoDelete
+        self.onPlayNext = onPlayNext
     }
     
     var body: some View {
@@ -138,6 +141,15 @@ struct BookmarkCardView: View {
                           systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill")
                 }
                 .tint(bookmark.isMarked ? .gray : .pink)
+
+                if onPlayNext != nil {
+                    Button {
+                        onPlayNext?(bookmark)
+                    } label: {
+                        Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                    }
+                    .tint(.purple)
+                }
             }
         }
     }

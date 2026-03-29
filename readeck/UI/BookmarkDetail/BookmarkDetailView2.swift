@@ -433,6 +433,15 @@ struct BookmarkDetailView2: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                metaRow(icon: "text.line.first.and.arrowtriangle.forward") {
+                    Button(action: {
+                        viewModel.addBookmarkToSpeechQueueNext()
+                    }) {
+                        Text("Play Next")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
         }
     }

@@ -480,10 +480,19 @@ struct BookmarkDetailLegacyView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                metaRow(icon: "text.line.first.and.arrowtriangle.forward") {
+                    Button(action: {
+                        viewModel.addBookmarkToSpeechQueueNext()
+                    }) {
+                        Text("Play Next")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
         }
     }
-    
+
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {

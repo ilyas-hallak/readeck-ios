@@ -174,6 +174,17 @@ class BookmarkDetailViewModel {
         bookmarkDetail.content = articleContent
         addTextToSpeechQueueUseCase?.execute(bookmarkDetail: bookmarkDetail)
     }
+
+    func addBookmarkToSpeechQueueNext() {
+        bookmarkDetail.content = articleContent
+        var text = bookmarkDetail.title + "\n"
+        if !articleContent.isEmpty {
+            text += articleContent.stripHTML
+        } else {
+            text += bookmarkDetail.description.stripHTML
+        }
+        SpeechQueue.shared.insertAfterCurrent(bookmarkDetail.toSpeechQueueItem(text))
+    }
     
     @MainActor
     func toggleFavorite(id: String) async {
