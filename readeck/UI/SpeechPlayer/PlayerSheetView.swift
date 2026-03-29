@@ -198,7 +198,7 @@ struct PlayerSheetView: View {
             .padding(.horizontal, 24)
 
             List {
-                ForEach(Array(viewModel.queueItems.enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(viewModel.queueItems.enumerated()), id: \.offset) { index, item in
                     HStack {
                         if index == 0 {
                             Image(systemName: "speaker.wave.2.fill")
