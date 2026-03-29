@@ -5,7 +5,7 @@ import Combine
 
 class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     static let shared = TTSManager()
-    private let synthesizer = AVSpeechSynthesizer()
+    private var synthesizer = AVSpeechSynthesizer()
     private let voiceManager = VoiceManager.shared
     
     @Published var isSpeaking = false
@@ -54,13 +54,35 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
                 name: UIApplication.willEnterForegroundNotification,
                 object: nil
             )
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleAudioInterruption),
+                name: AVAudioSession.interruptionNotification,
+                object: nil
+            )
         } catch {
             print("Fehler beim Konfigurieren der Audio-Session: \(error)")
         }
     }
     
+    private func ensureSynthesizerReady() {
+        // Re-activate audio session (may have been interrupted by iOS Settings)
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("[TTSManager] Audio session reactivation failed: \(error)")
+        }
+    }
+
+    private func resetSynthesizer() {
+        synthesizer = AVSpeechSynthesizer()
+        synthesizer.delegate = self
+    }
+
     func speak(text: String, language: String, utteranceIndex: Int = 0, totalUtterances: Int = 1, startFromCharacter: Int = 0) {
         guard !text.isEmpty else { return }
+
+        ensureSynthesizerReady()
 
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
@@ -268,7 +290,26 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         do {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Fehler beim Aktivieren der Audio-Session im Vordergrund: \(error)")
+            print("[TTSManager] Audio session reactivation on foreground failed: \(error)")
+        }
+        // Refresh voices in case user downloaded new ones in iOS Settings
+        voiceManager.refreshVoices()
+        // Recreate synthesizer to pick up new voices
+        resetSynthesizer()
+    }
+
+    @objc private func handleAudioInterruption(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+
+        if type == .ended {
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+            } catch {
+                print("[TTSManager] Audio session reactivation after interruption failed: \(error)")
+            }
+            resetSynthesizer()
         }
     }
     
