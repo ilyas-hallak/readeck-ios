@@ -99,6 +99,6 @@ class SpeechPlayerViewModel: ObservableObject {
     }
     
     func stop() {
-        ttsManager?.stop()
+        speechQueue?.clear()
     }
 } 

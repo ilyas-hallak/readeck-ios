@@ -18,6 +18,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published var rate: Float = 0.5
 
     var onUtteranceFinished: (() -> Void)?
+    var onUtteranceCancelled: (() -> Void)?
     
     override private init() {
         super.init()
@@ -138,6 +139,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             self.isSpeaking = false
             self.currentUtterance = ""
             self.articleProgress = 0.0
+            self.onUtteranceCancelled?()
         }
     }
     

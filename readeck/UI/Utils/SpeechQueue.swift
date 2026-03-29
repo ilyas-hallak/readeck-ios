@@ -89,6 +89,9 @@ class SpeechQueue: ObservableObject {
         ttsManager.onUtteranceFinished = { [weak self] in
             self?.onCurrentItemFinished()
         }
+        ttsManager.onUtteranceCancelled = { [weak self] in
+            self?.onCurrentItemCancelled()
+        }
     }
     
     func enqueue(_ item: SpeechQueueItem) {
@@ -138,6 +141,11 @@ class SpeechQueue: ObservableObject {
         let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
         let languageCode = convertToBCP47(next.language)
         ttsManager.speak(text: textToSpeak, language: languageCode, utteranceIndex: currentIndex, totalUtterances: queueItems.count)
+    }
+
+    private func onCurrentItemCancelled() {
+        isProcessing = false
+        updatePublishedProperties()
     }
 
     private func onCurrentItemFinished() {
