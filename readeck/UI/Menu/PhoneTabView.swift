@@ -13,6 +13,7 @@ struct PhoneTabView: View {
 
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
+    @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
 
     // Navigation paths for each tab
     @State private var allPath = NavigationPath()
@@ -26,6 +27,7 @@ struct PhoneTabView: View {
     @FocusState private var searchFieldIsFocused: Bool
 
     @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject var playerUIState: PlayerUIState
 
     private var cardLayoutStyle: CardLayoutStyle {
         appSettings.settings?.cardLayoutStyle ?? .compact
@@ -36,95 +38,112 @@ struct PhoneTabView: View {
     }
 
     var body: some View {
-        GlobalPlayerContainerView {
-            TabView(selection: $selectedTab) {
-
-                Tab(value: SidebarTab.all) {
-                    NavigationStack(path: $allPath) {
-                        tabView(for: .all)
+        if #available(iOS 26, *) {
+            tabViewContent
+                .tabViewBottomAccessory {
+                    if appSettings.enableTTS && speechPlayerViewModel.hasItems && playerUIState.isPlayerVisible {
+                        SpeechPlayerView(viewModel: speechPlayerViewModel, onClose: { playerUIState.hidePlayer() })
                     }
-                } label: {
-                    Label(SidebarTab.all.label, systemImage: SidebarTab.all.systemImage)
                 }
-
-                Tab(value: SidebarTab.unread) {
-                    NavigationStack(path: $unreadPath) {
-                        tabView(for: .unread)
-                    }
-                } label: {
-                    Label(SidebarTab.unread.label, systemImage: SidebarTab.unread.systemImage)
+                .task {
+                    await speechPlayerViewModel.setup()
                 }
-
-                Tab(value: SidebarTab.favorite) {
-                    NavigationStack(path: $favoritePath) {
-                        tabView(for: .favorite)
-                    }
-                } label: {
-                    Label(SidebarTab.favorite.label, systemImage: SidebarTab.favorite.systemImage)
-                }
-
-                Tab(value: SidebarTab.archived) {
-                    NavigationStack(path: $archivedPath) {
-                        tabView(for: .archived)
-                    }
-                } label: {
-                    Label(SidebarTab.archived.label, systemImage: SidebarTab.archived.systemImage)
-                }
-
-                // iOS 26+: Dedicated search tab with role
-                if #available(iOS 26, *) {
-                    Tab("Search", systemImage: SidebarTab.search.systemImage, value: SidebarTab.search, role: .search) {
-                        NavigationStack {
-                            moreTabContent
-                                .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
-                        }
-                    }
-                    .badge(offlineBookmarksBadgeCount)
-                } else {
-                    Tab(value: SidebarTab.settings) {
-                        NavigationStack(path: $morePath) {
-                            VStack(spacing: 0) {
-
-                                // Classic search bar for iOS 18
-                                HStack {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(.gray)
-                                    TextField("Search...", text: $searchViewModel.searchQuery)
-                                        .focused($searchFieldIsFocused)
-                                        .textFieldStyle(PlainTextFieldStyle())
-                                        .autocapitalization(.none)
-                                        .disableAutocorrection(true)
-                                    if !searchViewModel.searchQuery.isEmpty {
-                                        Button(action: {
-                                            searchViewModel.searchQuery = ""
-                                            searchFieldIsFocused = true
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.gray)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                                .padding(10)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(12)
-                                .padding([.horizontal, .top])
-
-                                moreTabContent
-                                moreTabsFooter
-                            }
-                            .navigationTitle("More")
-                        }
-                    } label: {
-                        Label("More", systemImage: "ellipsis")
-                    }
-                    .badge(offlineBookmarksBadgeCount)
-                }
+        } else {
+            GlobalPlayerContainerView {
+                tabViewContent
             }
-            .tabBarMinimizeBehaviorIfAvailable()
-            .accentColor(.accentColor)
-            .searchToolbarBehaviorIfAvailable()
         }
+    }
+
+    @ViewBuilder
+    private var tabViewContent: some View {
+        TabView(selection: $selectedTab) {
+
+            Tab(value: SidebarTab.all) {
+                NavigationStack(path: $allPath) {
+                    tabView(for: .all)
+                }
+            } label: {
+                Label(SidebarTab.all.label, systemImage: SidebarTab.all.systemImage)
+            }
+
+            Tab(value: SidebarTab.unread) {
+                NavigationStack(path: $unreadPath) {
+                    tabView(for: .unread)
+                }
+            } label: {
+                Label(SidebarTab.unread.label, systemImage: SidebarTab.unread.systemImage)
+            }
+
+            Tab(value: SidebarTab.favorite) {
+                NavigationStack(path: $favoritePath) {
+                    tabView(for: .favorite)
+                }
+            } label: {
+                Label(SidebarTab.favorite.label, systemImage: SidebarTab.favorite.systemImage)
+            }
+
+            Tab(value: SidebarTab.archived) {
+                NavigationStack(path: $archivedPath) {
+                    tabView(for: .archived)
+                }
+            } label: {
+                Label(SidebarTab.archived.label, systemImage: SidebarTab.archived.systemImage)
+            }
+
+            // iOS 26+: Dedicated search tab with role
+            if #available(iOS 26, *) {
+                Tab("Search", systemImage: SidebarTab.search.systemImage, value: SidebarTab.search, role: .search) {
+                    NavigationStack {
+                        moreTabContent
+                            .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
+                    }
+                }
+                .badge(offlineBookmarksBadgeCount)
+            } else {
+                Tab(value: SidebarTab.settings) {
+                    NavigationStack(path: $morePath) {
+                        VStack(spacing: 0) {
+
+                            // Classic search bar for iOS 18
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                TextField("Search...", text: $searchViewModel.searchQuery)
+                                    .focused($searchFieldIsFocused)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                if !searchViewModel.searchQuery.isEmpty {
+                                    Button(action: {
+                                        searchViewModel.searchQuery = ""
+                                        searchFieldIsFocused = true
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .padding([.horizontal, .top])
+
+                            moreTabContent
+                            moreTabsFooter
+                        }
+                        .navigationTitle("More")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis")
+                }
+                .badge(offlineBookmarksBadgeCount)
+            }
+        }
+        .tabBarMinimizeBehaviorIfAvailable()
+        .accentColor(.accentColor)
+        .searchToolbarBehaviorIfAvailable()
     }
 
     // MARK: - Tab Content
