@@ -98,6 +98,9 @@ class SpeechQueue: ObservableObject {
         ttsManager.onUtteranceCancelled = { [weak self] in
             self?.onCurrentItemCancelled()
         }
+        ttsManager.onPositionUpdate = { [weak self] charIndex in
+            self?.updateCurrentPosition(charIndex)
+        }
     }
     
     func enqueue(_ item: SpeechQueueItem) {
@@ -116,10 +119,15 @@ class SpeechQueue: ObservableObject {
     
     func stop() {
         print("[SpeechQueue] stop() aufgerufen")
-        updatePublishedProperties()
         saveQueue()
         ttsManager.stop()
         isProcessing = false
+        updatePublishedProperties()
+    }
+
+    func pauseAndSave() {
+        ttsManager.pause()
+        saveQueue()
     }
     
     func clear() {
@@ -146,7 +154,13 @@ class SpeechQueue: ObservableObject {
         let currentIndex = queueItems.count - queue.count
         let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
         let languageCode = convertToBCP47(next.language)
-        ttsManager.speak(text: textToSpeak, language: languageCode, utteranceIndex: currentIndex, totalUtterances: queueItems.count)
+        ttsManager.speak(
+            text: textToSpeak,
+            language: languageCode,
+            utteranceIndex: currentIndex,
+            totalUtterances: queueItems.count,
+            startFromCharacter: next.lastCharacterIndex
+        )
     }
 
     private func onCurrentItemCancelled() {
