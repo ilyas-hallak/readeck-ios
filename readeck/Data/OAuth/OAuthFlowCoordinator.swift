@@ -9,7 +9,7 @@ import Foundation
 
 /// Coordinates the complete OAuth 2.0 flow from start to finish
 @MainActor
-class OAuthFlowCoordinator {
+final class OAuthFlowCoordinator {
     private let manager: OAuthManager
     private let session: OAuthSession
     private let logger = Logger.network

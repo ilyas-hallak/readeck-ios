@@ -9,26 +9,26 @@ struct BookmarkDetailView2: View {
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
-    @State private var webViewHeight: CGFloat = 300
-    @State private var contentEndPosition: CGFloat = 0
-    @State private var initialContentEndPosition: CGFloat = 0
+    @State private var webViewHeight: Double = 300
+    @State private var contentEndPosition: Double = 0
+    @State private var initialContentEndPosition: Double = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
-    @State private var readingProgress: Double = 0.0
-    @State private var lastSentProgress: Double = 0.0
-    @State private var showJumpToProgressButton: Bool = false
+    @State private var readingProgress = 0.0
+    @State private var lastSentProgress = 0.0
+    @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
 
     // MARK: - Envs
 
-    @EnvironmentObject var playerUIState: PlayerUIState
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var playerUIState: PlayerUIState
+    @EnvironmentObject private var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
-    private let headerHeight: CGFloat = 360
+    private let headerHeight: Double = 360
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
@@ -230,12 +230,12 @@ struct BookmarkDetailView2: View {
                 }
 
                 // Check if we should update: threshold OR reaching 100% for first time
-                let threshold: Double = 0.03
+                let threshold = 0.03
                 let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
                 let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
                 readingProgress = progress
-                
+
                 if shouldUpdate {
                     lastSentProgress = progress
                     viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
@@ -249,7 +249,6 @@ struct BookmarkDetailView2: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-
         if Bundle.main.isDebugBuild {
             // Toggle button (left)
             ToolbarItem(placement: .navigationBarLeading) {
@@ -313,7 +312,7 @@ struct BookmarkDetailView2: View {
     // MARK: - ViewBuilder
 
     @ViewBuilder
-    private func headerView(width: CGFloat) -> some View {
+    private func headerView(width: Double) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
                 // Background blur for images that don't fill
@@ -321,7 +320,7 @@ struct BookmarkDetailView2: View {
                     url: URL(string: viewModel.bookmarkDetail.imageUrl),
                     cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: width, height: headerHeight)
                     .blur(radius: 30)
                     .clipped()
@@ -331,7 +330,7 @@ struct BookmarkDetailView2: View {
                     url: URL(string: viewModel.bookmarkDetail.imageUrl),
                     cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
                     .frame(width: width, height: headerHeight)
 
                 // Zoom icon
@@ -359,6 +358,7 @@ struct BookmarkDetailView2: View {
             .onTapGesture {
                 showingImageViewer = true
             }
+            .accessibilityAddTraits(.isButton)
         }
     }
 
@@ -485,7 +485,7 @@ struct BookmarkDetailView2: View {
                     },
                     onScrollToPosition: { position in
                         // Calculate scroll position: add header height and webview offset
-                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                        let imageHeight: Double = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
                         let targetPosition = imageHeight + position
 
                         // Scroll to the annotation
@@ -520,7 +520,7 @@ struct BookmarkDetailView2: View {
         }
     }
 
-    private func jumpButton(containerHeight: CGFloat) -> some View {
+    private func jumpButton(containerHeight: Double) -> some View {
         Button(action: {
             let maxOffset = webViewHeight - containerHeight
             let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
@@ -550,7 +550,7 @@ struct BookmarkDetailView2: View {
         } else if let parsedDate = isoFormatterNoMillis.date(from: dateString) {
             date = parsedDate
         }
-        if let date = date {
+        if let date {
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
             displayFormatter.timeStyle = .short

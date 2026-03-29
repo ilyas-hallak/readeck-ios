@@ -9,7 +9,6 @@ import Foundation
 
 /// Utility for extracting image URLs from HTML content
 struct HTMLImageExtractor {
-
     /// Extracts all image URLs from HTML using regex
     /// - Parameter html: The HTML string to parse
     /// - Returns: Array of absolute image URLs (http/https only)
@@ -26,13 +25,11 @@ struct HTMLImageExtractor {
         let nsString = html as NSString
         let results = regex.matches(in: html, options: [], range: NSRange(location: 0, length: nsString.length))
 
-        for result in results {
-            if result.numberOfRanges >= 2 {
-                let urlRange = result.range(at: 1)
-                if let url = nsString.substring(with: urlRange) as String?,
-                   url.hasPrefix("http") { // Only include absolute URLs
-                    imageURLs.append(url)
-                }
+        for result in results where result.numberOfRanges >= 2 {
+            let urlRange = result.range(at: 1)
+            if let url = nsString.substring(with: urlRange) as String?,
+               url.hasPrefix("http") { // Only include absolute URLs
+                imageURLs.append(url)
             }
         }
 

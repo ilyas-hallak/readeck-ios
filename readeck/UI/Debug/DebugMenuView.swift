@@ -262,7 +262,7 @@ struct DebugMenuView: View {
 }
 
 @MainActor
-class DebugMenuViewModel: ObservableObject {
+final class DebugMenuViewModel: ObservableObject {
     @Published var showResetCacheAlert = false
     @Published var showResetDatabaseAlert = false
     @Published var cachedArticlesCount = 0
@@ -292,13 +292,14 @@ class DebugMenuViewModel: ObservableObject {
     var buildType: String {
         if Bundle.main.isDebugBuild {
             return "Debug"
-        } else if Bundle.main.isTestFlightBuild {
-            return "TestFlight"
-        } else if Bundle.main.isProduction {
-            return "Production"
-        } else {
-            return "Unknown"
         }
+        if Bundle.main.isTestFlightBuild {
+            return "TestFlight"
+        }
+        if Bundle.main.isProduction {
+            return "Production"
+        }
+        return "Unknown"
     }
 
     init() {
@@ -371,7 +372,7 @@ extension UIDevice {
 }
 
 extension UIWindow {
-    open override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+    override open func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
         if motion == .motionShake {
             NotificationCenter.default.post(name: UIDevice.deviceDidShakeNotification, object: nil)
         }

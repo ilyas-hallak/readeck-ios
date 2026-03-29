@@ -8,11 +8,11 @@
 import Foundation
 
 enum FontSize: String, CaseIterable {
-    case small = "small"
-    case medium = "medium"
-    case large = "large"
-    case extraLarge = "extraLarge"
-    
+    case small
+    case medium
+    case large
+    case extraLarge
+
     var displayName: String {
         switch self {
         case .small: return "S"
@@ -21,8 +21,8 @@ enum FontSize: String, CaseIterable {
         case .extraLarge: return "XL"
         }
     }
-    
-    var size: CGFloat {
+
+    var size: Double {
         switch self {
         case .small: return 14
         case .medium: return 16
@@ -30,4 +30,4 @@ enum FontSize: String, CaseIterable {
         case .extraLarge: return 20
         }
     }
-} 
+}

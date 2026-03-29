@@ -10,8 +10,7 @@ import Observation
 import Combine
 
 @Observable
-class OfflineSettingsViewModel {
-
+final class OfflineSettingsViewModel {
     // MARK: - Dependencies
 
     private let settingsRepository: PSettingsRepository
@@ -20,11 +19,11 @@ class OfflineSettingsViewModel {
 
     // MARK: - Published State
 
-    var offlineSettings: OfflineSettings = OfflineSettings()
-    var isSyncing: Bool = false
+    var offlineSettings = OfflineSettings()
+    var isSyncing = false
     var syncProgress: String?
-    var cachedArticlesCount: Int = 0
-    var cacheSize: String = "0 KB"
+    var cachedArticlesCount = 0
+    var cacheSize = "0 KB"
 
     // MARK: - Initialization
 

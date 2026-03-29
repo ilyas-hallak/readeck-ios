@@ -3,7 +3,7 @@ import SwiftUI
 struct SectionHeader: View {
     let title: String
     let icon: String
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
@@ -14,7 +14,7 @@ struct SectionHeader: View {
                 .fontWeight(.bold)
         }
     }
-} 
+}
 
 #Preview {
     SectionHeader(title: "hello", icon: "person.circle")

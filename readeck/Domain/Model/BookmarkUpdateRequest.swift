@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable discouraged_optional_collection discouraged_optional_boolean
 struct BookmarkUpdateRequest {
     let addLabels: [String]?
     let isArchived: Bool?
@@ -10,7 +11,7 @@ struct BookmarkUpdateRequest {
     let readProgress: Int?
     let removeLabels: [String]?
     let title: String?
-    
+
     init(
         addLabels: [String]? = nil,
         isArchived: Bool? = nil,
@@ -37,34 +38,35 @@ struct BookmarkUpdateRequest {
 
 extension BookmarkUpdateRequest {
     static func archive(_ isArchived: Bool) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(isArchived: isArchived)
+        BookmarkUpdateRequest(isArchived: isArchived)
     }
-    
+
     static func favorite(_ isMarked: Bool) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(isMarked: isMarked)
+        BookmarkUpdateRequest(isMarked: isMarked)
     }
-    
+
     static func delete(_ isDeleted: Bool) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(isDeleted: isDeleted)
+        BookmarkUpdateRequest(isDeleted: isDeleted)
     }
-    
+
     static func updateProgress(_ progress: Int, anchor: String? = nil) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(readAnchor: anchor, readProgress: progress)
+        BookmarkUpdateRequest(readAnchor: anchor, readProgress: progress)
     }
-    
+
     static func updateTitle(_ title: String) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(title: title)
+        BookmarkUpdateRequest(title: title)
     }
-    
+
     static func updateLabels(_ labels: [String]) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(labels: labels)
+        BookmarkUpdateRequest(labels: labels)
     }
-    
+
     static func addLabels(_ labels: [String]) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(addLabels: labels)
+        BookmarkUpdateRequest(addLabels: labels)
     }
-    
+
     static func removeLabels(_ labels: [String]) -> BookmarkUpdateRequest {
-        return BookmarkUpdateRequest(removeLabels: labels)
+        BookmarkUpdateRequest(removeLabels: labels)
     }
 }
+// swiftlint:enable discouraged_optional_collection discouraged_optional_boolean

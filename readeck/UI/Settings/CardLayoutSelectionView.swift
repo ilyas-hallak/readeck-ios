@@ -166,8 +166,7 @@ struct CardLayoutPreview: View {
 #Preview {
     NavigationStack {
         CardLayoutSelectionView(
-            selectedCardLayout: .constant(.magazine),
-            onSave: {}
-        )
+            selectedCardLayout: .constant(.magazine)
+        )            {}
     }
 }

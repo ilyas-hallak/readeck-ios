@@ -5,7 +5,7 @@ struct BookmarkLabel: Identifiable, Equatable, Hashable {
     let name: String
     let count: Int
     let href: String
-    
+
     init(name: String, count: Int, href: String) {
         self.name = name
         self.count = count

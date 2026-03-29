@@ -7,22 +7,24 @@
 
 
 struct Settings {
-    var endpoint: String? = nil
-    var username: String? = nil
-    var password: String? = nil
-    var token: String? = nil
+    var endpoint: String?
+    var username: String?
+    var password: String?
+    var token: String?
 
-    var fontFamily: FontFamily? = nil
-    var fontSize: FontSize? = nil
-    var hasFinishedSetup: Bool = false
-    var enableTTS: Bool? = nil
-    var theme: Theme? = nil
-    var cardLayoutStyle: CardLayoutStyle? = nil
-    var tagSortOrder: TagSortOrder? = nil
-    var bookmarkSortField: BookmarkSortField? = nil
-    var bookmarkSortDirection: BookmarkSortDirection? = nil
+    var fontFamily: FontFamily?
+    var fontSize: FontSize?
+    var hasFinishedSetup = false
+    // swiftlint:disable:next discouraged_optional_boolean
+    var enableTTS: Bool?
+    var theme: Theme?
+    var cardLayoutStyle: CardLayoutStyle?
+    var tagSortOrder: TagSortOrder?
+    var bookmarkSortField: BookmarkSortField?
+    var bookmarkSortDirection: BookmarkSortDirection?
 
-    var urlOpener: UrlOpener? = nil
+    var urlOpener: UrlOpener?
+    var swipeActionConfig: SwipeActionConfig?
 
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty

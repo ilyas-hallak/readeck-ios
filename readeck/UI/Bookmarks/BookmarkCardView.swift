@@ -13,9 +13,9 @@ extension View {
 }
 
 struct BookmarkCardView: View {
-    @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var appSettings: AppSettings
-    
+    @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var appSettings: AppSettings
+
     let bookmark: Bookmark
     let currentState: BookmarkState
     let layout: CardLayoutStyle
@@ -24,7 +24,7 @@ struct BookmarkCardView: View {
     let onDelete: (Bookmark) -> Void
     let onToggleFavorite: (Bookmark) -> Void
     let onUndoDelete: ((String) -> Void)?
-    
+
     init(
         bookmark: Bookmark,
         currentState: BookmarkState,
@@ -44,7 +44,7 @@ struct BookmarkCardView: View {
         self.onToggleFavorite = onToggleFavorite
         self.onUndoDelete = onUndoDelete
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -59,12 +59,12 @@ struct BookmarkCardView: View {
             }
             .opacity(pendingDelete != nil ? 0.4 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: pendingDelete != nil)
-            
+
             // Undo toast overlay with progress background
-            if let pendingDelete = pendingDelete {
+            if let pendingDelete {
                 VStack(spacing: 0) {
                     Spacer()
-                    
+
                     // Undo button area with circular progress
                     HStack {
                         HStack(spacing: 8) {
@@ -74,20 +74,20 @@ struct BookmarkCardView: View {
                                     .stroke(Color.gray.opacity(0.3), lineWidth: 2)
                                     .frame(width: 16, height: 16)
                                 Circle()
-                                    .trim(from: 0, to: CGFloat(pendingDelete.progress))
+                                    .trim(from: 0, to: Double(pendingDelete.progress))
                                     .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                                     .rotationEffect(.degrees(-90))
                                     .frame(width: 16, height: 16)
                                     .animation(.linear(duration: 0.1), value: pendingDelete.progress)
                             }
-                            
+
                             Text("Deleting...")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Button("Undo") {
                             onUndoDelete?(bookmark.id)
                         }
@@ -100,6 +100,7 @@ struct BookmarkCardView: View {
                         .onTapGesture {
                             onUndoDelete?(bookmark.id)
                         }
+                        .accessibilityAddTraits(.isButton)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -130,35 +131,37 @@ struct BookmarkCardView: View {
                     }
                 }
                 .tint(currentState == .archived ? .blue : .orange)
-                
+
                 Button {
                     onToggleFavorite(bookmark)
                 } label: {
-                    Label(bookmark.isMarked ? "Remove" : "Favorite",
-                          systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill")
+                    Label(
+                        bookmark.isMarked ? "Remove" : "Favorite",
+                        systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill"
+                    )
                 }
                 .tint(bookmark.isMarked ? .gray : .pink)
             }
         }
     }
-    
+
     private var compactLayoutView: some View {
         HStack(alignment: .top, spacing: 12) {
             CachedAsyncImage(
                 url: imageURL,
                 cacheKey: "bookmark-\(bookmark.id)-hero"
             )
-                .aspectRatio(contentMode: .fill)
+                .scaledToFill()
                 .frame(width: 80, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(bookmark.title)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                
+
                 if !bookmark.description.isEmpty {
                     Text(bookmark.description)
                         .font(.subheadline)
@@ -166,7 +169,7 @@ struct BookmarkCardView: View {
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                 }
-                
+
                 HStack(spacing: 4) {
                     if !bookmark.siteName.isEmpty {
                         HStack(spacing: 2) {
@@ -176,9 +179,9 @@ struct BookmarkCardView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     if let readingTime = bookmark.readingTime, readingTime > 0 {
                         HStack(spacing: 2) {
                             Image(systemName: "clock")
@@ -194,7 +197,7 @@ struct BookmarkCardView: View {
         .background(Color(R.color.bookmark_list_bg))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-    
+
     private var magazineLayoutView: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomTrailing) {
@@ -202,10 +205,10 @@ struct BookmarkCardView: View {
                     url: imageURL,
                     cacheKey: "bookmark-\(bookmark.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(height: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                
+
                 if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {
                     ZStack {
                         Circle()
@@ -215,7 +218,7 @@ struct BookmarkCardView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 4)
                             .frame(width: 32, height: 32)
                         Circle()
-                            .trim(from: 0, to: CGFloat(bookmark.readProgress) / 100)
+                            .trim(from: 0, to: Double(bookmark.readProgress) / 100)
                             .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                             .frame(width: 32, height: 32)
@@ -231,14 +234,14 @@ struct BookmarkCardView: View {
                     .padding(8)
                 }
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(bookmark.title)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         if let publishedDate = formattedPublishedDate {
@@ -248,12 +251,12 @@ struct BookmarkCardView: View {
                             }
                             Spacer()
                         }
-                        
+
                         if let readingTime = bookmark.readingTime, readingTime > 0 {
                             Label("\(readingTime) min", systemImage: "clock")
                         }
                     }
-                    
+
                     HStack {
                         if !bookmark.siteName.isEmpty {
                             Label(bookmark.siteName, systemImage: "globe")
@@ -264,6 +267,7 @@ struct BookmarkCardView: View {
                             .onTapGesture {
                                 URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
                             }
+                            .accessibilityAddTraits(.isButton)
                     }
                 }
                 .font(.caption)
@@ -277,7 +281,7 @@ struct BookmarkCardView: View {
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
-    
+
     private var naturalLayoutView: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .bottomTrailing) {
@@ -285,11 +289,11 @@ struct BookmarkCardView: View {
                     url: imageURL,
                     cacheKey: "bookmark-\(bookmark.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: UIScreen.main.bounds.width - 32)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                
+
                 if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {
                     ZStack {
                         Circle()
@@ -299,7 +303,7 @@ struct BookmarkCardView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 4)
                             .frame(width: 32, height: 32)
                         Circle()
-                            .trim(from: 0, to: CGFloat(bookmark.readProgress) / 100)
+                            .trim(from: 0, to: Double(bookmark.readProgress) / 100)
                             .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                             .frame(width: 32, height: 32)
@@ -315,14 +319,14 @@ struct BookmarkCardView: View {
                     .padding(8)
                 }
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(bookmark.title)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         if let publishedDate = formattedPublishedDate {
@@ -332,12 +336,12 @@ struct BookmarkCardView: View {
                             }
                             Spacer()
                         }
-                        
+
                         if let readingTime = bookmark.readingTime, readingTime > 0 {
                             Label("\(readingTime) min", systemImage: "clock")
                         }
                     }
-                    
+
                     HStack {
                         if !bookmark.siteName.isEmpty {
                             Label(bookmark.siteName, systemImage: "globe")
@@ -348,6 +352,7 @@ struct BookmarkCardView: View {
                             .onTapGesture {
                                 URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
                             }
+                            .accessibilityAddTraits(.isButton)
                     }
                 }
                 .font(.caption)
@@ -360,21 +365,21 @@ struct BookmarkCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var formattedPublishedDate: String? {
         guard let published = bookmark.published, !published.isEmpty else {
-            return nil 
+            return nil
         }
-        
+
         if published.contains("1970-01-01") {
             return nil
         }
-        
+
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-        
+
         guard let date = formatter.date(from: published) else {
             formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
             guard let fallbackDate = formatter.date(from: published) else {
@@ -382,21 +387,21 @@ struct BookmarkCardView: View {
             }
             return formatDate(fallbackDate)
         }
-        
+
         return formatDate(date)
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let calendar = Calendar.current
         let now = Date()
-        
+
         // Today
         if calendar.isDate(date, inSameDayAs: now) {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
             return "Today, \(formatter.string(from: date))"
         }
-        
+
         // Yesterday
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
            calendar.isDate(date, inSameDayAs: yesterday) {
@@ -404,27 +409,27 @@ struct BookmarkCardView: View {
             formatter.timeStyle = .short
             return "Yesterday, \(formatter.string(from: date))"
         }
-        
+
         // This week
         if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE, HH:mm"
             return formatter.string(from: date)
         }
-        
+
         // This year
         if calendar.isDate(date, equalTo: now, toGranularity: .year) {
             let formatter = DateFormatter()
             formatter.dateFormat = "d. MMM, HH:mm"
             return formatter.string(from: date)
         }
-        
+
         // Other years
         let formatter = DateFormatter()
         formatter.dateFormat = "d. MMM yyyy"
         return formatter.string(from: date)
     }
-    
+
     private var imageURL: URL? {
         if let imageUrl = bookmark.resources.image?.src {
             return URL(string: imageUrl)
@@ -436,7 +441,7 @@ struct BookmarkCardView: View {
 struct IconBadge: View {
     let systemName: String
     let color: Color
-    
+
     var body: some View {
         Image(systemName: systemName)
             .frame(width: 20, height: 20)
