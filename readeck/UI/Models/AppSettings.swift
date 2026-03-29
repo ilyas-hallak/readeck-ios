@@ -44,6 +44,10 @@ class AppSettings: ObservableObject {
         settings?.bookmarkSortDirection ?? .descending
     }
 
+    var swipeActionConfig: SwipeActionConfig {
+        settings?.swipeActionConfig ?? .default
+    }
+
     init(settings: Settings? = nil) {
         self.settings = settings
     }

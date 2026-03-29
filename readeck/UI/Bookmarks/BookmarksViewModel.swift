@@ -23,6 +23,7 @@ class BookmarksViewModel {
 
     weak var appSettings: AppSettings?
     
+    var showTagsBookmark: Bookmark? = nil
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -302,6 +303,24 @@ class BookmarksViewModel {
         }
     }
     
+    @MainActor
+    func handleSwipeAction(_ action: SwipeAction, bookmark: Bookmark) {
+        switch action {
+        case .archive:
+            Task { await toggleArchive(bookmark: bookmark) }
+        case .favorite:
+            Task { await toggleFavorite(bookmark: bookmark) }
+        case .delete:
+            deleteBookmarkWithUndo(bookmark: bookmark)
+        case .showTags:
+            showTagsBookmark = bookmark
+        case .openInBrowser:
+            if let appSettings = appSettings {
+                URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
+            }
+        }
+    }
+
     @MainActor
     func resetReadProgress(bookmark: Bookmark) async {
         do {

@@ -233,6 +233,9 @@ class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(theme: Theme) async throws {}
     func execute(urlOpener: UrlOpener) async throws {}
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
+    func execute(swipeActionConfig: SwipeActionConfig) async throws {
+        // no-op for mock
+    }
 }
 
 class MockGetBookmarkUseCase: PGetBookmarkUseCase {
