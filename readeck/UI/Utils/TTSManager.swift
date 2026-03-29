@@ -92,11 +92,11 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         utterance.pitchMultiplier = 1.0
         utterance.volume = volume
         synthesizer.speak(utterance)
+    }
 
-        let source = SpeechQueue.shared.currentItem.flatMap { URL(string: $0.url)?.host }
-        let imageUrl = SpeechQueue.shared.currentItem?.imageUrl
+    func updateNowPlaying(title: String, source: String?, imageUrl: String?) {
         nowPlayingManager.updateNowPlayingInfo(
-            title: SpeechQueue.shared.currentItem?.title ?? "",
+            title: title,
             source: source,
             imageUrl: imageUrl,
             duration: estimatedDuration(for: currentFullText.count),

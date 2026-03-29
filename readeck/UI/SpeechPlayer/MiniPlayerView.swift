@@ -23,7 +23,7 @@ struct MiniPlayerView: View {
                         .lineLimit(1)
 
                     if viewModel.queueCount > 1 {
-                        Text("\(viewModel.queueCount) articles in queue")
+                        Text("\(viewModel.queueCount) \(String(localized: "articles in queue"))")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }

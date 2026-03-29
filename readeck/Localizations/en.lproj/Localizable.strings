@@ -188,3 +188,22 @@
 /* Font Settings */
 "font.web.match.hint" = "* Matches Readeck Web fonts";
 "DEBUG: Toggle network status" = "DEBUG: Toggle network status";
+
+/* TTS Player */
+"Play Next" = "Play Next";
+"Queue" = "Queue";
+"Clear All" = "Clear All";
+"Speed" = "Speed";
+"articles in queue" = "articles in queue";
+
+/* TTS Settings */
+"Languages & Voices" = "Languages & Voices";
+"Language & Voices" = "Language & Voices";
+"Auto" = "Auto";
+"Automatic (best available)" = "Automatic (best available)";
+"Download Premium Voices" = "Download Premium Voices";
+"Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices." = "Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices.";
+"Select a voice for each language. Articles are read in their detected language." = "Select a voice for each language. Articles are read in their detected language.";
+"Premium" = "Premium";
+"Enhanced" = "Enhanced";
+"Default" = "Default";

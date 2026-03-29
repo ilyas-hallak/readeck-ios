@@ -18,14 +18,12 @@ class NowPlayingManager {
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in
             self?.ttsManager.resume()
-            self?.updateNowPlayingPlaybackState(isPlaying: true)
             return .success
         }
 
         commandCenter.pauseCommand.isEnabled = true
         commandCenter.pauseCommand.addTarget { [weak self] _ in
             self?.ttsManager.pause()
-            self?.updateNowPlayingPlaybackState(isPlaying: false)
             return .success
         }
 

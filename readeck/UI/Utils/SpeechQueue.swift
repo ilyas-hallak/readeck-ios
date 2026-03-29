@@ -151,16 +151,18 @@ class SpeechQueue: ObservableObject {
         let next = queue[0]
         updatePublishedProperties()
         saveQueue()
-        let currentIndex = queueItems.count - queue.count
         let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
         let languageCode = convertToBCP47(next.language)
         ttsManager.speak(
             text: textToSpeak,
             language: languageCode,
-            utteranceIndex: currentIndex,
-            totalUtterances: queueItems.count,
+            utteranceIndex: 0,
+            totalUtterances: queue.count,
             startFromCharacter: next.lastCharacterIndex
         )
+
+        let source = URL(string: next.url)?.host
+        ttsManager.updateNowPlaying(title: next.title, source: source, imageUrl: next.imageUrl)
     }
 
     private func onCurrentItemCancelled() {
