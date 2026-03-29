@@ -2,12 +2,13 @@ import SwiftUI
 
 struct SpeechPlayerView: View {
     @ObservedObject var viewModel: SpeechPlayerViewModel
+    @State private var isSheetPresented = false
 
     var body: some View {
         MiniPlayerView(viewModel: viewModel) {
-            viewModel.isPlayerSheetPresented = true
+            isSheetPresented = true
         }
-        .sheet(isPresented: $viewModel.isPlayerSheetPresented) {
+        .sheet(isPresented: $isSheetPresented) {
             PlayerSheetView(viewModel: viewModel)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)

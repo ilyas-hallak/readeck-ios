@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI
 import Combine
 
 class SpeechPlayerViewModel: ObservableObject {
@@ -21,8 +20,6 @@ class SpeechPlayerViewModel: ObservableObject {
     @Published var rate: Float = 0.5
     @Published var currentCharacterIndex: Int = 0
     @Published var totalCharacterCount: Int = 0
-    @Published var isPlayerSheetPresented: Bool = false
-    @Published var selectedSheetDetent: PresentationDetent = .medium
     
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {        
         loadSettingsUseCase = factory.makeLoadSettingsUseCase()
