@@ -179,6 +179,68 @@ class SpeechQueue: ObservableObject {
         processQueue()
     }
     
+    // MARK: - Queue Management
+
+    func insertAfterCurrent(_ item: SpeechQueueItem) {
+        if queue.isEmpty {
+            enqueue(item)
+        } else {
+            queue.insert(item, at: 1)
+            updatePublishedProperties()
+            saveQueue()
+            if !isProcessing {
+                processQueue()
+            }
+        }
+    }
+
+    func move(from source: IndexSet, to destination: Int) {
+        // Don't allow moving the currently playing item (index 0)
+        let adjustedSource = source.filter { $0 > 0 }
+        guard !adjustedSource.isEmpty else { return }
+        let adjustedDestination = max(1, destination)
+        queue.move(fromOffsets: IndexSet(adjustedSource), toOffset: adjustedDestination)
+        updatePublishedProperties()
+        saveQueue()
+    }
+
+    func remove(at offsets: IndexSet) {
+        let removingCurrent = offsets.contains(0)
+        queue.remove(atOffsets: offsets)
+        updatePublishedProperties()
+        saveQueue()
+        if removingCurrent {
+            ttsManager.stop()
+            isProcessing = false
+            processQueue()
+        }
+    }
+
+    func skipToNext() {
+        guard !queue.isEmpty else { return }
+        ttsManager.stop()
+        queue.removeFirst()
+        isProcessing = false
+        updatePublishedProperties()
+        saveQueue()
+        processQueue()
+    }
+
+    func seekBack(seconds: Double = 30) {
+        ttsManager.seekBack(seconds: seconds)
+    }
+
+    func seekForward(seconds: Double = 30) {
+        ttsManager.seekForward(seconds: seconds)
+    }
+
+    func seekToPosition(_ percentage: Double) {
+        guard let current = queue.first else { return }
+        let totalChars = current.totalCharacters
+        let targetChar = Int(percentage * Double(totalChars))
+        ttsManager.seek(toCharacter: targetChar)
+    }
+
     // MARK: - Position Tracking
 
     func updateCurrentPosition(_ characterIndex: Int) {
