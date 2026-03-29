@@ -25,10 +25,21 @@ struct ReadingSettingsView: View {
                             }
                         }
 
-                    Text("Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.")
+                    Text("Activate the Read Aloud Feature to read aloud your articles.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
+                }
+
+                if viewModel.enableTTS {
+                    NavigationLink {
+                        TTSLanguageSettingsView()
+                    } label: {
+                        HStack {
+                            Label("Language & Voices", systemImage: "waveform")
+                            Spacer()
+                        }
+                    }
                 }
             } header: {
                 Text("Reading Settings")

@@ -6,7 +6,10 @@ class VoiceManager: ObservableObject {
     
     private let userDefaults = UserDefaults.standard
     private let selectedVoiceKey = "selectedVoice"
+    private let perLanguageVoiceKey = "tts_per_language_voices"
     private var cachedVoices: [String: AVSpeechSynthesisVoice] = [:]
+    private(set) var perLanguageVoices: [String: String] = [:] // languageCode -> voiceIdentifier
+    private var previewSynthesizer = AVSpeechSynthesizer()
     
     @Published var selectedVoice: AVSpeechSynthesisVoice?
     @Published var availableVoices: [AVSpeechSynthesisVoice] = []
@@ -14,6 +17,7 @@ class VoiceManager: ObservableObject {
     private init() {
         loadAvailableVoices()
         loadSelectedVoice()
+        loadPerLanguageVoices()
     }
     
     // MARK: - Public Methods
@@ -22,6 +26,13 @@ class VoiceManager: ObservableObject {
         // Check cache first
         if let cachedVoice = cachedVoices[language] {
             return cachedVoice
+        }
+
+        // Check per-language selection
+        if let voiceId = perLanguageVoices[language],
+           let voice = availableVoices.first(where: { $0.identifier == voiceId }) {
+            cachedVoices[language] = voice
+            return voice
         }
 
         // Only use selectedVoice if its language matches
@@ -87,6 +98,49 @@ class VoiceManager: ObservableObject {
         return AVSpeechSynthesisVoice(language: language) ?? AVSpeechSynthesisVoice()
     }
     
+    // MARK: - Per-Language Voice
+
+    private func loadPerLanguageVoices() {
+        if let data = userDefaults.data(forKey: perLanguageVoiceKey),
+           let dict = try? JSONDecoder().decode([String: String].self, from: data) {
+            perLanguageVoices = dict
+        }
+    }
+
+    func setVoice(_ voice: AVSpeechSynthesisVoice, for language: String) {
+        perLanguageVoices[language] = voice.identifier
+        cachedVoices.removeValue(forKey: language)
+        if let data = try? JSONEncoder().encode(perLanguageVoices) {
+            userDefaults.set(data, forKey: perLanguageVoiceKey)
+        }
+    }
+
+    func getSelectedVoiceIdentifier(for language: String) -> String? {
+        return perLanguageVoices[language]
+    }
+
+    func clearPerLanguageVoice(for language: String) {
+        perLanguageVoices.removeValue(forKey: language)
+        cachedVoices.removeValue(forKey: language)
+        if let data = try? JSONEncoder().encode(perLanguageVoices) {
+            userDefaults.set(data, forKey: perLanguageVoiceKey)
+        }
+    }
+
+    // MARK: - Preview
+
+    func previewVoice(_ voice: AVSpeechSynthesisVoice, sampleText: String) {
+        previewSynthesizer.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: sampleText)
+        utterance.voice = voice
+        utterance.rate = 0.5
+        previewSynthesizer.speak(utterance)
+    }
+
+    func stopPreview() {
+        previewSynthesizer.stopSpeaking(at: .immediate)
+    }
+
     // MARK: - Debug Methods
     
     func printAvailableVoices(for language: String) {

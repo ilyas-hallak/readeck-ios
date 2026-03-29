@@ -1,14 +1,10 @@
-//
-//  TTSLanguageSettingsView.swift
-//  readeck
-//
-//  Created by Claude on 04.02.26.
-//
-
 import SwiftUI
+import AVFoundation
 
 struct TTSLanguageSettingsView: View {
     @AppStorage("tts_preferred_language") private var preferredLanguage: String = "en-US"
+    @ObservedObject private var voiceManager = VoiceManager.shared
+    @State private var previewingVoiceId: String? = nil
 
     private let supportedLanguages: [(code: String, name: String)] = [
         ("de-DE", "Deutsch"),
@@ -47,26 +43,29 @@ struct TTSLanguageSettingsView: View {
         List {
             Section {
                 ForEach(supportedLanguages, id: \.code) { language in
-                    Button {
-                        preferredLanguage = language.code
+                    NavigationLink {
+                        VoiceListView(languageCode: language.code, languageName: language.name)
                     } label: {
                         HStack {
                             Text(language.name)
-                                .foregroundColor(.primary)
                             Spacer()
-                            if preferredLanguage == language.code {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
+                            if let voiceId = voiceManager.getSelectedVoiceIdentifier(for: language.code),
+                               let voice = voiceManager.availableVoices.first(where: { $0.identifier == voiceId }) {
+                                Text(voice.name)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("Auto")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
                 }
             } header: {
-                Text("Preferred Language")
+                Text("Languages & Voices")
             } footer: {
-                Text(
-                    "Articles will be read in their detected language. This setting is used as fallback."
-                )
+                Text("Select a voice for each language. Articles are read in their detected language.")
             }
 
             Section {
@@ -74,7 +73,7 @@ struct TTSLanguageSettingsView: View {
                     openAccessibilitySettings()
                 } label: {
                     HStack {
-                        Label("Download Extended Voices", systemImage: "arrow.down.circle")
+                        Label("Download Premium Voices", systemImage: "arrow.down.circle")
                         Spacer()
                         Image(systemName: "arrow.up.forward.app")
                             .font(.caption)
@@ -82,21 +81,125 @@ struct TTSLanguageSettingsView: View {
                     }
                 }
             } footer: {
-                Text(
-                    "Download additional high-quality Siri voices in iOS Settings > Accessibility > Spoken Content > Voices."
-                )
+                Text("Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices.")
             }
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Language & Voices")
         .onAppear {
-            VoiceManager.shared.refreshVoices()
+            voiceManager.refreshVoices()
+        }
+        .onDisappear {
+            voiceManager.stopPreview()
         }
     }
 
     private func openAccessibilitySettings() {
         if let url = URL(string: "App-prefs:ACCESSIBILITY&path=SPOKEN_CONTENT") {
             UIApplication.shared.open(url)
+        }
+    }
+}
+
+// MARK: - Voice List for a specific language
+
+struct VoiceListView: View {
+    let languageCode: String
+    let languageName: String
+    @ObservedObject private var voiceManager = VoiceManager.shared
+    @State private var previewingVoiceId: String? = nil
+
+    private var voicesByQuality: [(quality: String, voices: [AVSpeechSynthesisVoice])] {
+        let voices = voiceManager.getAvailableVoices(for: languageCode)
+        var groups: [(String, [AVSpeechSynthesisVoice])] = []
+
+        let premium = voices.filter { $0.quality == .premium }
+        let enhanced = voices.filter { $0.quality == .enhanced }
+        let standard = voices.filter { $0.quality == .default }
+
+        if !premium.isEmpty { groups.append(("Premium", premium)) }
+        if !enhanced.isEmpty { groups.append(("Enhanced", enhanced)) }
+        if !standard.isEmpty { groups.append(("Default", standard)) }
+
+        return groups
+    }
+
+    private var selectedVoiceId: String? {
+        voiceManager.getSelectedVoiceIdentifier(for: languageCode)
+    }
+
+    var body: some View {
+        List {
+            // Auto option
+            Section {
+                Button {
+                    voiceManager.clearPerLanguageVoice(for: languageCode)
+                } label: {
+                    HStack {
+                        Text("Automatic (best available)")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        if selectedVoiceId == nil {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                }
+            }
+
+            ForEach(voicesByQuality, id: \.quality) { group in
+                Section(group.quality) {
+                    ForEach(group.voices, id: \.identifier) { voice in
+                        Button {
+                            voiceManager.setVoice(voice, for: languageCode)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(voice.name)
+                                        .foregroundColor(.primary)
+                                }
+                                Spacer()
+                                if selectedVoiceId == voice.identifier {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.accentColor)
+                                }
+                                // Preview button
+                                Button {
+                                    if previewingVoiceId == voice.identifier {
+                                        voiceManager.stopPreview()
+                                        previewingVoiceId = nil
+                                    } else {
+                                        let sampleText = sampleSentence(for: languageCode, voiceName: voice.name)
+                                        voiceManager.previewVoice(voice, sampleText: sampleText)
+                                        previewingVoiceId = voice.identifier
+                                    }
+                                } label: {
+                                    Image(systemName: previewingVoiceId == voice.identifier ? "stop.circle.fill" : "play.circle")
+                                        .foregroundColor(.accentColor)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle(languageName)
+        .onDisappear {
+            voiceManager.stopPreview()
+            previewingVoiceId = nil
+        }
+    }
+
+    private func sampleSentence(for language: String, voiceName: String) -> String {
+        switch language.prefix(2) {
+        case "de": return "Hallo, ich bin \(voiceName). So werde ich deine Artikel vorlesen."
+        case "en": return "Hi, I'm \(voiceName). This is how I'll read your articles."
+        case "es": return "Hola, soy \(voiceName). Así leeré tus artículos."
+        case "fr": return "Bonjour, je suis \(voiceName). Voici comment je lirai vos articles."
+        case "it": return "Ciao, sono \(voiceName). Ecco come leggerò i tuoi articoli."
+        default: return "Hello, I'm \(voiceName). This is how I'll read your articles."
         }
     }
 }
