@@ -5,88 +5,97 @@
 //  Created by Ilyas Hallak on 15.12.25.
 //
 
-import XCTest
+import Testing
 @testable import readeck
 
-final class ServerInfoTests: XCTestCase {
+@Suite("Server Info Tests")
+struct ServerInfoTests {
 
     // MARK: - OAuth Feature Detection
 
-    func testSupportsOAuth_WithOAuthFeature_ReturnsTrue() {
+    @Test("Supports OAuth with OAuth feature returns true")
+    func supportsOAuth_WithOAuthFeature_ReturnsTrue() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: ["oauth", "email"]
         )
 
-        XCTAssertTrue(serverInfo.supportsOAuth)
+        #expect(serverInfo.supportsOAuth)
     }
 
-    func testSupportsOAuth_WithoutOAuthFeature_ReturnsFalse() {
+    @Test("Supports OAuth without OAuth feature returns false")
+    func supportsOAuth_WithoutOAuthFeature_ReturnsFalse() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: ["email"]
         )
 
-        XCTAssertFalse(serverInfo.supportsOAuth)
+        #expect(!serverInfo.supportsOAuth)
     }
 
-    func testSupportsOAuth_WithNilFeatures_ReturnsFalse() {
+    @Test("Supports OAuth with nil features returns false")
+    func supportsOAuth_WithNilFeatures_ReturnsFalse() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: nil
         )
 
-        XCTAssertFalse(serverInfo.supportsOAuth, "Should return false for old servers without features array")
+        #expect(!serverInfo.supportsOAuth, "Should return false for old servers without features array")
     }
 
-    func testSupportsOAuth_WithEmptyFeatures_ReturnsFalse() {
+    @Test("Supports OAuth with empty features returns false")
+    func supportsOAuth_WithEmptyFeatures_ReturnsFalse() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: []
         )
 
-        XCTAssertFalse(serverInfo.supportsOAuth)
+        #expect(!serverInfo.supportsOAuth)
     }
 
     // MARK: - Email Feature Detection
 
-    func testSupportsEmail_WithEmailFeature_ReturnsTrue() {
+    @Test("Supports email with email feature returns true")
+    func supportsEmail_WithEmailFeature_ReturnsTrue() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: ["oauth", "email"]
         )
 
-        XCTAssertTrue(serverInfo.supportsEmail)
+        #expect(serverInfo.supportsEmail)
     }
 
-    func testSupportsEmail_WithoutEmailFeature_ReturnsFalse() {
+    @Test("Supports email without email feature returns false")
+    func supportsEmail_WithoutEmailFeature_ReturnsFalse() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: ["oauth"]
         )
 
-        XCTAssertFalse(serverInfo.supportsEmail)
+        #expect(!serverInfo.supportsEmail)
     }
 
-    func testSupportsEmail_WithNilFeatures_ReturnsFalse() {
+    @Test("Supports email with nil features returns false")
+    func supportsEmail_WithNilFeatures_ReturnsFalse() {
         let serverInfo = ServerInfo(
             version: "1.0.0",
             isReachable: true,
             features: nil
         )
 
-        XCTAssertFalse(serverInfo.supportsEmail)
+        #expect(!serverInfo.supportsEmail)
     }
 
     // MARK: - DTO Conversion
 
-    func testInit_FromDto_WithFeatures() {
+    @Test("Init from DTO with features")
+    func init_FromDto_WithFeatures() {
         let dto = ServerInfoDto(
             version: ServerInfoDto.VersionInfo(canonical: "1.2.3", release: "1.2.3", build: "abc123"),
             features: ["oauth", "email"]
@@ -94,14 +103,15 @@ final class ServerInfoTests: XCTestCase {
 
         let serverInfo = ServerInfo(from: dto)
 
-        XCTAssertEqual(serverInfo.version, "1.2.3")
-        XCTAssertTrue(serverInfo.isReachable)
-        XCTAssertEqual(serverInfo.features, ["oauth", "email"])
-        XCTAssertTrue(serverInfo.supportsOAuth)
-        XCTAssertTrue(serverInfo.supportsEmail)
+        #expect(serverInfo.version == "1.2.3")
+        #expect(serverInfo.isReachable)
+        #expect(serverInfo.features == ["oauth", "email"])
+        #expect(serverInfo.supportsOAuth)
+        #expect(serverInfo.supportsEmail)
     }
 
-    func testInit_FromDto_WithoutFeatures() {
+    @Test("Init from DTO without features")
+    func init_FromDto_WithoutFeatures() {
         let dto = ServerInfoDto(
             version: ServerInfoDto.VersionInfo(canonical: "0.9.0", release: "0.9.0", build: ""),
             features: nil
@@ -109,26 +119,28 @@ final class ServerInfoTests: XCTestCase {
 
         let serverInfo = ServerInfo(from: dto)
 
-        XCTAssertEqual(serverInfo.version, "0.9.0")
-        XCTAssertTrue(serverInfo.isReachable)
-        XCTAssertNil(serverInfo.features)
-        XCTAssertFalse(serverInfo.supportsOAuth, "Old server without features should not support OAuth")
-        XCTAssertFalse(serverInfo.supportsEmail)
+        #expect(serverInfo.version == "0.9.0")
+        #expect(serverInfo.isReachable)
+        #expect(serverInfo.features == nil)
+        #expect(!serverInfo.supportsOAuth, "Old server without features should not support OAuth")
+        #expect(!serverInfo.supportsEmail)
     }
 
-    func testUnreachable_HasNoFeatures() {
+    @Test("Unreachable has no features")
+    func unreachable_HasNoFeatures() {
         let serverInfo = ServerInfo.unreachable
 
-        XCTAssertEqual(serverInfo.version, "")
-        XCTAssertFalse(serverInfo.isReachable)
-        XCTAssertNil(serverInfo.features)
-        XCTAssertFalse(serverInfo.supportsOAuth)
-        XCTAssertFalse(serverInfo.supportsEmail)
+        #expect(serverInfo.version == "")
+        #expect(!serverInfo.isReachable)
+        #expect(serverInfo.features == nil)
+        #expect(!serverInfo.supportsOAuth)
+        #expect(!serverInfo.supportsEmail)
     }
 
     // MARK: - Backward Compatibility
 
-    func testBackwardCompatibility_OldServerWithoutFeaturesArray() {
+    @Test("Backward compatibility: old server without features array")
+    func backwardCompatibility_OldServerWithoutFeaturesArray() {
         // Simulates an old Readeck server that doesn't include features in /api/info response
         let dto = ServerInfoDto(
             version: ServerInfoDto.VersionInfo(canonical: "0.5.0", release: "0.5.0", build: ""),
@@ -138,15 +150,16 @@ final class ServerInfoTests: XCTestCase {
         let serverInfo = ServerInfo(from: dto)
 
         // Should work without crashing
-        XCTAssertNotNil(serverInfo)
-        XCTAssertEqual(serverInfo.version, "0.5.0")
+        #expect(serverInfo != nil)
+        #expect(serverInfo.version == "0.5.0")
 
         // OAuth detection should gracefully return false
-        XCTAssertFalse(serverInfo.supportsOAuth, "Old servers should gracefully report no OAuth support")
-        XCTAssertFalse(serverInfo.supportsEmail)
+        #expect(!serverInfo.supportsOAuth, "Old servers should gracefully report no OAuth support")
+        #expect(!serverInfo.supportsEmail)
     }
 
-    func testBackwardCompatibility_NewServerWithFeaturesArray() {
+    @Test("Backward compatibility: new server with features array")
+    func backwardCompatibility_NewServerWithFeaturesArray() {
         // Simulates a new Readeck server with OAuth support
         let dto = ServerInfoDto(
             version: ServerInfoDto.VersionInfo(canonical: "1.0.0", release: "1.0.0", build: "xyz"),
@@ -155,12 +168,13 @@ final class ServerInfoTests: XCTestCase {
 
         let serverInfo = ServerInfo(from: dto)
 
-        XCTAssertNotNil(serverInfo)
-        XCTAssertTrue(serverInfo.supportsOAuth, "New servers with oauth feature should report OAuth support")
-        XCTAssertTrue(serverInfo.supportsEmail)
+        #expect(serverInfo != nil)
+        #expect(serverInfo.supportsOAuth, "New servers with oauth feature should report OAuth support")
+        #expect(serverInfo.supportsEmail)
     }
 
-    func testBackwardCompatibility_NewServerWithoutOAuthFeature() {
+    @Test("Backward compatibility: new server without OAuth feature")
+    func backwardCompatibility_NewServerWithoutOAuthFeature() {
         // Simulates a new server that has features array but OAuth is disabled
         let dto = ServerInfoDto(
             version: ServerInfoDto.VersionInfo(canonical: "1.0.0", release: "1.0.0", build: "xyz"),
@@ -169,8 +183,8 @@ final class ServerInfoTests: XCTestCase {
 
         let serverInfo = ServerInfo(from: dto)
 
-        XCTAssertNotNil(serverInfo)
-        XCTAssertFalse(serverInfo.supportsOAuth, "Server with features but no oauth should report no OAuth support")
-        XCTAssertTrue(serverInfo.supportsEmail)
+        #expect(serverInfo != nil)
+        #expect(!serverInfo.supportsOAuth, "Server with features but no oauth should report no OAuth support")
+        #expect(serverInfo.supportsEmail)
     }
 }

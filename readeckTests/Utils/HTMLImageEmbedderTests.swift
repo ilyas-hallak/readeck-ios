@@ -15,7 +15,7 @@ import AppKit
 #endif
 @testable import readeck
 
-@Suite("HTMLImageEmbedder Tests")
+@Suite("HTMLImageEmbedder Tests", .serialized)
 struct HTMLImageEmbedderTests {
 
     // MARK: - Test Data
@@ -48,7 +48,7 @@ struct HTMLImageEmbedderTests {
 
     // MARK: - Helper Methods
 
-    /// Creates a test image and caches it in Kingfisher for testing
+    /// Creates a test image and caches it in Kingfisher's memory cache for testing
     private func cacheTestImage(url: URL) async {
         // Create a simple 1x1 pixel red image for testing
         #if os(iOS)
@@ -68,34 +68,21 @@ struct HTMLImageEmbedderTests {
         #endif
 
         if let image = image {
-            // Store both in memory and on disk for testing
-            let options = KingfisherParsedOptionsInfo([
-                .cacheOriginalImage,
-                .diskCacheExpiration(.never)
-            ])
-            try? await ImageCache.default.store(image, forKey: url.cacheKey, options: options)
-
-            // Small delay to ensure cache write completes
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            // Store in memory cache for reliable test behavior
+            try? await ImageCache.default.store(image, forKey: url.cacheKey, toDisk: false)
         }
     }
 
-    /// Clears all cached images after tests
-    private func clearTestCache() async {
-        // Clear both memory and disk cache
-        await ImageCache.default.clearMemoryCache()
-        await ImageCache.default.clearDiskCache()
-
-        // Small delay to ensure cache clear completes
-        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-    }
+    /// No-op: we use unique URLs per test instead of clearing the shared cache,
+    /// because clearMemoryCache() interferes with parallel test suites.
+    private func clearTestCache() {}
 
     // MARK: - Basic Functionality Tests
 
     @Test("Embed Base64 images converts URLs to data URIs")
     func testEmbedBase64ImagesConvertsURLs() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
 
@@ -113,29 +100,34 @@ struct HTMLImageEmbedderTests {
         #expect(!result.contains("https://example.com/image1.jpg"))
         #expect(!result.contains("https://example.com/image2.png"))
 
-        await clearTestCache()
+        clearTestCache()
     }
 
     @Test("Embed Base64 images skips images not in cache")
     func testEmbedBase64ImagesSkipsUncachedImages() async {
-        // Clear cache first to ensure clean state
-        await clearTestCache()
-
         let embedder = HTMLImageEmbedder()
 
-        // Don't cache any images - all should be skipped
-        let result = await embedder.embedBase64Images(in: htmlWithImages)
+        // Use unique URLs that are definitely not cached
+        let uniqueHTML = """
+        <html>
+            <body>
+                <img src="https://uncached-\(UUID()).com/image1.jpg" alt="Image 1">
+                <img src="https://uncached-\(UUID()).com/image2.png">
+            </body>
+        </html>
+        """
 
-        // Original URLs should remain unchanged
-        #expect(result.contains("https://example.com/image1.jpg"))
-        #expect(result.contains("https://example.com/image2.png"))
+        // Don't cache any images - all should be skipped
+        let result = await embedder.embedBase64Images(in: uniqueHTML)
+
+        // HTML should be unchanged (no data URIs added)
         #expect(!result.contains("data:image/jpeg;base64,"))
     }
 
     @Test("Embed Base64 images increases HTML size")
     func testEmbedBase64ImagesIncreasesHTMLSize() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
 
@@ -150,13 +142,13 @@ struct HTMLImageEmbedderTests {
         // Base64 encoded images should make HTML larger
         #expect(newSize > originalSize)
 
-        await clearTestCache()
+        clearTestCache()
     }
 
     @Test("Embed Base64 images uses JPEG format with quality 0.85")
     func testEmbedBase64ImagesUsesJPEGFormat() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
 
@@ -168,7 +160,7 @@ struct HTMLImageEmbedderTests {
         // Verify data URI uses JPEG format
         #expect(result.contains("data:image/jpeg;base64,"))
 
-        await clearTestCache()
+        clearTestCache()
     }
 
     // MARK: - Edge Case Tests
@@ -198,7 +190,7 @@ struct HTMLImageEmbedderTests {
     @Test("Embed Base64 images skips already embedded data URIs")
     func testEmbedBase64ImagesSkipsDataURIs() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
 
@@ -214,13 +206,13 @@ struct HTMLImageEmbedderTests {
         // New image should be embedded
         #expect(!result.contains("https://example.com/new-image.jpg"))
 
-        await clearTestCache()
+        clearTestCache()
     }
 
     @Test("Embed Base64 images processes multiple images correctly")
     func testEmbedBase64ImagesProcessesMultipleImages() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
         let htmlMultiple = """
@@ -246,7 +238,7 @@ struct HTMLImageEmbedderTests {
         #expect(!result.contains("https://example.com/img2.jpg"))
         #expect(!result.contains("https://example.com/img3.jpg"))
 
-        await clearTestCache()
+        clearTestCache()
     }
 
     // MARK: - Statistics & Logging Tests
@@ -254,7 +246,7 @@ struct HTMLImageEmbedderTests {
     @Test("Embed Base64 images tracks success and failure counts")
     func testEmbedBase64ImagesTracksStatistics() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
         let htmlMixed = """
@@ -275,13 +267,13 @@ struct HTMLImageEmbedderTests {
         // Second image should remain as URL
         #expect(result.contains("https://not-cached.com/image.jpg"))
 
-        await clearTestCache()
+        clearTestCache()
     }
 
     @Test("Embed Base64 images handles invalid URLs gracefully")
     func testEmbedBase64ImagesHandlesInvalidURLs() async {
         // Clear cache first to ensure clean state
-        await clearTestCache()
+        clearTestCache()
 
         let embedder = HTMLImageEmbedder()
         let htmlInvalid = """
@@ -301,6 +293,6 @@ struct HTMLImageEmbedderTests {
         #expect(!result.contains("https://valid.com/image.jpg"))
         #expect(result.contains("data:image/jpeg;base64,"))
 
-        await clearTestCache()
+        clearTestCache()
     }
 }

@@ -38,6 +38,7 @@ struct BookmarkDetailView2: View {
 
     var body: some View {
         mainView
+            .background(nativeBackgroundColor)
     }
 
     private var mainView: some View {
@@ -96,9 +97,11 @@ struct BookmarkDetailView2: View {
     private var content: some View {
         VStack(spacing: 0) {
             // Progress bar at top
-            ProgressView(value: readingProgress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .frame(height: 3)
+            if !(viewModel.settings?.hideProgressBar ?? false) {
+                ProgressView(value: readingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(height: 3)
+            }
 
             // Main scroll content
             scrollViewContent
@@ -165,10 +168,12 @@ struct BookmarkDetailView2: View {
 
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
-                        headerView(width: geometry.size.width)
+                        if !(viewModel.settings?.hideHeroImage ?? false) {
+                            headerView(width: geometry.size.width)
+                        }
 
                         VStack(alignment: .leading, spacing: 16) {
-                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                            Color.clear.frame(width: geometry.size.width, height: (viewModel.bookmarkDetail.imageUrl.isEmpty || (viewModel.settings?.hideHeroImage ?? false)) ? 84 : headerHeight)
 
                             titleSection
 
@@ -290,19 +295,10 @@ struct BookmarkDetailView2: View {
 
     private var fontSettingsSheet: some View {
         NavigationView {
-            VStack {
-                FontSettingsView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-
-                Spacer()
-            }
-            .navigationTitle("Font Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+            FontSelectionView()
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
                         showingFontSettings = false
                     }
                 }
@@ -364,12 +360,21 @@ struct BookmarkDetailView2: View {
 
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(viewModel.bookmarkDetail.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.bottom, 2)
-                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+            HStack(alignment: .top) {
+                Text(viewModel.bookmarkDetail.title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(nativeTextColor)
+                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                Spacer()
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    Image(systemName: "safari")
+                        .font(.title3)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            }
             metaInfoSection
         }
         .padding(.horizontal)
@@ -378,10 +383,25 @@ struct BookmarkDetailView2: View {
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
-                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Authors: " : "Author: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                HStack(spacing: 4) {
+                    Image(systemName: "person")
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text("·")
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(formatDate(viewModel.bookmarkDetail.created))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            } else {
+                metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             }
-            metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
-            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            if !(viewModel.settings?.hideWordCount ?? false) {
+                metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            }
 
             // Labels section
             if !viewModel.bookmarkDetail.labels.isEmpty {
@@ -414,16 +434,6 @@ struct BookmarkDetailView2: View {
                 }
             }
 
-            metaRow(icon: "safari") {
-                Button(action: {
-                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                }) {
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-
             if appSettings.enableTTS {
                 metaRow(icon: "speaker.wave.2") {
                     Button(action: {
@@ -439,13 +449,48 @@ struct BookmarkDetailView2: View {
         }
     }
 
+    // MARK: - Color Theme Helpers
+
+    private var nativeBackgroundColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return Color(.systemBackground)
+        case .custom:
+            if let hex = viewModel.settings?.customBackgroundColor {
+                return Color(hex: hex)
+            }
+            return Color(.systemBackground)
+        default:
+            return theme.backgroundColor ?? Color(.systemBackground)
+        }
+    }
+
+    private var nativeTextColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return .primary
+        case .custom:
+            if let hex = viewModel.settings?.customTextColor {
+                return Color(hex: hex)
+            }
+            return .primary
+        default:
+            return theme.textColor ?? .primary
+        }
+    }
+
+    private var nativeSecondaryTextColor: Color {
+        return nativeTextColor.opacity(0.6)
+    }
+
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(nativeSecondaryTextColor)
         }
     }
 
@@ -453,6 +498,7 @@ struct BookmarkDetailView2: View {
     private func metaRow(icon: String, @ViewBuilder content: () -> some View) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             content()
         }
     }
@@ -497,7 +543,7 @@ struct BookmarkDetailView2: View {
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
                 .padding(.horizontal, 4)
-                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
+                .id(settings.webViewIdentifier)
             }
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
