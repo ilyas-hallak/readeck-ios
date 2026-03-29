@@ -23,6 +23,8 @@ final class BookmarksViewModel {
 
     weak var appSettings: AppSettings?
 
+    var showTagsBookmark: Bookmark?
+
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -298,6 +300,24 @@ final class BookmarksViewModel {
             await loadBookmarks(state: currentState)
         } catch {
             errorMessage = "Error marking bookmark"
+        }
+    }
+
+    @MainActor
+    func handleSwipeAction(_ action: SwipeAction, bookmark: Bookmark) {
+        switch action {
+        case .archive:
+            Task { await toggleArchive(bookmark: bookmark) }
+        case .favorite:
+            Task { await toggleFavorite(bookmark: bookmark) }
+        case .delete:
+            deleteBookmarkWithUndo(bookmark: bookmark)
+        case .showTags:
+            showTagsBookmark = bookmark
+        case .openInBrowser:
+            if let appSettings = appSettings {
+                URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
+            }
         }
     }
 

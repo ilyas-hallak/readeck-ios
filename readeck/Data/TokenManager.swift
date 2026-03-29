@@ -1,9 +1,11 @@
 import Foundation
+import OSLog
 
 @Observable
 final class TokenManager {
     static let shared = TokenManager()
 
+    private let logger = Logger.auth
     private let settingsRepository: PSettingsRepository
     private var cachedSettings: Settings?
 
@@ -23,7 +25,7 @@ final class TokenManager {
         do {
             cachedSettings = try await settingsRepository.loadSettings()
         } catch {
-            print("Failed to load settings: \(error)")
+            logger.error("Failed to load settings: \(error)")
         }
     }
 
@@ -32,7 +34,7 @@ final class TokenManager {
             try await settingsRepository.saveToken(token)
             cachedSettings?.token = token
         } catch {
-            print("Failed to save token: \(error)")
+            logger.error("Failed to save token: \(error)")
         }
     }
 
@@ -41,7 +43,7 @@ final class TokenManager {
             try await settingsRepository.saveToken("")
             cachedSettings?.token = ""
         } catch {
-            print("Failed to clear token: \(error)")
+            logger.error("Failed to clear token: \(error)")
             throw error
         }
     }

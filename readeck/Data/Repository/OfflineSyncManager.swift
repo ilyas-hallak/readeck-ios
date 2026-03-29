@@ -16,6 +16,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
 
     private let coreDataManager = CoreDataManager.shared
     private let api: PAPI
+    private let logger = Logger.sync
 
     init(api: PAPI = API()) {
         self.api = api
@@ -65,7 +66,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                     syncStatus = "Synced \(successCount) bookmarks..."
                 }
             } catch {
-                print("Failed to sync bookmark: \(url) - \(error)")
+                logger.error("Failed to sync bookmark: \(url) - \(error)")
                 failedCount += 1
 
                 // If first sync attempt fails, server is likely unreachable - abort
@@ -109,7 +110,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
             return try coreDataManager.context.safeFetch(fetchRequest)
         } catch {
-            print("Failed to fetch offline bookmarks: \(error)")
+            logger.error("Failed to fetch offline bookmarks: \(error)")
             return []
         }
     }
@@ -123,7 +124,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                 self.coreDataManager.save()
             }
         } catch {
-            print("Failed to delete offline bookmark: \(error)")
+            logger.error("Failed to delete offline bookmark: \(error)")
         }
     }
 }
