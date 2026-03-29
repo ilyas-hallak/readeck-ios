@@ -20,6 +20,8 @@ struct SettingsContainerView: View {
         List {
             AppearanceSettingsView()
 
+            SwipeActionsSettingsView()
+
             Section {
                 Toggle("Enable Offline Reading".localized, isOn: $offlineViewModel.offlineSettings.enabled)
                     .onChange(of: offlineViewModel.offlineSettings.enabled) {
@@ -81,8 +83,6 @@ struct SettingsContainerView: View {
             CacheSettingsView()
 
             ReadingSettingsView()
-
-            SwipeActionsSettingsView()
 
             SettingsServerView()
 

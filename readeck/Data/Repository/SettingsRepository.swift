@@ -86,8 +86,8 @@ class SettingsRepository: PSettingsRepository {
                     if let swipeActionConfig = settings.swipeActionConfig {
                         let encoder = JSONEncoder()
                         if let jsonData = try? encoder.encode(swipeActionConfig),
-                           let jsonString = String(data: jsonData, encoding: .utf8) {
-                            existingSettings.swipeActionConfig = jsonString
+                           let configText = String(data: jsonData, encoding: .utf8) {
+                            existingSettings.swipeActionConfig = configText
                         }
                     }
 
