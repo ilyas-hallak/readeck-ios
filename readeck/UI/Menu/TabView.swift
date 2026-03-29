@@ -3,16 +3,16 @@ import Foundation
 
 struct MainTabView: View {
     @State private var selectedTab: SidebarTab = .unread
-    @State var selectedBookmark: Bookmark?
+    @State private var selectedBookmark: Bookmark?
     @StateObject private var playerUIState = PlayerUIState()
     @State private var showReleaseNotes = false
 
     // sizeClass
     @Environment(\.horizontalSizeClass)
-    var horizontalSizeClass
+    private var horizontalSizeClass
 
     @Environment(\.verticalSizeClass)
-    var verticalSizeClass
+    private var verticalSizeClass
 
     var body: some View {
         Group {

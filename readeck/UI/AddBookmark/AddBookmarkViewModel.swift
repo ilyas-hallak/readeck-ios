@@ -2,65 +2,63 @@ import Foundation
 import UIKit
 
 @Observable
-class AddBookmarkViewModel {
-    
+final class AddBookmarkViewModel {
     // MARK: - Dependencies
 
     private let createBookmarkUseCase = DefaultUseCaseFactory.shared.makeCreateBookmarkUseCase()
     private let getLabelsUseCase = DefaultUseCaseFactory.shared.makeGetLabelsUseCase()
     private let createLabelUseCase = DefaultUseCaseFactory.shared.makeCreateLabelUseCase()
     private let syncTagsUseCase = DefaultUseCaseFactory.shared.makeSyncTagsUseCase()
-    
+
     // MARK: - Form Data
-    var url: String = ""
-    var title: String = ""
-    var labelsText: String = ""
-    
+    var url = ""
+    var title = ""
+    var labelsText = ""
+
     // MARK: - Labels/Tags Management
 
     var allLabels: [BookmarkLabel] = []
     var selectedLabels: Set<String> = []
-    var searchText: String = ""
-    var isLabelsLoading: Bool = false
-    
+    var searchText = ""
+    var isLabelsLoading = false
+
     // MARK: - UI State
 
-    var isLoading: Bool = false
+    var isLoading = false
     var errorMessage: String?
-    var showErrorAlert: Bool = false
-    var hasCreated: Bool = false
-    
+    var showErrorAlert = false
+    var hasCreated = false
+
     // MARK: - Clipboard Management
-    
+
     var clipboardURL: String?
-    var showClipboardButton: Bool = false
-    
+    var showClipboardButton = false
+
     // MARK: - Computed Properties
-    
+
     var isValid: Bool {
         !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         URL(string: url.trimmingCharacters(in: .whitespacesAndNewlines)) != nil
     }
-    
+
     var parsedLabels: [String] {
         labelsText
             .components(separatedBy: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
     }
-    
+
     var availableLabels: [BookmarkLabel] {
-        return allLabels.filter { !selectedLabels.contains($0.name) }
+        allLabels.filter { !selectedLabels.contains($0.name) }
     }
-    
+
     var filteredLabels: [BookmarkLabel] {
         if searchText.isEmpty {
             return availableLabels
-        } else {
-            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
+        return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
-    
+
     // MARK: - Labels Management
 
     /// Triggers background sync of tags from server to Core Data
@@ -83,7 +81,7 @@ class AddBookmarkViewModel {
             showErrorAlert = true
         }
     }
-    
+
     @MainActor
     func addCustomTag() {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -96,17 +94,16 @@ class AddBookmarkViewModel {
         if allExisting.contains(lowercased) || allSelected.contains(lowercased) {
             // Tag already exists, don't add
             return
-        } else {
-            selectedLabels.insert(trimmed)
-            searchText = ""
+        }
+        selectedLabels.insert(trimmed)
+        searchText = ""
 
-            // Save new label to Core Data so it's available next time
-            Task {
-                try? await createLabelUseCase.execute(name: trimmed)
-            }
+        // Save new label to Core Data so it's available next time
+        Task {
+            try? await createLabelUseCase.execute(name: trimmed)
         }
     }
-    
+
     @MainActor
     func toggleLabel(_ label: String) {
         if selectedLabels.contains(label) {
@@ -116,38 +113,38 @@ class AddBookmarkViewModel {
         }
         searchText = ""
     }
-    
+
     @MainActor
     func removeLabel(_ label: String) {
         selectedLabels.remove(label)
     }
-    
+
     // MARK: - Bookmark Creation
-    
+
     @MainActor
     func createBookmark() async {
         guard isValid else { return }
-        
+
         isLoading = true
         errorMessage = nil
         hasCreated = false
-        
+
         do {
             let cleanURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
             let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
             let labels = Array(selectedLabels)
-            
+
             let request = CreateBookmarkRequest(
                 url: cleanURL,
                 title: cleanTitle.isEmpty ? nil : cleanTitle,
                 labels: labels.isEmpty ? nil : labels
             )
-            
+
             let message = try await createBookmarkUseCase.execute(createRequest: request)
-            
+
             // Optional: Show the server message
             print("Server response: \(message)")
-            
+
             clearForm()
             hasCreated = true
         } catch let error as CreateBookmarkError {
@@ -157,12 +154,12 @@ class AddBookmarkViewModel {
             errorMessage = "Error creating bookmark"
             showErrorAlert = true
         }
-        
+
         isLoading = false
     }
-    
+
     // MARK: - Clipboard Management
-    
+
     func checkClipboard() {
         guard let clipboardString = UIPasteboard.general.string,
               URL(string: clipboardString) != nil else {
@@ -170,7 +167,7 @@ class AddBookmarkViewModel {
             showClipboardButton = false
             return
         }
-        
+
         // Only show clipboard button if the URL is different from current URL
         let currentURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
         if clipboardString != currentURL {
@@ -180,19 +177,19 @@ class AddBookmarkViewModel {
             showClipboardButton = false
         }
     }
-    
+
     func pasteFromClipboard() {
-        guard let clipboardURL = clipboardURL else { return }
+        guard let clipboardURL else { return }
         url = clipboardURL
         showClipboardButton = false
     }
-    
+
     func dismissClipboard() {
         showClipboardButton = false
     }
-    
+
     // MARK: - Form Management
-    
+
     func clearForm() {
         url = ""
         title = ""

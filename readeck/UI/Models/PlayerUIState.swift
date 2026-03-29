@@ -1,18 +1,18 @@
 import Foundation
 import Combine
 
-class PlayerUIState: ObservableObject {
-    @Published var isPlayerVisible: Bool = false
-    
+final class PlayerUIState: ObservableObject {
+    @Published var isPlayerVisible = false
+
     func showPlayer() {
         isPlayerVisible = true
     }
-    
+
     func hidePlayer() {
         isPlayerVisible = false
     }
-    
+
     func togglePlayer() {
         isPlayerVisible.toggle()
     }
-} 
+}

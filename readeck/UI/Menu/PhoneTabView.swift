@@ -25,7 +25,7 @@ struct PhoneTabView: View {
     @State private var searchViewModel = SearchBookmarksViewModel()
     @FocusState private var searchFieldIsFocused: Bool
 
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
 
     private var cardLayoutStyle: CardLayoutStyle {
         appSettings.settings?.cardLayoutStyle ?? .compact
@@ -38,7 +38,6 @@ struct PhoneTabView: View {
     var body: some View {
         GlobalPlayerContainerView {
             TabView(selection: $selectedTab) {
-
                 Tab(value: SidebarTab.all) {
                     NavigationStack(path: $allPath) {
                         tabView(for: .all)
@@ -84,7 +83,6 @@ struct PhoneTabView: View {
                     Tab(value: SidebarTab.settings) {
                         NavigationStack(path: $morePath) {
                             VStack(spacing: 0) {
-
                                 // Classic search bar for iOS 18
                                 HStack {
                                     Image(systemName: "magnifyingglass")
@@ -150,7 +148,6 @@ struct PhoneTabView: View {
         } else if let bookmarks = searchViewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
             List(bookmarks) { bookmark in
                 ZStack {
-                    
                     // Hidden NavigationLink to remove disclosure indicator
                     NavigationLink {
                         BookmarkDetailView(bookmarkId: bookmark.id)
@@ -200,15 +197,15 @@ struct PhoneTabView: View {
                 }
                 .listRowBackground(Color(R.color.bookmark_list_bg))
             }
-            
+
             if case .idle = offlineBookmarksViewModel.state {
                 // Don't show anything for idle state
             } else {
                 Section {
                     VStack {
-                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state, onSyncTapped: {
+                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state) {
                             await offlineBookmarksViewModel.syncOfflineBookmarks()
-                        })
+                        }
                     }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
@@ -219,7 +216,7 @@ struct PhoneTabView: View {
         .scrollContentBackground(.hidden)
         .background(Color(R.color.bookmark_list_bg))
     }
-    
+
     @ViewBuilder
     private var moreTabsFooter: some View {
         if appSettings.enableTTS {
@@ -227,7 +224,7 @@ struct PhoneTabView: View {
                 .padding(.top, 16)
         }
     }
-    
+
     @ViewBuilder
     private func tabView(for tab: SidebarTab) -> some View {
         switch tab {
@@ -268,7 +265,7 @@ extension View {
             self
         }
     }
-    
+
     @ViewBuilder
     func tabBarMinimizeBehaviorIfAvailable() -> some View {
         if #available(iOS 26.0, *) {

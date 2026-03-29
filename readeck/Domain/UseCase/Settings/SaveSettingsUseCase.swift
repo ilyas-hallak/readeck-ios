@@ -8,13 +8,13 @@ protocol PSaveSettingsUseCase {
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws
 }
 
-class SaveSettingsUseCase: PSaveSettingsUseCase {
+final class SaveSettingsUseCase: PSaveSettingsUseCase {
     private let settingsRepository: PSettingsRepository
-    
+
     init(settingsRepository: PSettingsRepository) {
         self.settingsRepository = settingsRepository
     }
-    
+
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {
         try await settingsRepository.saveSettings(
             .init(
@@ -23,19 +23,19 @@ class SaveSettingsUseCase: PSaveSettingsUseCase {
             )
         )
     }
-    
+
     func execute(enableTTS: Bool) async throws {
         try await settingsRepository.saveSettings(
             .init(enableTTS: enableTTS)
         )
     }
-    
+
     func execute(theme: Theme) async throws {
         try await settingsRepository.saveSettings(
             .init(theme: theme)
         )
     }
-    
+
     func execute(urlOpener: UrlOpener) async throws {
         try await settingsRepository.saveSettings(
             .init(urlOpener: urlOpener)

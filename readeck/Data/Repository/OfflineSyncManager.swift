@@ -20,9 +20,9 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     init(api: PAPI = API()) {
         self.api = api
     }
-    
+
     // MARK: - Sync Methods
-    
+
     func syncOfflineBookmarks() async {
         await MainActor.run {
             isSyncing = true
@@ -64,7 +64,6 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                 await MainActor.run {
                     syncStatus = "Synced \(successCount) bookmarks..."
                 }
-
             } catch {
                 print("Failed to sync bookmark: \(url) - \(error)")
                 failedCount += 1
@@ -100,9 +99,9 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             self.syncStatus = nil
         }
     }
-    
+
     func getOfflineBookmarksCount() -> Int {
-        return getOfflineBookmarks().count
+        getOfflineBookmarks().count
     }
 
     open func getOfflineBookmarks() -> [ArticleURLEntity] {
@@ -118,7 +117,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     open func deleteOfflineBookmark(_ entity: ArticleURLEntity) {
         do {
             try coreDataManager.context.safePerform { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
 
                 self.coreDataManager.context.delete(entity)
                 self.coreDataManager.save()
@@ -127,5 +126,4 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             print("Failed to delete offline bookmark: \(error)")
         }
     }
-    
 }

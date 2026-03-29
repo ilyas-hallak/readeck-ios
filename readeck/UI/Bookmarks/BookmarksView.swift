@@ -3,7 +3,6 @@ import Foundation
 import SwiftUI
 
 struct BookmarksView: View {
-
     // MARK: States
 
     @State private var viewModel = BookmarksViewModel()
@@ -16,14 +15,14 @@ struct BookmarksView: View {
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
-    @EnvironmentObject var playerUIState: PlayerUIState
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var playerUIState: PlayerUIState
+    @EnvironmentObject private var appSettings: AppSettings
     let tag: String?
 
     // MARK: Environments
 
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    @Environment(\.verticalSizeClass) var verticalSizeClass
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     // MARK: Initializer
 
@@ -70,11 +69,10 @@ struct BookmarksView: View {
             AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
         }
         .sheet(
-            isPresented: $viewModel.showingAddBookmarkFromShare,
-            content: {
-                AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
-            }
-        )
+            isPresented: $viewModel.showingAddBookmarkFromShare
+        ) {
+            AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
+        }
         .task {
             // Set appSettings reference
             viewModel.appSettings = appSettings
@@ -113,7 +111,7 @@ struct BookmarksView: View {
             }
         }
     }
-    
+
     // MARK: - Computed Properties
 
     private var shouldShowCenteredState: Bool {
@@ -126,9 +124,9 @@ struct BookmarksView: View {
         // 2. Offline mode in non-Unread tabs (Archive/Starred/All)
         return (isEmpty && hasError) || isOfflineNonUnread
     }
-    
+
     // MARK: - View Components
-    
+
     @ViewBuilder
     private var centeredStateView: some View {
         VStack(spacing: 20) {
@@ -147,19 +145,19 @@ struct BookmarksView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(R.color.bookmark_list_bg))
     }
-    
+
     @ViewBuilder
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.3)
                 .tint(.accentColor)
-            
+
             VStack(spacing: 8) {
                 Text("Loading \(state.displayName)")
                     .font(.headline)
                     .foregroundColor(.primary)
-                
+
                 Text("Please wait while we fetch your bookmarks...")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -168,7 +166,7 @@ struct BookmarksView: View {
         }
         .padding(.horizontal, 40)
     }
-    
+
     @ViewBuilder
     private var offlineUnavailableView: some View {
         VStack(spacing: 20) {
@@ -248,7 +246,7 @@ struct BookmarksView: View {
         }
         .padding(.horizontal, 40)
     }
-    
+
     @ViewBuilder
     private var bookmarksList: some View {
         List {
@@ -258,7 +256,7 @@ struct BookmarksView: View {
                     if viewModel.pendingDeletes[bookmark.id] != nil {
                         return
                     }
-                    
+
                     if UIDevice.isPhone {
                         selectedBookmarkId = bookmark.id
                     } else {
@@ -323,7 +321,7 @@ struct BookmarksView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color(R.color.bookmark_list_bg))
             }
-            
+
             // Show loading indicator for pagination
             if viewModel.isLoading && !(viewModel.bookmarks?.bookmarks.isEmpty == true) {
                 HStack {
@@ -354,7 +352,7 @@ struct BookmarksView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var skeletonLoadingView: some View {
         ScrollView {
@@ -373,7 +371,7 @@ struct BookmarksView: View {
             await viewModel.refreshBookmarks()
         }
     }
-    
+
     @ViewBuilder
     private var offlineBanner: some View {
         HStack(spacing: 12) {

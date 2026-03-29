@@ -10,14 +10,14 @@ import Observation
 import SwiftUI
 
 @Observable
-class FontSettingsViewModel {
+final class FontSettingsViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
-    
+
     // MARK: - Font Settings
     var selectedFontFamily: FontFamily = .system
     var selectedFontSize: FontSize = .medium
-    
+
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
@@ -60,7 +60,7 @@ class FontSettingsViewModel {
             return Font.custom("Helvetica Neue", size: size).weight(.semibold)
         }
     }
-    
+
     var previewBodyFont: Font {
         let size = selectedFontSize.size
 
@@ -136,12 +136,12 @@ class FontSettingsViewModel {
             return Font.custom("Helvetica Neue", size: captionSize)
         }
     }
-    
+
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
-    
+
     @MainActor
     func loadFontSettings() async {
         do {
@@ -153,12 +153,12 @@ class FontSettingsViewModel {
             errorMessage = "Error loading font settings"
         }
     }
-    
+
     @MainActor
     func saveFontSettings() async {
         do {
             try await saveSettingsUseCase.execute(
-                selectedFontFamily: selectedFontFamily, 
+                selectedFontFamily: selectedFontFamily,
                 selectedFontSize: selectedFontSize
             )
             successMessage = "Font settings saved"
@@ -166,13 +166,9 @@ class FontSettingsViewModel {
             errorMessage = "Error saving font settings"
         }
     }
-    
+
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
     }
 }
-
-
-
-

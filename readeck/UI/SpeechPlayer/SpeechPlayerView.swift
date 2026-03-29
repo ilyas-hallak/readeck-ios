@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct SpeechPlayerView: View {
-    @State var viewModel = SpeechPlayerViewModel()
+    @State private var viewModel = SpeechPlayerViewModel()
     @State private var isExpanded = false
-    @State private var dragOffset: CGFloat = 0
-    var onClose: (() -> Void)? = nil
-    
-    private let minHeight: CGFloat = 60
-    private let maxHeight: CGFloat = UIScreen.main.bounds.height / 2
-    
+    @State private var dragOffset: Double = 0
+    var onClose: (() -> Void)?
+
+    private let minHeight: Double = 60
+    private let maxHeight: Double = UIScreen.main.bounds.height / 2
+
     var body: some View {
         VStack(spacing: 0) {
             if isExpanded {
@@ -38,7 +38,7 @@ struct SpeechPlayerView: View {
                     }
                 }
         )
-        .onAppear() {
+        .onAppear {
             Task {
                 await viewModel.setup()
             }
@@ -47,9 +47,10 @@ struct SpeechPlayerView: View {
 }
 
 private struct CollapsedPlayerBar: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: SpeechPlayerViewModel
     @Binding var isExpanded: Bool
-    
+
     var body: some View {
         HStack(spacing: 16) {
             Button(action: {
@@ -87,6 +88,7 @@ private struct CollapsedPlayerBar: View {
             }.onTapGesture {
                 withAnimation(.spring()) { isExpanded.toggle() }
             }
+            .accessibilityAddTraits(.isButton)
             Spacer()
             Button(action: { viewModel.stop() }) {
                 Image(systemName: "stop.fill")
@@ -105,10 +107,11 @@ private struct CollapsedPlayerBar: View {
 }
 
 private struct ExpandedPlayerView: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: SpeechPlayerViewModel
     @Binding var isExpanded: Bool
-    var onClose: (() -> Void)? = nil
-    
+    var onClose: (() -> Void)?
+
     var body: some View {
         VStack(spacing: 16) {
             // Header
@@ -145,10 +148,10 @@ private struct ExpandedPlayerView: View {
                 }
                 .padding(.horizontal, 16)
             }
-            
+
             PlayerControls(viewModel: viewModel)
             PlayerVolume(viewModel: viewModel)
-            
+
             if viewModel.queueCount > 0 {
                 HStack(spacing: 8) {
                     Image(systemName: "text.line.first.and.arrowtriangle.forward")
@@ -172,6 +175,7 @@ private struct ExpandedPlayerView: View {
 }
 
 private struct PlayerControls: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: SpeechPlayerViewModel
     let rates: [Float] = [0.25, 0.5, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
     var body: some View {
@@ -217,16 +221,21 @@ private struct PlayerControls: View {
 }
 
 private struct PlayerVolume: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: SpeechPlayerViewModel
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Image(systemName: "speaker.wave.2.fill")
                     .foregroundColor(.accentColor)
-                Slider(value: Binding(
-                    get: { viewModel.volume },
-                    set: { viewModel.setVolume($0) }
-                ), in: 0...1, step: 0.01)
+                Slider(
+                    value: Binding(
+                        get: { viewModel.volume },
+                        set: { viewModel.setVolume($0) }
+                    ),
+                    in: 0...1,
+                    step: 0.01
+                )
                 Text(String(format: "%.0f%%", viewModel.volume * 100))
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -238,6 +247,7 @@ private struct PlayerVolume: View {
 }
 
 private struct PlayerRate: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: SpeechPlayerViewModel
     let rates: [Float] = [0.25, 0.5, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
     var body: some View {
@@ -262,6 +272,7 @@ private struct PlayerRate: View {
 }
 
 private struct PlayerQueueList: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: SpeechPlayerViewModel
     var body: some View {
         if viewModel.queueCount == 0 {

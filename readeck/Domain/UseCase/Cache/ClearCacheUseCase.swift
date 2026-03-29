@@ -4,7 +4,7 @@ protocol PClearCacheUseCase {
     func execute() async throws
 }
 
-class ClearCacheUseCase: PClearCacheUseCase {
+final class ClearCacheUseCase: PClearCacheUseCase {
     private let settingsRepository: PSettingsRepository
 
     init(settingsRepository: PSettingsRepository) {

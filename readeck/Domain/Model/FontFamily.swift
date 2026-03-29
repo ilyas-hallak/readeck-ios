@@ -7,24 +7,24 @@
 
 enum FontFamily: String, CaseIterable {
     // Apple System Fonts
-    case system = "system"           // SF Pro
-    case newYork = "newYork"         // New York
-    case avenirNext = "avenirNext"   // Avenir Next
-    case monospace = "monospace"     // SF Mono
+    case system           // SF Pro
+    case newYork         // New York
+    case avenirNext   // Avenir Next
+    case monospace     // SF Mono
 
     // Google Serif Fonts
-    case literata = "literata"
-    case merriweather = "merriweather"
-    case sourceSerif = "sourceSerif"
+    case literata
+    case merriweather
+    case sourceSerif
 
     // Google Sans Serif Fonts
-    case lato = "lato"
-    case montserrat = "montserrat"
-    case sourceSans = "sourceSans"
+    case lato
+    case montserrat
+    case sourceSans
 
     // Legacy (for backwards compatibility)
-    case serif = "serif"
-    case sansSerif = "sansSerif"
+    case serif
+    case sansSerif
 
     var displayName: String {
         switch self {
@@ -72,6 +72,7 @@ enum FontFamily: String, CaseIterable {
 
     /// Returns the font file names (without extension) for this font family
     /// These correspond to the files listed in Info.plist under UIAppFonts
+    // swiftlint:disable:next discouraged_optional_collection
     var fontFileNames: [(fileName: String, weight: String)]? {
         switch self {
         case .literata:

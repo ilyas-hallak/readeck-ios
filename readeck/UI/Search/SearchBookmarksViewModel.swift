@@ -3,24 +3,24 @@ import Combine
 import SwiftUI
 
 @Observable
-class SearchBookmarksViewModel {
+final class SearchBookmarksViewModel {
     private let searchBookmarksUseCase = DefaultUseCaseFactory.shared.makeSearchBookmarksUseCase()
-    
-    var searchQuery: String = "" {
+
+    var searchQuery = "" {
         didSet {
             throttleSearch()
         }
     }
-    var bookmarks: BookmarksPage? = nil
+    var bookmarks: BookmarksPage?
     var isLoading = false
-    var errorMessage: String? = nil
-    
+    var errorMessage: String?
+
     private var searchWorkItem: DispatchWorkItem?
-    
+
     private func throttleSearch() {
         searchWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             Task {
                 await self.search()
             }
@@ -28,7 +28,7 @@ class SearchBookmarksViewModel {
         searchWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
-    
+
     @MainActor
     func search() async {
         guard !searchQuery.isEmpty else {
@@ -46,4 +46,4 @@ class SearchBookmarksViewModel {
         }
         isLoading = false
     }
-} 
+}

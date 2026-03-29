@@ -2,7 +2,7 @@ import Foundation
 
 extension BookmarksPageDto {
     func toDomain() -> BookmarksPage {
-        return BookmarksPage(
+        BookmarksPage(
             bookmarks: bookmarks.map { $0.toDomain() },
             currentPage: currentPage,
             totalCount: totalCount,
@@ -15,7 +15,7 @@ extension BookmarksPageDto {
 // MARK: - BookmarkDto to Domain Mapping
 extension BookmarkDto {
     func toDomain() -> Bookmark {
-        return Bookmark(
+        Bookmark(
             id: id,
             title: title,
             url: url,
@@ -49,7 +49,7 @@ extension BookmarkDto {
 // MARK: - Resources Mapping
 extension BookmarkResourcesDto {
     func toDomain() -> BookmarkResources {
-        return BookmarkResources(
+        BookmarkResources(
             article: article?.toDomain(),
             icon: icon?.toDomain(),
             image: image?.toDomain(),
@@ -62,18 +62,18 @@ extension BookmarkResourcesDto {
 
 extension ResourceDto {
     func toDomain() -> Resource {
-        return Resource(src: src)
+        Resource(src: src)
     }
 }
 
 extension ImageResourceDto {
     func toDomain() -> ImageResource {
-        return ImageResource(src: src, height: height, width: width)
+        ImageResource(src: src, height: height, width: width)
     }
 }
 
 extension BookmarkLabelDto {
     func toDomain() -> BookmarkLabel {
-        return BookmarkLabel(name: self.name, count: self.count, href: self.href)
+        BookmarkLabel(name: self.name, count: self.count, href: self.href)
     }
 }

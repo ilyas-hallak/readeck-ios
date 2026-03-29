@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @Observable
-class BookmarkDetailViewModel {
+final class BookmarkDetailViewModel {
     private let getBookmarkUseCase: PGetBookmarkUseCase
     private let getBookmarkArticleUseCase: PGetBookmarkArticleUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
@@ -11,22 +11,22 @@ class BookmarkDetailViewModel {
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
 
-    var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
-    var articleContent: String = ""
+    var bookmarkDetail = BookmarkDetail.empty
+    var articleContent = ""
     var articleParagraphs: [String] = []
-    var bookmark: Bookmark? = nil
+    var bookmark: Bookmark?
     var isLoading = false
     var isLoadingArticle = true
     var errorMessage: String?
     var settings: Settings?
-    var readProgress: Int = 0
+    var readProgress = 0
     var selectedAnnotationId: String?
-    var hasAnnotations: Bool = false
+    var hasAnnotations = false
 
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
     private let readProgressSubject = PassthroughSubject<(id: String, progress: Double, anchor: String?), Never>()
-    
+
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.getBookmarkUseCase = factory.makeGetBookmarkUseCase()
         self.getBookmarkArticleUseCase = factory.makeGetBookmarkArticleUseCase()
@@ -38,7 +38,7 @@ class BookmarkDetailViewModel {
 
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
-            .sink { [weak self] (id, progress, anchor) in
+            .sink { [weak self] id, progress, anchor in
                 let progressInt = Int(progress * 100)
                 Task {
                     await self?.updateReadProgress(id: id, progress: progressInt, anchor: anchor)
@@ -46,30 +46,30 @@ class BookmarkDetailViewModel {
             }
             .store(in: &cancellables)
     }
-    
+
     @MainActor
     func loadBookmarkDetail(id: String) async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
-            settings = try await loadSettingsUseCase.execute()            
+            settings = try await loadSettingsUseCase.execute()
             bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
-            
+
             // Always take the higher value between server and local progress
             let serverProgress = bookmarkDetail.readProgress ?? 0
             readProgress = max(readProgress, serverProgress)
-            
+
             if settings?.enableTTS == true {
                 self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
             }
         } catch {
             errorMessage = "Error loading bookmark"
         }
-        
+
         isLoading = false
     }
-    
+
     @MainActor
     func loadArticleContent(id: String, forceRefresh: Bool = false) async {
         isLoadingArticle = true
@@ -137,7 +137,7 @@ class BookmarkDetailViewModel {
     }
 
     private func countOccurrences(in text: String, of substring: String) -> Int {
-        return text.components(separatedBy: substring).count - 1
+        text.components(separatedBy: substring).count - 1
     }
 
     private func processArticleContent() {
@@ -150,7 +150,7 @@ class BookmarkDetailViewModel {
         // Check if article contains annotations
         hasAnnotations = articleContent.contains("<rd-annotation")
     }
-    
+
     @MainActor
     func archiveBookmark(id: String, isArchive: Bool = true) async {
         isLoading = true
@@ -163,18 +163,18 @@ class BookmarkDetailViewModel {
         }
         isLoading = false
     }
-    
+
     @MainActor
     func refreshBookmarkDetail(id: String) async {
         await loadBookmarkDetail(id: id)
         await loadArticleContent(id: id, forceRefresh: true)
     }
-    
+
     func addBookmarkToSpeechQueue() {
         bookmarkDetail.content = articleContent
         addTextToSpeechQueueUseCase?.execute(bookmarkDetail: bookmarkDetail)
     }
-    
+
     @MainActor
     func toggleFavorite(id: String) async {
         isLoading = true
@@ -188,18 +188,18 @@ class BookmarkDetailViewModel {
         }
         isLoading = false
     }
-    
-    func updateReadProgress(id: String, progress: Int, anchor: String?) async {        
+
+    func updateReadProgress(id: String, progress: Int, anchor: String?) async {
         // Only update if the new progress is higher than current
         if progress > readProgress {
             do {
                 try await updateBookmarkUseCase.updateReadProgress(bookmarkId: id, progress: progress, anchor: anchor)
-            } catch {            
+            } catch {
                 // ignore error in this case
             }
         }
     }
-    
+
     func debouncedUpdateReadProgress(id: String, progress: Double, anchor: String?) {
         readProgressSubject.send((id, progress, anchor))
     }

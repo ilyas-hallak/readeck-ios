@@ -75,8 +75,8 @@ struct FontSettingsView: View {
 
 #Preview {
     List {
-        FontSettingsView(viewModel: .init(
-            factory: MockUseCaseFactory())
+        FontSettingsView(
+            viewModel: .init(factory: MockUseCaseFactory())
         )
     }
     .listStyle(.insetGrouped)

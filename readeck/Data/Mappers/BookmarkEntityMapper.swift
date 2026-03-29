@@ -12,7 +12,7 @@ extension BookmarkDto {
         entity.authors = self.authors.first
         entity.desc = self.description
         entity.created = self.created
-        
+
         entity.siteName = self.siteName
         entity.site = self.site
         entity.authors = self.authors.first // TODO: support multiple authors
@@ -33,9 +33,9 @@ extension BookmarkDto {
         entity.textDirection = self.textDirection
         entity.type = self.type
         entity.state = Int16(self.state)
-        
+
         // entity.resources = self.resources.toEntity(context: context)
-        
+
         return entity
     }
 }
@@ -43,14 +43,14 @@ extension BookmarkDto {
 extension BookmarkResourcesDto {
     func toEntity(context: NSManagedObjectContext) -> BookmarkResourcesEntity {
         let entity = BookmarkResourcesEntity(context: context)
-        
+
         entity.article = self.article?.toEntity(context: context)
         entity.icon = self.icon?.toEntity(context: context)
         entity.image = self.image?.toEntity(context: context)
         entity.log = self.log?.toEntity(context: context)
         entity.props = self.props?.toEntity(context: context)
         entity.thumbnail = self.thumbnail?.toEntity(context: context)
-        
+
         return entity
     }
 }
@@ -141,7 +141,7 @@ extension Bookmark {
         entity.populateFrom(bookmark: self)
         return entity
     }
-    
+
     func updateEntity(_ entity: BookmarkEntity) {
         entity.populateFrom(bookmark: self)
     }
@@ -206,7 +206,6 @@ private extension BookmarkState {
 
 private extension BookmarkResourcesEntity {
     func populateFrom(bookmarkResources: BookmarkResources) {
-        
     }
 }
 
@@ -229,7 +228,7 @@ private extension String {
     func toDate() -> Date? {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: self) ?? 
+        return formatter.date(from: self) ??
                ISO8601DateFormatter().date(from: self)
     }
 }
@@ -245,13 +244,13 @@ private extension Date {
 // MARK: - Array Mapping Extensions
 extension Array where Element == BookmarkEntity {
     func toDomain() -> [Bookmark] {
-        return [] // self.map { $0.toDomain() }
+        [] // self.map { $0.toDomain() }
     }
 }
 
 extension Array where Element == Bookmark {
     func toEntities(context: NSManagedObjectContext) -> [BookmarkEntity] {
-        return self.map { $0.toEntity(context: context) }
+        self.map { $0.toEntity(context: context) }
     }
 }
 /*
