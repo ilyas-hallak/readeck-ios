@@ -11,6 +11,7 @@ protocol PSaveSettingsUseCase {
     func execute(theme: Theme) async throws
     func execute(urlOpener: UrlOpener) async throws
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws
+    func execute(swipeActionConfig: SwipeActionConfig) async throws
 }
 
 class SaveSettingsUseCase: PSaveSettingsUseCase {
@@ -97,6 +98,12 @@ class SaveSettingsUseCase: PSaveSettingsUseCase {
                 bookmarkSortField: bookmarkSortField,
                 bookmarkSortDirection: bookmarkSortDirection
             )
+        )
+    }
+
+    func execute(swipeActionConfig: SwipeActionConfig) async throws {
+        try await settingsRepository.saveSettings(
+            .init(swipeActionConfig: swipeActionConfig)
         )
     }
 }

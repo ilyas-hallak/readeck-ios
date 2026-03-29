@@ -66,6 +66,9 @@ struct BookmarksView: View {
             BookmarkDetailView(bookmarkId: bookmarkId)
                 .toolbar(.hidden, for: .tabBar)
         }
+        .sheet(item: $viewModel.showTagsBookmark) { bookmark in
+            BookmarkLabelsView(bookmarkId: bookmark.id, initialLabels: bookmark.labels)
+        }
         .sheet(isPresented: $showingAddBookmark) {
             AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
         }
@@ -86,6 +89,14 @@ struct BookmarksView: View {
 
             Logger.ui.info("📲 BookmarksView.task - Loading bookmarks, isNetworkConnected: \(appSettings.isNetworkConnected)")
             await viewModel.loadBookmarks(state: state, type: type, tag: tag)
+        }
+        .onChange(of: viewModel.showTagsBookmark) { oldValue, newValue in
+            // Refresh bookmarks when tags sheet is dismissed (labels may have changed)
+            if oldValue != nil && newValue == nil {
+                Task {
+                    await viewModel.refreshBookmarks()
+                }
+            }
         }
         .onChange(of: showingAddBookmark) { oldValue, newValue in
             // Refresh bookmarks when sheet is dismissed
@@ -277,18 +288,9 @@ struct BookmarksView: View {
                         currentState: state,
                         layout: viewModel.cardLayoutStyle,
                         pendingDelete: viewModel.pendingDeletes[bookmark.id],
-                        onArchive: { bookmark in
-                            Task {
-                                await viewModel.toggleArchive(bookmark: bookmark)
-                            }
-                        },
-                        onDelete: { bookmark in
-                            viewModel.deleteBookmarkWithUndo(bookmark: bookmark)
-                        },
-                        onToggleFavorite: { bookmark in
-                            Task {
-                                await viewModel.toggleFavorite(bookmark: bookmark)
-                            }
+                        swipeActionConfig: appSettings.swipeActionConfig,
+                        onSwipeAction: { action, bookmark in
+                            viewModel.handleSwipeAction(action, bookmark: bookmark)
                         },
                         onUndoDelete: { bookmarkId in
                             viewModel.undoDelete(bookmarkId: bookmarkId)

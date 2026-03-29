@@ -24,6 +24,7 @@ struct Settings {
 
     var urlOpener: UrlOpener? = nil
 
+    var swipeActionConfig: SwipeActionConfig? = nil
     // Reader styling
     var fontSizeNumeric: Double? = nil
     var horizontalMargin: Double? = nil
