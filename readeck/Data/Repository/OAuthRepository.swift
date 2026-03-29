@@ -7,7 +7,7 @@
 
 import Foundation
 
-class OAuthRepository: POAuthRepository {
+final class OAuthRepository: POAuthRepository {
     private let api: PAPI
     private let logger = Logger.network
 

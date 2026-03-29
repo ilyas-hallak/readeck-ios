@@ -1,6 +1,6 @@
 import Foundation
 
-class VersionManager {
+final class VersionManager {
     static let shared = VersionManager()
 
     private let lastSeenVersionKey = "lastSeenAppVersion"

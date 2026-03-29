@@ -3,6 +3,7 @@ import Foundation
 struct ServerInfo {
     let version: String
     let isReachable: Bool
+    // swiftlint:disable:next discouraged_optional_collection
     let features: [String]?
 
     var supportsOAuth: Bool {

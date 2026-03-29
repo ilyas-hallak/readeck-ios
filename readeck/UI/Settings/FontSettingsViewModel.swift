@@ -10,10 +10,10 @@ import Observation
 import SwiftUI
 
 @Observable
-class FontSettingsViewModel {
+final class FontSettingsViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
-    
+
     // MARK: - Font Settings
     var selectedFontFamily: FontFamily = .system
     var selectedFontSize: FontSize = .medium
@@ -178,12 +178,12 @@ class FontSettingsViewModel {
             return Font.custom("Helvetica Neue", size: captionSize)
         }
     }
-    
+
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
-    
+
     @MainActor
     func loadFontSettings() async {
         do {
@@ -280,12 +280,9 @@ class FontSettingsViewModel {
         }
     }
 
+
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
     }
 }
-
-
-
-

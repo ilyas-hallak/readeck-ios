@@ -113,6 +113,7 @@ struct LoggingConfigurationView: View {
 // MARK: - Global Log Level View
 
 struct GlobalLogLevelView: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var logConfig: LogConfiguration
 
     var body: some View {
@@ -171,6 +172,7 @@ struct GlobalLogLevelView: View {
 
 struct CategoryLogLevelView: View {
     let category: LogCategory
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var logConfig: LogConfiguration
 
     var body: some View {

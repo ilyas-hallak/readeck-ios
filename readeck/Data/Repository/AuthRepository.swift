@@ -1,6 +1,6 @@
 import Foundation
 
-class AuthRepository: PAuthRepository {
+final class AuthRepository: PAuthRepository {
     private let api: PAPI
     private let settingsRepository: PSettingsRepository
     private let getUserProfileUseCase: PGetUserProfileUseCase
@@ -10,23 +10,23 @@ class AuthRepository: PAuthRepository {
         self.settingsRepository = settingsRepository
         self.getUserProfileUseCase = getUserProfileUseCase
     }
-    
+
     func login(endpoint: String, username: String, password: String) async throws -> User {
         let userDto = try await api.login(endpoint: endpoint, username: username, password: password)
         // Token wird automatisch von der API gespeichert
         await api.tokenProvider.setAuthMethod(.apiToken)
         return User(id: userDto.id, token: userDto.token)
     }
-    
+
     func logout() async throws {
         await api.tokenProvider.clearToken()
         await api.tokenProvider.setAuthMethod(.apiToken)
     }
-    
+
     func getCurrentSettings() async throws -> Settings? {
-        return try await settingsRepository.loadSettings()
+        try await settingsRepository.loadSettings()
     }
-    
+
     func loginWithOAuth(endpoint: String, token: OAuthToken, clientId: String) async throws {
         // Save OAuth token, auth method, client ID, and endpoint
         await api.tokenProvider.setOAuthToken(token)
@@ -46,16 +46,16 @@ class AuthRepository: PAuthRepository {
             try await settingsRepository.saveSettings(settings)
         }
     }
-    
+
     func getAuthenticationMethod() async -> AuthenticationMethod? {
-        return await api.tokenProvider.getAuthMethod()
+        await api.tokenProvider.getAuthMethod()
     }
-    
+
     func switchToClassicAuth(endpoint: String, username: String, password: String) async throws -> User {
         // Clear OAuth token first
         await api.tokenProvider.clearToken()
         await api.tokenProvider.setAuthMethod(.apiToken)
-        
+
         // Then do regular login
         return try await login(endpoint: endpoint, username: username, password: password)
     }

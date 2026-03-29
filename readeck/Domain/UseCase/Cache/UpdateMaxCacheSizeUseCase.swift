@@ -4,7 +4,7 @@ protocol PUpdateMaxCacheSizeUseCase {
     func execute(sizeInBytes: UInt) async throws
 }
 
-class UpdateMaxCacheSizeUseCase: PUpdateMaxCacheSizeUseCase {
+final class UpdateMaxCacheSizeUseCase: PUpdateMaxCacheSizeUseCase {
     private let settingsRepository: PSettingsRepository
 
     init(settingsRepository: PSettingsRepository) {

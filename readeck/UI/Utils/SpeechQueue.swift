@@ -6,6 +6,7 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let title: String
     let content: String?
     let url: String
+    // swiftlint:disable:next discouraged_optional_collection
     let labels: [String]?
     let imageUrl: String?
     let language: String
@@ -13,7 +14,7 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
 
 extension BookmarkDetail {
     func toSpeechQueueItem(_ content: String? = nil) -> SpeechQueueItem {
-        return SpeechQueueItem(
+        SpeechQueueItem(
             id: self.id,
             title: title,
             content: content ?? self.content,
@@ -25,7 +26,7 @@ extension BookmarkDetail {
     }
 }
 
-class SpeechQueue: ObservableObject {
+final class SpeechQueue: ObservableObject {
     private let logger = Logger.general
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
@@ -71,15 +72,15 @@ class SpeechQueue: ObservableObject {
     }
 
     @Published var queueItems: [SpeechQueueItem] = []
-    @Published var currentText: String = ""
-    @Published var hasItems: Bool = false
+    @Published var currentText = ""
+    @Published var hasItems = false
 
     var queueCount: Int {
-        return queueItems.count
+        queueItems.count
     }
 
     var currentItem: SpeechQueueItem? {
-        return queueItems.first
+        queueItems.first
     }
 
     private init(ttsManager: TTSManager = .shared) {
@@ -87,21 +88,21 @@ class SpeechQueue: ObservableObject {
         loadQueue()
         updatePublishedProperties()
     }
-    
+
     func enqueue(_ item: SpeechQueueItem) {
         queue.append(item)
         updatePublishedProperties()
         saveQueue()
         processQueue()
     }
-    
+
     func enqueue(contentsOf items: [SpeechQueueItem]) {
         queue.append(contentsOf: items)
         updatePublishedProperties()
         saveQueue()
         processQueue()
     }
-    
+
     func stop() {
         logger.debug("SpeechQueue stop() called")
         updatePublishedProperties()
@@ -109,7 +110,7 @@ class SpeechQueue: ObservableObject {
         ttsManager.stop()
         isProcessing = false
     }
-    
+
     func clear() {
         logger.debug("SpeechQueue clear() called")
         queue.removeAll()
@@ -118,13 +119,13 @@ class SpeechQueue: ObservableObject {
         ttsManager.stop()
         isProcessing = false
     }
-    
+
     private func updatePublishedProperties() {
         queueItems = queue
         currentText = queue.first?.content ?? ""
         hasItems = !queue.isEmpty || ttsManager.isCurrentlySpeaking()
     }
-    
+
     private func processQueue() {
         guard !isProcessing, !queue.isEmpty else { return }
         isProcessing = true
@@ -139,7 +140,7 @@ class SpeechQueue: ObservableObject {
             self?.waitForSpeechToFinish()
         }
     }
-    
+
     private func waitForSpeechToFinish() {
         if ttsManager.isCurrentlySpeaking() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
@@ -156,7 +157,7 @@ class SpeechQueue: ObservableObject {
             self.processQueue()
         }
     }
-    
+
     // MARK: - Persistenz
     private func saveQueue() {
         let defaults = UserDefaults.standard
@@ -168,7 +169,7 @@ class SpeechQueue: ObservableObject {
             logger.error("SpeechQueue failed to save queue: \(error.localizedDescription)")
         }
     }
-    
+
     private func loadQueue() {
         let defaults = UserDefaults.standard
         if let data = defaults.data(forKey: queueKey) {

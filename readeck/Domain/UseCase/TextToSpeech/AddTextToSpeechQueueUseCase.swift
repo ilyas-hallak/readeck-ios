@@ -4,7 +4,7 @@ protocol PAddTextToSpeechQueueUseCase {
     func execute(bookmarkDetail: BookmarkDetail)
 }
 
-class AddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
+final class AddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
     private let speechQueue: SpeechQueue
 
     init(speechQueue: SpeechQueue = .shared) {
@@ -20,4 +20,4 @@ class AddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
         }
         speechQueue.enqueue(bookmarkDetail.toSpeechQueueItem(text))
     }
-} 
+}
