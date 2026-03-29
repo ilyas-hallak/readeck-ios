@@ -8,7 +8,7 @@
 import Foundation
 
 /// Orchestrates the OAuth 2.0 Authorization Code flow with PKCE
-class OAuthManager {
+final class OAuthManager {
     private let repository: POAuthRepository
     private let logger = Logger.network
 
@@ -121,10 +121,10 @@ class OAuthManager {
             return nil
         }
 
-        let code = queryItems.first(where: { $0.name == "code" })?.value
-        let state = queryItems.first(where: { $0.name == "state" })?.value
+        let code = queryItems.first { $0.name == "code" }?.value
+        let state = queryItems.first { $0.name == "state" }?.value
 
-        guard let code = code, let state = state else {
+        guard let code, let state else {
             return nil
         }
 

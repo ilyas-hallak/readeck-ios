@@ -1,36 +1,36 @@
 import Foundation
 import Combine
 
-class SpeechPlayerViewModel: ObservableObject {
-    private var ttsManager: TTSManager? = nil
-    private var speechQueue: SpeechQueue? = nil
+final class SpeechPlayerViewModel: ObservableObject {
+    private var ttsManager: TTSManager?
+    private var speechQueue: SpeechQueue?
     private let loadSettingsUseCase: PLoadSettingsUseCase
     private var cancellables = Set<AnyCancellable>()
-    
-    @Published var isSpeaking: Bool = false
-    @Published var currentText: String = ""
-    @Published var queueCount: Int = 0
+
+    @Published var isSpeaking = false
+    @Published var currentText = ""
+    @Published var queueCount = 0
     @Published var queueItems: [SpeechQueueItem] = []
-    @Published var hasItems: Bool = false
-    @Published var progress: Double = 0.0
-    @Published var currentUtteranceIndex: Int = 0
-    @Published var totalUtterances: Int = 0
-    @Published var articleProgress: Double = 0.0
+    @Published var hasItems = false
+    @Published var progress = 0.0
+    @Published var currentUtteranceIndex = 0
+    @Published var totalUtterances = 0
+    @Published var articleProgress = 0.0
     @Published var volume: Float = 1.0
     @Published var rate: Float = 0.5
     @Published var currentCharacterIndex: Int = 0
     @Published var totalCharacterCount: Int = 0
-    
-    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {        
+
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
-    
+
     func setup() async {
         self.ttsManager = .shared
         self.speechQueue = .shared
         setupBindings()
     }
-    
+
     private func setupBindings() {
         // TTSManager bindings
         ttsManager?.$isSpeaking
@@ -51,7 +51,7 @@ class SpeechPlayerViewModel: ObservableObject {
 
         speechQueue?.$queueItems
             .receive(on: DispatchQueue.main)
-            .map { $0.count }
+            .map(\.count)
             .assign(to: \.queueCount, on: self)
             .store(in: &cancellables)
 
@@ -101,23 +101,23 @@ class SpeechPlayerViewModel: ObservableObject {
             .assign(to: \.totalCharacterCount, on: self)
             .store(in: &cancellables)
     }
-    
+
     func setVolume(_ newVolume: Float) {
         ttsManager?.setVolume(newVolume)
     }
-    
+
     func setRate(_ newRate: Float) {
         ttsManager?.setRate(newRate)
     }
-    
+
     func pause() {
         ttsManager?.pause()
     }
-    
+
     func resume() {
         ttsManager?.resume()
     }
-    
+
     func stop() {
         speechQueue?.clear()
     }
@@ -161,4 +161,4 @@ class SpeechPlayerViewModel: ObservableObject {
     func clearQueue() {
         speechQueue?.clear()
     }
-} 
+}

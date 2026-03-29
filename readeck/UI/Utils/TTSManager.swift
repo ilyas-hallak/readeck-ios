@@ -3,17 +3,18 @@ import UIKit
 import AVFoundation
 import Combine
 
-class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    private let logger = Logger.general
     static let shared = TTSManager()
     private var synthesizer = AVSpeechSynthesizer()
     private let voiceManager = VoiceManager.shared
-    
+
     @Published var isSpeaking = false
     @Published var currentUtterance = ""
-    @Published var progress: Double = 0.0
-    @Published var totalUtterances: Int = 0
-    @Published var currentUtteranceIndex: Int = 0
-    @Published var articleProgress: Double = 0.0
+    @Published var progress = 0.0
+    @Published var totalUtterances = 0
+    @Published var currentUtteranceIndex = 0
+    @Published var articleProgress = 0.0
     @Published var volume: Float = 1.0
     @Published var rate: Float = 0.5
 
@@ -29,14 +30,14 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
 
     var onUtteranceFinished: (() -> Void)?
     var onUtteranceCancelled: (() -> Void)?
-    
+
     override private init() {
         super.init()
         synthesizer.delegate = self
         configureAudioSession()
         loadSettings()
     }
-    
+
     private func configureAudioSession() {
         do {
             let audioSession = AVAudioSession.sharedInstance()
@@ -61,16 +62,16 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
                 object: nil
             )
         } catch {
-            print("Fehler beim Konfigurieren der Audio-Session: \(error)")
+            logger.error("Failed to configure audio session: \(error.localizedDescription)")
         }
     }
-    
+
     private func ensureSynthesizerReady() {
         // Re-activate audio session (may have been interrupted by iOS Settings)
         do {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("[TTSManager] Audio session reactivation failed: \(error)")
+            logger.error("Audio session reactivation failed: \(error.localizedDescription)")
         }
     }
 
@@ -125,7 +126,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             currentTime: estimatedCurrentTime()
         )
     }
-    
+
     private func updateProgress() {
         if totalUtterances > 0 {
             progress = Double(currentUtteranceIndex) / Double(totalUtterances)
@@ -133,17 +134,17 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             progress = 0.0
         }
     }
-    
+
     func setVolume(_ newVolume: Float) {
         volume = newVolume
         saveSettings()
     }
-    
+
     func setRate(_ newRate: Float) {
         rate = newRate
         saveSettings()
     }
-    
+
     private func loadSettings() {
         let defaults = UserDefaults.standard
         if let savedVolume = defaults.value(forKey: "tts_volume") as? Float {
@@ -153,13 +154,13 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             rate = savedRate
         }
     }
-    
+
     private func saveSettings() {
         let defaults = UserDefaults.standard
         defaults.set(volume, forKey: "tts_volume")
         defaults.set(rate, forKey: "tts_rate")
     }
-    
+
     // MARK: - Seek
 
     func seek(toCharacter index: Int) {
@@ -226,7 +227,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         onPositionUpdate?(currentCharacterIndex)
         nowPlayingManager.clearNowPlaying()
     }
-    
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             self.isSpeaking = false
@@ -237,7 +238,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             self.onUtteranceFinished?()
         }
     }
-    
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             self.isSpeaking = false
@@ -246,7 +247,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             self.onUtteranceCancelled?()
         }
     }
-    
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             self.isSpeaking = false
@@ -258,7 +259,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             self.isSpeaking = true
         }
     }
-    
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
         let spoken = characterRange.location + characterRange.length
         let absolutePosition = currentStartOffset + spoken
@@ -273,24 +274,24 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             self.nowPlayingManager.updateNowPlayingPosition()
         }
     }
-    
+
     func isCurrentlySpeaking() -> Bool {
-        return synthesizer.isSpeaking
+        synthesizer.isSpeaking
     }
-    
+
     @objc private func handleAppDidEnterBackground() {
         do {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Fehler beim Aktivieren der Audio-Session im Hintergrund: \(error)")
+            logger.error("Failed to activate audio session in background: \(error.localizedDescription)")
         }
     }
-    
+
     @objc private func handleAppWillEnterForeground() {
         do {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("[TTSManager] Audio session reactivation on foreground failed: \(error)")
+            logger.error("Audio session reactivation on foreground failed: \(error.localizedDescription)")
         }
         // Refresh voices in case user downloaded new ones in iOS Settings
         voiceManager.refreshVoices()
@@ -307,13 +308,13 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             do {
                 try AVAudioSession.sharedInstance().setActive(true)
             } catch {
-                print("[TTSManager] Audio session reactivation after interruption failed: \(error)")
+                logger.error("Audio session reactivation after interruption failed: \(error.localizedDescription)")
             }
             resetSynthesizer()
         }
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-} 
+}

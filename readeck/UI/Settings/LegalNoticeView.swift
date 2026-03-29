@@ -2,7 +2,7 @@ import SwiftUI
 
 struct LegalNoticeView: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -11,7 +11,7 @@ struct LegalNoticeView: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.bottom, 10)
-                    
+
                     VStack(alignment: .leading, spacing: 16) {
                         sectionView(
                             title: "App Publisher",
@@ -20,37 +20,37 @@ struct LegalNoticeView: View {
                             Albert-Bischof-Str. 18
                             28357 Bremen
                             Germany
-                            
+
                             Email: hi@ilyashallak.de
                             """
                         )
-                        
+
                         sectionView(
                             title: "Content Responsibility",
                             content: "The publisher is responsible for the content of this application in accordance with applicable laws."
                         )
-                        
+
                         sectionView(
                             title: "App Information",
                             content: """
                             readeck iOS - Bookmark Management Client
                             Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
                             Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown")
-                            
+
                             This app is an open source client for readeck bookmark management.
                             """
                         )
-                        
+
                         sectionView(
                             title: "License",
                             content: "This software is released under the MIT License. The source code is available at the official repository."
                         )
-                        
+
                         sectionView(
                             title: "Disclaimer",
                             content: "The app is provided \"as is\" without warranty of any kind. The publisher assumes no liability for damages arising from the use of this application."
                         )
-                        
+
                         // TODO: Add business registration details if needed
                         // sectionView(
                         //     title: "Business Registration",
@@ -75,14 +75,14 @@ struct LegalNoticeView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func sectionView(title: String, content: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
-            
+
             Text(content)
                 .font(.body)
                 .foregroundColor(.primary)

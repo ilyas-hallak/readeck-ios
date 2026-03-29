@@ -3,7 +3,7 @@ import SwiftUI
 struct GlobalPlayerContainerView<Content: View>: View {
     let content: Content
     @StateObject private var viewModel = SpeechPlayerViewModel()
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
     @State private var isPlayerSheetPresented = false
     @State private var isPlayerDismissed = false
 

@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 
 struct TTSLanguageSettingsView: View {
-    @AppStorage("tts_preferred_language") private var preferredLanguage: String = "en-US"
+    @AppStorage("tts_preferred_language") private var preferredLanguage = "en-US"
     @ObservedObject private var voiceManager = VoiceManager.shared
 
     private let supportedLanguages: [(code: String, name: String)] = [
@@ -35,7 +35,7 @@ struct TTSLanguageSettingsView: View {
         ("hi-IN", "हिन्दी"),
         ("th-TH", "ไทย"),
         ("id-ID", "Bahasa Indonesia"),
-        ("vi-VN", "Tiếng Việt"),
+        ("vi-VN", "Tiếng Việt")
     ].sorted { $0.name < $1.name }
 
     var body: some View {

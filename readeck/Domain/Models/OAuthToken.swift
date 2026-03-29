@@ -17,7 +17,7 @@ struct OAuthToken: Codable {
     let createdAt: Date
 
     var isExpired: Bool {
-        guard let expiresIn = expiresIn else { return false }
+        guard let expiresIn else { return false }
         let expiryDate = createdAt.addingTimeInterval(TimeInterval(expiresIn))
         return Date() > expiryDate
     }

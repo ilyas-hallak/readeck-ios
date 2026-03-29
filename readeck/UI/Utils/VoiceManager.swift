@@ -1,27 +1,28 @@
 import Foundation
 import AVFoundation
 
-class VoiceManager: ObservableObject {
+final class VoiceManager: ObservableObject {
+    private let logger = Logger.general
     static let shared = VoiceManager()
-    
+
     private let userDefaults = UserDefaults.standard
     private let selectedVoiceKey = "selectedVoice"
     private let perLanguageVoiceKey = "tts_per_language_voices"
     private var cachedVoices: [String: AVSpeechSynthesisVoice] = [:]
     private(set) var perLanguageVoices: [String: String] = [:] // languageCode -> voiceIdentifier
     private var previewSynthesizer = AVSpeechSynthesizer()
-    
+
     @Published var selectedVoice: AVSpeechSynthesisVoice?
     @Published var availableVoices: [AVSpeechSynthesisVoice] = []
-    
+
     private init() {
         loadAvailableVoices()
         loadSelectedVoice()
         loadPerLanguageVoices()
     }
-    
+
     // MARK: - Public Methods
-    
+
     func getVoice(for language: String) -> AVSpeechSynthesisVoice {
         // Check cache first
         if let cachedVoice = cachedVoices[language] {
@@ -47,17 +48,17 @@ class VoiceManager: ObservableObject {
         cachedVoices[language] = voice
         return voice
     }
-    
+
     func setSelectedVoice(_ voice: AVSpeechSynthesisVoice) {
         selectedVoice = voice
         cachedVoices.removeValue(forKey: voice.language)
         saveSelectedVoice(voice)
     }
-    
+
     func getAvailableVoices(for language: String) -> [AVSpeechSynthesisVoice] {
-        return availableVoices.filter { $0.language == language }
+        availableVoices.filter { $0.language == language }
     }
-    
+
     func refreshVoices() {
         cachedVoices.removeAll()
         loadAvailableVoices()
@@ -68,18 +69,18 @@ class VoiceManager: ObservableObject {
     private func loadAvailableVoices() {
         availableVoices = AVSpeechSynthesisVoice.speechVoices()
     }
-    
+
     private func loadSelectedVoice() {
         if let voiceIdentifier = userDefaults.string(forKey: selectedVoiceKey),
            let voice = availableVoices.first(where: { $0.identifier == voiceIdentifier }) {
             selectedVoice = voice
         }
     }
-    
+
     private func saveSelectedVoice(_ voice: AVSpeechSynthesisVoice) {
         userDefaults.set(voice.identifier, forKey: selectedVoiceKey)
     }
-    
+
     private func findEnhancedVoice(for language: String) -> AVSpeechSynthesisVoice {
         let voicesForLanguage = availableVoices.filter { $0.language == language }
 
@@ -97,7 +98,7 @@ class VoiceManager: ObservableObject {
         // Ultimate fallback
         return AVSpeechSynthesisVoice(language: language) ?? AVSpeechSynthesisVoice()
     }
-    
+
     // MARK: - Per-Language Voice
 
     private func loadPerLanguageVoices() {
@@ -116,7 +117,7 @@ class VoiceManager: ObservableObject {
     }
 
     func getSelectedVoiceIdentifier(for language: String) -> String? {
-        return perLanguageVoices[language]
+        perLanguageVoices[language]
     }
 
     func clearPerLanguageVoice(for language: String) {
@@ -142,22 +143,22 @@ class VoiceManager: ObservableObject {
     }
 
     // MARK: - Debug Methods
-    
+
     func printAvailableVoices(for language: String) {
         let filteredVoices = availableVoices.filter { $0.language.starts(with: language.prefix(2)) }
-        
-        print("Verfügbare Stimmen für \(language):")
+
+        logger.debug("Available voices for \(language):")
         for voice in filteredVoices {
-            print("- \(voice.name) (\(voice.language)) - Qualität: \(voice.quality.rawValue)")
+            logger.debug("- \(voice.name) (\(voice.language)) - Quality: \(voice.quality.rawValue)")
         }
     }
-    
+
     func printAllAvailableLanguages() {
-        let languages = Set(availableVoices.map { $0.language })
-        
-        print("Verfügbare Sprachen:")
+        let languages = Set(availableVoices.map(\.language))
+
+        logger.debug("Available languages:")
         for language in languages.sorted() {
-            print("- \(language)")
+            logger.debug("- \(language)")
         }
     }
-} 
+}

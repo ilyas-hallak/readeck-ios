@@ -7,22 +7,50 @@
 
 
 struct Settings {
-    var endpoint: String? = nil
-    var username: String? = nil
-    var password: String? = nil
-    var token: String? = nil
+    var endpoint: String?
+    var username: String?
+    var password: String?
+    var token: String?
 
-    var fontFamily: FontFamily? = nil
-    var fontSize: FontSize? = nil
-    var hasFinishedSetup: Bool = false
-    var enableTTS: Bool? = nil
-    var theme: Theme? = nil
-    var cardLayoutStyle: CardLayoutStyle? = nil
-    var tagSortOrder: TagSortOrder? = nil
-    var bookmarkSortField: BookmarkSortField? = nil
-    var bookmarkSortDirection: BookmarkSortDirection? = nil
+    var fontFamily: FontFamily?
+    var fontSize: FontSize?
+    var hasFinishedSetup = false
+    // swiftlint:disable:next discouraged_optional_boolean
+    var enableTTS: Bool?
+    var theme: Theme?
+    var cardLayoutStyle: CardLayoutStyle?
+    var tagSortOrder: TagSortOrder?
+    var bookmarkSortField: BookmarkSortField?
+    var bookmarkSortDirection: BookmarkSortDirection?
 
-    var urlOpener: UrlOpener? = nil
+    var urlOpener: UrlOpener?
+    var swipeActionConfig: SwipeActionConfig?
+
+    // Reader styling
+    var fontSizeNumeric: Double?
+    var horizontalMargin: Double?
+    var lineHeight: Double?
+    var hideProgressBar: Bool?
+    var hideWordCount: Bool?
+    var hideHeroImage: Bool?
+    var customCSS: String?
+    var readerColorTheme: ReaderColorTheme?
+    var customBackgroundColor: String?  // hex string
+    var customTextColor: String?        // hex string
+
+    var webViewIdentifier: String {
+        let parts: [String] = [
+            fontFamily?.rawValue ?? "system",
+            "\(fontSizeNumeric ?? 20)",
+            "\(horizontalMargin ?? 16)",
+            "\(lineHeight ?? 1.4)",
+            "\(customCSS?.hashValue ?? 0)",
+            readerColorTheme?.rawValue ?? "system",
+            customBackgroundColor ?? "",
+            customTextColor ?? ""
+        ]
+        return parts.joined(separator: "-")
+    }
 
     var isLoggedIn: Bool {
         token != nil && !token!.isEmpty

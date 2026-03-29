@@ -218,7 +218,7 @@ struct SettingsRowLabel: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let icon = icon {
+            if let icon {
                 Image(systemName: icon)
                     .foregroundColor(iconColor)
                     .frame(width: 24)
@@ -228,7 +228,7 @@ struct SettingsRowLabel: View {
                 Text(title)
                     .foregroundColor(titleColor)
 
-                if let subtitle = subtitle {
+                if let subtitle {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -285,7 +285,7 @@ struct SettingsRowLabel: View {
             subtitle: "Remove all cached images",
             destructive: true
         ) {
-            print("Clear cache tapped")
+            Logger.ui.debug("Clear cache tapped")
         }
     }
     .listStyle(.insetGrouped)

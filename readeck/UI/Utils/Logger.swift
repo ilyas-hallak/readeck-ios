@@ -42,7 +42,7 @@ enum LogCategory: String, CaseIterable, Codable {
     case sync = "Sync"
 }
 
-class LogConfiguration: ObservableObject {
+final class LogConfiguration: ObservableObject {
     static let shared = LogConfiguration()
 
     @Published private var categoryLevels: [LogCategory: LogLevel] = [:]
@@ -68,22 +68,22 @@ class LogConfiguration: ObservableObject {
 
         loadConfiguration()
     }
-    
+
     func setLevel(_ level: LogLevel, for category: LogCategory) {
         categoryLevels[category] = level
         saveConfiguration()
     }
-    
+
     func getLevel(for category: LogCategory) -> LogLevel {
-        return categoryLevels[category] ?? globalMinLevel
+        categoryLevels[category] ?? globalMinLevel
     }
-    
+
     func shouldLog(_ level: LogLevel, for category: LogCategory) -> Bool {
         guard isLoggingEnabled else { return false }
         let categoryLevel = getLevel(for: category)
         return level.rawValue >= categoryLevel.rawValue
     }
-    
+
     private func loadConfiguration() {
         // Load from UserDefaults
         if let data = UserDefaults.standard.data(forKey: "LogConfiguration"),
@@ -112,13 +112,13 @@ class LogConfiguration: ObservableObject {
             isLoggingEnabled = UserDefaults.standard.bool(forKey: "LogIsEnabled")
         }
     }
-    
+
     private func saveConfiguration() {
         let config = categoryLevels.mapKeys { $0.rawValue }.mapValues { $0.rawValue }
         if let data = try? JSONEncoder().encode(config) {
             UserDefaults.standard.set(data, forKey: "LogConfiguration")
         }
-        
+
         UserDefaults.standard.set(globalMinLevel.rawValue, forKey: "LogGlobalLevel")
         UserDefaults.standard.set(showPerformanceLogs, forKey: "LogShowPerformance")
         UserDefaults.standard.set(showTimestamps, forKey: "LogShowTimestamps")
@@ -131,12 +131,12 @@ struct Logger {
     private let logger: os.Logger
     private let category: LogCategory
     private let config = LogConfiguration.shared
-    
+
     init(subsystem: String = Bundle.main.bundleIdentifier ?? "com.romm.app", category: LogCategory) {
         self.logger = os.Logger(subsystem: subsystem, category: category.rawValue)
         self.category = category
     }
-    
+
     // MARK: - Log Levels
 
     func debug(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
@@ -198,54 +198,54 @@ struct Logger {
             await LogStore.shared.addEntry(entry)
         }
     }
-    
+
     // MARK: - Convenience Methods
-    
+
     func logNetworkRequest(method: String, url: String, statusCode: Int? = nil) {
         guard config.shouldLog(.info, for: category) else { return }
-        if let statusCode = statusCode {
+        if let statusCode {
             info("🌐 \(method) \(url) - Status: \(statusCode)")
         } else {
             info("🌐 \(method) \(url)")
         }
     }
-    
+
     func logNetworkError(method: String, url: String, error: Error) {
         guard config.shouldLog(.error, for: category) else { return }
         self.error("❌ \(method) \(url) - Error: \(error.localizedDescription)")
     }
-    
+
     func logPerformance(_ operation: String, duration: TimeInterval) {
         guard config.showPerformanceLogs && config.shouldLog(.info, for: category) else { return }
         info("⏱️ \(operation) completed in \(String(format: "%.3f", duration))s")
     }
-    
+
     // MARK: - Private Helpers
-    
+
     private func formatMessage(_ message: String, level: LogLevel, file: String, function: String, line: Int) -> String {
         var components: [String] = []
-        
+
         if config.showTimestamps {
             let timestamp = DateFormatter.logTimestamp.string(from: Date())
             components.append(timestamp)
         }
-        
+
         components.append(level.emoji)
         components.append("[\(category.rawValue)]")
-        
+
         if config.includeSourceLocation {
             components.append("[\(sourceFileName(filePath: file)):\(line)]")
             components.append(function)
         }
-        
+
         components.append("-")
         components.append(message)
-        
+
         return components.joined(separator: " ")
     }
-    
+
     private func sourceFileName(filePath: String) -> String {
-        return URL(fileURLWithPath: filePath).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
+        URL(fileURLWithPath: filePath).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
     }
 }
 
@@ -269,13 +269,13 @@ struct PerformanceMeasurement {
     private let startTime = CFAbsoluteTimeGetCurrent()
     private let operation: String
     private let logger: Logger
-    
+
     init(operation: String, logger: Logger = .performance) {
         self.operation = operation
         self.logger = logger
         logger.debug("🚀 Starting \(operation)")
     }
-    
+
     func end() {
         let duration = CFAbsoluteTimeGetCurrent() - startTime
         logger.logPerformance(operation, duration: duration)
@@ -288,7 +288,7 @@ extension DateFormatter {
     static let logTimestamp: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss.SSS"
-        
+
         return formatter
     }()
 }
@@ -297,7 +297,6 @@ extension DateFormatter {
 
 extension Dictionary {
     func mapKeys<T>(_ transform: (Key) throws -> T) rethrows -> [T: Value] {
-        return try Dictionary<T, Value>(uniqueKeysWithValues: map { (try transform($0.key), $0.value) })
+        try [T: Value](uniqueKeysWithValues: map { (try transform($0.key), $0.value) })
     }
 }
-

@@ -27,7 +27,7 @@ struct BookmarkDto: Codable {
     let textDirection: String
     let type: String
     let resources: BookmarkResourcesDto
-    
+
     enum CodingKeys: String, CodingKey {
         case id, title, url, href, description, authors, created, published, updated, site, labels, lang, loaded, state, type
         case siteName = "site_name"
@@ -62,5 +62,3 @@ struct ImageResourceDto: Codable {
     let height: Int
     let width: Int
 }
-
-

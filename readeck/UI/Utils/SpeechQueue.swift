@@ -6,6 +6,7 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let title: String
     let content: String?
     let url: String
+    // swiftlint:disable:next discouraged_optional_collection
     let labels: [String]?
     let imageUrl: String?
     let language: String
@@ -47,7 +48,8 @@ extension BookmarkDetail {
     }
 }
 
-class SpeechQueue: ObservableObject {
+final class SpeechQueue: ObservableObject {
+    private let logger = Logger.general
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
     private let ttsManager: TTSManager
@@ -93,15 +95,15 @@ class SpeechQueue: ObservableObject {
     }
 
     @Published var queueItems: [SpeechQueueItem] = []
-    @Published var currentText: String = ""
-    @Published var hasItems: Bool = false
+    @Published var currentText = ""
+    @Published var hasItems = false
 
     var queueCount: Int {
-        return queueItems.count
+        queueItems.count
     }
 
     var currentItem: SpeechQueueItem? {
-        return queueItems.first
+        queueItems.first
     }
 
     private init(ttsManager: TTSManager = .shared) {
@@ -119,23 +121,23 @@ class SpeechQueue: ObservableObject {
             self?.updateCurrentPosition(charIndex)
         }
     }
-    
+
     func enqueue(_ item: SpeechQueueItem) {
         queue.append(item)
         updatePublishedProperties()
         saveQueue()
         processQueue()
     }
-    
+
     func enqueue(contentsOf items: [SpeechQueueItem]) {
         queue.append(contentsOf: items)
         updatePublishedProperties()
         saveQueue()
         processQueue()
     }
-    
+
     func stop() {
-        print("[SpeechQueue] stop() aufgerufen")
+        logger.debug("SpeechQueue stop() called")
         saveQueue()
         ttsManager.stop()
         isProcessing = false
@@ -146,22 +148,22 @@ class SpeechQueue: ObservableObject {
         ttsManager.pause()
         saveQueue()
     }
-    
+
     func clear() {
-        print("[SpeechQueue] clear() aufgerufen")
+        logger.debug("SpeechQueue clear() called")
         queue.removeAll()
         updatePublishedProperties()
         saveQueue()
         ttsManager.stop()
         isProcessing = false
     }
-    
+
     private func updatePublishedProperties() {
         queueItems = queue
         currentText = queue.first?.content ?? ""
         hasItems = !queue.isEmpty || ttsManager.isCurrentlySpeaking()
     }
-    
+
     private func processQueue() {
         guard !isProcessing, !queue.isEmpty else { return }
         isProcessing = true
@@ -197,7 +199,7 @@ class SpeechQueue: ObservableObject {
         saveQueue()
         processQueue()
     }
-    
+
     // MARK: - Queue Management
 
     func insertAfterCurrent(_ item: SpeechQueueItem) {
@@ -284,30 +286,28 @@ class SpeechQueue: ObservableObject {
         let defaults = UserDefaults.standard
         do {
             let data = try JSONEncoder().encode(queue)
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("[SpeechQueue] Speichere Queue (\(queue.count)) als JSON: \n\(jsonString)")
-            }
+            logger.debug("SpeechQueue saving queue (\(queue.count) items)")
             defaults.set(data, forKey: queueKey)
         } catch {
-            print("[SpeechQueue] Fehler beim Speichern der Queue:", error)
+            logger.error("SpeechQueue failed to save queue: \(error.localizedDescription)")
         }
     }
-    
+
     private func loadQueue() {
         let defaults = UserDefaults.standard
         if let data = defaults.data(forKey: queueKey) {
             do {
                 let savedQueue = try JSONDecoder().decode([SpeechQueueItem].self, from: data)
                 queue = savedQueue
-                print("[SpeechQueue] Queue geladen (", queue.count, ")")
+                logger.debug("SpeechQueue loaded queue (\(queue.count) items)")
             } catch {
-                print("[SpeechQueue] Fehler beim Laden der Queue:", error)
+                logger.error("SpeechQueue failed to load queue: \(error.localizedDescription)")
                 defaults.removeObject(forKey: queueKey)
                 queue = []
             }
         }
         if queue.isEmpty {
-            print("[SpeechQueue] Queue ist nach dem Laden leer!")
+            logger.debug("SpeechQueue is empty after loading")
         }
     }
 }

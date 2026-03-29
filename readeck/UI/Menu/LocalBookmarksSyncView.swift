@@ -3,33 +3,33 @@ import SwiftUI
 struct LocalBookmarksSyncView: View {
     let state: OfflineBookmarkSyncState
     let onSyncTapped: () async -> Void
-    
+
     init(state: OfflineBookmarkSyncState, onSyncTapped: @escaping () async -> Void) {
         self.state = state
         self.onSyncTapped = onSyncTapped
     }
-    
+
     var body: some View {
         Group {
             switch state {
             case .idle:
                 EmptyView()
-                
+
             case .pending(let count):
                 pendingView(count: count)
-                
+
             case .syncing(let count, let status):
                 syncingView(count: count, status: status)
-                
+
             case .success(let syncedCount):
                 successView(syncedCount: syncedCount)
-                
+
             case .error(let message):
                 errorView(message: message)
             }
         }
     }
-    
+
     @ViewBuilder
     private func pendingView(count: Int) -> some View {
         syncContainerView {
@@ -37,13 +37,13 @@ struct LocalBookmarksSyncView: View {
                 Image(systemName: "externaldrive.badge.wifi")
                     .foregroundColor(.blue)
                     .imageScale(.medium)
-                
+
                 Text("\(count) bookmark\(count == 1 ? "" : "s") waiting for sync")
                     .font(.subheadline)
                     .foregroundColor(.primary)
-                
+
                 Spacer()
-                
+
                 Button {
                     Task { await onSyncTapped() }
                 } label: {
@@ -53,7 +53,7 @@ struct LocalBookmarksSyncView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func syncingView(count: Int, status: String?) -> some View {
         syncContainerView {
@@ -62,15 +62,15 @@ struct LocalBookmarksSyncView: View {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .foregroundColor(.blue)
                         .imageScale(.medium)
-                    
+
                     Text("Syncing with server...")
                         .font(.subheadline)
                         .foregroundColor(.blue)
-                    
+
                     Spacer()
                 }
-                
-                if let status = status {
+
+                if let status {
                     HStack {
                         Text(status)
                             .font(.caption)
@@ -82,7 +82,7 @@ struct LocalBookmarksSyncView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func successView(syncedCount: Int) -> some View {
         syncContainerView {
@@ -90,16 +90,16 @@ struct LocalBookmarksSyncView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
                     .imageScale(.small)
-                
+
                 Text("\(syncedCount) bookmark\(syncedCount == 1 ? "" : "s") synced successfully")
                     .font(.caption2)
                     .foregroundColor(.green)
-                
+
                 Spacer()
             }
         }
     }
-    
+
     @ViewBuilder
     private func errorView(message: String) -> some View {
         syncContainerView {
@@ -107,16 +107,16 @@ struct LocalBookmarksSyncView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.orange)
                     .imageScale(.small)
-                
+
                 Text(message)
                     .font(.caption2)
                     .foregroundColor(.orange)
-                
+
                 Spacer()
             }
         }
     }
-    
+
     @ViewBuilder
     private func syncContainerView<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()

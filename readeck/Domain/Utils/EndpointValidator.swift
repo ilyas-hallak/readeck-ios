@@ -9,7 +9,6 @@ import Foundation
 
 /// Validates and normalizes server endpoint URLs for consistent API usage
 struct EndpointValidator {
-
     /// Normalizes an endpoint URL by:
     /// - Trimming whitespace
     /// - Ensuring proper scheme (http/https, defaults to https if missing)

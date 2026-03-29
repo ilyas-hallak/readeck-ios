@@ -11,7 +11,6 @@ import CryptoKit
 /// Generates PKCE (Proof Key for Code Exchange) verifier and challenge for OAuth 2.0
 /// According to RFC 7636: https://datatracker.ietf.org/doc/html/rfc7636
 struct PKCEGenerator {
-
     /// Generates a cryptographically random code verifier
     /// - Returns: A 64-character random alphanumeric string
     static func generateCodeVerifier() -> String {

@@ -213,3 +213,55 @@
 "Premium" = "Premium";
 "Enhanced" = "Erweitert";
 "Default" = "Standard";
+
+/* Custom CSS Hilfe */
+"css.help.title" = "CSS Hilfe";
+"css.help.hint" = "Eigenes CSS wird nach den Standard-Styles angehängt.";
+"css.help.button.append" = "Anhängen";
+"css.help.button.replace" = "Ersetzen";
+
+/* CSS Hilfe Kategorien */
+"css.help.category.typography" = "Typografie";
+"css.help.category.colors" = "Farben";
+"css.help.category.layout" = "Layout";
+"css.help.category.visibility" = "Sichtbarkeit";
+
+/* CSS Snippets - Typografie */
+"css.snippet.fontSize.title" = "Schriftgröße";
+"css.snippet.fontSize.description" = "Ändert die Textgröße";
+"css.snippet.lineHeight.title" = "Zeilenabstand";
+"css.snippet.lineHeight.description" = "Abstand zwischen Zeilen anpassen";
+"css.snippet.headingsSmaller.title" = "Kleinere Überschriften";
+"css.snippet.headingsSmaller.description" = "Überschriften verkleinern";
+"css.snippet.boldParagraphs.title" = "Fetterer Text";
+"css.snippet.boldParagraphs.description" = "Schriftstärke der Absätze erhöhen";
+
+/* CSS Snippets - Farben */
+"css.snippet.sepia.title" = "Sepia-Thema";
+"css.snippet.sepia.description" = "Warmer, papierartiger Hintergrund mit dunkelbraunem Text";
+"css.snippet.linkColor.title" = "Linkfarbe";
+"css.snippet.linkColor.description" = "Farbe der Links ändern";
+"css.snippet.headingColor.title" = "Überschriftenfarbe";
+"css.snippet.headingColor.description" = "Farbe der Überschriften ändern";
+"css.snippet.quoteColor.title" = "Zitat-Stil";
+"css.snippet.quoteColor.description" = "Text- und Rahmenfarbe von Zitaten ändern";
+
+/* CSS Snippets - Layout */
+"css.snippet.marginsSmall.title" = "Schmale Ränder";
+"css.snippet.marginsSmall.description" = "Seitenränder verkleinern für mehr Textfläche";
+"css.snippet.marginsLarge.title" = "Breite Ränder";
+"css.snippet.marginsLarge.description" = "Seitenränder vergrößern für eine fokussierte Spalte";
+"css.snippet.imagesSmaller.title" = "Kleinere Bilder";
+"css.snippet.imagesSmaller.description" = "Bilder verkleinern und zentrieren";
+"css.snippet.paragraphSpacing.title" = "Kompakte Absätze";
+"css.snippet.paragraphSpacing.description" = "Abstand zwischen Absätzen verringern";
+
+/* CSS Snippets - Sichtbarkeit */
+"css.snippet.hideImages.title" = "Bilder ausblenden";
+"css.snippet.hideImages.description" = "Alle Bilder aus dem Artikel entfernen";
+"css.snippet.hideHR.title" = "Trennlinien ausblenden";
+"css.snippet.hideHR.description" = "Horizontale Trennlinien entfernen";
+"css.snippet.linksPlain.title" = "Schlichte Links";
+"css.snippet.linksPlain.description" = "Unterstreichung von Links entfernen";
+"css.snippet.blockquotePlain.title" = "Schlichte Zitate";
+"css.snippet.blockquotePlain.description" = "Rahmen, Hintergrund und Kursivschrift von Zitaten entfernen";

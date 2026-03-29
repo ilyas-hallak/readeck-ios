@@ -8,12 +8,11 @@
 import SwiftUI
 
 struct CachedArticlesPreviewView: View {
-
     // MARK: - State
 
     @State private var viewModel = CachedArticlesPreviewViewModel()
     @State private var selectedBookmarkId: String?
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
 
     // MARK: - Body
 
@@ -59,9 +58,7 @@ struct CachedArticlesPreviewView: View {
                             bookmark: bookmark,
                             currentState: .unread,
                             layout: .magazine,
-                            onArchive: { _ in },
-                            onDelete: { _ in },
-                            onToggleFavorite: { _ in }
+                            onSwipeAction: { _, _ in }
                         )
                     }
                     .buttonStyle(PlainButtonStyle())

@@ -71,7 +71,7 @@ actor LogStore {
     }
 
     func getEntries() -> [LogEntry] {
-        return entries
+        entries
     }
 
     func getEntries(
@@ -81,15 +81,15 @@ actor LogStore {
     ) -> [LogEntry] {
         var filtered = entries
 
-        if let level = level {
+        if let level {
             filtered = filtered.filter { $0.level == level }
         }
 
-        if let category = category {
+        if let category {
             filtered = filtered.filter { $0.category == category }
         }
 
-        if let searchText = searchText, !searchText.isEmpty {
+        if let searchText, !searchText.isEmpty {
             filtered = filtered.filter {
                 $0.message.localizedCaseInsensitiveContains(searchText) ||
                 $0.fileName.localizedCaseInsensitiveContains(searchText) ||
@@ -262,7 +262,7 @@ actor LogStore {
 
     // CRC-32 lookup table
     private var crc32Table: [UInt32] {
-        return (0..<256).map { i -> UInt32 in
+        (0..<256).map { i -> UInt32 in
             var crc = UInt32(i)
             for _ in 0..<8 {
                 crc = (crc & 1 == 1) ? ((crc >> 1) ^ 0xEDB88320) : (crc >> 1)
@@ -304,7 +304,7 @@ extension DateFormatter {
 
 extension UInt32 {
     var littleEndianBytes: [UInt8] {
-        return [
+        [
             UInt8(self & 0xFF),
             UInt8((self >> 8) & 0xFF),
             UInt8((self >> 16) & 0xFF),
@@ -315,7 +315,7 @@ extension UInt32 {
 
 extension UInt16 {
     var littleEndianBytes: [UInt8] {
-        return [
+        [
             UInt8(self & 0xFF),
             UInt8((self >> 8) & 0xFF)
         ]

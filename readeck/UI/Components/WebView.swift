@@ -4,21 +4,21 @@ import WebKit
 struct WebView: UIViewRepresentable {
     let htmlContent: String
     let settings: Settings
-    let onHeightChange: (CGFloat) -> Void
-    var onScroll: ((Double) -> Void)? = nil
+    let onHeightChange: (Double) -> Void
+    var onScroll: ((Double) -> Void)?
     var selectedAnnotationId: String?
-    var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)? = nil
-    var onScrollToPosition: ((CGFloat) -> Void)? = nil
+    var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+    var onScrollToPosition: ((Double) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
-    
+
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
-        
+
         // Enable text selection and copy functionality
         let preferences = WKWebpagePreferences()
         preferences.allowsContentJavaScript = true
         configuration.defaultWebpagePreferences = preferences
-        
+
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.isScrollEnabled = false
@@ -41,7 +41,7 @@ struct WebView: UIViewRepresentable {
 
         return webView
     }
-    
+
     func updateUIView(_ webView: WKWebView, context: Context) {
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
@@ -49,8 +49,34 @@ struct WebView: UIViewRepresentable {
         context.coordinator.onScrollToPosition = onScrollToPosition
 
         let isDarkMode = colorScheme == .dark
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let horizontalMargin = Int(settings.horizontalMargin ?? 16)
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
+
+        // Resolve color theme
+        let colorTheme = settings.readerColorTheme ?? .system
+        let resolvedBgColor: String
+        let resolvedTextColor: String
+        let resolvedHeadingColor: String
+        let themeIsDark: Bool
+        switch colorTheme {
+        case .system:
+            resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
+            resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
+            resolvedHeadingColor = isDarkMode ? "#ffffff" : "#000000"
+            themeIsDark = isDarkMode
+        case .custom:
+            resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = isDarkMode
+        default:
+            resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = colorTheme.isDark
+        }
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
             ? "var(--font-family)"
@@ -83,26 +109,26 @@ struct WebView: UIViewRepresentable {
                 \(fontCSS.fontFaceCSS)
 
                 :root {
-                    --background-color: \(isDarkMode ? "#000000" : "#ffffff");
-                    --text-color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
-                    --heading-color: \(isDarkMode ? "#ffffff" : "#000000");
-                    --link-color: \(isDarkMode ? "#0A84FF" : "#007AFF");
-                    --quote-color: \(isDarkMode ? "#8E8E93" : "#666666");
-                    --quote-border: \(isDarkMode ? "#0A84FF" : "#007AFF");
-                    --code-background: \(isDarkMode ? "#1C1C1E" : "#f5f5f5");
-                    --code-text: \(isDarkMode ? "#ffffff" : "#000000");
-                    --separator-color: \(isDarkMode ? "#38383A" : "#e0e0e0");
-                    
+                    --background-color: \(resolvedBgColor);
+                    --text-color: \(resolvedTextColor);
+                    --heading-color: \(resolvedHeadingColor);
+                    --link-color: \(themeIsDark ? "#0A84FF" : "#007AFF");
+                    --quote-color: \(themeIsDark ? "#8E8E93" : "#666666");
+                    --quote-border: \(themeIsDark ? "#0A84FF" : "#007AFF");
+                    --code-background: \(themeIsDark ? "#1C1C1E" : "#f5f5f5");
+                    --code-text: \(themeIsDark ? "#ffffff" : "#000000");
+                    --separator-color: \(themeIsDark ? "#38383A" : "#e0e0e0");
+
                     /* Font Settings from Settings */
                     --base-font-size: \(fontSize)px;
                     --font-family: \(fontCSS.fontStackCSS);
                 }
-                
+
                 body {
                     font-family: var(--font-family);
-                    line-height: 1.8;
+                    line-height: \(lineHeightValue);
                     margin: 0;
-                    padding: 16px 16px 100px;
+                    padding: 16px \(horizontalMargin)px 100px;
                     background-color: var(--background-color);
                     color: var(--text-color);
                     font-size: var(--base-font-size);
@@ -115,7 +141,7 @@ struct WebView: UIViewRepresentable {
                 body, article, p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, div, a {
                     font-family: var(--font-family) !important;
                 }
-                
+
                 h1, h2, h3, h4, h5, h6 {
                     color: var(--heading-color);
                     margin-top: 24px;
@@ -128,19 +154,19 @@ struct WebView: UIViewRepresentable {
                 h4 { font-size: var(--base-font-size); }
                 h5 { font-size: calc(var(--base-font-size) * 0.875); }
                 h6 { font-size: calc(var(--base-font-size) * 0.75); }
-                
+
                 p {
                     margin-bottom: 16px;
                     font-size: var(--base-font-size);
                 }
-                
+
                 img {
                     max-width: 100%;
                     height: auto;
                     border-radius: 8px;
                     margin: 16px 0;
                 }
-                
+
                 a {
                     color: var(--link-color);
                     text-decoration: none;
@@ -148,7 +174,7 @@ struct WebView: UIViewRepresentable {
                 a:hover {
                     text-decoration: underline;
                 }
-                
+
                 blockquote {
                     border-left: 4px solid var(--quote-border);
                     margin: 16px 0;
@@ -164,7 +190,7 @@ struct WebView: UIViewRepresentable {
                 code, pre, kbd, samp {
                     font-family: \(codeFontFamily) !important;
                 }
-                
+
                 code {
                     background-color: var(--code-background);
                     color: var(--code-text);
@@ -172,7 +198,7 @@ struct WebView: UIViewRepresentable {
                     border-radius: 4px;
                     font-size: calc(var(--base-font-size) * 0.875);
                 }
-                
+
                 pre {
                     background-color: var(--code-background);
                     color: var(--code-text);
@@ -182,49 +208,50 @@ struct WebView: UIViewRepresentable {
                     font-size: calc(var(--base-font-size) * 0.875);
                     border: 1px solid var(--separator-color);
                 }
-                
+
                 pre code {
                     background-color: transparent;
                     padding: 0;
                     font-family: inherit !important;
                 }
-                
+
                 hr {
                     border: none;
                     height: 1px;
                     background-color: var(--separator-color);
                     margin: 24px 0;
                 }
-                
+
                 table {
                     width: 100%;
                     border-collapse: collapse;
                     margin: 16px 0;
                     font-size: var(--base-font-size);
                 }
-                
+
                 th, td {
                     border: 1px solid var(--separator-color);
                     padding: 8px 12px;
                     text-align: left;
                 }
-                
+
                 th {
                     background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.5)" : "rgba(0, 0, 0, 0.05)");
                     font-weight: 600;
                 }
-                
+
                 ul, ol {
                     padding-left: 20px;
                     margin-bottom: 16px;
                     font-size: var(--base-font-size);
                 }
-                
+
                 li {
                     margin-bottom: 4px;
                 }
-                
-                /* Dark mode media query als Fallback */
+
+                /* Media query fallbacks only for system theme */
+                \(colorTheme == .system ? """
                 @media (prefers-color-scheme: dark) {
                     :root {
                         --background-color: #000000;
@@ -238,8 +265,6 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #38383A;
                     }
                 }
-                
-                /* Light mode media query als Fallback */
                 @media (prefers-color-scheme: light) {
                     :root {
                         --background-color: #ffffff;
@@ -253,6 +278,7 @@ struct WebView: UIViewRepresentable {
                         --separator-color: #e0e0e0;
                     }
                 }
+                """ : "")
 
                 /* Annotation Highlighting - for rd-annotation tags */
                 rd-annotation {
@@ -299,6 +325,8 @@ struct WebView: UIViewRepresentable {
                     background-color: \(AnnotationColor.red.cssColorWithOpacity(0.5));
                     box-shadow: 0 0 0 2px \(AnnotationColor.red.cssColorWithOpacity(0.6));
                 }
+                /* Custom user CSS */
+                \(settings.customCSS ?? "")
             </style>
         </head>
         <body>
@@ -308,7 +336,7 @@ struct WebView: UIViewRepresentable {
                 let heightUpdateTimeout = null;
                 let scrollTimeout = null;
                 let isScrolling = false;
-                
+
                 function updateHeight() {
                     const height = document.body.scrollHeight;
                     if (Math.abs(height - lastHeight) > 5 && !isScrolling) {
@@ -316,15 +344,15 @@ struct WebView: UIViewRepresentable {
                         window.webkit.messageHandlers.heightUpdate.postMessage(height);
                     }
                 }
-                
+
                 function debouncedHeightUpdate() {
                     clearTimeout(heightUpdateTimeout);
                     heightUpdateTimeout = setTimeout(updateHeight, 100);
                 }
-                
+
                 window.addEventListener('load', updateHeight);
                 setTimeout(updateHeight, 500);
-                
+
                 document.querySelectorAll('img').forEach(img => {
                     img.addEventListener('load', debouncedHeightUpdate);
                 });
@@ -340,7 +368,7 @@ struct WebView: UIViewRepresentable {
         """
         webView.loadHTMLString(styledHTML, baseURL: nil)
     }
-    
+
     func dismantleUIView(_ webView: WKWebView, coordinator: WebViewCoordinator) {
         webView.stopLoading()
         webView.navigationDelegate = nil
@@ -351,7 +379,7 @@ struct WebView: UIViewRepresentable {
         webView.loadHTMLString("", baseURL: nil)
         coordinator.cleanup()
     }
-    
+
     func makeCoordinator() -> WebViewCoordinator {
         WebViewCoordinator()
     }
@@ -362,6 +390,7 @@ struct WebView: UIViewRepresentable {
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
+        case .custom: return 20
         }
     }
 
@@ -698,34 +727,34 @@ struct WebView: UIViewRepresentable {
     }
 }
 
-class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     // Callbacks
-    var onHeightChange: ((CGFloat) -> Void)?
+    var onHeightChange: ((Double) -> Void)?
     var onScroll: ((Double) -> Void)?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
-    var onScrollToPosition: ((CGFloat) -> Void)?
+    var onScrollToPosition: ((Double) -> Void)?
 
     // WebView reference
     weak var webView: WKWebView?
 
     // Height management
-    var lastHeight: CGFloat = 0
-    var pendingHeight: CGFloat = 0
+    var lastHeight: Double = 0
+    var pendingHeight: Double = 0
     var heightUpdateTimer: Timer?
 
     // Scroll management
-    var isScrolling: Bool = false
+    var isScrolling = false
     var scrollVelocity: Double = 0
-    var lastScrollTime: Date = Date()
+    var lastScrollTime = Date()
     var scrollEndTimer: Timer?
 
     // Lifecycle
     private var isCleanedUp = false
-    
+
     deinit {
         cleanup()
     }
-    
+
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated {
             if let url = navigationAction.request.url {
@@ -736,9 +765,9 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
         decisionHandler(.allow)
     }
-    
+
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        if message.name == "heightUpdate", let height = message.body as? CGFloat {
+        if message.name == "heightUpdate", let height = message.body as? Double {
             DispatchQueue.main.async {
                 self.handleHeightUpdate(height: height)
             }
@@ -761,24 +790,24 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
         if message.name == "scrollToPosition", let position = message.body as? Double {
             DispatchQueue.main.async {
-                self.onScrollToPosition?(CGFloat(position))
+                self.onScrollToPosition?(Double(position))
             }
         }
     }
-    
-    private func handleHeightUpdate(height: CGFloat) {
+
+    private func handleHeightUpdate(height: Double) {
         // Store the pending height
         pendingHeight = height
-        
+
         // If we're actively scrolling, defer the height update
         if isScrolling {
             return
         }
-        
+
         // Apply height update immediately if not scrolling
         applyHeightUpdate(height: height)
     }
-    
+
     private func handleScrollProgress(progress: Double) {
         let now = Date()
         let timeDelta = now.timeIntervalSince(lastScrollTime)
@@ -801,23 +830,23 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
 
         onScroll?(progress)
     }
-    
+
     private func handleScrollEnd() {
         isScrolling = false
         scrollVelocity = 0
-        
+
         // Apply any pending height update after scrolling ends
         if pendingHeight != lastHeight && pendingHeight > 0 {
             // Add small delay to ensure scroll has fully stopped
             heightUpdateTimer?.invalidate()
             heightUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.applyHeightUpdate(height: self.pendingHeight)
             }
         }
     }
-    
-    private func applyHeightUpdate(height: CGFloat) {
+
+    private func applyHeightUpdate(height: Double) {
         // Only update if height actually changed significantly
         let heightDifference = abs(height - lastHeight)
         if heightDifference < 5 { // Ignore tiny height changes that cause flicker

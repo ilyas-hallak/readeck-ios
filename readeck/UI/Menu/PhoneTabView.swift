@@ -28,7 +28,7 @@ struct PhoneTabView: View {
     @State private var searchViewModel = SearchBookmarksViewModel()
     @FocusState private var searchFieldIsFocused: Bool
 
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
 
     private var cardLayoutStyle: CardLayoutStyle {
         appSettings.settings?.cardLayoutStyle ?? .compact
@@ -43,32 +43,21 @@ struct PhoneTabView: View {
     }
 
     var body: some View {
-        if #available(iOS 26.1, *) {
+        GlobalPlayerContainerView {
             tabViewContent
-                .tabViewBottomAccessory(isEnabled: shouldShowPlayer) {
-                    SpeechPlayerView(viewModel: speechPlayerViewModel, onTap: {
-                        isPlayerSheetPresented = true
-                    }, onClose: {
-                        isPlayerDismissed = true
-                    })
-                }
-                .sheet(isPresented: $isPlayerSheetPresented) {
-                    PlayerSheetView(viewModel: speechPlayerViewModel)
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
-                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                }
-                .task {
-                    await speechPlayerViewModel.setup()
-                }
-                .onChange(of: speechPlayerViewModel.queueCount) { oldCount, newCount in
-                    if newCount > oldCount {
-                        isPlayerDismissed = false
-                    }
-                }
-        } else {
-            GlobalPlayerContainerView {
-                tabViewContent
+        }
+        .sheet(isPresented: $isPlayerSheetPresented) {
+            PlayerSheetView(viewModel: speechPlayerViewModel)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+        }
+        .task {
+            await speechPlayerViewModel.setup()
+        }
+        .onChange(of: speechPlayerViewModel.queueCount) { oldCount, newCount in
+            if newCount > oldCount {
+                isPlayerDismissed = false
             }
         }
     }
@@ -187,7 +176,6 @@ struct PhoneTabView: View {
         } else if let bookmarks = searchViewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
             List(bookmarks) { bookmark in
                 ZStack {
-                    
                     // Hidden NavigationLink to remove disclosure indicator
                     NavigationLink {
                         BookmarkDetailView(bookmarkId: bookmark.id)
@@ -200,9 +188,7 @@ struct PhoneTabView: View {
                         bookmark: bookmark,
                         currentState: .all,
                         layout: cardLayoutStyle,
-                        onArchive: { _ in },
-                        onDelete: { _ in },
-                        onToggleFavorite: { _ in },
+                        onSwipeAction: { _, _ in },
                         onPlayNext: appSettings.enableTTS ? { bookmark in
                             SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
                         } : nil
@@ -240,15 +226,15 @@ struct PhoneTabView: View {
                 }
                 .listRowBackground(Color(R.color.bookmark_list_bg))
             }
-            
+
             if case .idle = offlineBookmarksViewModel.state {
                 // Don't show anything for idle state
             } else {
                 Section {
                     VStack {
-                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state, onSyncTapped: {
+                        LocalBookmarksSyncView(state: offlineBookmarksViewModel.state) {
                             await offlineBookmarksViewModel.syncOfflineBookmarks()
-                        })
+                        }
                     }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
@@ -259,7 +245,7 @@ struct PhoneTabView: View {
         .scrollContentBackground(.hidden)
         .background(Color(R.color.bookmark_list_bg))
     }
-    
+
     @ViewBuilder
     private var moreTabsFooter: some View {
         if appSettings.enableTTS && isPlayerDismissed {
@@ -269,7 +255,7 @@ struct PhoneTabView: View {
             .padding(.top, 16)
         }
     }
-    
+
     @ViewBuilder
     private func tabView(for tab: SidebarTab) -> some View {
         switch tab {
@@ -310,7 +296,7 @@ extension View {
             self
         }
     }
-    
+
     @ViewBuilder
     func tabBarMinimizeBehaviorIfAvailable() -> some View {
         if #available(iOS 26.0, *) {

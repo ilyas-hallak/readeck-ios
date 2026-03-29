@@ -9,17 +9,17 @@ import WebKit
 struct NativeWebView: View {
     let htmlContent: String
     let settings: Settings
-    let onHeightChange: (CGFloat) -> Void
-    var onScroll: ((Double) -> Void)? = nil
+    let onHeightChange: (Double) -> Void
+    var onScroll: ((Double) -> Void)?
     var selectedAnnotationId: String?
-    var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)? = nil
-    var onScrollToPosition: ((CGFloat) -> Void)? = nil
+    var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+    var onScrollToPosition: ((Double) -> Void)?
 
     @State private var webPage = WebPage()
     @State private var annotationPollingTask: Task<Void, Never>?
     @State private var scrollPollingTask: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
-    
+
     var body: some View {
         WebKit.WebView(webPage)
             .scrollDisabled(true) // Disable internal scrolling
@@ -55,7 +55,7 @@ struct NativeWebView: View {
         // Cancel any existing polling task
         annotationPollingTask?.cancel()
 
-        guard let onAnnotationCreated = onAnnotationCreated else { return }
+        guard let onAnnotationCreated else { return }
 
         // Poll for annotation messages from JavaScript
         annotationPollingTask = Task { @MainActor in
@@ -96,7 +96,7 @@ struct NativeWebView: View {
         // Cancel any existing polling task
         scrollPollingTask?.cancel()
 
-        guard let onScrollToPosition = onScrollToPosition else { return }
+        guard let onScrollToPosition else { return }
 
         // Poll for scroll position messages from JavaScript
         scrollPollingTask = Task { @MainActor in
@@ -118,7 +118,7 @@ struct NativeWebView: View {
 
                 do {
                     if let position = try await page.callJavaScript(script) as? Double {
-                        onScrollToPosition(CGFloat(position))
+                        onScrollToPosition(Double(position))
                     }
                 } catch {
                     // Silently continue polling
@@ -126,9 +126,9 @@ struct NativeWebView: View {
             }
         }
     }
-    
+
     private func updateContentHeightWithJS() async {
-        var lastHeight: CGFloat = 0
+        var lastHeight: Double = 0
 
         // Similar strategy to WebView: multiple attempts with increasing delays
         let delays = [0.1, 0.2, 0.5, 1.0, 1.5, 2.0] // 6 attempts like WebView
@@ -142,11 +142,11 @@ struct NativeWebView: View {
                 let result = try await webPage.callJavaScript("return document.body.scrollHeight")
 
                 if let height = result as? Double, height > 0 {
-                    let cgHeight = CGFloat(height)
+                    let cgHeight = Double(height)
 
                     // Update height if it's significantly different (> 5px like WebView)
                     if lastHeight == 0 || abs(cgHeight - lastHeight) > 5 {
-                        print("🟢 NativeWebView - JavaScript height updated: \(height)px on attempt \(attempt)")
+                        Logger.ui.debug("NativeWebView - JavaScript height updated: \(height)px on attempt \(attempt)")
                         DispatchQueue.main.async {
                             self.onHeightChange(cgHeight)
                         }
@@ -155,49 +155,76 @@ struct NativeWebView: View {
 
                     // If height seems stable (no change in last 2 attempts), we can exit early
                     if attempt >= 2 && lastHeight > 0 {
-                        print("🟢 NativeWebView - Height stabilized at \(lastHeight)px after \(attempt) attempts")
+                        Logger.ui.debug("NativeWebView - Height stabilized at \(lastHeight)px after \(attempt) attempts")
                         return
                     }
                 }
             } catch {
-                print("🟡 NativeWebView - JavaScript attempt \(attempt) failed: \(error)")
+                Logger.ui.warning("NativeWebView - JavaScript attempt \(attempt) failed: \(error)")
             }
         }
 
         // If no valid height was found, use fallback
         if lastHeight == 0 {
-            print("🔴 NativeWebView - No valid JavaScript height found, using fallback")
+            Logger.ui.error("NativeWebView - No valid JavaScript height found, using fallback")
             updateContentHeightFallback()
         } else {
-            print("🟢 NativeWebView - Final height: \(lastHeight)px")
+            Logger.ui.debug("NativeWebView - Final height: \(lastHeight)px")
         }
     }
-    
+
     private func updateContentHeightFallback() {
         // Simplified fallback calculation
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let plainText = htmlContent.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         let characterCount = plainText.count
         let estimatedLines = max(1, characterCount / 80)
-        let textHeight = CGFloat(estimatedLines) * CGFloat(fontSize) * 1.8
+        let textHeight = Double(estimatedLines) * Double(fontSize) * lineHeightValue
         let finalHeight = max(400, min(textHeight + 100, 3000))
-        
-        print("🟡 NativeWebView - Using fallback height: \(finalHeight)px")
+
+        Logger.ui.warning("NativeWebView - Using fallback height: \(finalHeight)px")
         DispatchQueue.main.async {
             self.onHeightChange(finalHeight)
         }
     }
-    
+
     private func loadStyledContent() {
         let isDarkMode = colorScheme == .dark
-        let fontSize = getFontSize(from: settings.fontSize ?? .extraLarge)
+        let fontSize = settings.fontSizeNumeric.map { Int($0) } ?? getFontSize(from: settings.fontSize ?? .extraLarge)
+        let horizontalMargin = Int(settings.horizontalMargin ?? 16)
+        let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
+
+        // Resolve color theme
+        let colorTheme = settings.readerColorTheme ?? .system
+        let resolvedBgColor: String
+        let resolvedTextColor: String
+        let resolvedHeadingColor: String
+        let themeIsDark: Bool
+        switch colorTheme {
+        case .system:
+            resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
+            resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
+            resolvedHeadingColor = isDarkMode ? "#ffffff" : "#000000"
+            themeIsDark = isDarkMode
+        case .custom:
+            resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = isDarkMode
+        default:
+            resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
+            resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
+            resolvedHeadingColor = resolvedTextColor
+            themeIsDark = colorTheme.isDark
+        }
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
             ? "var(--font-family)"
             : "'SF Mono', Menlo, Monaco, Consolas, monospace"
         Logger.ui.debug("NativeWebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
-        
+
         let styledHTML = """
         <html>
         <head>
@@ -219,11 +246,11 @@ struct NativeWebView: View {
 
                 body {
                     font-family: \(fontCSS.fontStackCSS);
-                    line-height: 1.8;
+                    line-height: \(lineHeightValue);
                     margin: 0;
-                    padding: 16px 16px 100px;
-                    background-color: \(isDarkMode ? "#000000" : "#ffffff");
-                    color: \(isDarkMode ? "#ffffff" : "#1a1a1a");
+                    padding: 16px \(horizontalMargin)px 100px;
+                    background-color: \(resolvedBgColor);
+                    color: \(resolvedTextColor);
                     font-size: \(fontSize)px;
                     -webkit-text-size-adjust: 100%;
                     -webkit-user-select: text;
@@ -237,18 +264,18 @@ struct NativeWebView: View {
                 body, article, p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, div, a {
                     font-family: \(fontCSS.fontStackCSS) !important;
                 }
-                
+
                 h1, h2, h3, h4, h5, h6 {
-                    color: \(isDarkMode ? "#ffffff" : "#000000");
+                    color: \(resolvedHeadingColor);
                     margin-top: 24px;
                     margin-bottom: 12px;
                     font-weight: 600;
                 }
-                
+
                 h1 { font-size: \(fontSize * 3 / 2)px; }
                 h2 { font-size: \(fontSize * 5 / 4)px; }
                 h3 { font-size: \(fontSize * 9 / 8)px; }
-                
+
                 p { margin-bottom: 16px; }
 
                 img {
@@ -257,32 +284,32 @@ struct NativeWebView: View {
                     border-radius: 8px;
                     margin: 16px 0;
                 }
-                a { color: \(isDarkMode ? "#0A84FF" : "#007AFF"); text-decoration: none; }
+                a { color: \(themeIsDark ? "#0A84FF" : "#007AFF"); text-decoration: none; }
                 a:hover { text-decoration: underline; }
-                
-                blockquote { 
-                    border-left: 4px solid \(isDarkMode ? "#0A84FF" : "#007AFF"); 
-                    margin: 16px 0; 
-                    padding: 12px 16px; 
-                    font-style: italic; 
-                    background-color: \(isDarkMode ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)"); 
-                    border-radius: 4px; 
+
+                blockquote {
+                    border-left: 4px solid \(themeIsDark ? "#0A84FF" : "#007AFF");
+                    margin: 16px 0;
+                    padding: 12px 16px;
+                    font-style: italic;
+                    background-color: \(themeIsDark ? "rgba(58, 58, 60, 0.3)" : "rgba(0, 122, 255, 0.05)");
+                    border-radius: 4px;
                 }
 
                 code, pre, kbd, samp {
                     font-family: \(codeFontFamily) !important;
                 }
-                
-                code { 
-                    background-color: \(isDarkMode ? "#1C1C1E" : "#f5f5f5"); 
-                    color: \(isDarkMode ? "#ffffff" : "#000000"); 
-                    padding: 2px 6px; 
-                    border-radius: 4px; 
+
+                code {
+                    background-color: \(themeIsDark ? "#1C1C1E" : "#f5f5f5");
+                    color: \(themeIsDark ? "#ffffff" : "#000000");
+                    padding: 2px 6px;
+                    border-radius: 4px;
                 }
-                
+
                 pre {
-                    background-color: \(isDarkMode ? "#1C1C1E" : "#f5f5f5");
-                    color: \(isDarkMode ? "#ffffff" : "#000000");
+                    background-color: \(themeIsDark ? "#1C1C1E" : "#f5f5f5");
+                    color: \(themeIsDark ? "#ffffff" : "#000000");
                     padding: 16px;
                     border-radius: 8px;
                     overflow-x: auto;
@@ -294,14 +321,14 @@ struct NativeWebView: View {
                 pre code {
                     font-family: inherit !important;
                 }
-                
+
                 ul, ol { padding-left: 20px; margin-bottom: 16px; }
                 li { margin-bottom: 4px; }
-                
+
                 table { width: 100%; border-collapse: collapse; margin: 16px 0; }
                 th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
                 th { font-weight: 600; }
-                
+
                 hr { border: none; height: 1px; background-color: #ccc; margin: 24px 0; }
 
                 /* Annotation Highlighting - for rd-annotation tags */
@@ -349,6 +376,8 @@ struct NativeWebView: View {
                     background-color: \(AnnotationColor.red.cssColorWithOpacity(0.5));
                     box-shadow: 0 0 0 2px \(AnnotationColor.red.cssColorWithOpacity(0.6));
                 }
+                /* Custom user CSS */
+                \(settings.customCSS ?? "")
             </style>
         </head>
         <body>
@@ -363,10 +392,10 @@ struct NativeWebView: View {
                         document.documentElement.offsetHeight || 0
                     );
                 }
-                
+
                 // Make function globally available
                 window.getContentHeight = measureHeight;
-                
+
                 // Auto-measure when everything is ready
                 function scheduleHeightCheck() {
                     // Multiple timing strategies
@@ -375,24 +404,24 @@ struct NativeWebView: View {
                     } else {
                         delayedHeightCheck();
                     }
-                    
+
                     // Also check after images load
                     window.addEventListener('load', delayedHeightCheck);
-                    
+
                     // Force check after layout
                     setTimeout(delayedHeightCheck, 50);
                     setTimeout(delayedHeightCheck, 100);
                     setTimeout(delayedHeightCheck, 200);
                     setTimeout(delayedHeightCheck, 500);
                 }
-                
+
                 function delayedHeightCheck() {
                     // Force layout recalculation
                     document.body.offsetHeight;
                     const height = measureHeight();
                     console.log('NativeWebView height check:', height);
                 }
-                
+
                 scheduleHeightCheck();
 
                 // Scroll to selected annotation
@@ -405,7 +434,7 @@ struct NativeWebView: View {
         </html>
         """
         webPage.load(html: styledHTML)
-        
+
         // Update height after content loads
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             Task {
@@ -413,13 +442,14 @@ struct NativeWebView: View {
             }
         }
     }
-    
+
     private func getFontSize(from fontSize: FontSize) -> Int {
         switch fontSize {
         case .small: return 14
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
+        case .custom: return 20
         }
     }
 

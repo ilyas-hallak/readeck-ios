@@ -10,7 +10,7 @@ protocol PInfoApiClient {
     func getServerInfo(endpoint: String?) async throws -> ServerInfoDto
 }
 
-class InfoApiClient: PInfoApiClient {
+final class InfoApiClient: PInfoApiClient {
     private let tokenProvider: TokenProvider
     private let logger = Logger.network
 
@@ -47,14 +47,14 @@ class InfoApiClient: PInfoApiClient {
     // MARK: - Private Helpers
 
     private func resolveEndpoint(_ providedEndpoint: String?) async throws -> String {
-        if let providedEndpoint = providedEndpoint {
+        if let providedEndpoint {
             return providedEndpoint
-        } else if let storedEndpoint = await tokenProvider.getEndpoint() {
-            return storedEndpoint
-        } else {
-            logger.error("No endpoint available for server info")
-            throw APIError.invalidURL
         }
+        if let storedEndpoint = await tokenProvider.getEndpoint() {
+            return storedEndpoint
+        }
+        logger.error("No endpoint available for server info")
+        throw APIError.invalidURL
     }
 
     private func buildInfoURL(baseEndpoint: String) throws -> URL {

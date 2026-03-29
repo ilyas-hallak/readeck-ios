@@ -1,22 +1,22 @@
 import Foundation
 import CoreData
 
-class LabelsRepository: PLabelsRepository, @unchecked Sendable {
+final class LabelsRepository: PLabelsRepository, @unchecked Sendable {
     private let api: PAPI
-    
+
     private let coreDataManager = CoreDataManager.shared
-    
+
     init(api: PAPI) {
         self.api = api
     }
-    
+
     func getLabels() async throws -> [BookmarkLabel] {
         // First, load from Core Data (instant response)
         let cachedLabels = try await loadLabelsFromCoreData()
 
         // Then sync with API in background (don't wait)
         Task.detached(priority: .background) { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             do {
                 let dtos = try await self.api.getBookmarkLabels()
                 try? await self.saveLabels(dtos)
@@ -49,7 +49,7 @@ class LabelsRepository: PLabelsRepository, @unchecked Sendable {
             }
         }
     }
-    
+
     func saveLabels(_ dtos: [BookmarkLabelDto]) async throws {
         let backgroundContext = coreDataManager.newBackgroundContext()
 
