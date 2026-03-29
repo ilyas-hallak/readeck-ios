@@ -24,12 +24,9 @@ class SpeechPlayerViewModel: ObservableObject {
     }
     
     func setup() async {
-        let settings = try? await loadSettingsUseCase.execute()
-        if settings?.enableTTS == true {
-            self.ttsManager = .shared
-            self.speechQueue = .shared
-            setupBindings()
-        }
+        self.ttsManager = .shared
+        self.speechQueue = .shared
+        setupBindings()
     }
     
     private func setupBindings() {
