@@ -37,13 +37,15 @@ struct PhoneTabView: View {
         offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0
     }
 
+    private var shouldShowPlayer: Bool {
+        appSettings.enableTTS && speechPlayerViewModel.hasItems && playerUIState.isPlayerVisible
+    }
+
     var body: some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26.1, *) {
             tabViewContent
-                .tabViewBottomAccessory {
-                    if appSettings.enableTTS && speechPlayerViewModel.hasItems && playerUIState.isPlayerVisible {
-                        SpeechPlayerView(viewModel: speechPlayerViewModel, onClose: { playerUIState.hidePlayer() })
-                    }
+                .tabViewBottomAccessory(isEnabled: shouldShowPlayer) {
+                    SpeechPlayerView(viewModel: speechPlayerViewModel, onClose: { playerUIState.hidePlayer() })
                 }
                 .task {
                     await speechPlayerViewModel.setup()
