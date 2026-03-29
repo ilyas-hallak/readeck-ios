@@ -4,7 +4,6 @@ import Foundation
 struct MainTabView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State var selectedBookmark: Bookmark?
-    @StateObject private var playerUIState = PlayerUIState()
     @State private var showReleaseNotes = false
 
     // sizeClass
@@ -18,10 +17,8 @@ struct MainTabView: View {
         Group {
             if UIDevice.isPhone {
                 PhoneTabView()
-                    .environmentObject(playerUIState)
             } else {
                 PadSidebarView()
-                    .environmentObject(playerUIState)
             }
         }
         .sheet(isPresented: $showReleaseNotes) {

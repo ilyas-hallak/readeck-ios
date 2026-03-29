@@ -12,7 +12,6 @@ struct PadSidebarView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State private var selectedBookmark: Bookmark?
     @State private var selectedTag: BookmarkLabel?
-    @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     
