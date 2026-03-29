@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Combine
 
 class SpeechPlayerViewModel: ObservableObject {
@@ -18,6 +19,10 @@ class SpeechPlayerViewModel: ObservableObject {
     @Published var articleProgress: Double = 0.0
     @Published var volume: Float = 1.0
     @Published var rate: Float = 0.5
+    @Published var currentCharacterIndex: Int = 0
+    @Published var totalCharacterCount: Int = 0
+    @Published var isPlayerSheetPresented: Bool = false
+    @Published var selectedSheetDetent: PresentationDetent = .medium
     
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {        
         loadSettingsUseCase = factory.makeLoadSettingsUseCase()
@@ -77,6 +82,14 @@ class SpeechPlayerViewModel: ObservableObject {
         ttsManager?.$rate
             .assign(to: \.rate, on: self)
             .store(in: &cancellables)
+
+        ttsManager?.$currentCharacterIndex
+            .assign(to: \.currentCharacterIndex, on: self)
+            .store(in: &cancellables)
+
+        ttsManager?.$totalCharacterCount
+            .assign(to: \.totalCharacterCount, on: self)
+            .store(in: &cancellables)
     }
     
     func setVolume(_ newVolume: Float) {
@@ -96,6 +109,46 @@ class SpeechPlayerViewModel: ObservableObject {
     }
     
     func stop() {
+        speechQueue?.clear()
+    }
+
+    var estimatedDuration: TimeInterval {
+        ttsManager?.estimatedDuration(for: totalCharacterCount) ?? 0
+    }
+
+    var estimatedCurrentTime: TimeInterval {
+        ttsManager?.estimatedCurrentTime() ?? 0
+    }
+
+    func seekBack() {
+        speechQueue?.seekBack(seconds: 30)
+    }
+
+    func seekForward() {
+        speechQueue?.seekForward(seconds: 30)
+    }
+
+    func seekToPosition(_ percentage: Double) {
+        speechQueue?.seekToPosition(percentage)
+    }
+
+    func skipToNext() {
+        speechQueue?.skipToNext()
+    }
+
+    func insertAfterCurrent(_ item: SpeechQueueItem) {
+        speechQueue?.insertAfterCurrent(item)
+    }
+
+    func moveItems(from source: IndexSet, to destination: Int) {
+        speechQueue?.move(from: source, to: destination)
+    }
+
+    func removeItems(at offsets: IndexSet) {
+        speechQueue?.remove(at: offsets)
+    }
+
+    func clearQueue() {
         speechQueue?.clear()
     }
 } 
