@@ -27,14 +27,14 @@ struct InlineHeaderFormView: View {
     private var isValid: Bool {
         !trimmedKey.isEmpty && HTTPHeadersHelper.isHeaderNameAllowed(trimmedKey)
     }
-    
+
     private var isEditMode: Bool {
         if case .edit = mode {
             return true
         }
         return false
     }
-    
+
     private var buttonLabel: String {
         isEditMode ? "Save" : "Add"
     }

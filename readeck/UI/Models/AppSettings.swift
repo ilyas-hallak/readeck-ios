@@ -16,9 +16,9 @@
 import Foundation
 import Combine
 
-class AppSettings: ObservableObject {
+final class AppSettings: ObservableObject {
     @Published var settings: Settings?
-    @Published var isNetworkConnected: Bool = true
+    @Published var isNetworkConnected = true
 
     var enableTTS: Bool {
         settings?.enableTTS ?? false

@@ -19,10 +19,10 @@ struct CustomHeadersSectionView: View {
     let onStartEditingHeader: (String) -> Void
     let onCancelEditingHeader: () -> Void
     let onFinishEditingHeader: (String, String, String) -> Void
-    
-    @State private var newHeaderKey: String = ""
-    @State private var newHeaderValue: String = ""
-    
+
+    @State private var newHeaderKey = ""
+    @State private var newHeaderValue = ""
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Schlichterer Disclosure-Button
@@ -47,7 +47,7 @@ struct CustomHeadersSectionView: View {
                 }
             }
             .buttonStyle(.plain)
-            
+
             if showingHeadersSection {
                 VStack(alignment: .leading, spacing: 10) {
                     // Schlichterer Helper-Text
@@ -77,7 +77,7 @@ struct CustomHeadersSectionView: View {
                                     )
                                 } else {
                                     // Display mode - schlichter
-                                    HStack(alignment: .center, spacing: 8) {
+                                    HStack(spacing: 8) {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(key)
                                                 .font(.caption)
@@ -114,7 +114,7 @@ struct CustomHeadersSectionView: View {
                             }
                         }
                     }
-                    
+
                     // Add new header - nur wenn nicht im Edit-Modus
                     if editingHeaderKey == nil {
                         InlineHeaderFormView(

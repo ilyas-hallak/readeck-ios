@@ -7,6 +7,7 @@
 
 protocol PBookmarksRepository {
     // Bookmark API methods
+    // swiftlint:disable:next discouraged_optional_collection
     func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage
     func fetchBookmark(id: String) async throws -> BookmarkDetail
     func fetchBookmarkArticle(id: String) async throws -> String

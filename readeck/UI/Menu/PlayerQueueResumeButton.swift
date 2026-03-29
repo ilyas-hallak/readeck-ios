@@ -2,9 +2,9 @@ import SwiftUI
 
 struct PlayerQueueResumeButton: View {
     @ObservedObject private var queue = SpeechQueue.shared
-    @EnvironmentObject var playerUIState: PlayerUIState
+    @EnvironmentObject private var playerUIState: PlayerUIState
     private let playerViewModel = SpeechPlayerViewModel()
-    
+
     var body: some View {
         if queue.hasItems, !playerUIState.isPlayerVisible {
             Button(action: {

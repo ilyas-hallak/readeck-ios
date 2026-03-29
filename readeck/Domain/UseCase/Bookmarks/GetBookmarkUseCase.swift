@@ -4,7 +4,7 @@ protocol PGetBookmarkUseCase {
     func execute(id: String) async throws -> BookmarkDetail
 }
 
-class GetBookmarkUseCase: PGetBookmarkUseCase {
+final class GetBookmarkUseCase: PGetBookmarkUseCase {
     private let repository: PBookmarksRepository
 
     init(repository: PBookmarksRepository) {
@@ -12,6 +12,6 @@ class GetBookmarkUseCase: PGetBookmarkUseCase {
     }
 
     func execute(id: String) async throws -> BookmarkDetail {
-        return try await repository.fetchBookmark(id: id)
+        try await repository.fetchBookmark(id: id)
     }
 }

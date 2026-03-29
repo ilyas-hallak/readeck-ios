@@ -8,7 +8,7 @@ struct LabelUtils {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? [] : [trimmed]
     }
-    
+
     /// Filters out labels that already exist in current or available labels
     /// - Parameters:
     ///   - labels: Array of labels to filter
@@ -18,7 +18,7 @@ struct LabelUtils {
     static func filterUniqueLabels(_ labels: [String], currentLabels: [String], availableLabels: [String] = []) -> [String] {
         let currentSet = Set(currentLabels.map { $0.lowercased() })
         let availableSet = Set(availableLabels.map { $0.lowercased() })
-        
+
         return labels.filter { label in
             let lowercased = label.lowercased()
             return !currentSet.contains(lowercased) && !availableSet.contains(lowercased)

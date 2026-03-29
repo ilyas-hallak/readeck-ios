@@ -23,7 +23,9 @@ struct UserProfileDto: Codable {
         let id: String
         let name: String
         let application: String?
+        // swiftlint:disable:next discouraged_optional_collection
         let roles: [String]?
+        // swiftlint:disable:next discouraged_optional_collection
         let permissions: [String]?
     }
 }

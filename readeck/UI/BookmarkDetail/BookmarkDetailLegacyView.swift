@@ -11,8 +11,8 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 
 // PreferenceKey for content height tracking
 struct ContentHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    static var defaultValue: Double = 0
+    static func reduce(value: inout Double, nextValue: () -> Double) {
         value = nextValue()
     }
 }
@@ -24,32 +24,32 @@ struct BookmarkDetailLegacyView: View {
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
-    @State private var webViewHeight: CGFloat = 300
-    @State private var contentEndPosition: CGFloat = 0
-    @State private var initialContentEndPosition: CGFloat = 0
+    @State private var webViewHeight: Double = 300
+    @State private var contentEndPosition: Double = 0
+    @State private var initialContentEndPosition: Double = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
-    @State private var readingProgress: Double = 0.0
-    @State private var lastSentProgress: Double = 0.0
-    @State private var showJumpToProgressButton: Bool = false
+    @State private var readingProgress = 0.0
+    @State private var lastSentProgress = 0.0
+    @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
 
     // MARK: - Envs
 
-    @EnvironmentObject var playerUIState: PlayerUIState
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var playerUIState: PlayerUIState
+    @EnvironmentObject private var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
-    private let headerHeight: CGFloat = 360
+    private let headerHeight: Double = 360
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
         self._useNativeWebView = useNativeWebView
         self.viewModel = viewModel
     }
-    
+
     @ViewBuilder
     private func scrollViewContent(geometry: GeometryProxy) -> some View {
         // Invisible GeometryReader to track scroll offset
@@ -99,7 +99,7 @@ struct BookmarkDetailLegacyView: View {
                         },
                         onScrollToPosition: { position in
                             // Calculate scroll position: add header height and webview offset
-                            let imageHeight: CGFloat = viewModel.hasVisibleHeroImage ? headerHeight : 84
+                            let imageHeight: Double = viewModel.hasVisibleHeroImage ? headerHeight : 84
                             let targetPosition = imageHeight + position
 
                             // Scroll to the annotation
@@ -132,16 +132,16 @@ struct BookmarkDetailLegacyView: View {
                 }
 
                 if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                    VStack(alignment: .center) {
+                    VStack {
                         archiveSection
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
                             .animation(.easeInOut, value: viewModel.articleContent)
                     }
                     .frame(maxWidth: .infinity)
                 }
-            }
+                }
             .frame(maxWidth: .infinity)
-        }
+            }
 
             // Invisible marker to measure total content height - placed AFTER all content
             Color.clear
@@ -156,7 +156,7 @@ struct BookmarkDetailLegacyView: View {
                 )
         }
     }
-    
+
     @ViewBuilder
     private func scrollableContent(geometry: GeometryProxy) -> some View {
         ScrollView {
@@ -204,7 +204,7 @@ struct BookmarkDetailLegacyView: View {
             Logger.ui.debug("Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
 
             // Check if we should update: threshold OR reaching 100% for first time
-            let threshold: Double = 0.03
+            let threshold = 0.03
             let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
             let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
@@ -219,7 +219,7 @@ struct BookmarkDetailLegacyView: View {
             // Not needed anymore, we track via ContentHeightPreferenceKey
         }
     }
-    
+
     var body: some View {
         mainContent
             .frame(maxWidth: .infinity)
@@ -495,15 +495,15 @@ struct BookmarkDetailLegacyView: View {
             await viewModel.loadArticleContent(id: bookmarkId)
         }
     }
-    
+
     // MARK: - ViewBuilder
-    
+
     @ViewBuilder
-    private func headerView(width: CGFloat) -> some View {
+    private func headerView(width: Double) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
                 CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: width, height: headerHeight)
                     .clipped()
 
@@ -532,9 +532,10 @@ struct BookmarkDetailLegacyView: View {
             .onTapGesture {
                 showingImageViewer = true
             }
+            .accessibilityAddTraits(.isButton)
         }
     }
-    
+
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
@@ -556,7 +557,7 @@ struct BookmarkDetailLegacyView: View {
         }
         .padding(.horizontal)
     }
-    
+
     @ViewBuilder
     private var contentSection: some View {
         if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
@@ -591,7 +592,7 @@ struct BookmarkDetailLegacyView: View {
             .padding(.top, 0)
         }
     }
-    
+
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
@@ -621,7 +622,7 @@ struct BookmarkDetailLegacyView: View {
                     Image(systemName: "tag")
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
-                    
+
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
                             ForEach(viewModel.bookmarkDetail.labels, id: \.self) { label in
@@ -645,7 +646,8 @@ struct BookmarkDetailLegacyView: View {
                     }
                 }
             }
-            
+
+
             if appSettings.enableTTS {
                 metaRow(icon: "speaker.wave.2") {
                     Button(action: {
@@ -660,7 +662,7 @@ struct BookmarkDetailLegacyView: View {
             }
         }
     }
-    
+
     // MARK: - Color Theme Helpers
 
     private var nativeBackgroundColor: Color {
@@ -692,7 +694,7 @@ struct BookmarkDetailLegacyView: View {
     }
 
     private var nativeSecondaryTextColor: Color {
-        return nativeTextColor.opacity(0.6)
+        nativeTextColor.opacity(0.6)
     }
 
     @ViewBuilder
@@ -714,7 +716,7 @@ struct BookmarkDetailLegacyView: View {
             content()
         }
     }
-    
+
     private func formatDate(_ dateString: String) -> String {
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -726,7 +728,7 @@ struct BookmarkDetailLegacyView: View {
         } else if let parsedDate = isoFormatterNoMillis.date(from: dateString) {
             date = parsedDate
         }
-        if let date = date {
+        if let date {
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
             displayFormatter.timeStyle = .short
@@ -735,13 +737,13 @@ struct BookmarkDetailLegacyView: View {
         }
         return dateString
     }
-    
+
     private var archiveSection: some View {
-        VStack(alignment: .center, spacing: 12) {
+        VStack(spacing: 12) {
             Text("Finished reading?")
                 .font(.headline)
                 .padding(.top, 24)
-            VStack(alignment: .center, spacing: 16) {
+            VStack(spacing: 16) {
                 Button(action: {
                     Task {
                         await viewModel.toggleFavorite(id: bookmarkId)
@@ -758,7 +760,7 @@ struct BookmarkDetailLegacyView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(viewModel.isLoading)
-                
+
                 // Archive button
                 Button(action: {
                     Task {
@@ -785,9 +787,9 @@ struct BookmarkDetailLegacyView: View {
         .padding(.horizontal)
         .padding(.bottom, 32)
     }
-    
+
     @ViewBuilder
-    func JumpButton(containerHeight: CGFloat) -> some View {
+    func JumpButton(containerHeight: Double) -> some View {
         Button(action: {
             let maxOffset = webViewHeight - containerHeight
             let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)

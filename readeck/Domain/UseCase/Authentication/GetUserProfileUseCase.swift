@@ -11,7 +11,7 @@ protocol PGetUserProfileUseCase {
     func execute() async throws -> String
 }
 
-class GetUserProfileUseCase: PGetUserProfileUseCase {
+final class GetUserProfileUseCase: PGetUserProfileUseCase {
     private let profileApiClient: PProfileApiClient
 
     init(profileApiClient: PProfileApiClient) {

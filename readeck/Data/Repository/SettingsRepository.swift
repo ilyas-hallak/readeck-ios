@@ -2,7 +2,7 @@ import Foundation
 import CoreData
 import Kingfisher
 
-class SettingsRepository: PSettingsRepository {
+final class SettingsRepository: PSettingsRepository {
     private let coreDataManager = CoreDataManager.shared
     private let userDefault = UserDefaults.standard
     private let keychainHelper = KeychainHelper.shared
@@ -14,13 +14,13 @@ class SettingsRepository: PSettingsRepository {
 
     var hasFinishedSetup: Bool {
         get {
-            return userDefault.value(forKey: "hasFinishedSetup") as? Bool ?? false
+            userDefault.value(forKey: "hasFinishedSetup") as? Bool ?? false
         }
         set {
             userDefault.set(newValue, forKey: "hasFinishedSetup")
         }
     }
-    
+
     func saveSettings(_ settings: Settings) async throws {
         // Save credentials using TokenProvider to ensure cache is updated
         if let endpoint = settings.endpoint, !endpoint.isEmpty {
@@ -37,36 +37,36 @@ class SettingsRepository: PSettingsRepository {
         if let password = settings.password, !password.isEmpty {
             keychainHelper.savePassword(password)
         }
-        
+
         // Save UI preferences to Core Data
         let context = coreDataManager.context
-        
-        return try await withCheckedThrowingContinuation { continuation in
+
+        try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
                     let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
-                    
+
                     if let fontFamily = settings.fontFamily {
                         existingSettings.fontFamily = fontFamily.rawValue
                     }
-                    
+
                     if let fontSize = settings.fontSize {
                         existingSettings.fontSize = fontSize.rawValue
                     }
-                    
+
                     if let enableTTS = settings.enableTTS {
                         existingSettings.enableTTS = enableTTS
                     }
-                    
+
                     if let theme = settings.theme {
                         existingSettings.theme = theme.rawValue
                     }
-                    
+
                     if let urlOpener = settings.urlOpener {
                         existingSettings.urlOpener = urlOpener.rawValue
                     }
-                    
+
                     if let cardLayoutStyle = settings.cardLayoutStyle {
                         existingSettings.cardLayoutStyle = cardLayoutStyle.rawValue
                     }
@@ -89,6 +89,7 @@ class SettingsRepository: PSettingsRepository {
                            let configText = String(data: jsonData, encoding: .utf8) {
                             existingSettings.swipeActionConfig = configText
                         }
+                    }
                     if let fontSizeNumeric = settings.fontSizeNumeric {
                         existingSettings.fontSizeNumeric = fontSizeNumeric
                     }
@@ -127,27 +128,29 @@ class SettingsRepository: PSettingsRepository {
                 }
             }
         }
+        return
     }
-    
+
     func loadSettings() async throws -> Settings? {
         let context = coreDataManager.context
-        
+
         return try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
                     fetchRequest.fetchLimit = 1
-                    
+
                     let settingEntities = try context.fetch(fetchRequest)
                     let settingEntity = settingEntities.first
-                    
+
                     // Load credentials from keychain only
                     let endpoint = self.keychainHelper.loadEndpoint()
                     let username = self.keychainHelper.loadUsername()
                     let password = self.keychainHelper.loadPassword()
                     let token = self.keychainHelper.loadToken()
-                    
-                    var swipeActionConfig: SwipeActionConfig? = nil
+
+                    // Load swipe action config from JSON
+                    var swipeActionConfig: SwipeActionConfig?
                     if let jsonString = settingEntity?.swipeActionConfig,
                        let jsonData = jsonString.data(using: .utf8) {
                         swipeActionConfig = try? JSONDecoder().decode(SwipeActionConfig.self, from: jsonData)
@@ -179,7 +182,7 @@ class SettingsRepository: PSettingsRepository {
                         bookmarkSortField: BookmarkSortField(rawValue: settingEntity?.bookmarkSortField ?? BookmarkSortField.created.rawValue),
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
-                        swipeActionConfig: swipeActionConfig
+                        swipeActionConfig: swipeActionConfig,
                         fontSizeNumeric: fontSizeNumeric,
                         horizontalMargin: horizontalMargin,
                         lineHeight: lineHeight,
@@ -198,24 +201,24 @@ class SettingsRepository: PSettingsRepository {
             }
         }
     }
-    
+
     func clearSettings() async throws {
         // Clear credentials from keychain
         keychainHelper.clearCredentials()
-        
+
         // Also clear from Core Data
         let context = coreDataManager.context
-        
-        return try await withCheckedThrowingContinuation { continuation in
+
+        try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
                     let settingEntities = try context.fetch(fetchRequest)
-                    
+
                     for settingEntity in settingEntities {
                         context.delete(settingEntity)
                     }
-                    
+
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -223,8 +226,9 @@ class SettingsRepository: PSettingsRepository {
                 }
             }
         }
+        return
     }
-    
+
     func saveToken(_ token: String) async throws {
         // Use TokenProvider to ensure cache is updated
         await tokenProvider.setToken(token)
@@ -238,7 +242,7 @@ class SettingsRepository: PSettingsRepository {
             }
         }
     }
-    
+
     func saveServerSettings(endpoint: String, username: String, password: String, token: String) async throws {
         // Use TokenProvider to ensure cache is updated
         await tokenProvider.setEndpoint(endpoint)
@@ -255,17 +259,17 @@ class SettingsRepository: PSettingsRepository {
             }
         }
     }
-    
+
     func saveUsername(_ username: String) async throws {
         keychainHelper.saveUsername(username)
     }
-    
+
     func savePassword(_ password: String) async throws {
         keychainHelper.savePassword(password)
     }
-    
+
     func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             self.hasFinishedSetup = hasFinishedSetup
             // Notification senden, dass sich der Setup-Status geändert hat
             DispatchQueue.main.async {
@@ -274,18 +278,18 @@ class SettingsRepository: PSettingsRepository {
             continuation.resume()
         }
     }
-    
+
     func saveCardLayoutStyle(_ cardLayoutStyle: CardLayoutStyle) async throws {
         let context = coreDataManager.context
-        
-        return try await withCheckedThrowingContinuation { continuation in
+
+        try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
                     let existingSettings = try context.fetch(fetchRequest).first ?? SettingEntity(context: context)
-                    
+
                     existingSettings.cardLayoutStyle = cardLayoutStyle.rawValue
-                    
+
                     try context.save()
                     continuation.resume()
                 } catch {
@@ -293,8 +297,9 @@ class SettingsRepository: PSettingsRepository {
                 }
             }
         }
+        return
     }
-    
+
     func loadCardLayoutStyle() async throws -> CardLayoutStyle {
         let context = coreDataManager.context
 
@@ -319,7 +324,7 @@ class SettingsRepository: PSettingsRepository {
     func saveTagSortOrder(_ tagSortOrder: TagSortOrder) async throws {
         let context = coreDataManager.context
 
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
@@ -334,6 +339,7 @@ class SettingsRepository: PSettingsRepository {
                 }
             }
         }
+        return
     }
 
     func loadTagSortOrder() async throws -> TagSortOrder {
@@ -393,7 +399,7 @@ class SettingsRepository: PSettingsRepository {
     func saveOfflineSettings(_ settings: OfflineSettings) async throws {
         let context = coreDataManager.context
 
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             context.perform {
                 do {
                     let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
@@ -413,6 +419,7 @@ class SettingsRepository: PSettingsRepository {
                 }
             }
         }
+        return
     }
 
     // MARK: - Cache Settings
@@ -420,7 +427,7 @@ class SettingsRepository: PSettingsRepository {
     private let maxCacheSizeKey = "KingfisherMaxCacheSize"
 
     func getCacheSize() async throws -> UInt {
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             KingfisherManager.shared.cache.calculateDiskStorageSize { result in
                 switch result {
                 case .success(let size):
@@ -435,12 +442,11 @@ class SettingsRepository: PSettingsRepository {
     func getMaxCacheSize() async throws -> UInt {
         if let savedSize = userDefault.object(forKey: maxCacheSizeKey) as? UInt {
             return savedSize
-        } else {
-            // Default: 200 MB
-            let defaultBytes = UInt(200 * 1024 * 1024)
-            userDefault.set(defaultBytes, forKey: maxCacheSizeKey)
-            return defaultBytes
         }
+        // Default: 200 MB
+        let defaultBytes = UInt(200 * 1024 * 1024)
+        userDefault.set(defaultBytes, forKey: maxCacheSizeKey)
+        return defaultBytes
     }
 
     func updateMaxCacheSize(_ sizeInBytes: UInt) async throws {
@@ -450,7 +456,7 @@ class SettingsRepository: PSettingsRepository {
     }
 
     func clearCache() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             KingfisherManager.shared.cache.clearDiskCache {
                 KingfisherManager.shared.cache.clearMemoryCache()
                 self.logger.info("Cache cleared successfully")

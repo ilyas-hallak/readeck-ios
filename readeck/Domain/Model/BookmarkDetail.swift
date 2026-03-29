@@ -43,4 +43,4 @@ extension BookmarkDetail {
         lang: "",
         readProgress: 0
     )
-} 
+}
