@@ -31,7 +31,6 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers, .duckOthers, .allowBluetooth, .allowBluetoothA2DP])
             try audioSession.setActive(true)
-            try audioSession.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers, .duckOthers, .allowBluetooth, .allowBluetoothA2DP])
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(handleAppDidEnterBackground),
@@ -51,17 +50,18 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     
     func speak(text: String, language: String, utteranceIndex: Int = 0, totalUtterances: Int = 1) {
         guard !text.isEmpty else { return }
-        DispatchQueue.main.async {
-            self.isSpeaking = true
-            self.currentUtterance = text
-            self.currentUtteranceIndex = utteranceIndex
-            self.totalUtterances = totalUtterances
-            self.updateProgress()
-            self.articleProgress = 0.0
-        }
+
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
+
+        self.isSpeaking = true
+        self.currentUtterance = text
+        self.currentUtteranceIndex = utteranceIndex
+        self.totalUtterances = totalUtterances
+        self.updateProgress()
+        self.articleProgress = 0.0
+
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = voiceManager.getVoice(for: language)
         utterance.rate = rate
