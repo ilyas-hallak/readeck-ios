@@ -193,3 +193,22 @@
 "font.web.match.hint" = "* Entspricht den Readeck Web-Schriften";
 
 "DEBUG: Toggle network status" = "DEBUG: Netzwerkstatus umschalten";
+
+/* TTS Player */
+"Play Next" = "Als Nächstes abspielen";
+"Queue" = "Warteschlange";
+"Clear All" = "Alle entfernen";
+"Speed" = "Geschwindigkeit";
+"articles in queue" = "Artikel in der Warteschlange";
+
+/* TTS Settings */
+"Languages & Voices" = "Sprachen & Stimmen";
+"Language & Voices" = "Sprachen & Stimmen";
+"Auto" = "Automatisch";
+"Automatic (best available)" = "Automatisch (beste verfügbar)";
+"Download Premium Voices" = "Premium-Stimmen laden";
+"Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices." = "Premium-Stimmen klingen natürlicher. Lade sie unter iOS-Einstellungen > Bedienungshilfen > Gesprochene Inhalte > Stimmen.";
+"Select a voice for each language. Articles are read in their detected language." = "Wähle eine Stimme für jede Sprache. Artikel werden in ihrer erkannten Sprache vorgelesen.";
+"Premium" = "Premium";
+"Enhanced" = "Erweitert";
+"Default" = "Standard";
