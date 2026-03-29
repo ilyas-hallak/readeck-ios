@@ -89,6 +89,7 @@ final class SettingsRepository: PSettingsRepository {
                            let configText = String(data: jsonData, encoding: .utf8) {
                             existingSettings.swipeActionConfig = configText
                         }
+                    }
                     if let fontSizeNumeric = settings.fontSizeNumeric {
                         existingSettings.fontSizeNumeric = fontSizeNumeric
                     }
