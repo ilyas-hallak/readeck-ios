@@ -12,22 +12,25 @@ enum FontSize: String, CaseIterable {
     case medium = "medium"
     case large = "large"
     case extraLarge = "extraLarge"
-    
+    case custom = "custom"
+
     var displayName: String {
         switch self {
         case .small: return "S"
         case .medium: return "M"
         case .large: return "L"
         case .extraLarge: return "XL"
+        case .custom: return "Custom"
         }
     }
-    
+
     var size: CGFloat {
         switch self {
         case .small: return 14
         case .medium: return 16
         case .large: return 18
         case .extraLarge: return 20
+        case .custom: return 20 // default custom size
         }
     }
 } 

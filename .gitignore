@@ -72,3 +72,10 @@ documentation/
 
 # VS Code
 .vscode/
+
+# Claude Code
+.claude/
+.mcp.json
+
+# SwiftLint Remote Config Cache
+.swiftlint/RemoteConfigCache

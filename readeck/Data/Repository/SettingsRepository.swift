@@ -89,6 +89,35 @@ class SettingsRepository: PSettingsRepository {
                            let configText = String(data: jsonData, encoding: .utf8) {
                             existingSettings.swipeActionConfig = configText
                         }
+                    if let fontSizeNumeric = settings.fontSizeNumeric {
+                        existingSettings.fontSizeNumeric = fontSizeNumeric
+                    }
+                    if let horizontalMargin = settings.horizontalMargin {
+                        existingSettings.horizontalMargin = horizontalMargin
+                    }
+                    if let lineHeight = settings.lineHeight {
+                        existingSettings.lineHeight = lineHeight
+                    }
+                    if let hideProgressBar = settings.hideProgressBar {
+                        existingSettings.hideProgressBar = hideProgressBar
+                    }
+                    if let hideWordCount = settings.hideWordCount {
+                        existingSettings.hideWordCount = hideWordCount
+                    }
+                    if let hideHeroImage = settings.hideHeroImage {
+                        existingSettings.hideHeroImage = hideHeroImage
+                    }
+                    if let customCSS = settings.customCSS {
+                        existingSettings.customCSS = customCSS
+                    }
+                    if let readerColorTheme = settings.readerColorTheme {
+                        existingSettings.readerColorTheme = readerColorTheme.rawValue
+                    }
+                    if let customBackgroundColor = settings.customBackgroundColor {
+                        existingSettings.customBackgroundColor = customBackgroundColor
+                    }
+                    if let customTextColor = settings.customTextColor {
+                        existingSettings.customTextColor = customTextColor
                     }
 
                     try context.save()
@@ -125,6 +154,17 @@ class SettingsRepository: PSettingsRepository {
                     }
 
                     // Load UI preferences from Core Data
+                    // fontSizeNumeric: 0 means not set (use FontSize enum fallback)
+                    let storedFontSizeNumeric = settingEntity?.fontSizeNumeric ?? 0
+                    let fontSizeNumeric: Double? = storedFontSizeNumeric > 0 ? storedFontSizeNumeric : nil
+
+                    // horizontalMargin/lineHeight: 0 means not set (use defaults)
+                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? 0
+                    let horizontalMargin: Double? = storedHorizontalMargin > 0 ? storedHorizontalMargin : nil
+
+                    let storedLineHeight = settingEntity?.lineHeight ?? 0
+                    let lineHeight: Double? = storedLineHeight > 0 ? storedLineHeight : nil
+
                     let settings = Settings(
                         endpoint: endpoint,
                         username: username,
@@ -140,6 +180,16 @@ class SettingsRepository: PSettingsRepository {
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
                         swipeActionConfig: swipeActionConfig
+                        fontSizeNumeric: fontSizeNumeric,
+                        horizontalMargin: horizontalMargin,
+                        lineHeight: lineHeight,
+                        hideProgressBar: settingEntity?.hideProgressBar,
+                        hideWordCount: settingEntity?.hideWordCount,
+                        hideHeroImage: settingEntity?.hideHeroImage,
+                        customCSS: settingEntity?.customCSS,
+                        readerColorTheme: ReaderColorTheme(rawValue: settingEntity?.readerColorTheme ?? ReaderColorTheme.system.rawValue),
+                        customBackgroundColor: settingEntity?.customBackgroundColor,
+                        customTextColor: settingEntity?.customTextColor
                     )
                     continuation.resume(returning: settings)
                 } catch {

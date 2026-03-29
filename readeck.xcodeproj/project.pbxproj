@@ -95,6 +95,7 @@
 				Domain/Model/CardLayoutStyle.swift,
 				Domain/Model/FontFamily.swift,
 				Domain/Model/FontSize.swift,
+				Domain/Model/ReaderColorTheme.swift,
 				Domain/Model/Settings.swift,
 				Domain/Model/SwipeAction.swift,
 				Domain/Model/TagSortOrder.swift,
@@ -251,6 +252,7 @@
 				5D45F9C62DF858680048D5B8 /* Resources */,
 				5D45FA1D2DF865BE0048D5B8 /* Embed Frameworks */,
 				5D2B7FBE2DFA27A400EBDB2B /* Embed Foundation Extensions */,
+				5DSWIFTLINT000000000000 /* SwiftLint */,
 			);
 			buildRules = (
 			);
@@ -407,6 +409,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		5DSWIFTLINT000000000000 /* SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = SwiftLint;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if command -v swiftlint >/dev/null 2>&1; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		5D2B7FAB2DFA27A400EBDB2B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -466,7 +490,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = URLShare/Info.plist;
@@ -479,7 +503,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.readeck.URLShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -499,7 +523,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = URLShare/URLShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = URLShare/Info.plist;
@@ -512,7 +536,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.readeck.URLShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -654,7 +678,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -677,7 +701,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.readeck;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -700,7 +724,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -723,7 +747,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.readeck;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

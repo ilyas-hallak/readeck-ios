@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 
 class VoiceManager: ObservableObject {
+    private let logger = Logger.general
     static let shared = VoiceManager()
     
     private let userDefaults = UserDefaults.standard
@@ -107,18 +108,18 @@ class VoiceManager: ObservableObject {
     func printAvailableVoices(for language: String = "de-DE") {
         let filteredVoices = availableVoices.filter { $0.language.starts(with: language.prefix(2)) }
         
-        print("Verfügbare Stimmen für \(language):")
+        logger.debug("Available voices for \(language):")
         for voice in filteredVoices {
-            print("- \(voice.name) (\(voice.language)) - Qualität: \(voice.quality.rawValue)")
+            logger.debug("- \(voice.name) (\(voice.language)) - Quality: \(voice.quality.rawValue)")
         }
     }
     
     func printAllAvailableLanguages() {
         let languages = Set(availableVoices.map { $0.language })
         
-        print("Verfügbare Sprachen:")
+        logger.debug("Available languages:")
         for language in languages.sorted() {
-            print("- \(language)")
+            logger.debug("- \(language)")
         }
     }
 } 
