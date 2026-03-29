@@ -89,6 +89,9 @@ struct TTSLanguageSettingsView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Language & Voices")
+        .onAppear {
+            VoiceManager.shared.refreshVoices()
+        }
     }
 
     private func openAccessibilitySettings() {

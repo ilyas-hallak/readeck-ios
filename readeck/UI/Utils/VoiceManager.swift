@@ -46,36 +46,13 @@ class VoiceManager: ObservableObject {
         return availableVoices.filter { $0.language == language }
     }
     
-    func getPreferredVoices(for language: String) -> [AVSpeechSynthesisVoice] {
-        let preferredVoiceNames = [
-            "Anna",      // Deutsche Premium-Stimme
-            "Helena",    // Deutsche Premium-Stimme
-            "Siri",      // Siri-Stimme (falls verfügbar)
-            "Enhanced",  // Enhanced-Stimmen
-            "Karen",     // Englische Premium-Stimme
-            "Daniel",    // Englische Premium-Stimme
-            "Marie",     // Französische Premium-Stimme
-            "Paolo",     // Italienische Premium-Stimme
-            "Carmen",    // Spanische Premium-Stimme
-            "Yuki"       // Japanische Premium-Stimme
-        ]
-        
-        var preferredVoices: [AVSpeechSynthesisVoice] = []
-        
-        for voiceName in preferredVoiceNames {
-            if let voice = availableVoices.first(where: { 
-                $0.language == language && 
-                $0.name.contains(voiceName) 
-            }) {
-                preferredVoices.append(voice)
-            }
-        }
-        
-        return preferredVoices
+    func refreshVoices() {
+        cachedVoices.removeAll()
+        loadAvailableVoices()
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func loadAvailableVoices() {
         availableVoices = AVSpeechSynthesisVoice.speechVoices()
     }
@@ -92,16 +69,21 @@ class VoiceManager: ObservableObject {
     }
     
     private func findEnhancedVoice(for language: String) -> AVSpeechSynthesisVoice {
-        // Zuerst nach bevorzugten Stimmen für die spezifische Sprache suchen
-        let preferredVoices = getPreferredVoices(for: language)
-        if let preferredVoice = preferredVoices.first {
-            return preferredVoice
+        let voicesForLanguage = availableVoices.filter { $0.language == language }
+
+        // Prefer highest quality available: premium > enhanced > default
+        if let premium = voicesForLanguage.first(where: { $0.quality == .premium }) {
+            return premium
         }
-        
-        // Fallback: Erste verfügbare Stimme für die Sprache
-        return availableVoices.first(where: { $0.language == language }) ?? 
-               AVSpeechSynthesisVoice(language: language) ??
-               AVSpeechSynthesisVoice()
+        if let enhanced = voicesForLanguage.first(where: { $0.quality == .enhanced }) {
+            return enhanced
+        }
+        if let defaultVoice = voicesForLanguage.first {
+            return defaultVoice
+        }
+
+        // Ultimate fallback
+        return AVSpeechSynthesisVoice(language: language) ?? AVSpeechSynthesisVoice()
     }
     
     // MARK: - Debug Methods
