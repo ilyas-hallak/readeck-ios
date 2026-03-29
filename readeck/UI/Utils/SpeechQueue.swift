@@ -85,6 +85,10 @@ class SpeechQueue: ObservableObject {
         self.ttsManager = ttsManager
         loadQueue()
         updatePublishedProperties()
+
+        ttsManager.onUtteranceFinished = { [weak self] in
+            self?.onCurrentItemFinished()
+        }
     }
     
     func enqueue(_ item: SpeechQueueItem) {
@@ -134,26 +138,17 @@ class SpeechQueue: ObservableObject {
         let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
         let languageCode = convertToBCP47(next.language)
         ttsManager.speak(text: textToSpeak, language: languageCode, utteranceIndex: currentIndex, totalUtterances: queueItems.count)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            self?.waitForSpeechToFinish()
-        }
     }
-    
-    private func waitForSpeechToFinish() {
-        if ttsManager.isCurrentlySpeaking() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.waitForSpeechToFinish()
-            }
-        } else {
-            if !queue.isEmpty {
-                queue.removeFirst()
-                print("[SpeechQueue] Artikel fertig abgespielt und aus Queue entfernt")
-            }
-            self.isProcessing = false
-            self.updatePublishedProperties()
-            self.saveQueue()
-            self.processQueue()
+
+    private func onCurrentItemFinished() {
+        guard isProcessing else { return }
+        if !queue.isEmpty {
+            queue.removeFirst()
         }
+        isProcessing = false
+        updatePublishedProperties()
+        saveQueue()
+        processQueue()
     }
     
     // MARK: - Persistenz

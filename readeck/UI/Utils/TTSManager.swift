@@ -16,6 +16,8 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published var articleProgress: Double = 0.0
     @Published var volume: Float = 1.0
     @Published var rate: Float = 0.5
+
+    var onUtteranceFinished: (() -> Void)?
     
     override private init() {
         super.init()
@@ -121,17 +123,22 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        isSpeaking = false
-        currentUtterance = ""
-        currentUtteranceIndex += 1
-        updateProgress()
-        articleProgress = 1.0
+        DispatchQueue.main.async {
+            self.isSpeaking = false
+            self.currentUtterance = ""
+            self.currentUtteranceIndex += 1
+            self.updateProgress()
+            self.articleProgress = 1.0
+            self.onUtteranceFinished?()
+        }
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        isSpeaking = false
-        currentUtterance = ""
-        articleProgress = 0.0
+        DispatchQueue.main.async {
+            self.isSpeaking = false
+            self.currentUtterance = ""
+            self.articleProgress = 0.0
+        }
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
