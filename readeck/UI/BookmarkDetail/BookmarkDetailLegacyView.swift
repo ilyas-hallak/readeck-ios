@@ -38,7 +38,6 @@ struct BookmarkDetailLegacyView: View {
 
     // MARK: - Envs
 
-    @EnvironmentObject var playerUIState: PlayerUIState
     @EnvironmentObject var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
@@ -475,7 +474,6 @@ struct BookmarkDetailLegacyView: View {
                 metaRow(icon: "speaker.wave.2") {
                     Button(action: {
                         viewModel.addBookmarkToSpeechQueue()
-                        playerUIState.showPlayer()
                     }) {
                         Text("Read article aloud")
                             .font(.subheadline)

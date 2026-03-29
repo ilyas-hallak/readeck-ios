@@ -27,7 +27,6 @@ struct PhoneTabView: View {
     @FocusState private var searchFieldIsFocused: Bool
 
     @EnvironmentObject var appSettings: AppSettings
-    @EnvironmentObject var playerUIState: PlayerUIState
 
     private var cardLayoutStyle: CardLayoutStyle {
         appSettings.settings?.cardLayoutStyle ?? .compact
@@ -38,14 +37,14 @@ struct PhoneTabView: View {
     }
 
     private var shouldShowPlayer: Bool {
-        appSettings.enableTTS && speechPlayerViewModel.hasItems && playerUIState.isPlayerVisible
+        appSettings.enableTTS && speechPlayerViewModel.hasItems
     }
 
     var body: some View {
         if #available(iOS 26.1, *) {
             tabViewContent
                 .tabViewBottomAccessory(isEnabled: shouldShowPlayer) {
-                    SpeechPlayerView(viewModel: speechPlayerViewModel, onClose: { playerUIState.hidePlayer() })
+                    SpeechPlayerView(viewModel: speechPlayerViewModel)
                 }
                 .task {
                     await speechPlayerViewModel.setup()
