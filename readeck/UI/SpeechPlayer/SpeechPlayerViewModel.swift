@@ -34,57 +34,70 @@ class SpeechPlayerViewModel: ObservableObject {
     private func setupBindings() {
         // TTSManager bindings
         ttsManager?.$isSpeaking
+            .receive(on: DispatchQueue.main)
             .assign(to: \.isSpeaking, on: self)
             .store(in: &cancellables)
-        
+
         ttsManager?.$currentUtterance
+            .receive(on: DispatchQueue.main)
             .assign(to: \.currentText, on: self)
             .store(in: &cancellables)
-        
+
         // SpeechQueue bindings
         speechQueue?.$queueItems
+            .receive(on: DispatchQueue.main)
             .assign(to: \.queueItems, on: self)
             .store(in: &cancellables)
-        
+
         speechQueue?.$queueItems
+            .receive(on: DispatchQueue.main)
             .map { $0.count }
             .assign(to: \.queueCount, on: self)
             .store(in: &cancellables)
-        
+
         speechQueue?.$hasItems
+            .receive(on: DispatchQueue.main)
             .assign(to: \.hasItems, on: self)
             .store(in: &cancellables)
-        
+
         // TTS Progress bindings
         ttsManager?.$progress
+            .receive(on: DispatchQueue.main)
             .assign(to: \.progress, on: self)
             .store(in: &cancellables)
-        
+
         ttsManager?.$currentUtteranceIndex
+            .receive(on: DispatchQueue.main)
             .assign(to: \.currentUtteranceIndex, on: self)
             .store(in: &cancellables)
-        
+
         ttsManager?.$totalUtterances
+            .receive(on: DispatchQueue.main)
             .assign(to: \.totalUtterances, on: self)
             .store(in: &cancellables)
-        
+
         ttsManager?.$articleProgress
+            .receive(on: DispatchQueue.main)
             .assign(to: \.articleProgress, on: self)
             .store(in: &cancellables)
-        
+
         ttsManager?.$volume
+            .receive(on: DispatchQueue.main)
             .assign(to: \.volume, on: self)
             .store(in: &cancellables)
-        
+
         ttsManager?.$rate
+            .receive(on: DispatchQueue.main)
             .assign(to: \.rate, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$currentCharacterIndex
+            .receive(on: DispatchQueue.main)
             .assign(to: \.currentCharacterIndex, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$totalCharacterCount
+            .receive(on: DispatchQueue.main)
             .assign(to: \.totalCharacterCount, on: self)
             .store(in: &cancellables)
     }
