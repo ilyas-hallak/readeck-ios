@@ -39,6 +39,7 @@ class VoiceManager: ObservableObject {
     
     func setSelectedVoice(_ voice: AVSpeechSynthesisVoice) {
         selectedVoice = voice
+        cachedVoices.removeValue(forKey: voice.language)
         saveSelectedVoice(voice)
     }
     

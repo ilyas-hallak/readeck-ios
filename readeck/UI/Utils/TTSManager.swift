@@ -144,11 +144,15 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
-        isSpeaking = false
+        DispatchQueue.main.async {
+            self.isSpeaking = false
+        }
     }
-    
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didContinue utterance: AVSpeechUtterance) {
-        isSpeaking = true
+        DispatchQueue.main.async {
+            self.isSpeaking = true
+        }
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
