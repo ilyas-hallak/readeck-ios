@@ -291,7 +291,10 @@ struct BookmarksView: View {
                         },
                         onUndoDelete: { bookmarkId in
                             viewModel.undoDelete(bookmarkId: bookmarkId)
-                        }
+                        },
+                        onPlayNext: appSettings.enableTTS ? { bookmark in
+                            SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                        } : nil
                     )
                     .onAppear {
                         if bookmark.id == viewModel.bookmarks?.bookmarks.last?.id {

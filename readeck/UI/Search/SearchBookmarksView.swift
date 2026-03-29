@@ -63,12 +63,15 @@ struct SearchBookmarksView: View {
                         }
                     }) {
                         BookmarkCardView(
-                            bookmark: bookmark, 
-                            currentState: .all, 
+                            bookmark: bookmark,
+                            currentState: .all,
                             layout: cardLayoutStyle,
-                            onArchive: {_ in }, 
-                            onDelete: {_ in }, 
-                            onToggleFavorite: {_ in }
+                            onArchive: {_ in },
+                            onDelete: {_ in },
+                            onToggleFavorite: {_ in },
+                            onPlayNext: { bookmark in
+                                SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                            }
                         )
                     }
                     .buttonStyle(PlainButtonStyle())

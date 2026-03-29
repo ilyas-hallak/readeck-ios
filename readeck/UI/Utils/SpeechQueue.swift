@@ -13,6 +13,23 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     var totalCharacters: Int = 0
 }
 
+extension Bookmark {
+    func toSpeechQueueItem() -> SpeechQueueItem {
+        let text = title + "\n" + description.stripHTML
+        return SpeechQueueItem(
+            id: self.id,
+            title: title,
+            content: description,
+            url: url,
+            labels: labels,
+            imageUrl: resources.image?.src,
+            language: (lang ?? "").isEmpty ? "en" : lang!,
+            lastCharacterIndex: 0,
+            totalCharacters: text.trimmingCharacters(in: .whitespacesAndNewlines).count
+        )
+    }
+}
+
 extension BookmarkDetail {
     func toSpeechQueueItem(_ content: String? = nil) -> SpeechQueueItem {
         let text = content ?? self.content ?? ""

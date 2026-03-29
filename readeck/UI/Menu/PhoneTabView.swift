@@ -202,7 +202,10 @@ struct PhoneTabView: View {
                         layout: cardLayoutStyle,
                         onArchive: { _ in },
                         onDelete: { _ in },
-                        onToggleFavorite: { _ in }
+                        onToggleFavorite: { _ in },
+                        onPlayNext: appSettings.enableTTS ? { bookmark in
+                            SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                        } : nil
                     )
                     .contentShape(Rectangle())
                 }
