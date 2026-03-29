@@ -5,6 +5,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
     @StateObject private var viewModel = SpeechPlayerViewModel()
     @EnvironmentObject var appSettings: AppSettings
     @State private var isPlayerSheetPresented = false
+    @State private var isPlayerDismissed = false
 
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
@@ -15,11 +16,13 @@ struct GlobalPlayerContainerView<Content: View>: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if appSettings.enableTTS && viewModel.hasItems {
+            if appSettings.enableTTS && viewModel.hasItems && !isPlayerDismissed {
                 VStack(spacing: 0) {
-                    SpeechPlayerView(viewModel: viewModel) {
+                    SpeechPlayerView(viewModel: viewModel, onTap: {
                         isPlayerSheetPresented = true
-                    }
+                    }, onClose: {
+                        isPlayerDismissed = true
+                    })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     Rectangle()
                         .fill(.clear)
@@ -36,6 +39,11 @@ struct GlobalPlayerContainerView<Content: View>: View {
         }
         .task {
             await viewModel.setup()
+        }
+        .onChange(of: viewModel.queueCount) { oldCount, newCount in
+            if newCount > oldCount {
+                isPlayerDismissed = false
+            }
         }
     }
 }

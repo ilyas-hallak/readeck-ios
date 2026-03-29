@@ -3,6 +3,7 @@ import SwiftUI
 struct MiniPlayerView: View {
     @ObservedObject var viewModel: SpeechPlayerViewModel
     var onTap: () -> Void
+    var onClose: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,6 +29,7 @@ struct MiniPlayerView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                .contentShape(Rectangle())
                 .onTapGesture { onTap() }
 
                 Spacer()
@@ -44,6 +46,16 @@ struct MiniPlayerView: View {
                         .font(.title3)
                         .foregroundColor(.accentColor)
                         .frame(width: 44, height: 44)
+                }
+
+                // Close
+                if let onClose {
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(width: 28, height: 28)
+                    }
                 }
             }
             .padding(.horizontal, 16)

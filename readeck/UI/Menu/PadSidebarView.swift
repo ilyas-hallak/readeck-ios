@@ -70,10 +70,6 @@ struct PadSidebarView: View {
                     }
                     .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
                     
-                    if appSettings.enableTTS {
-                        PlayerQueueResumeButton()
-                            .padding(.top, 8)
-                    }
                 }
                 .padding(.horizontal, 12)
                 .background(Color(R.color.menu_sidebar_bg))

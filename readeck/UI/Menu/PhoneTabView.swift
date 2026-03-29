@@ -15,6 +15,7 @@ struct PhoneTabView: View {
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
     @State private var isPlayerSheetPresented = false
+    @State private var isPlayerDismissed = false
 
     // Navigation paths for each tab
     @State private var allPath = NavigationPath()
@@ -38,16 +39,18 @@ struct PhoneTabView: View {
     }
 
     private var shouldShowPlayer: Bool {
-        appSettings.enableTTS && speechPlayerViewModel.hasItems
+        appSettings.enableTTS && speechPlayerViewModel.hasItems && !isPlayerDismissed
     }
 
     var body: some View {
         if #available(iOS 26.1, *) {
             tabViewContent
                 .tabViewBottomAccessory(isEnabled: shouldShowPlayer) {
-                    SpeechPlayerView(viewModel: speechPlayerViewModel) {
+                    SpeechPlayerView(viewModel: speechPlayerViewModel, onTap: {
                         isPlayerSheetPresented = true
-                    }
+                    }, onClose: {
+                        isPlayerDismissed = true
+                    })
                 }
                 .sheet(isPresented: $isPlayerSheetPresented) {
                     PlayerSheetView(viewModel: speechPlayerViewModel)
@@ -57,6 +60,11 @@ struct PhoneTabView: View {
                 }
                 .task {
                     await speechPlayerViewModel.setup()
+                }
+                .onChange(of: speechPlayerViewModel.queueCount) { oldCount, newCount in
+                    if newCount > oldCount {
+                        isPlayerDismissed = false
+                    }
                 }
         } else {
             GlobalPlayerContainerView {
@@ -251,9 +259,11 @@ struct PhoneTabView: View {
     
     @ViewBuilder
     private var moreTabsFooter: some View {
-        if appSettings.enableTTS {
-            PlayerQueueResumeButton()
-                .padding(.top, 16)
+        if appSettings.enableTTS && isPlayerDismissed {
+            PlayerQueueResumeButton {
+                isPlayerDismissed = false
+            }
+            .padding(.top, 16)
         }
     }
     
