@@ -14,6 +14,7 @@ struct PhoneTabView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
+    @State private var isPlayerSheetPresented = false
 
     // Navigation paths for each tab
     @State private var allPath = NavigationPath()
@@ -44,7 +45,15 @@ struct PhoneTabView: View {
         if #available(iOS 26.1, *) {
             tabViewContent
                 .tabViewBottomAccessory(isEnabled: shouldShowPlayer) {
-                    SpeechPlayerView(viewModel: speechPlayerViewModel)
+                    SpeechPlayerView(viewModel: speechPlayerViewModel) {
+                        isPlayerSheetPresented = true
+                    }
+                }
+                .sheet(isPresented: $isPlayerSheetPresented) {
+                    PlayerSheetView(viewModel: speechPlayerViewModel)
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
+                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                 }
                 .task {
                     await speechPlayerViewModel.setup()
