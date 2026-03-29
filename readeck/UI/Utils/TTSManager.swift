@@ -17,6 +17,14 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published var volume: Float = 1.0
     @Published var rate: Float = 0.5
 
+    @Published var currentCharacterIndex: Int = 0
+    @Published var totalCharacterCount: Int = 0
+    var onPositionUpdate: ((Int) -> Void)?
+
+    private var currentFullText: String = ""
+    private var currentLanguage: String = "en-US"
+    private var currentStartOffset: Int = 0
+
     var onUtteranceFinished: (() -> Void)?
     var onUtteranceCancelled: (() -> Void)?
     
@@ -49,21 +57,34 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         }
     }
     
-    func speak(text: String, language: String, utteranceIndex: Int = 0, totalUtterances: Int = 1) {
+    func speak(text: String, language: String, utteranceIndex: Int = 0, totalUtterances: Int = 1, startFromCharacter: Int = 0) {
         guard !text.isEmpty else { return }
 
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
 
+        self.currentFullText = text
+        self.currentLanguage = language
+        self.currentStartOffset = startFromCharacter
+        self.totalCharacterCount = text.count
+        self.currentCharacterIndex = startFromCharacter
         self.isSpeaking = true
         self.currentUtterance = text
         self.currentUtteranceIndex = utteranceIndex
         self.totalUtterances = totalUtterances
         self.updateProgress()
-        self.articleProgress = 0.0
+        self.articleProgress = text.isEmpty ? 0 : Double(startFromCharacter) / Double(text.count)
 
-        let utterance = AVSpeechUtterance(string: text)
+        let textToSpeak: String
+        if startFromCharacter > 0 && startFromCharacter < text.count {
+            let startIndex = text.index(text.startIndex, offsetBy: startFromCharacter)
+            textToSpeak = String(text[startIndex...])
+        } else {
+            textToSpeak = text
+        }
+
+        let utterance = AVSpeechUtterance(string: textToSpeak)
         utterance.voice = voiceManager.getVoice(for: language)
         utterance.rate = rate
         utterance.pitchMultiplier = 1.0
@@ -105,9 +126,54 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         defaults.set(rate, forKey: "tts_rate")
     }
     
+    // MARK: - Seek
+
+    func seek(toCharacter index: Int) {
+        guard !currentFullText.isEmpty else { return }
+        let clampedIndex = max(0, min(index, currentFullText.count))
+        speak(
+            text: currentFullText,
+            language: currentLanguage,
+            utteranceIndex: currentUtteranceIndex,
+            totalUtterances: totalUtterances,
+            startFromCharacter: clampedIndex
+        )
+    }
+
+    func seekBack(seconds: Double = 30) {
+        let charsPerSecond = estimatedCharactersPerSecond()
+        let charsToSkip = Int(seconds * charsPerSecond)
+        let targetIndex = max(0, currentCharacterIndex - charsToSkip)
+        seek(toCharacter: targetIndex)
+    }
+
+    func seekForward(seconds: Double = 30) {
+        let charsPerSecond = estimatedCharactersPerSecond()
+        let charsToSkip = Int(seconds * charsPerSecond)
+        let targetIndex = min(currentFullText.count, currentCharacterIndex + charsToSkip)
+        seek(toCharacter: targetIndex)
+    }
+
+    func estimatedCharactersPerSecond() -> Double {
+        // AVSpeechUtterance rate 0.5 ≈ natural speaking ≈ 15 chars/sec
+        // Scale linearly: rate 0.25 ≈ 7.5, rate 1.0 ≈ 30
+        return Double(rate) * 30.0
+    }
+
+    func estimatedDuration(for totalChars: Int) -> TimeInterval {
+        let cps = estimatedCharactersPerSecond()
+        return cps > 0 ? Double(totalChars) / cps : 0
+    }
+
+    func estimatedCurrentTime() -> TimeInterval {
+        let cps = estimatedCharactersPerSecond()
+        return cps > 0 ? Double(currentCharacterIndex) / cps : 0
+    }
+
     func pause() {
         synthesizer.pauseSpeaking(at: .immediate)
         isSpeaking = false
+        onPositionUpdate?(currentCharacterIndex)
     }
     
     func resume() {
@@ -121,6 +187,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         currentUtterance = ""
         articleProgress = 0.0
         updateProgress()
+        onPositionUpdate?(currentCharacterIndex)
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -156,13 +223,16 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
-        let total = utterance.speechString.count
-        if total > 0 {
-            let spoken = characterRange.location + characterRange.length
-            let progress = min(Double(spoken) / Double(total), 1.0)
-            DispatchQueue.main.async {
-                self.articleProgress = progress
+        let spoken = characterRange.location + characterRange.length
+        let absolutePosition = currentStartOffset + spoken
+        let total = currentFullText.count
+
+        DispatchQueue.main.async {
+            self.currentCharacterIndex = absolutePosition
+            if total > 0 {
+                self.articleProgress = min(Double(absolutePosition) / Double(total), 1.0)
             }
+            self.onPositionUpdate?(absolutePosition)
         }
     }
     
