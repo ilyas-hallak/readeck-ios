@@ -68,7 +68,7 @@ struct BookmarkDetailLegacyView: View {
             ZStack(alignment: .top) {
                 headerView(width: geometry.size.width)
                 VStack(alignment: .leading, spacing: 16) {
-                Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                Color.clear.frame(width: geometry.size.width, height: viewModel.hasVisibleHeroImage ? headerHeight : 84)
                 titleSection
                 Divider().padding(.horizontal)
                 if showJumpToProgressButton {
@@ -99,7 +99,7 @@ struct BookmarkDetailLegacyView: View {
                         },
                         onScrollToPosition: { position in
                             // Calculate scroll position: add header height and webview offset
-                            let imageHeight: Double = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                            let imageHeight: Double = viewModel.hasVisibleHeroImage ? headerHeight : 84
                             let targetPosition = imageHeight + position
 
                             // Scroll to the annotation
@@ -175,19 +175,19 @@ struct BookmarkDetailLegacyView: View {
             // We always take the maximum position seen (when scrolled to top, this is total content height)
             if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
                 initialContentEndPosition = endPosition
-                print("📏 Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
+                Logger.ui.debug("Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
             }
 
             // Calculate progress from how much the end marker has moved up
             guard initialContentEndPosition > 0 else {
-                print("⏳ Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
+                Logger.ui.debug("Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
                 return
             }
 
             let totalScrollableDistance = initialContentEndPosition - containerHeight
 
             guard totalScrollableDistance > 0 else {
-                print("⚠️ Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
+                Logger.ui.debug("Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
                 return
             }
 
@@ -201,7 +201,7 @@ struct BookmarkDetailLegacyView: View {
                 progress = max(progress, 1.0)
             }
 
-            print("📊 Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
+            Logger.ui.debug("Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
 
             // Check if we should update: threshold OR reaching 100% for first time
             let threshold = 0.03
@@ -209,7 +209,7 @@ struct BookmarkDetailLegacyView: View {
             let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
             if shouldUpdate {
-                print("✅ Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
+                Logger.ui.debug("Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
                 lastSentProgress = progress
                 readingProgress = progress
                 viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
@@ -221,15 +221,185 @@ struct BookmarkDetailLegacyView: View {
     }
 
     var body: some View {
+        mainContent
+            .frame(maxWidth: .infinity)
+            .background(nativeBackgroundColor)
+    }
+
+    private var mainContent: some View {
         VStack(spacing: 0) {
-            ProgressView(value: readingProgress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .frame(height: 3)
+            if viewModel.showProgressBar {
+                ProgressView(value: readingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(height: 3)
+            }
             GeometryReader { geometry in
-                scrollableContent(geometry: geometry)
+                ScrollView {
+                    // Invisible GeometryReader to track scroll offset
+                    GeometryReader { scrollGeo in
+                        Color.clear.preference(
+                            key: ScrollOffsetPreferenceKey.self,
+                            value: CGPoint(
+                                x: scrollGeo.frame(in: .named("scrollView")).minX,
+                                y: scrollGeo.frame(in: .named("scrollView")).minY
+                            )
+                        )
+                    }
+                    .frame(height: 0)
+
+                    VStack(spacing: 0) {
+                        ZStack(alignment: .top) {
+                            if viewModel.showHeroImage {
+                                headerView(width: geometry.size.width)
+                            }
+                            VStack(alignment: .leading, spacing: 16) {
+                            Color.clear.frame(width: geometry.size.width, height: viewModel.hasVisibleHeroImage ? headerHeight : 84)
+                            titleSection
+                            Divider().padding(.horizontal)
+                            if showJumpToProgressButton {
+                                JumpButton(containerHeight: geometry.size.height)
+                            }
+                            if let settings = viewModel.settings, !viewModel.articleContent.isEmpty {
+                                WebView(
+                                    htmlContent: viewModel.articleContent,
+                                    settings: settings,
+                                    onHeightChange: { height in
+                                        if webViewHeight != height {
+                                            webViewHeight = height
+                                        }
+                                    },
+                                    selectedAnnotationId: viewModel.selectedAnnotationId,
+                                    onAnnotationCreated: { color, text, startOffset, endOffset, startSelector, endSelector in
+                                        Task {
+                                            await viewModel.createAnnotation(
+                                                bookmarkId: bookmarkId,
+                                                color: color,
+                                                text: text,
+                                                startOffset: startOffset,
+                                                endOffset: endOffset,
+                                                startSelector: startSelector,
+                                                endSelector: endSelector
+                                            )
+                                        }
+                                    },
+                                    onScrollToPosition: { position in
+                                        // Calculate scroll position: add header height and webview offset
+                                        let imageHeight: CGFloat = viewModel.hasVisibleHeroImage ? headerHeight : 84
+                                        let targetPosition = imageHeight + position
+
+                                        // Scroll to the annotation
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                            scrollPosition = ScrollPosition(y: targetPosition)
+                                        }
+                                    }
+                                )
+                                .frame(height: webViewHeight)
+                                .cornerRadius(14)
+                                .padding(.horizontal, 4)
+                                .id(settings.webViewIdentifier)
+                            } else if viewModel.isLoadingArticle {
+                                ProgressView("Loading article...")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding()
+                            } else {
+                                Button(action: {
+                                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                                }) {
+                                    HStack {
+                                        Image(systemName: "safari")
+                                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+                                    }
+                                    .font(.title3.bold())
+                                    .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .padding(.horizontal)
+                                .padding(.top, 0)
+                            }
+
+                            if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                                VStack(alignment: .center) {
+                                    archiveSection
+                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                        .animation(.easeInOut, value: viewModel.articleContent)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+
+                        // Invisible marker to measure total content height - placed AFTER all content
+                        Color.clear
+                            .frame(height: 1)
+                            .background(
+                                GeometryReader { endGeo in
+                                    Color.clear.preference(
+                                        key: ContentHeightPreferenceKey.self,
+                                        value: endGeo.frame(in: .named("scrollView")).maxY
+                                    )
+                                }
+                            )
+                    }
+                }
+                .coordinateSpace(name: "scrollView")
+                .clipped()
+                .ignoresSafeArea(edges: .top)
+                .scrollPosition($scrollPosition)
+                .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
+                    contentEndPosition = endPosition
+
+                    let containerHeight = geometry.size.height
+
+                    // Update initial position if content grows (WebView still loading) or first time
+                    // We always take the maximum position seen (when scrolled to top, this is total content height)
+                    if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
+                        initialContentEndPosition = endPosition
+                        Logger.ui.debug("Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
+                    }
+
+                    // Calculate progress from how much the end marker has moved up
+                    guard initialContentEndPosition > 0 else {
+                        Logger.ui.debug("Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
+                        return
+                    }
+
+                    let totalScrollableDistance = initialContentEndPosition - containerHeight
+
+                    guard totalScrollableDistance > 0 else {
+                        Logger.ui.debug("Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
+                        return
+                    }
+
+                    // How far has the marker moved from its initial position?
+                    let scrolled = initialContentEndPosition - endPosition
+                    let rawProgress = scrolled / totalScrollableDistance
+                    var progress = min(max(rawProgress, 0), 1)
+
+                    // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
+                    if lastSentProgress >= 0.995 {
+                        progress = max(progress, 1.0)
+                    }
+
+                    Logger.ui.debug("Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
+
+                    // Check if we should update: threshold OR reaching 100% for first time
+                    let threshold: Double = 0.03
+                    let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
+                    let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
+
+                    if shouldUpdate {
+                        Logger.ui.debug("Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
+                        lastSentProgress = progress
+                        readingProgress = progress
+                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                    }
+                }
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
+                    // Not needed anymore, we track via ContentHeightPreferenceKey
+                }
             }
         }
-        .frame(maxWidth: .infinity)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             // Toggle button (left)
@@ -269,23 +439,14 @@ struct BookmarkDetailLegacyView: View {
         }
         .sheet(isPresented: $showingFontSettings) {
             NavigationView {
-                VStack {
-                    FontSettingsView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
-                    Spacer()
-                }
-                .navigationTitle("Font Settings")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            showingFontSettings = false
+                FontSelectionView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingFontSettings = false
+                            }
                         }
                     }
-                }
             }
         }
         .sheet(isPresented: $showingLabelsSheet) {
@@ -377,12 +538,21 @@ struct BookmarkDetailLegacyView: View {
 
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(viewModel.bookmarkDetail.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.bottom, 2)
-                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+            HStack(alignment: .top) {
+                Text(viewModel.bookmarkDetail.title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(nativeTextColor)
+                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                Spacer()
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    Image(systemName: "safari")
+                        .font(.title3)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            }
             metaInfoSection
         }
         .padding(.horizontal)
@@ -401,7 +571,7 @@ struct BookmarkDetailLegacyView: View {
             .cornerRadius(14)
             .padding(.horizontal, 4)
             .animation(.easeInOut, value: webViewHeight)
-            .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
+            .id(settings.webViewIdentifier)
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -426,10 +596,25 @@ struct BookmarkDetailLegacyView: View {
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
-                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Authors: " : "Author: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                HStack(spacing: 4) {
+                    Image(systemName: "person")
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text("·")
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(formatDate(viewModel.bookmarkDetail.created))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            } else {
+                metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             }
-            metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
-            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            if viewModel.showWordCount {
+                metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            }
 
             // Labels section
             if !viewModel.bookmarkDetail.labels.isEmpty {
@@ -462,15 +647,6 @@ struct BookmarkDetailLegacyView: View {
                 }
             }
 
-            metaRow(icon: "safari") {
-                Button(action: {
-                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                }) {
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
 
             if appSettings.enableTTS {
                 metaRow(icon: "speaker.wave.2") {
@@ -487,13 +663,48 @@ struct BookmarkDetailLegacyView: View {
         }
     }
 
+    // MARK: - Color Theme Helpers
+
+    private var nativeBackgroundColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return Color(.systemBackground)
+        case .custom:
+            if let hex = viewModel.settings?.customBackgroundColor {
+                return Color(hex: hex)
+            }
+            return Color(.systemBackground)
+        default:
+            return theme.backgroundColor ?? Color(.systemBackground)
+        }
+    }
+
+    private var nativeTextColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return .primary
+        case .custom:
+            if let hex = viewModel.settings?.customTextColor {
+                return Color(hex: hex)
+            }
+            return .primary
+        default:
+            return theme.textColor ?? .primary
+        }
+    }
+
+    private var nativeSecondaryTextColor: Color {
+        nativeTextColor.opacity(0.6)
+    }
+
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(nativeSecondaryTextColor)
         }
     }
 
@@ -501,6 +712,7 @@ struct BookmarkDetailLegacyView: View {
     private func metaRow(icon: String, @ViewBuilder content: () -> some View) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             content()
         }
     }

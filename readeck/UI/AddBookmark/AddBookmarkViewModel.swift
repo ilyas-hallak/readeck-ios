@@ -143,7 +143,7 @@ final class AddBookmarkViewModel {
             let message = try await createBookmarkUseCase.execute(createRequest: request)
 
             // Optional: Show the server message
-            print("Server response: \(message)")
+            Logger.viewModel.info("Server response: \(message)")
 
             clearForm()
             hasCreated = true

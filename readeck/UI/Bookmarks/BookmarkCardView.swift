@@ -20,9 +20,8 @@ struct BookmarkCardView: View {
     let currentState: BookmarkState
     let layout: CardLayoutStyle
     let pendingDelete: PendingDelete?
-    let onArchive: (Bookmark) -> Void
-    let onDelete: (Bookmark) -> Void
-    let onToggleFavorite: (Bookmark) -> Void
+    let swipeActionConfig: SwipeActionConfig
+    let onSwipeAction: (SwipeAction, Bookmark) -> Void
     let onUndoDelete: ((String) -> Void)?
 
     init(
@@ -30,18 +29,16 @@ struct BookmarkCardView: View {
         currentState: BookmarkState,
         layout: CardLayoutStyle = .magazine,
         pendingDelete: PendingDelete? = nil,
-        onArchive: @escaping (Bookmark) -> Void,
-        onDelete: @escaping (Bookmark) -> Void,
-        onToggleFavorite: @escaping (Bookmark) -> Void,
+        swipeActionConfig: SwipeActionConfig = .default,
+        onSwipeAction: @escaping (SwipeAction, Bookmark) -> Void,
         onUndoDelete: ((String) -> Void)? = nil
     ) {
         self.bookmark = bookmark
         self.currentState = currentState
         self.layout = layout
         self.pendingDelete = pendingDelete
-        self.onArchive = onArchive
-        self.onDelete = onDelete
-        self.onToggleFavorite = onToggleFavorite
+        self.swipeActionConfig = swipeActionConfig
+        self.onSwipeAction = onSwipeAction
         self.onUndoDelete = onUndoDelete
     }
 
@@ -111,37 +108,72 @@ struct BookmarkCardView: View {
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+        .swipeActions(edge: .trailing, allowsFullSwipe: !swipeActionConfig.trailingActions.isEmpty) {
             if pendingDelete == nil {
-                Button("Delete", role: .destructive) {
-                    onDelete(bookmark)
+                ForEach(Array(swipeActionConfig.trailingActions.enumerated()), id: \.element) { index, action in
+                    swipeButton(for: action)
                 }
-                .tint(.red)
             }
         }
-        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+        .swipeActions(edge: .leading, allowsFullSwipe: !swipeActionConfig.leadingActions.isEmpty) {
             if pendingDelete == nil {
-                Button {
-                    onArchive(bookmark)
-                } label: {
-                    if currentState == .archived {
-                        Label("Restore", systemImage: "tray.and.arrow.up")
-                    } else {
-                        Label("Archive", systemImage: "archivebox")
-                    }
+                ForEach(Array(swipeActionConfig.leadingActions.enumerated()), id: \.element) { index, action in
+                    swipeButton(for: action)
                 }
-                .tint(currentState == .archived ? .blue : .orange)
-
-                Button {
-                    onToggleFavorite(bookmark)
-                } label: {
-                    Label(
-                        bookmark.isMarked ? "Remove" : "Favorite",
-                        systemImage: bookmark.isMarked ? "heart.slash" : "heart.fill"
-                    )
-                }
-                .tint(bookmark.isMarked ? .gray : .pink)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func swipeButton(for action: SwipeAction) -> some View {
+        switch action {
+        case .archive:
+            Button {
+                onSwipeAction(.archive, bookmark)
+            } label: {
+                if currentState == .archived {
+                    Label("Restore", systemImage: "tray.and.arrow.up")
+                } else {
+                    Label("Archive", systemImage: "archivebox")
+                }
+            }
+            .tint(currentState == .archived ? .blue : .orange)
+
+        case .favorite:
+            Button {
+                onSwipeAction(.favorite, bookmark)
+            } label: {
+                if bookmark.isMarked {
+                    Image(systemName: "heart.slash")
+                } else {
+                    Image(systemName: "heart.fill")
+                }
+            }
+            .tint(bookmark.isMarked ? .gray : .pink)
+
+        case .delete:
+            Button(role: .destructive) {
+                onSwipeAction(.delete, bookmark)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+            .tint(.red)
+
+        case .showTags:
+            Button {
+                onSwipeAction(.showTags, bookmark)
+            } label: {
+                Label("Tags", systemImage: "tag")
+            }
+            .tint(.teal)
+
+        case .openInBrowser:
+            Button {
+                onSwipeAction(.openInBrowser, bookmark)
+            } label: {
+                Label("Open", systemImage: "safari")
+            }
+            .tint(.blue)
         }
     }
 

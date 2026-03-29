@@ -229,10 +229,18 @@ final class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(endpoint: String, username: String, password: String, hasFinishedSetup: Bool) async throws {}
     func execute(token: String) async throws {}
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {}
+    func execute(selectedFontFamily: FontFamily, fontSizeNumeric: Double) async throws {}
+    func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws {}
+    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool) async throws {}
+    func execute(customCSS: String) async throws {}
+    func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws {}
     func execute(enableTTS: Bool) async throws {}
     func execute(theme: Theme) async throws {}
     func execute(urlOpener: UrlOpener) async throws {}
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
+    func execute(swipeActionConfig: SwipeActionConfig) async throws {
+        // no-op for mock
+    }
 }
 
 final class MockGetBookmarkUseCase: PGetBookmarkUseCase {

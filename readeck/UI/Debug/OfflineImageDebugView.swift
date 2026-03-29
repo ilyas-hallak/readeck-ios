@@ -111,7 +111,7 @@ struct OfflineImageDebugView: View {
                 debugInfo.heroImageInCache = isCached
             }
         } catch {
-            print("Error loading bookmark: \(error)")
+            Logger.general.error("Error loading bookmark: \(error)")
         }
     }
 

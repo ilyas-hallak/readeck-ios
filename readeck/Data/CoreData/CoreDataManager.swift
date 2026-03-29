@@ -32,6 +32,8 @@ final class CoreDataManager {
             migrateStoreToAppGroupIfNeeded(targetURL: storeURL)
 
             let storeDescription = NSPersistentStoreDescription(url: storeURL)
+            storeDescription.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
+            storeDescription.setOption(true as NSNumber, forKey: NSInferMappingModelAutomaticallyOption)
             container.persistentStoreDescriptions = [storeDescription]
         }
 
