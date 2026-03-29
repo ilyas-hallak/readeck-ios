@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SpeechPlayerView: View {
-    @State var viewModel = SpeechPlayerViewModel()
+    @ObservedObject var viewModel: SpeechPlayerViewModel
     @State private var isExpanded = false
     @State private var dragOffset: CGFloat = 0
     var onClose: (() -> Void)? = nil
@@ -38,11 +38,6 @@ struct SpeechPlayerView: View {
                     }
                 }
         )
-        .onAppear() {
-            Task {
-                await viewModel.setup()
-            }
-        }
     }
 }
 
@@ -304,5 +299,5 @@ fileprivate extension Array {
 }
 
 #Preview {
-    SpeechPlayerView()
+    SpeechPlayerView(viewModel: SpeechPlayerViewModel())
 }

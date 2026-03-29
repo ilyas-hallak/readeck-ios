@@ -17,7 +17,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
             
             if appSettings.enableTTS && viewModel.hasItems && playerUIState.isPlayerVisible {
                 VStack(spacing: 0) {
-                    SpeechPlayerView(onClose: { playerUIState.hidePlayer() })
+                    SpeechPlayerView(viewModel: viewModel, onClose: { playerUIState.hidePlayer() })
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -28,6 +28,9 @@ struct GlobalPlayerContainerView<Content: View>: View {
             }
         }
         .animation(.spring(), value: viewModel.hasItems)
+        .task {
+            await viewModel.setup()
+        }
     }
 }
 
