@@ -18,18 +18,20 @@ class VoiceManager: ObservableObject {
     
     // MARK: - Public Methods
     
-    func getVoice(for language: String = "de-DE") -> AVSpeechSynthesisVoice {
-        // Verwende ausgewählte Stimme falls verfügbar
-        if let selected = selectedVoice, selected.language == language {
-            return selected
-        }
-        
-        // Verwende gecachte Stimme
+    func getVoice(for language: String) -> AVSpeechSynthesisVoice {
+        // Check cache first
         if let cachedVoice = cachedVoices[language] {
             return cachedVoice
         }
-        
-        // Finde und cache eine neue Stimme
+
+        // Only use selectedVoice if its language matches
+        let langPrefix = String(language.prefix(2))
+        if let selected = selectedVoice, selected.language.hasPrefix(langPrefix) {
+            cachedVoices[language] = selected
+            return selected
+        }
+
+        // Find best voice for this language
         let voice = findEnhancedVoice(for: language)
         cachedVoices[language] = voice
         return voice
@@ -40,11 +42,11 @@ class VoiceManager: ObservableObject {
         saveSelectedVoice(voice)
     }
     
-    func getAvailableVoices(for language: String = "de-DE") -> [AVSpeechSynthesisVoice] {
+    func getAvailableVoices(for language: String) -> [AVSpeechSynthesisVoice] {
         return availableVoices.filter { $0.language == language }
     }
     
-    func getPreferredVoices(for language: String = "de-DE") -> [AVSpeechSynthesisVoice] {
+    func getPreferredVoices(for language: String) -> [AVSpeechSynthesisVoice] {
         let preferredVoiceNames = [
             "Anna",      // Deutsche Premium-Stimme
             "Helena",    // Deutsche Premium-Stimme
@@ -104,7 +106,7 @@ class VoiceManager: ObservableObject {
     
     // MARK: - Debug Methods
     
-    func printAvailableVoices(for language: String = "de-DE") {
+    func printAvailableVoices(for language: String) {
         let filteredVoices = availableVoices.filter { $0.language.starts(with: language.prefix(2)) }
         
         print("Verfügbare Stimmen für \(language):")

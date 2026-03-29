@@ -47,7 +47,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         }
     }
     
-    func speak(text: String, language: String = "de-DE", utteranceIndex: Int = 0, totalUtterances: Int = 1) {
+    func speak(text: String, language: String, utteranceIndex: Int = 0, totalUtterances: Int = 1) {
         guard !text.isEmpty else { return }
         DispatchQueue.main.async {
             self.isSpeaking = true
