@@ -98,7 +98,7 @@ final class VoiceManager: ObservableObject {
         }
 
         // Fallback: Erste verfügbare Stimme für die Sprache
-        return availableVoices.first { $0.language == language }??
+        return availableVoices.first(where: { $0.language == language }) ??
                AVSpeechSynthesisVoice(language: language) ??
                AVSpeechSynthesisVoice()
     }
