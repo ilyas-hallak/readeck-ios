@@ -25,6 +25,8 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     private var currentLanguage: String = "en-US"
     private var currentStartOffset: Int = 0
 
+    private lazy var nowPlayingManager = NowPlayingManager.shared
+
     var onUtteranceFinished: (() -> Void)?
     var onUtteranceCancelled: (() -> Void)?
     
@@ -90,6 +92,16 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         utterance.pitchMultiplier = 1.0
         utterance.volume = volume
         synthesizer.speak(utterance)
+
+        let source = SpeechQueue.shared.currentItem.flatMap { URL(string: $0.url)?.host }
+        let imageUrl = SpeechQueue.shared.currentItem?.imageUrl
+        nowPlayingManager.updateNowPlayingInfo(
+            title: SpeechQueue.shared.currentItem?.title ?? "",
+            source: source,
+            imageUrl: imageUrl,
+            duration: estimatedDuration(for: currentFullText.count),
+            currentTime: estimatedCurrentTime()
+        )
     }
     
     private func updateProgress() {
@@ -174,13 +186,15 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         synthesizer.pauseSpeaking(at: .immediate)
         isSpeaking = false
         onPositionUpdate?(currentCharacterIndex)
+        nowPlayingManager.updateNowPlayingPlaybackState(isPlaying: false)
     }
-    
+
     func resume() {
         synthesizer.continueSpeaking()
         isSpeaking = true
+        nowPlayingManager.updateNowPlayingPlaybackState(isPlaying: true)
     }
-    
+
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
         isSpeaking = false
@@ -188,6 +202,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         articleProgress = 0.0
         updateProgress()
         onPositionUpdate?(currentCharacterIndex)
+        nowPlayingManager.clearNowPlaying()
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -233,6 +248,7 @@ class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
                 self.articleProgress = min(Double(absolutePosition) / Double(total), 1.0)
             }
             self.onPositionUpdate?(absolutePosition)
+            self.nowPlayingManager.updateNowPlayingPosition()
         }
     }
     
