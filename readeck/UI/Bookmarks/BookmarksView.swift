@@ -15,7 +15,6 @@ struct BookmarksView: View {
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
-    @EnvironmentObject private var playerUIState: PlayerUIState
     @EnvironmentObject private var appSettings: AppSettings
     let tag: String?
 
@@ -292,7 +291,10 @@ struct BookmarksView: View {
                         },
                         onUndoDelete: { bookmarkId in
                             viewModel.undoDelete(bookmarkId: bookmarkId)
-                        }
+                        },
+                        onPlayNext: appSettings.enableTTS ? { bookmark in
+                            SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                        } : nil
                     )
                     .onAppear {
                         if bookmark.id == viewModel.bookmarks?.bookmarks.last?.id {

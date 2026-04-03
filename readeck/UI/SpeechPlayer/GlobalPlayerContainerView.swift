@@ -2,11 +2,14 @@ import SwiftUI
 
 struct GlobalPlayerContainerView<Content: View>: View {
     let content: Content
-    @StateObject private var viewModel = SpeechPlayerViewModel()
-    @EnvironmentObject private var playerUIState: PlayerUIState
+    @ObservedObject var viewModel: SpeechPlayerViewModel
     @EnvironmentObject private var appSettings: AppSettings
+    @State private var isPlayerSheetPresented = false
+    @Binding var isPlayerDismissed: Bool
 
-    init(@ViewBuilder content: () -> Content) {
+    init(viewModel: SpeechPlayerViewModel, isPlayerDismissed: Binding<Bool>, @ViewBuilder content: () -> Content) {
+        self.viewModel = viewModel
+        self._isPlayerDismissed = isPlayerDismissed
         self.content = content()
     }
 
@@ -15,12 +18,14 @@ struct GlobalPlayerContainerView<Content: View>: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if appSettings.enableTTS && viewModel.hasItems && playerUIState.isPlayerVisible {
+            if appSettings.enableTTS && viewModel.hasItems && !isPlayerDismissed {
                 VStack(spacing: 0) {
-                    SpeechPlayerView { playerUIState.hidePlayer() }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    MiniPlayerView(viewModel: viewModel, onTap: {
+                        isPlayerSheetPresented = true
+                    }, onClose: {
+                        isPlayerDismissed = true
+                    })
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                     Rectangle()
                         .fill(.clear)
                         .frame(height: 49)
@@ -28,14 +33,20 @@ struct GlobalPlayerContainerView<Content: View>: View {
             }
         }
         .animation(.spring(), value: viewModel.hasItems)
+        .sheet(isPresented: $isPlayerSheetPresented) {
+            PlayerSheetView(viewModel: viewModel)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+        }
     }
 }
 
 #Preview {
-    GlobalPlayerContainerView {
+    GlobalPlayerContainerView(viewModel: SpeechPlayerViewModel(), isPlayerDismissed: .constant(false)) {
         Text("Main Content")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
     }
-    .environmentObject(PlayerUIState())
+    .environmentObject(AppSettings())
 }

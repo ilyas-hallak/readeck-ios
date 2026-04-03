@@ -1,51 +1,51 @@
 import SwiftUI
 
 struct PlayerQueueResumeButton: View {
-    @ObservedObject private var queue = SpeechQueue.shared
-    @EnvironmentObject private var playerUIState: PlayerUIState
-    private let playerViewModel = SpeechPlayerViewModel()
+    let hasItems: Bool
+    let currentTitle: String?
+    let queueCount: Int
+    var onResume: () -> Void
 
     var body: some View {
-        if queue.hasItems, !playerUIState.isPlayerVisible {
-            Button(action: {
-                playerViewModel.resume()
-                playerUIState.showPlayer()
-            }) {
+        if hasItems {
+            Button(action: onResume) {
                 HStack(spacing: 12) {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .foregroundColor(.accentColor)
+                        .font(.title3)
+
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Read-aloud Queue")
+                        Text(currentTitle ?? String(localized: "Listening Queue"))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Text("\(queueCount) \(String(localized: "articles in queue"))")
                             .font(.caption2)
                             .foregroundColor(.secondary)
-                        Text("\(queue.queueItems.count) articles in the queue")
-                            .font(.subheadline)
-                            .foregroundColor(.primary)
                     }
+
                     Spacer()
-                    Button(action: {
-                        playerViewModel.resume()
-                        playerUIState.showPlayer()
-                    }) {
-                        Text("Resume listening")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(0.15))
-                            .foregroundColor(.accentColor)
-                            .cornerRadius(8)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+
+                    Text(String(localized: "Show Player"))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.accentColor.opacity(0.15))
+                        .foregroundColor(.accentColor)
+                        .cornerRadius(8)
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 20)
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.plain)
             .background(Color(.systemBackground))
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color(.systemBackground))
             .padding(.bottom, 8)
             .transition(.opacity)
-            .animation(.spring(), value: queue.hasItems)
+            .animation(.spring(), value: hasItems)
         }
     }
 }

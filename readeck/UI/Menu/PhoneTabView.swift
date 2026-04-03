@@ -13,6 +13,9 @@ struct PhoneTabView: View {
 
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
+    @State private var isPlayerDismissed = false
+    @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
+    @State private var isPlayerSheetPresented = false
 
     // Navigation paths for each tab
     @State private var allPath = NavigationPath()
@@ -36,93 +39,130 @@ struct PhoneTabView: View {
     }
 
     var body: some View {
-        GlobalPlayerContainerView {
-            TabView(selection: $selectedTab) {
-                Tab(value: SidebarTab.all) {
-                    NavigationStack(path: $allPath) {
-                        tabView(for: .all)
+        Group {
+            if #available(iOS 26.1, *) {
+                tabViewContent
+                    .tabViewBottomAccessory(isEnabled: appSettings.enableTTS && speechPlayerViewModel.hasItems && !isPlayerDismissed) {
+                        MiniPlayerView(viewModel: speechPlayerViewModel, onTap: {
+                            isPlayerSheetPresented = true
+                        }, onClose: {
+                            isPlayerDismissed = true
+                        })
                     }
-                } label: {
-                    Label(SidebarTab.all.label, systemImage: SidebarTab.all.systemImage)
-                }
-
-                Tab(value: SidebarTab.unread) {
-                    NavigationStack(path: $unreadPath) {
-                        tabView(for: .unread)
-                    }
-                } label: {
-                    Label(SidebarTab.unread.label, systemImage: SidebarTab.unread.systemImage)
-                }
-
-                Tab(value: SidebarTab.favorite) {
-                    NavigationStack(path: $favoritePath) {
-                        tabView(for: .favorite)
-                    }
-                } label: {
-                    Label(SidebarTab.favorite.label, systemImage: SidebarTab.favorite.systemImage)
-                }
-
-                Tab(value: SidebarTab.archived) {
-                    NavigationStack(path: $archivedPath) {
-                        tabView(for: .archived)
-                    }
-                } label: {
-                    Label(SidebarTab.archived.label, systemImage: SidebarTab.archived.systemImage)
-                }
-
-                // iOS 26+: Dedicated search tab with role
-                if #available(iOS 26, *) {
-                    Tab("Search", systemImage: SidebarTab.search.systemImage, value: SidebarTab.search, role: .search) {
-                        NavigationStack {
-                            moreTabContent
-                                .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
-                        }
-                    }
-                    .badge(offlineBookmarksBadgeCount)
-                } else {
-                    Tab(value: SidebarTab.settings) {
-                        NavigationStack(path: $morePath) {
-                            VStack(spacing: 0) {
-                                // Classic search bar for iOS 18
-                                HStack {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(.gray)
-                                    TextField("Search...", text: $searchViewModel.searchQuery)
-                                        .focused($searchFieldIsFocused)
-                                        .textFieldStyle(PlainTextFieldStyle())
-                                        .autocapitalization(.none)
-                                        .disableAutocorrection(true)
-                                    if !searchViewModel.searchQuery.isEmpty {
-                                        Button(action: {
-                                            searchViewModel.searchQuery = ""
-                                            searchFieldIsFocused = true
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.gray)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                                .padding(10)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(12)
-                                .padding([.horizontal, .top])
-
-                                moreTabContent
-                                moreTabsFooter
-                            }
-                            .navigationTitle("More")
-                        }
-                    } label: {
-                        Label("More", systemImage: "ellipsis")
-                    }
-                    .badge(offlineBookmarksBadgeCount)
+            } else {
+                GlobalPlayerContainerView(viewModel: speechPlayerViewModel, isPlayerDismissed: $isPlayerDismissed) {
+                    tabViewContent
                 }
             }
-            .tabBarMinimizeBehaviorIfAvailable()
-            .accentColor(.accentColor)
-            .searchToolbarBehaviorIfAvailable()
         }
+        .sheet(isPresented: $isPlayerSheetPresented) {
+            PlayerSheetView(viewModel: speechPlayerViewModel)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+        }
+        .task {
+            await speechPlayerViewModel.setup()
+        }
+        .onChange(of: speechPlayerViewModel.queueCount) { oldCount, newCount in
+            if newCount > oldCount {
+                isPlayerDismissed = false
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var tabViewContent: some View {
+        TabView(selection: $selectedTab) {
+
+            Tab(value: SidebarTab.all) {
+                NavigationStack(path: $allPath) {
+                    tabView(for: .all)
+                }
+            } label: {
+                Label(SidebarTab.all.label, systemImage: SidebarTab.all.systemImage)
+            }
+
+            Tab(value: SidebarTab.unread) {
+                NavigationStack(path: $unreadPath) {
+                    tabView(for: .unread)
+                }
+            } label: {
+                Label(SidebarTab.unread.label, systemImage: SidebarTab.unread.systemImage)
+            }
+
+            Tab(value: SidebarTab.favorite) {
+                NavigationStack(path: $favoritePath) {
+                    tabView(for: .favorite)
+                }
+            } label: {
+                Label(SidebarTab.favorite.label, systemImage: SidebarTab.favorite.systemImage)
+            }
+
+            Tab(value: SidebarTab.archived) {
+                NavigationStack(path: $archivedPath) {
+                    tabView(for: .archived)
+                }
+            } label: {
+                Label(SidebarTab.archived.label, systemImage: SidebarTab.archived.systemImage)
+            }
+
+            // iOS 26+: Dedicated search tab with role
+            if #available(iOS 26, *) {
+                Tab("Search", systemImage: SidebarTab.search.systemImage, value: SidebarTab.search, role: .search) {
+                    NavigationStack {
+                        VStack(spacing: 0) {
+                            moreTabContent
+                            moreTabsFooter
+                        }
+                        .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
+                    }
+                }
+                .badge(offlineBookmarksBadgeCount)
+            } else {
+                Tab(value: SidebarTab.settings) {
+                    NavigationStack(path: $morePath) {
+                        VStack(spacing: 0) {
+
+                            // Classic search bar for iOS 18
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                TextField("Search...", text: $searchViewModel.searchQuery)
+                                    .focused($searchFieldIsFocused)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                if !searchViewModel.searchQuery.isEmpty {
+                                    Button(action: {
+                                        searchViewModel.searchQuery = ""
+                                        searchFieldIsFocused = true
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .padding([.horizontal, .top])
+
+                            moreTabContent
+                            moreTabsFooter
+                        }
+                        .navigationTitle("More")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis")
+                }
+                .badge(offlineBookmarksBadgeCount)
+            }
+        }
+        .tabBarMinimizeBehaviorIfAvailable()
+        .accentColor(.accentColor)
+        .searchToolbarBehaviorIfAvailable()
     }
 
     // MARK: - Tab Content
@@ -160,7 +200,10 @@ struct PhoneTabView: View {
                         bookmark: bookmark,
                         currentState: .all,
                         layout: cardLayoutStyle,
-                        onSwipeAction: { _, _ in }
+                        onSwipeAction: { _, _ in },
+                        onPlayNext: appSettings.enableTTS ? { bookmark in
+                            SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                        } : nil
                     )
                     .contentShape(Rectangle())
                 }
@@ -217,9 +260,15 @@ struct PhoneTabView: View {
 
     @ViewBuilder
     private var moreTabsFooter: some View {
-        if appSettings.enableTTS {
-            PlayerQueueResumeButton()
-                .padding(.top, 16)
+        if appSettings.enableTTS && isPlayerDismissed {
+            PlayerQueueResumeButton(
+                hasItems: speechPlayerViewModel.hasItems,
+                currentTitle: speechPlayerViewModel.currentItem?.title,
+                queueCount: speechPlayerViewModel.queueCount
+            ) {
+                isPlayerDismissed = false
+            }
+            .padding(.top, 16)
         }
     }
 

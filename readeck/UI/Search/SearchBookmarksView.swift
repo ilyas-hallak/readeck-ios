@@ -8,6 +8,7 @@ struct SearchBookmarksView: View {
     @Namespace private var namespace
     @State private var isFirstAppearance = true
     @State private var cardLayoutStyle: CardLayoutStyle = .magazine
+    @EnvironmentObject private var appSettings: AppSettings
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,7 +67,10 @@ struct SearchBookmarksView: View {
                             bookmark: bookmark,
                             currentState: .all,
                             layout: cardLayoutStyle,
-                            onSwipeAction: { _, _ in }
+                            onSwipeAction: { _, _ in },
+                            onPlayNext: appSettings.enableTTS ? { bookmark in
+                                SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                            } : nil
                         )
                     }
                     .buttonStyle(PlainButtonStyle())

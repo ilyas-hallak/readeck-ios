@@ -23,6 +23,7 @@ struct BookmarkCardView: View {
     let swipeActionConfig: SwipeActionConfig
     let onSwipeAction: (SwipeAction, Bookmark) -> Void
     let onUndoDelete: ((String) -> Void)?
+    var onPlayNext: ((Bookmark) -> Void)? = nil
 
     init(
         bookmark: Bookmark,
@@ -31,7 +32,8 @@ struct BookmarkCardView: View {
         pendingDelete: PendingDelete? = nil,
         swipeActionConfig: SwipeActionConfig = .default,
         onSwipeAction: @escaping (SwipeAction, Bookmark) -> Void,
-        onUndoDelete: ((String) -> Void)? = nil
+        onUndoDelete: ((String) -> Void)? = nil,
+        onPlayNext: ((Bookmark) -> Void)? = nil
     ) {
         self.bookmark = bookmark
         self.currentState = currentState
@@ -40,6 +42,7 @@ struct BookmarkCardView: View {
         self.swipeActionConfig = swipeActionConfig
         self.onSwipeAction = onSwipeAction
         self.onUndoDelete = onUndoDelete
+        self.onPlayNext = onPlayNext
     }
 
     var body: some View {
@@ -119,6 +122,15 @@ struct BookmarkCardView: View {
             if pendingDelete == nil {
                 ForEach(Array(swipeActionConfig.leadingActions.enumerated()), id: \.element) { index, action in
                     swipeButton(for: action)
+                }
+
+                if onPlayNext != nil {
+                    Button {
+                        onPlayNext?(bookmark)
+                    } label: {
+                        Label("Listen Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                    }
+                    .tint(.purple)
                 }
             }
         }
