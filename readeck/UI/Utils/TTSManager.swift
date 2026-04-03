@@ -76,11 +76,15 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     }
 
     private func resetSynthesizer() {
+        let old = synthesizer
+        old.delegate = nil
+        old.stopSpeaking(at: .immediate)
         synthesizer = AVSpeechSynthesizer()
         synthesizer.delegate = self
     }
 
     func speak(text: String, language: String, utteranceIndex: Int = 0, totalUtterances: Int = 1, startFromCharacter: Int = 0) {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard !text.isEmpty else { return }
 
         ensureSynthesizerReady()
@@ -219,6 +223,7 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     }
 
     func pause() {
+        dispatchPrecondition(condition: .onQueue(.main))
         synthesizer.pauseSpeaking(at: .immediate)
         isSpeaking = false
         onPositionUpdate?(currentCharacterIndex)
@@ -226,6 +231,7 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     }
 
     func resume() {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard synthesizer.isPaused else { return }
         synthesizer.continueSpeaking()
         isSpeaking = true
@@ -233,6 +239,7 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     }
 
     func stop() {
+        dispatchPrecondition(condition: .onQueue(.main))
         synthesizer.stopSpeaking(at: .immediate)
         isSpeaking = false
         currentUtterance = ""
@@ -297,6 +304,10 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
 
     func isCurrentlySpeaking() -> Bool {
         synthesizer.isSpeaking
+    }
+
+    func isCurrentlyPaused() -> Bool {
+        synthesizer.isPaused
     }
 
     @objc private func handleAppDidEnterBackground() {

@@ -2,12 +2,13 @@ import SwiftUI
 
 struct GlobalPlayerContainerView<Content: View>: View {
     let content: Content
-    @StateObject private var viewModel = SpeechPlayerViewModel()
+    @ObservedObject var viewModel: SpeechPlayerViewModel
     @EnvironmentObject private var appSettings: AppSettings
     @State private var isPlayerSheetPresented = false
     @Binding var isPlayerDismissed: Bool
 
-    init(isPlayerDismissed: Binding<Bool>, @ViewBuilder content: () -> Content) {
+    init(viewModel: SpeechPlayerViewModel, isPlayerDismissed: Binding<Bool>, @ViewBuilder content: () -> Content) {
+        self.viewModel = viewModel
         self._isPlayerDismissed = isPlayerDismissed
         self.content = content()
     }
@@ -19,7 +20,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
 
             if appSettings.enableTTS && viewModel.hasItems && !isPlayerDismissed {
                 VStack(spacing: 0) {
-                    SpeechPlayerView(viewModel: viewModel, onTap: {
+                    MiniPlayerView(viewModel: viewModel, onTap: {
                         isPlayerSheetPresented = true
                     }, onClose: {
                         isPlayerDismissed = true
@@ -38,19 +39,11 @@ struct GlobalPlayerContainerView<Content: View>: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }
-        .task {
-            await viewModel.setup()
-        }
-        .onChange(of: viewModel.queueCount) { oldCount, newCount in
-            if newCount > oldCount {
-                isPlayerDismissed = false
-            }
-        }
     }
 }
 
 #Preview {
-    GlobalPlayerContainerView(isPlayerDismissed: .constant(false)) {
+    GlobalPlayerContainerView(viewModel: SpeechPlayerViewModel(), isPlayerDismissed: .constant(false)) {
         Text("Main Content")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))

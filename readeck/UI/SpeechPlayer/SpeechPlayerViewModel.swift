@@ -118,7 +118,7 @@ final class SpeechPlayerViewModel: ObservableObject {
     }
 
     func resume() {
-        ttsManager?.resume()
+        speechQueue?.resumeOrReplay()
     }
 
     func stop() {

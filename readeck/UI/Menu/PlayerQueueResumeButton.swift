@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct PlayerQueueResumeButton: View {
-    @ObservedObject private var queue = SpeechQueue.shared
+    let hasItems: Bool
+    let currentTitle: String?
+    let queueCount: Int
     var onResume: () -> Void
 
     var body: some View {
-        if queue.hasItems {
+        if hasItems {
             Button(action: onResume) {
                 HStack(spacing: 12) {
                     Image(systemName: "speaker.wave.2.fill")
@@ -13,12 +15,12 @@ struct PlayerQueueResumeButton: View {
                         .font(.title3)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(queue.currentItem?.title ?? String(localized: "Listening Queue"))
+                        Text(currentTitle ?? String(localized: "Listening Queue"))
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
                             .lineLimit(1)
-                        Text("\(queue.queueItems.count) \(String(localized: "articles in queue"))")
+                        Text("\(queueCount) \(String(localized: "articles in queue"))")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -43,7 +45,7 @@ struct PlayerQueueResumeButton: View {
             .listRowBackground(Color(.systemBackground))
             .padding(.bottom, 8)
             .transition(.opacity)
-            .animation(.spring(), value: queue.hasItems)
+            .animation(.spring(), value: hasItems)
         }
     }
 }

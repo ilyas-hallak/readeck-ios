@@ -24,7 +24,7 @@ extension Bookmark {
             url: url,
             labels: labels,
             imageUrl: resources.image?.src,
-            language: (lang ?? "").isEmpty ? "en" : lang!,
+            language: (lang ?? "").isEmpty ? "en" : (lang ?? "en"),
             lastCharacterIndex: 0,
             totalCharacters: text.trimmingCharacters(in: .whitespacesAndNewlines).count
         )
@@ -60,14 +60,30 @@ final class SpeechQueue: ObservableObject {
 
     // Convert ISO 639-1 language codes (e.g., "de", "en") to BCP 47 (e.g., "de-DE", "en-US")
     private func convertToBCP47(_ isoCode: String) -> String {
+        // Already a BCP 47 code (e.g. "en-US", "pt-BR")
+        if isoCode.contains("-") { return isoCode }
+
         let mapping: [String: String] = [
             "de": "de-DE",
             "en": "en-US",
             "es": "es-ES",
             "fr": "fr-FR",
-            "it": "it-IT"
+            "it": "it-IT",
+            "pt": "pt-BR",
+            "nl": "nl-NL",
+            "ja": "ja-JP",
+            "zh": "zh-CN",
+            "ko": "ko-KR",
+            "ru": "ru-RU",
+            "ar": "ar-SA",
+            "pl": "pl-PL",
+            "sv": "sv-SE",
+            "da": "da-DK",
+            "nb": "nb-NO",
+            "fi": "fi-FI",
+            "tr": "tr-TR"
         ]
-        return mapping[isoCode.lowercased()] ?? "en-US"
+        return mapping[isoCode.lowercased()] ?? "\(isoCode)-\(isoCode.uppercased())"
     }
 
     @Published var queueItems: [SpeechQueueItem] = []
@@ -99,6 +115,7 @@ final class SpeechQueue: ObservableObject {
     }
 
     func enqueue(_ item: SpeechQueueItem) {
+        dispatchPrecondition(condition: .onQueue(.main))
         queue.append(item)
         updatePublishedProperties()
         saveQueue()
@@ -106,6 +123,7 @@ final class SpeechQueue: ObservableObject {
     }
 
     func enqueue(contentsOf items: [SpeechQueueItem]) {
+        dispatchPrecondition(condition: .onQueue(.main))
         queue.append(contentsOf: items)
         updatePublishedProperties()
         saveQueue()
@@ -113,6 +131,7 @@ final class SpeechQueue: ObservableObject {
     }
 
     func stop() {
+        dispatchPrecondition(condition: .onQueue(.main))
         logger.debug("SpeechQueue stop() called")
         saveQueue()
         ttsManager.stop()
@@ -125,7 +144,20 @@ final class SpeechQueue: ObservableObject {
         saveQueue()
     }
 
+    func resumeOrReplay() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        if ttsManager.isCurrentlyPaused() {
+            ttsManager.resume()
+        } else if ttsManager.isCurrentlySpeaking() {
+            return
+        } else if !queue.isEmpty {
+            isProcessing = false
+            processQueue()
+        }
+    }
+
     func clear() {
+        dispatchPrecondition(condition: .onQueue(.main))
         logger.debug("SpeechQueue clear() called")
         queue.removeAll()
         updatePublishedProperties()
@@ -146,7 +178,7 @@ final class SpeechQueue: ObservableObject {
         let next = queue[0]
         updatePublishedProperties()
         saveQueue()
-        let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
+        let textToSpeak = (next.title + "\n" + (next.content ?? "").stripHTML).trimmingCharacters(in: .whitespacesAndNewlines)
         let languageCode = convertToBCP47(next.language)
         ttsManager.speak(
             text: textToSpeak,
@@ -186,6 +218,7 @@ final class SpeechQueue: ObservableObject {
     // MARK: - Queue Management
 
     func insertAfterCurrent(_ item: SpeechQueueItem) {
+        dispatchPrecondition(condition: .onQueue(.main))
         if queue.isEmpty {
             enqueue(item)
         } else {

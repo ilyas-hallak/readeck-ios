@@ -154,8 +154,8 @@ struct PlayerSheetView: View {
                     get: { viewModel.rate },
                     set: { viewModel.setRate($0) }
                 )) {
-                    ForEach([Float(0.25), 0.5, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0], id: \.self) { value in
-                        Text(String(format: "%.2fx", value)).tag(value)
+                    ForEach([Float(0.25), 0.5, 0.75, 1.0, 1.25], id: \.self) { value in
+                        Text(String(format: "%.2gx", value)).tag(value)
                     }
                 }
                 .pickerStyle(.menu)
@@ -253,8 +253,13 @@ struct PlayerSheetView: View {
     // MARK: - Helpers
 
     private func formatTime(_ seconds: TimeInterval) -> String {
-        let mins = Int(seconds) / 60
-        let secs = Int(seconds) % 60
+        let totalSeconds = Int(seconds)
+        let hours = totalSeconds / 3600
+        let mins = (totalSeconds % 3600) / 60
+        let secs = totalSeconds % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, mins, secs)
+        }
         return String(format: "%d:%02d", mins, secs)
     }
 }

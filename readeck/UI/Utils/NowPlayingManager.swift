@@ -7,9 +7,10 @@ class NowPlayingManager {
     private let commandCenter = MPRemoteCommandCenter.shared()
     private var ttsManager: TTSManager { .shared }
     private var speechQueue: SpeechQueue { .shared }
-    private var artworkCache: [String: MPMediaItemArtwork] = [:]
+    private let artworkCache = NSCache<NSString, MPMediaItemArtwork>()
 
     private init() {
+        artworkCache.countLimit = 20
         setupRemoteCommands()
     }
 
@@ -18,7 +19,7 @@ class NowPlayingManager {
     private func setupRemoteCommands() {
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in
-            self?.ttsManager.resume()
+            self?.speechQueue.resumeOrReplay()
             return .success
         }
 
@@ -68,12 +69,13 @@ class NowPlayingManager {
 
         // Load artwork (cached)
         if let imageUrl, let url = URL(string: imageUrl) {
-            if let cached = artworkCache[imageUrl] {
+            let cacheKey = imageUrl as NSString
+            if let cached = artworkCache.object(forKey: cacheKey) {
                 info[MPMediaItemPropertyArtwork] = cached
             } else {
                 loadArtwork(from: url) { [weak self] artwork in
                     if let artwork {
-                        self?.artworkCache[imageUrl] = artwork
+                        self?.artworkCache.setObject(artwork, forKey: cacheKey)
                         var updatedInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
                         updatedInfo[MPMediaItemPropertyArtwork] = artwork
                         MPNowPlayingInfoCenter.default().nowPlayingInfo = updatedInfo

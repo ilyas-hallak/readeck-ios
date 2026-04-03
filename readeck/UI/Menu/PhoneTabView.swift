@@ -43,14 +43,14 @@ struct PhoneTabView: View {
             if #available(iOS 26.1, *) {
                 tabViewContent
                     .tabViewBottomAccessory(isEnabled: appSettings.enableTTS && speechPlayerViewModel.hasItems && !isPlayerDismissed) {
-                        SpeechPlayerView(viewModel: speechPlayerViewModel, onTap: {
+                        MiniPlayerView(viewModel: speechPlayerViewModel, onTap: {
                             isPlayerSheetPresented = true
                         }, onClose: {
                             isPlayerDismissed = true
                         })
                     }
             } else {
-                GlobalPlayerContainerView(isPlayerDismissed: $isPlayerDismissed) {
+                GlobalPlayerContainerView(viewModel: speechPlayerViewModel, isPlayerDismissed: $isPlayerDismissed) {
                     tabViewContent
                 }
             }
@@ -261,7 +261,11 @@ struct PhoneTabView: View {
     @ViewBuilder
     private var moreTabsFooter: some View {
         if appSettings.enableTTS && isPlayerDismissed {
-            PlayerQueueResumeButton {
+            PlayerQueueResumeButton(
+                hasItems: speechPlayerViewModel.hasItems,
+                currentTitle: speechPlayerViewModel.currentItem?.title,
+                queueCount: speechPlayerViewModel.queueCount
+            ) {
                 isPlayerDismissed = false
             }
             .padding(.top, 16)

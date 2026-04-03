@@ -15,6 +15,7 @@ struct PadSidebarView: View {
     @EnvironmentObject private var appSettings: AppSettings
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     @State private var isPlayerDismissed = false
+    @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
 
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
 
@@ -61,7 +62,11 @@ struct PadSidebarView: View {
             .safeAreaInset(edge: .bottom, alignment: .center) {
                 VStack(spacing: 0) {
                     if appSettings.enableTTS && isPlayerDismissed {
-                        PlayerQueueResumeButton {
+                        PlayerQueueResumeButton(
+                            hasItems: speechPlayerViewModel.hasItems,
+                            currentTitle: speechPlayerViewModel.currentItem?.title,
+                            queueCount: speechPlayerViewModel.queueCount
+                        ) {
                             isPlayerDismissed = false
                         }
                     }
@@ -81,7 +86,7 @@ struct PadSidebarView: View {
                 .background(Color(R.color.menu_sidebar_bg))
             }
         } content: {
-            GlobalPlayerContainerView(isPlayerDismissed: $isPlayerDismissed) {
+            GlobalPlayerContainerView(viewModel: speechPlayerViewModel, isPlayerDismissed: $isPlayerDismissed) {
                 Group {
                     switch selectedTab {
                     case .search:
@@ -136,5 +141,8 @@ struct PadSidebarView: View {
             }
         }
         .background(Color(R.color.menu_sidebar_bg))
+        .task {
+            await speechPlayerViewModel.setup()
+        }
     }
 }
