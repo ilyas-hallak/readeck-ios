@@ -33,7 +33,7 @@ struct SettingsGeneralView: View {
                     }
                 }
 
-                Toggle("Read Aloud Feature", isOn: $viewModel.enableTTS)
+                Toggle("Listen to Article", isOn: $viewModel.enableTTS)
                     .onChange(of: viewModel.enableTTS) {
                         Task {
                             await viewModel.saveGeneralSettings()
@@ -42,7 +42,7 @@ struct SettingsGeneralView: View {
             } header: {
                 Text("General")
             } footer: {
-                Text("Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.")
+                Text("Activate Listen to Article to have your articles read to you. This feature is currently in beta — you may encounter occasional issues.")
             }
 
             if Bundle.main.isDebugBuild {

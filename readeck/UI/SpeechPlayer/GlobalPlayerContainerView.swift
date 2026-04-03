@@ -5,9 +5,10 @@ struct GlobalPlayerContainerView<Content: View>: View {
     @StateObject private var viewModel = SpeechPlayerViewModel()
     @EnvironmentObject private var appSettings: AppSettings
     @State private var isPlayerSheetPresented = false
-    @State private var isPlayerDismissed = false
+    @Binding var isPlayerDismissed: Bool
 
-    init(@ViewBuilder content: () -> Content) {
+    init(isPlayerDismissed: Binding<Bool>, @ViewBuilder content: () -> Content) {
+        self._isPlayerDismissed = isPlayerDismissed
         self.content = content()
     }
 
@@ -49,7 +50,7 @@ struct GlobalPlayerContainerView<Content: View>: View {
 }
 
 #Preview {
-    GlobalPlayerContainerView {
+    GlobalPlayerContainerView(isPlayerDismissed: .constant(false)) {
         Text("Main Content")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))

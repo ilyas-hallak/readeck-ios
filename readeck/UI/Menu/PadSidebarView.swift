@@ -14,6 +14,7 @@ struct PadSidebarView: View {
     @State private var selectedTag: BookmarkLabel?
     @EnvironmentObject private var appSettings: AppSettings
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
+    @State private var isPlayerDismissed = false
 
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
 
@@ -59,6 +60,12 @@ struct PadSidebarView: View {
             .scrollContentBackground(.hidden)
             .safeAreaInset(edge: .bottom, alignment: .center) {
                 VStack(spacing: 0) {
+                    if appSettings.enableTTS && isPlayerDismissed {
+                        PlayerQueueResumeButton {
+                            isPlayerDismissed = false
+                        }
+                    }
+
                     Button(action: {
                         selectedTab = .settings
                     }) {
@@ -69,13 +76,12 @@ struct PadSidebarView: View {
                             .contentShape(Rectangle())
                     }
                     .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
-
                 }
                 .padding(.horizontal, 12)
                 .background(Color(R.color.menu_sidebar_bg))
             }
         } content: {
-            GlobalPlayerContainerView {
+            GlobalPlayerContainerView(isPlayerDismissed: $isPlayerDismissed) {
                 Group {
                     switch selectedTab {
                     case .search:

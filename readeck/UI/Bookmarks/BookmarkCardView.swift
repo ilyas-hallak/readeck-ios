@@ -128,7 +128,7 @@ struct BookmarkCardView: View {
                     Button {
                         onPlayNext?(bookmark)
                     } label: {
-                        Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                        Label("Listen Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                     }
                     .tint(.purple)
                 }

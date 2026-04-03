@@ -13,7 +13,7 @@ struct PlayerQueueResumeButton: View {
                         .font(.title3)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(queue.queueItems.first?.title ?? "Read-aloud Queue")
+                        Text(queue.currentItem?.title ?? String(localized: "Listening Queue"))
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
@@ -25,7 +25,7 @@ struct PlayerQueueResumeButton: View {
 
                     Spacer()
 
-                    Text("Show Player")
+                    Text(String(localized: "Show Player"))
                         .font(.caption)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 12)

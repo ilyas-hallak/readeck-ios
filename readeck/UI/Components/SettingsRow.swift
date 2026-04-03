@@ -256,7 +256,7 @@ struct SettingsRowLabel: View {
     List {
         SettingsRowToggle(
             icon: "speaker.wave.2",
-            title: "Read Aloud Feature",
+            title: "Listen to Article",
             subtitle: "Text-to-Speech functionality",
             isOn: .constant(true)
         )

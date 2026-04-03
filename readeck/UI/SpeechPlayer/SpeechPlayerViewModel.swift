@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 final class SpeechPlayerViewModel: ObservableObject {
     private var ttsManager: TTSManager?
     private var speechQueue: SpeechQueue?
@@ -21,6 +22,8 @@ final class SpeechPlayerViewModel: ObservableObject {
     @Published var currentCharacterIndex: Int = 0
     @Published var totalCharacterCount: Int = 0
 
+    var currentItem: SpeechQueueItem? { queueItems.first }
+
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
@@ -34,70 +37,70 @@ final class SpeechPlayerViewModel: ObservableObject {
     private func setupBindings() {
         // TTSManager bindings
         ttsManager?.$isSpeaking
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.isSpeaking, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$currentUtterance
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.currentText, on: self)
             .store(in: &cancellables)
 
         // SpeechQueue bindings
         speechQueue?.$queueItems
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.queueItems, on: self)
             .store(in: &cancellables)
 
         speechQueue?.$queueItems
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .map(\.count)
             .assign(to: \.queueCount, on: self)
             .store(in: &cancellables)
 
         speechQueue?.$hasItems
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.hasItems, on: self)
             .store(in: &cancellables)
 
         // TTS Progress bindings
         ttsManager?.$progress
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.progress, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$currentUtteranceIndex
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.currentUtteranceIndex, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$totalUtterances
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.totalUtterances, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$articleProgress
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.articleProgress, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$volume
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.volume, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$rate
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.rate, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$currentCharacterIndex
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.currentCharacterIndex, on: self)
             .store(in: &cancellables)
 
         ttsManager?.$totalCharacterCount
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.totalCharacterCount, on: self)
             .store(in: &cancellables)
     }
@@ -148,6 +151,10 @@ final class SpeechPlayerViewModel: ObservableObject {
 
     func insertAfterCurrent(_ item: SpeechQueueItem) {
         speechQueue?.insertAfterCurrent(item)
+    }
+
+    func skipTo(index: Int) {
+        speechQueue?.skipTo(index: index)
     }
 
     func moveItems(from source: IndexSet, to destination: Int) {

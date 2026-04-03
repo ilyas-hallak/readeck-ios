@@ -138,11 +138,24 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     func setVolume(_ newVolume: Float) {
         volume = newVolume
         saveSettings()
+        restartIfSpeaking()
     }
 
     func setRate(_ newRate: Float) {
         rate = newRate
         saveSettings()
+        restartIfSpeaking()
+    }
+
+    private func restartIfSpeaking() {
+        guard synthesizer.isSpeaking || synthesizer.isPaused else { return }
+        speak(
+            text: currentFullText,
+            language: currentLanguage,
+            utteranceIndex: currentUtteranceIndex,
+            totalUtterances: totalUtterances,
+            startFromCharacter: currentCharacterIndex
+        )
     }
 
     private func loadSettings() {
@@ -213,6 +226,7 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     }
 
     func resume() {
+        guard synthesizer.isPaused else { return }
         synthesizer.continueSpeaking()
         isSpeaking = true
         nowPlayingManager.updateNowPlayingPlaybackState(isPlaying: true)
@@ -230,20 +244,26 @@ final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
-            self.isSpeaking = false
-            self.currentUtterance = ""
+            // Only update state if the synthesizer isn't already speaking a new utterance
+            if !self.synthesizer.isSpeaking {
+                self.isSpeaking = false
+                self.currentUtterance = ""
+                self.articleProgress = 1.0
+            }
             self.currentUtteranceIndex += 1
             self.updateProgress()
-            self.articleProgress = 1.0
             self.onUtteranceFinished?()
         }
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
-            self.isSpeaking = false
-            self.currentUtterance = ""
-            self.articleProgress = 0.0
+            // Only update state if the synthesizer isn't already speaking a new utterance
+            if !self.synthesizer.isSpeaking {
+                self.isSpeaking = false
+                self.currentUtterance = ""
+                self.articleProgress = 0.0
+            }
             self.onUtteranceCancelled?()
         }
     }

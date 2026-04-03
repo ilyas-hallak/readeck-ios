@@ -447,7 +447,7 @@ struct BookmarkDetailView2: View {
                     Button(action: {
                         viewModel.addBookmarkToSpeechQueueNext()
                     }) {
-                        Text("Play Next")
+                        Text("Listen Next")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }

@@ -18,7 +18,7 @@ struct MiniPlayerView: View {
             HStack(spacing: 12) {
                 // Article title
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.queueItems.first?.title ?? "")
+                    Text(viewModel.currentItem?.title ?? "")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .lineLimit(1)

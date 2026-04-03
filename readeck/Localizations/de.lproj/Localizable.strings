@@ -18,7 +18,7 @@
 "%lld." = "%lld.";
 "%lld/%lld" = "%1$lld/%2$lld";
 "12 min • Today • example.com" = "12 Min • Heute • example.com";
-"Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly." = "Aktiviere die Vorlese-Funktion, um deine Artikel vorlesen zu lassen. Dies ist eine sehr frühe Vorschau und funktioniert möglicherweise noch nicht perfekt.";
+"Activate Listen to Article to have your articles read to you. This feature is currently in beta — you may encounter occasional issues." = "Aktiviere Artikel anhören, um dir deine Artikel vorlesen zu lassen. Dieses Feature ist derzeit in der Beta — es kann vereinzelt zu Problemen kommen.";
 
 /* Legal & Privacy */
 "Legal & Privacy" = "Rechtliches & Datenschutz";
@@ -124,9 +124,9 @@
 "Preview" = "Vorschau";
 "Progress: %lld%%" = "Fortschritt: %lld%%";
 "Re-login & Save" = "Erneut anmelden & Speichern";
-"Read Aloud Feature" = "Vorlese-Funktion";
+"Listen to Article" = "Artikel anhören";
 "Read article aloud" = "Artikel vorlesen";
-"Read-aloud Queue" = "Vorlese-Warteschlange";
+"Listening Queue" = "Wiedergabeliste";
 "readeck Bookmark Title" = "readeck Lesezeichen-Titel";
 "Reading %lld/%lld: " = "Lese %1$lld/%2$lld: ";
 "Remove" = "Entfernen";
@@ -195,7 +195,7 @@
 "DEBUG: Toggle network status" = "DEBUG: Netzwerkstatus umschalten";
 
 /* TTS Player */
-"Play Next" = "Als Nächstes abspielen";
+"Listen Next" = "Als Nächstes anhören";
 "Queue" = "Warteschlange";
 "Clear All" = "Alle entfernen";
 "Show Player" = "Player anzeigen";
@@ -213,6 +213,9 @@
 "Premium" = "Premium";
 "Enhanced" = "Erweitert";
 "Default" = "Standard";
+"Highest quality — most natural sounding. Requires download in iOS Settings." = "Höchste Qualität — klingt am natürlichsten. Download in den iOS-Einstellungen erforderlich.";
+"Good quality with natural intonation. Requires download in iOS Settings." = "Gute Qualität mit natürlicher Betonung. Download in den iOS-Einstellungen erforderlich.";
+"Built-in voice. No download required." = "Integrierte Stimme. Kein Download nötig.";
 
 /* Custom CSS Hilfe */
 "css.help.title" = "CSS Hilfe";

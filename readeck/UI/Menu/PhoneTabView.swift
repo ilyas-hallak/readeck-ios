@@ -13,9 +13,9 @@ struct PhoneTabView: View {
 
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
+    @State private var isPlayerDismissed = false
     @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
     @State private var isPlayerSheetPresented = false
-    @State private var isPlayerDismissed = false
 
     // Navigation paths for each tab
     @State private var allPath = NavigationPath()
@@ -38,13 +38,22 @@ struct PhoneTabView: View {
         offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0
     }
 
-    private var shouldShowPlayer: Bool {
-        appSettings.enableTTS && speechPlayerViewModel.hasItems && !isPlayerDismissed
-    }
-
     var body: some View {
-        GlobalPlayerContainerView {
-            tabViewContent
+        Group {
+            if #available(iOS 26.1, *) {
+                tabViewContent
+                    .tabViewBottomAccessory(isEnabled: appSettings.enableTTS && speechPlayerViewModel.hasItems && !isPlayerDismissed) {
+                        SpeechPlayerView(viewModel: speechPlayerViewModel, onTap: {
+                            isPlayerSheetPresented = true
+                        }, onClose: {
+                            isPlayerDismissed = true
+                        })
+                    }
+            } else {
+                GlobalPlayerContainerView(isPlayerDismissed: $isPlayerDismissed) {
+                    tabViewContent
+                }
+            }
         }
         .sheet(isPresented: $isPlayerSheetPresented) {
             PlayerSheetView(viewModel: speechPlayerViewModel)
@@ -102,8 +111,11 @@ struct PhoneTabView: View {
             if #available(iOS 26, *) {
                 Tab("Search", systemImage: SidebarTab.search.systemImage, value: SidebarTab.search, role: .search) {
                     NavigationStack {
-                        moreTabContent
-                            .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
+                        VStack(spacing: 0) {
+                            moreTabContent
+                            moreTabsFooter
+                        }
+                        .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
                     }
                 }
                 .badge(offlineBookmarksBadgeCount)

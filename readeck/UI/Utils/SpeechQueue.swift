@@ -65,31 +65,7 @@ final class SpeechQueue: ObservableObject {
             "en": "en-US",
             "es": "es-ES",
             "fr": "fr-FR",
-            "it": "it-IT",
-            "pt": "pt-PT",
-            "nl": "nl-NL",
-            "pl": "pl-PL",
-            "ru": "ru-RU",
-            "ja": "ja-JP",
-            "zh": "zh-CN",
-            "ko": "ko-KR",
-            "ar": "ar-SA",
-            "tr": "tr-TR",
-            "sv": "sv-SE",
-            "da": "da-DK",
-            "no": "nb-NO",
-            "fi": "fi-FI",
-            "cs": "cs-CZ",
-            "hu": "hu-HU",
-            "ro": "ro-RO",
-            "sk": "sk-SK",
-            "uk": "uk-UA",
-            "el": "el-GR",
-            "he": "he-IL",
-            "hi": "hi-IN",
-            "th": "th-TH",
-            "id": "id-ID",
-            "vi": "vi-VN"
+            "it": "it-IT"
         ]
         return mapping[isoCode.lowercased()] ?? "en-US"
     }
@@ -191,13 +167,20 @@ final class SpeechQueue: ObservableObject {
 
     private func onCurrentItemFinished() {
         guard isProcessing else { return }
-        if !queue.isEmpty {
-            queue.removeFirst()
-        }
         isProcessing = false
-        updatePublishedProperties()
-        saveQueue()
-        processQueue()
+        if queue.count > 1 {
+            queue.removeFirst()
+            updatePublishedProperties()
+            saveQueue()
+            processQueue()
+        } else {
+            // Last item — keep it visible, reset position for replay
+            if !queue.isEmpty {
+                queue[0].lastCharacterIndex = 0
+            }
+            updatePublishedProperties()
+            saveQueue()
+        }
     }
 
     // MARK: - Queue Management
@@ -235,6 +218,17 @@ final class SpeechQueue: ObservableObject {
             isProcessing = false
             processQueue()
         }
+    }
+
+    func skipTo(index: Int) {
+        guard index > 0, index < queue.count else { return }
+        let item = queue.remove(at: index)
+        queue.insert(item, at: 0)
+        ttsManager.stop()
+        isProcessing = false
+        updatePublishedProperties()
+        saveQueue()
+        processQueue()
     }
 
     func skipToNext() {

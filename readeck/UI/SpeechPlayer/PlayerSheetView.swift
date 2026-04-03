@@ -24,7 +24,7 @@ struct PlayerSheetView: View {
     private var playerHeader: some View {
         VStack(spacing: 12) {
             // Cover image
-            if let imageUrl = viewModel.queueItems.first?.imageUrl,
+            if let imageUrl = viewModel.currentItem?.imageUrl,
                let url = URL(string: imageUrl) {
                 AsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
@@ -39,13 +39,13 @@ struct PlayerSheetView: View {
             }
 
             // Title + source
-            Text(viewModel.queueItems.first?.title ?? "")
+            Text(viewModel.currentItem?.title ?? "")
                 .font(.headline)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .padding(.horizontal, 20)
 
-            if let url = viewModel.queueItems.first?.url,
+            if let url = viewModel.currentItem?.url,
                let host = URL(string: url)?.host {
                 Text(host)
                     .font(.caption)
@@ -146,7 +146,7 @@ struct PlayerSheetView: View {
         VStack(spacing: 12) {
             // Speed
             HStack {
-                Text("Speed")
+                Text(String(localized: "Speed"))
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
@@ -184,11 +184,11 @@ struct PlayerSheetView: View {
     private var queueSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Queue")
+                Text(String(localized: "Queue"))
                     .font(.headline)
                 Spacer()
                 if viewModel.queueCount > 1 {
-                    Button("Clear All") {
+                    Button(String(localized: "Clear All")) {
                         viewModel.clearQueue()
                     }
                     .font(.caption)
@@ -197,7 +197,7 @@ struct PlayerSheetView: View {
             }
             .padding(.horizontal, 24)
 
-            List {
+            LazyVStack(spacing: 0) {
                 ForEach(Array(viewModel.queueItems.enumerated()), id: \.offset) { index, item in
                     HStack {
                         if index == 0 {
@@ -221,17 +221,32 @@ struct PlayerSheetView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                        Spacer()
+                        if index > 0 {
+                            Button {
+                                viewModel.removeItems(at: IndexSet(integer: index))
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if index > 0 {
+                            viewModel.skipTo(index: index)
+                        }
+                    }
+
+                    if index < viewModel.queueItems.count - 1 {
+                        Divider()
+                            .padding(.leading, 60)
                     }
                 }
-                .onDelete { offsets in
-                    viewModel.removeItems(at: offsets)
-                }
-                .onMove { source, destination in
-                    viewModel.moveItems(from: source, to: destination)
-                }
             }
-            .listStyle(.plain)
-            .frame(minHeight: 200)
         }
     }
 
