@@ -39,8 +39,27 @@ private class DisableBackSwipeViewController: UIViewController {
         setBackSwipeDisabled(disabled)
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setBackSwipeDisabled(disabled)
+    }
+
     func setBackSwipeDisabled(_ disabled: Bool) {
-        navigationController?.interactivePopGestureRecognizer?.isEnabled = !disabled
+        findNavigationController()?.interactivePopGestureRecognizer?.isEnabled = !disabled
+    }
+
+    private func findNavigationController() -> UINavigationController? {
+        if let nav = navigationController {
+            return nav
+        }
+        var responder: UIResponder? = view
+        while let next = responder?.next {
+            if let nav = next as? UINavigationController {
+                return nav
+            }
+            responder = next
+        }
+        return nil
     }
 }
 
