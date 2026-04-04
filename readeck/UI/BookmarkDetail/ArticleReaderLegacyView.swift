@@ -17,7 +17,7 @@ struct ContentHeightPreferenceKey: PreferenceKey {
     }
 }
 
-struct BookmarkDetailLegacyView: View {
+struct ArticleReaderLegacyView: View {
     let bookmarkId: String
     @Binding var useNativeWebView: Bool
 
@@ -598,7 +598,7 @@ struct BookmarkDetailLegacyView: View {
 
 #Preview {
     NavigationView {
-        BookmarkDetailLegacyView(
+        ArticleReaderLegacyView(
             bookmarkId: "123",
             useNativeWebView: .constant(false),
             viewModel: .init(MockUseCaseFactory())

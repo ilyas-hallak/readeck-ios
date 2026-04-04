@@ -2,7 +2,7 @@ import SwiftUI
 import SafariServices
 
 @available(iOS 26.0, *)
-struct BookmarkDetailView2: View {
+struct ArticleReaderView: View {
     let bookmarkId: String
     @Binding var useNativeWebView: Bool
 
@@ -21,6 +21,10 @@ struct BookmarkDetailView2: View {
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
+    @State private var isToolbarVisible: Bool = true
+    @State private var previousEndPosition: CGFloat? = nil
+    @State private var previousContainerHeight: CGFloat = 0
+    @State private var accumulatedScrollUp: CGFloat = 0
 
     // MARK: - Envs
 
@@ -29,6 +33,7 @@ struct BookmarkDetailView2: View {
     @Environment(\.dismiss) private var dismiss
 
     private let headerHeight: CGFloat = 360
+    private let scrollUpThresholdRatio: CGFloat = 0.12
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
@@ -46,6 +51,8 @@ struct BookmarkDetailView2: View {
             .toolbar {
                 toolbarContent
             }
+            .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
+            .animation(.easeInOut(duration: 0.25), value: isToolbarVisible)
             .sheet(isPresented: $showingFontSettings) {
                 fontSettingsSheet
             }
@@ -151,18 +158,6 @@ struct BookmarkDetailView2: View {
     private var scrollViewContent: some View {
         GeometryReader { geometry in
             ScrollView {
-                // Invisible GeometryReader to track scroll offset
-                GeometryReader { scrollGeo in
-                    Color.clear.preference(
-                        key: ScrollOffsetPreferenceKey.self,
-                        value: CGPoint(
-                            x: scrollGeo.frame(in: .named("scrollView")).minX,
-                            y: scrollGeo.frame(in: .named("scrollView")).minY
-                        )
-                    )
-                }
-                .frame(height: 0)
-
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
                         headerView(width: geometry.size.width)
@@ -205,6 +200,15 @@ struct BookmarkDetailView2: View {
                 contentEndPosition = endPosition
 
                 let containerHeight = geometry.size.height
+                let containerChanged = abs(containerHeight - previousContainerHeight) > 1
+                if containerChanged {
+                    // Container height changed (toolbar show/hide) — skip this delta
+                    // and don't let it inflate initialContentEndPosition
+                    previousContainerHeight = containerHeight
+                    previousEndPosition = endPosition
+                    return
+                }
+                previousContainerHeight = containerHeight
 
                 // Update initial position if content grows (WebView still loading) or first time
                 // We always take the maximum position seen (when scrolled to top, this is total content height)
@@ -217,7 +221,12 @@ struct BookmarkDetailView2: View {
 
                 let totalScrollableDistance = initialContentEndPosition - containerHeight
 
-                guard totalScrollableDistance > 0 else { return }
+                guard totalScrollableDistance > 0 else {
+                    if !isToolbarVisible {
+                        isToolbarVisible = true
+                    }
+                    return
+                }
 
                 // How far has the marker moved from its initial position?
                 let scrolled = initialContentEndPosition - endPosition
@@ -235,14 +244,48 @@ struct BookmarkDetailView2: View {
                 let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
 
                 readingProgress = progress
-                
+
                 if shouldUpdate {
                     lastSentProgress = progress
                     viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                 }
-            }
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
-                // Not needed anymore, we track via ContentHeightPreferenceKey
+
+                // Toolbar visibility: derive scroll direction from endPosition changes
+                // endPosition decreases when scrolling down, increases when scrolling up
+                guard let prev = previousEndPosition else {
+                    previousEndPosition = endPosition
+                    return
+                }
+                let delta = endPosition - prev
+                previousEndPosition = endPosition
+
+                // Always show toolbar when at or near top
+                if progress <= 0.01 {
+                    if !isToolbarVisible {
+                        isToolbarVisible = true
+                    }
+                    accumulatedScrollUp = 0
+                    return
+                }
+
+                let screenHeight = containerHeight
+                guard screenHeight > 0 else { return }
+
+                if delta < -1 {
+                    // Scrolling down — hide toolbar
+                    accumulatedScrollUp = 0
+                    if isToolbarVisible {
+                        isToolbarVisible = false
+                    }
+                } else if delta > 1 {
+                    // Scrolling up — accumulate distance
+                    accumulatedScrollUp += delta
+                    let scrollUpThreshold = screenHeight * scrollUpThresholdRatio
+                    if accumulatedScrollUp >= scrollUpThreshold && !isToolbarVisible {
+                        isToolbarVisible = true
+                        accumulatedScrollUp = 0
+                    }
+                }
             }
         }
     }
@@ -564,7 +607,7 @@ struct BookmarkDetailView2: View {
 #Preview {
     if #available(iOS 26.0, *) {
         NavigationView {
-            BookmarkDetailView2(
+            ArticleReaderView(
                 bookmarkId: "123",
                 useNativeWebView: .constant(true),
                 viewModel: .init(MockUseCaseFactory())

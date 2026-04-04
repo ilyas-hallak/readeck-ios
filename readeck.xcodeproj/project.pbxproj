@@ -653,7 +653,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 50;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -699,7 +699,7 @@
 				CODE_SIGN_ENTITLEMENTS = readeck/readeck.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 50;
 				DEVELOPMENT_ASSET_PATHS = "\"readeck/Preview Content\"";
 				DEVELOPMENT_TEAM = 8J69P655GN;
 				ENABLE_HARDENED_RUNTIME = YES;

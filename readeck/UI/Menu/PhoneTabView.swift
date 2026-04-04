@@ -153,7 +153,7 @@ struct PhoneTabView: View {
                     
                     // Hidden NavigationLink to remove disclosure indicator
                     NavigationLink {
-                        BookmarkDetailView(bookmarkId: bookmark.id)
+                        ArticleReaderRouter(bookmarkId: bookmark.id)
                     } label: {
                         EmptyView()
                     }

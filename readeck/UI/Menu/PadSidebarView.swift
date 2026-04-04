@@ -118,7 +118,7 @@ struct PadSidebarView: View {
             }
         } detail: {
             if let bookmark = selectedBookmark, selectedTab != .settings {
-                BookmarkDetailView(bookmarkId: bookmark.id)
+                ArticleReaderRouter(bookmarkId: bookmark.id)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
                             Button {
