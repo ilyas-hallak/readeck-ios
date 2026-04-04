@@ -10,6 +10,7 @@ import Foundation
 protocol PAPI {
     var tokenProvider: TokenProvider { get }
     func login(endpoint: String, username: String, password: String) async throws -> UserDto
+    // swiftlint:disable:next discouraged_optional_collection
     func getBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPageDto
     func getBookmark(id: String) async throws -> BookmarkDetailDto
     func getBookmarkArticle(id: String) async throws -> String
@@ -27,7 +28,7 @@ protocol PAPI {
     func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto
 }
 
-class API: PAPI {
+final class API: PAPI {
     let tokenProvider: TokenProvider
     private let logger = Logger.network
 
@@ -44,7 +45,7 @@ class API: PAPI {
             return url
         }
     }
-    
+
     private func handleUnauthorizedResponse(_ statusCode: Int) {
         if statusCode == 401 {
             DispatchQueue.main.async {
@@ -52,7 +53,7 @@ class API: PAPI {
             }
         }
     }
-    
+
     /// Unified request builder that ensures all headers are applied consistently
     private func buildRequest(
         url: String,
@@ -70,35 +71,35 @@ class API: PAPI {
             // For login, url is already a full URL
             fullURL = url
         }
-        
+
         guard let requestURL = URL(string: fullURL) else {
             throw APIError.invalidURL
         }
-        
+
         var request = URLRequest(url: requestURL)
         request.httpMethod = method.rawValue
-        
+
         if body != nil {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
-        
+
         if let token = await tokenProvider.getToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        
+
         for (key, value) in additionalHeaders {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        
+
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
-        
-        if let body = body {
+
+        if let body {
             request.httpBody = body
         }
-        
+
         return request
     }
-        
+
     private func makeJSONRequestWithHeaders<T: Codable>(
         endpoint: String,
         method: HTTPMethod = .GET,
@@ -111,22 +112,22 @@ class API: PAPI {
             body: body,
             useBaseURL: true
         )
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
-        
+
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
             throw APIError.serverError(httpResponse.statusCode)
         }
-        
+
         let decoded = try JSONDecoder().decode(T.self, from: data)
         return (decoded, httpResponse)
     }
-    
+
     // Separate Methode für JSON-Requests
     private func makeJSONRequest<T: Codable>(
         endpoint: String,
@@ -140,13 +141,13 @@ class API: PAPI {
             body: body,
             useBaseURL: true
         )
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
-        
+
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
             // Try to extract error message from response body
@@ -163,7 +164,7 @@ class API: PAPI {
         let status: Int
         let message: String
     }
-    
+
     // Separate Methode für String-Requests (HTML/Text)
     private func makeStringRequest(
         endpoint: String,
@@ -175,7 +176,7 @@ class API: PAPI {
             body: nil,
             useBaseURL: true
         )
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -199,18 +200,18 @@ class API: PAPI {
 
         return string
     }
-    
+
     func login(endpoint: String, username: String, password: String) async throws -> UserDto {
         logger.info("Attempting login for user: \(username) at endpoint: \(endpoint)")
         let loginEndpoint = endpoint + "/api/auth"
-        guard let _ = URL(string: loginEndpoint) else { 
+        guard URL(string: loginEndpoint) != nil else {
             logger.error("Invalid URL for login endpoint: \(loginEndpoint)")
-            throw APIError.invalidURL 
+            throw APIError.invalidURL
         }
-        
+
         let loginRequest = LoginRequestDto(application: "api doc", username: username, password: password)
         let requestData = try JSONEncoder().encode(loginRequest)
-        
+
         let request = try await buildRequest(
             url: loginEndpoint,
             method: .POST,
@@ -219,7 +220,7 @@ class API: PAPI {
         )
 
         logger.logNetworkRequest(method: "POST", url: loginEndpoint)
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -237,12 +238,13 @@ class API: PAPI {
         logger.info("Login successful for user: \(username)")
         return try JSONDecoder().decode(UserDto.self, from: data)
     }
-    
+
+    // swiftlint:disable:next discouraged_optional_collection
     func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil, sort: String? = nil) async throws -> BookmarksPageDto {
         logger.debug("Fetching bookmarks with state: \(state?.rawValue ?? "all"), limit: \(limit ?? 0), offset: \(offset ?? 0)")
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
-        
+
         // Query-Parameter basierend auf State hinzufügen
         if let state {
             switch state {
@@ -257,25 +259,25 @@ class API: PAPI {
                 break
             }
         }
-        
+
         if let limit {
             queryItems.append(URLQueryItem(name: "limit", value: "\(limit)"))
         }
         if let offset {
             queryItems.append(URLQueryItem(name: "offset", value: "\(offset)"))
         }
-        
+
         if let search {
             queryItems.append(URLQueryItem(name: "search", value: search))
         }
-        
+
         // type-Parameter als Array von BookmarkType
         if let type, !type.isEmpty {
             for t in type {
                 queryItems.append(URLQueryItem(name: "type", value: t.rawValue))
             }
         }
-        
+
         if let tag {
             // URL-encode label with quotes for proper API handling
             let encodedTag = "\"\(tag)\""
@@ -290,24 +292,24 @@ class API: PAPI {
             let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
             endpoint += "?\(queryString)"
         }
-        
+
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + (endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"))
-        
+
         let (bookmarks, response) = try await makeJSONRequestWithHeaders(
             endpoint: endpoint,
             responseType: [BookmarkDto].self
         )
-        
+
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + (endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"), statusCode: response.statusCode)
         logger.info("Fetched \(bookmarks.count) bookmarks")
-        
+
         // Header auslesen
         let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
         let totalCount = response.value(forHTTPHeaderField: "Total-Count").flatMap { Int($0) }
         let totalPages = response.value(forHTTPHeaderField: "Total-Pages").flatMap { Int($0) }
         let linksHeader = response.value(forHTTPHeaderField: "Link")
         let links = linksHeader?.components(separatedBy: ",")
-        
+
         return BookmarksPageDto(
             bookmarks: bookmarks,
             currentPage: currentPage,
@@ -316,57 +318,57 @@ class API: PAPI {
             links: links
         )
     }
-    
+
     func getBookmark(id: String) async throws -> BookmarkDetailDto {
         logger.debug("Fetching bookmark: \(id)")
         let endpoint = "/api/bookmarks/\(id)"
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
-        
+
         let result = try await makeJSONRequest(
             endpoint: endpoint,
             responseType: BookmarkDetailDto.self
         )
-        
+
         logger.info("Successfully fetched bookmark: \(id)")
         return result
     }
-    
+
     // Artikel als String laden statt als JSON
     func getBookmarkArticle(id: String) async throws -> String {
         logger.debug("Fetching article for bookmark: \(id)")
         let endpoint = "/api/bookmarks/\(id)/article"
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
-        
+
         let result = try await makeStringRequest(
             endpoint: endpoint
         )
-        
+
         logger.info("Successfully fetched article for bookmark: \(id)")
         return result
     }
-    
+
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto {
         logger.info("Creating bookmark for URL: \(createRequest.url)")
         let requestData = try JSONEncoder().encode(createRequest)
         let endpoint = "/api/bookmarks"
         logger.logNetworkRequest(method: "POST", url: await self.baseURL + endpoint)
-        
+
         let result = try await makeJSONRequest(
             endpoint: endpoint,
             method: .POST,
             body: requestData,
             responseType: CreateBookmarkResponseDto.self
         )
-        
+
         logger.info("Successfully created bookmark: \(result.status)")
         return result
     }
-    
+
     func updateBookmark(id: String, updateRequest: UpdateBookmarkRequestDto) async throws {
         logger.info("Updating bookmark: \(id)")
         let requestData = try JSONEncoder().encode(updateRequest)
         let endpoint = "/api/bookmarks/\(id)"
-        
+
         let request = try await buildRequest(
             url: endpoint,
             method: .PATCH,
@@ -374,32 +376,32 @@ class API: PAPI {
             useBaseURL: true,
             additionalHeaders: ["Accept": "application/json"]
         )
-        
+
         let baseURL = await self.baseURL
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "PATCH", url: fullURL)
-        
+
         let (_, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for PATCH \(fullURL)")
             throw APIError.invalidResponse
         }
-        
+
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
             logger.logNetworkError(method: "PATCH", url: fullURL, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
-        
+
         logger.logNetworkRequest(method: "PATCH", url: fullURL, statusCode: httpResponse.statusCode)
         logger.info("Successfully updated bookmark: \(id)")
     }
-    
+
     func deleteBookmark(id: String) async throws {
         logger.info("Deleting bookmark: \(id)")
         let endpoint = "/api/bookmarks/\(id)"
-        
+
         let request = try await buildRequest(
             url: endpoint,
             method: .DELETE,
@@ -407,47 +409,47 @@ class API: PAPI {
             useBaseURL: true,
             additionalHeaders: ["Accept": "application/json"]
         )
-        
+
         let baseURL = await self.baseURL
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "DELETE", url: fullURL)
-        
+
         let (_, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for DELETE \(fullURL)")
             throw APIError.invalidResponse
         }
-        
+
         guard 200...299 ~= httpResponse.statusCode else {
             handleUnauthorizedResponse(httpResponse.statusCode)
             logger.logNetworkError(method: "DELETE", url: fullURL, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
         }
-        
+
         logger.logNetworkRequest(method: "DELETE", url: fullURL, statusCode: httpResponse.statusCode)
         logger.info("Successfully deleted bookmark: \(id)")
     }
-    
+
     func searchBookmarks(search: String) async throws -> BookmarksPageDto {
         logger.debug("Searching bookmarks with query: \(search)")
         let endpoint = "/api/bookmarks?search=\(search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
-        
+
         let (bookmarks, response) = try await makeJSONRequestWithHeaders(
             endpoint: endpoint,
             responseType: [BookmarkDto].self
         )
-        
+
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint, statusCode: response.statusCode)
         logger.info("Found \(bookmarks.count) bookmarks matching search: \(search)")
-        
+
         let currentPage = response.value(forHTTPHeaderField: "Current-Page").flatMap { Int($0) }
         let totalCount = response.value(forHTTPHeaderField: "Total-Count").flatMap { Int($0) }
         let totalPages = response.value(forHTTPHeaderField: "Total-Pages").flatMap { Int($0) }
         let linksHeader = response.value(forHTTPHeaderField: "Link")
         let links = linksHeader?.components(separatedBy: ",")
-        
+
         return BookmarksPageDto(
             bookmarks: bookmarks,
             currentPage: currentPage,
@@ -456,7 +458,7 @@ class API: PAPI {
             links: links
         )
     }
-    
+
     func getBookmarkLabels() async throws -> [BookmarkLabelDto] {
         logger.debug("Fetching bookmark labels")
         let endpoint = "/api/bookmarks/labels"
@@ -522,7 +524,7 @@ class API: PAPI {
             useBaseURL: true,
             additionalHeaders: ["Accept": "application/json"]
         )
-        
+
         let baseURL = await self.baseURL
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "DELETE", url: fullURL)
@@ -559,7 +561,7 @@ class API: PAPI {
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = requestData
-        
+
         // Apply custom headers (e.g., for proxy authentication)
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
 
@@ -623,7 +625,7 @@ class API: PAPI {
         urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = formBody.data(using: .utf8)
-        
+
         // Apply custom headers (e.g., for proxy authentication)
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
 
@@ -649,11 +651,11 @@ class API: PAPI {
 }
 
 enum HTTPMethod: String {
-    case GET = "GET"
-    case POST = "POST"
-    case PUT = "PUT"
-    case PATCH = "PATCH"
-    case DELETE = "DELETE"
+    case GET
+    case POST
+    case PUT
+    case PATCH
+    case DELETE
 }
 
 enum APIError: Error {

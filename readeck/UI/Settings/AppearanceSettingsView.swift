@@ -33,9 +33,9 @@ struct AppearanceSettingsView: View {
                     FontSelectionView(viewModel: fontViewModel)
                 } label: {
                     HStack {
-                        Text("Font")
+                        Text("Reader Settings")
                         Spacer()
-                        Text("\(fontViewModel.selectedFontFamily.displayName) · \(fontViewModel.selectedFontSize.displayName)")
+                        Text("\(fontViewModel.selectedFontFamily.displayName) · \(Int(fontViewModel.fontSizeNumeric))px")
                             .foregroundColor(.secondary)
                     }
                 }

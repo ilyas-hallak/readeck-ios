@@ -3,8 +3,10 @@ import Foundation
 struct CreateBookmarkRequest {
     let url: String
     let title: String?
+    // swiftlint:disable:next discouraged_optional_collection
     let labels: [String]?
-    
+
+    // swiftlint:disable:next discouraged_optional_collection
     init(url: String, title: String? = nil, labels: [String]? = nil) {
         self.url = url
         self.title = title
@@ -15,14 +17,14 @@ struct CreateBookmarkRequest {
 // Convenience Initializers
 extension CreateBookmarkRequest {
     static func fromURL(_ url: String) -> CreateBookmarkRequest {
-        return CreateBookmarkRequest(url: url)
+        CreateBookmarkRequest(url: url)
     }
-    
+
     static func fromURLWithTitle(_ url: String, title: String) -> CreateBookmarkRequest {
-        return CreateBookmarkRequest(url: url, title: title)
+        CreateBookmarkRequest(url: url, title: title)
     }
-    
+
     static func fromURLWithLabels(_ url: String, labels: [String]) -> CreateBookmarkRequest {
-        return CreateBookmarkRequest(url: url, labels: labels)
+        CreateBookmarkRequest(url: url, labels: labels)
     }
 }

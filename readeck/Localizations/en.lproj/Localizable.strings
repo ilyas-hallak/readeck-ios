@@ -17,7 +17,7 @@
 "%lld." = "%lld.";
 "%lld/%lld" = "%1$lld/%2$lld";
 "12 min • Today • example.com" = "12 min • Today • example.com";
-"Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly." = "Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.";
+"Activate Listen to Article to have your articles read to you. This feature is currently in beta — you may encounter occasional issues." = "Activate Listen to Article to have your articles read to you. This feature is currently in beta — you may encounter occasional issues.";
 
 /* Legal & Privacy */
 "Legal & Privacy" = "Legal & Privacy";
@@ -120,9 +120,9 @@
 "Preview" = "Preview";
 "Progress: %lld%%" = "Progress: %lld%%";
 "Re-login & Save" = "Re-login & Save";
-"Read Aloud Feature" = "Read Aloud Feature";
+"Listen to Article" = "Listen to Article";
 "Read article aloud" = "Read article aloud";
-"Read-aloud Queue" = "Read-aloud Queue";
+"Listening Queue" = "Listening Queue";
 "readeck Bookmark Title" = "readeck Bookmark Title";
 "Reading %lld/%lld: " = "Reading %1$lld/%2$lld: ";
 "Remove" = "Remove";
@@ -188,3 +188,74 @@
 /* Font Settings */
 "font.web.match.hint" = "* Matches Readeck Web fonts";
 "DEBUG: Toggle network status" = "DEBUG: Toggle network status";
+
+/* TTS Player */
+"Play Next" = "Play Next";
+"Queue" = "Queue";
+"Clear All" = "Clear All";
+"Show Player" = "Show Player";
+"articles in queue" = "articles in queue";
+
+/* TTS Settings */
+"Languages & Voices" = "Languages & Voices";
+"Language & Voices" = "Language & Voices";
+"Auto" = "Auto";
+"Automatic (best available)" = "Automatic (best available)";
+"Download Premium Voices" = "Download Premium Voices";
+"Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices." = "Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices.";
+"Select a voice for each language. Articles are read in their detected language." = "Select a voice for each language. Articles are read in their detected language.";
+"Premium" = "Premium";
+"Enhanced" = "Enhanced";
+"Default" = "Default";
+
+/* Custom CSS Help */
+"css.help.title" = "CSS Help";
+"css.help.hint" = "Custom CSS rules are appended after all default styles.";
+"css.help.button.append" = "Append";
+"css.help.button.replace" = "Replace";
+
+/* CSS Help Categories */
+"css.help.category.typography" = "Typography";
+"css.help.category.colors" = "Colors";
+"css.help.category.layout" = "Layout";
+"css.help.category.visibility" = "Visibility";
+
+/* CSS Snippets - Typography */
+"css.snippet.fontSize.title" = "Font Size";
+"css.snippet.fontSize.description" = "Change the base text size";
+"css.snippet.lineHeight.title" = "Line Height";
+"css.snippet.lineHeight.description" = "Adjust spacing between lines";
+"css.snippet.headingsSmaller.title" = "Smaller Headings";
+"css.snippet.headingsSmaller.description" = "Reduce heading sizes";
+"css.snippet.boldParagraphs.title" = "Bolder Text";
+"css.snippet.boldParagraphs.description" = "Increase paragraph font weight";
+
+/* CSS Snippets - Colors */
+"css.snippet.sepia.title" = "Sepia Theme";
+"css.snippet.sepia.description" = "Warm, paper-like background with dark brown text";
+"css.snippet.linkColor.title" = "Link Color";
+"css.snippet.linkColor.description" = "Change the color of links";
+"css.snippet.headingColor.title" = "Heading Color";
+"css.snippet.headingColor.description" = "Change the color of headings";
+"css.snippet.quoteColor.title" = "Quote Style";
+"css.snippet.quoteColor.description" = "Change blockquote text and border color";
+
+/* CSS Snippets - Layout */
+"css.snippet.marginsSmall.title" = "Narrow Margins";
+"css.snippet.marginsSmall.description" = "Reduce side margins for more text space";
+"css.snippet.marginsLarge.title" = "Wide Margins";
+"css.snippet.marginsLarge.description" = "Increase side margins for a focused column";
+"css.snippet.imagesSmaller.title" = "Smaller Images";
+"css.snippet.imagesSmaller.description" = "Reduce image size and center them";
+"css.snippet.paragraphSpacing.title" = "Compact Paragraphs";
+"css.snippet.paragraphSpacing.description" = "Reduce spacing between paragraphs";
+
+/* CSS Snippets - Visibility */
+"css.snippet.hideImages.title" = "Hide Images";
+"css.snippet.hideImages.description" = "Remove all images from the article";
+"css.snippet.hideHR.title" = "Hide Dividers";
+"css.snippet.hideHR.description" = "Remove horizontal rule separators";
+"css.snippet.linksPlain.title" = "Plain Links";
+"css.snippet.linksPlain.description" = "Remove underline decoration from links";
+"css.snippet.blockquotePlain.title" = "Plain Blockquotes";
+"css.snippet.blockquotePlain.description" = "Remove border, background and italic from quotes";

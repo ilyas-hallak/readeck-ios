@@ -2,33 +2,32 @@ import SwiftUI
 import SafariServices
 
 @available(iOS 26.0, *)
-struct BookmarkDetailView2: View {
+struct ArticleReaderView: View {
     let bookmarkId: String
     @Binding var useNativeWebView: Bool
 
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
-    @State private var webViewHeight: CGFloat = 300
-    @State private var contentEndPosition: CGFloat = 0
-    @State private var initialContentEndPosition: CGFloat = 0
+    @State private var webViewHeight: Double = 300
+    @State private var contentEndPosition: Double = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
-    @State private var readingProgress: Double = 0.0
-    @State private var lastSentProgress: Double = 0.0
-    @State private var showJumpToProgressButton: Bool = false
+    @State private var readingProgress = 0.0
+    @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
+    @State private var isToolbarVisible: Bool = true
+    @State private var scrollTracker = ScrollTracker()
 
     // MARK: - Envs
 
-    @EnvironmentObject var playerUIState: PlayerUIState
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
-    private let headerHeight: CGFloat = 360
+    private let headerHeight: Double = 360
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
@@ -38,6 +37,7 @@ struct BookmarkDetailView2: View {
 
     var body: some View {
         mainView
+            .background(nativeBackgroundColor)
     }
 
     private var mainView: some View {
@@ -46,6 +46,8 @@ struct BookmarkDetailView2: View {
             .toolbar {
                 toolbarContent
             }
+            .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
+            .animation(.easeInOut(duration: 0.25), value: isToolbarVisible)
             .sheet(isPresented: $showingFontSettings) {
                 fontSettingsSheet
             }
@@ -96,9 +98,11 @@ struct BookmarkDetailView2: View {
     private var content: some View {
         VStack(spacing: 0) {
             // Progress bar at top
-            ProgressView(value: readingProgress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .frame(height: 3)
+            if !(viewModel.settings?.hideProgressBar ?? false) {
+                ProgressView(value: readingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(height: 3)
+            }
 
             // Main scroll content
             scrollViewContent
@@ -151,24 +155,14 @@ struct BookmarkDetailView2: View {
     private var scrollViewContent: some View {
         GeometryReader { geometry in
             ScrollView {
-                // Invisible GeometryReader to track scroll offset
-                GeometryReader { scrollGeo in
-                    Color.clear.preference(
-                        key: ScrollOffsetPreferenceKey.self,
-                        value: CGPoint(
-                            x: scrollGeo.frame(in: .named("scrollView")).minX,
-                            y: scrollGeo.frame(in: .named("scrollView")).minY
-                        )
-                    )
-                }
-                .frame(height: 0)
-
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
-                        headerView(width: geometry.size.width)
+                        if !(viewModel.settings?.hideHeroImage ?? false) {
+                            headerView(width: geometry.size.width)
+                        }
 
                         VStack(alignment: .leading, spacing: 16) {
-                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                            Color.clear.frame(width: geometry.size.width, height: (viewModel.bookmarkDetail.imageUrl.isEmpty || (viewModel.settings?.hideHeroImage ?? false)) ? 84 : headerHeight)
 
                             titleSection
 
@@ -204,52 +198,25 @@ struct BookmarkDetailView2: View {
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 contentEndPosition = endPosition
 
-                let containerHeight = geometry.size.height
+                let result = scrollTracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
 
-                // Update initial position if content grows (WebView still loading) or first time
-                // We always take the maximum position seen (when scrolled to top, this is total content height)
-                if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
-                    initialContentEndPosition = endPosition
+                if let progress = result.readingProgress {
+                    readingProgress = progress
+
+                    if result.shouldUpdateProgress {
+                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                    }
                 }
 
-                // Calculate progress from how much the end marker has moved up
-                guard initialContentEndPosition > 0 else { return }
-
-                let totalScrollableDistance = initialContentEndPosition - containerHeight
-
-                guard totalScrollableDistance > 0 else { return }
-
-                // How far has the marker moved from its initial position?
-                let scrolled = initialContentEndPosition - endPosition
-                let rawProgress = scrolled / totalScrollableDistance
-                var progress = min(max(rawProgress, 0), 1)
-
-                // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
-                if lastSentProgress >= 0.995 {
-                    progress = max(progress, 1.0)
+                if let visible = result.isToolbarVisible {
+                    isToolbarVisible = visible
                 }
-
-                // Check if we should update: threshold OR reaching 100% for first time
-                let threshold: Double = 0.03
-                let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
-                let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
-
-                readingProgress = progress
-                
-                if shouldUpdate {
-                    lastSentProgress = progress
-                    viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
-                }
-            }
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
-                // Not needed anymore, we track via ContentHeightPreferenceKey
             }
         }
     }
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-
         if Bundle.main.isDebugBuild {
             // Toggle button (left)
             ToolbarItem(placement: .navigationBarLeading) {
@@ -290,19 +257,10 @@ struct BookmarkDetailView2: View {
 
     private var fontSettingsSheet: some View {
         NavigationView {
-            VStack {
-                FontSettingsView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-
-                Spacer()
-            }
-            .navigationTitle("Font Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+            FontSelectionView()
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
                         showingFontSettings = false
                     }
                 }
@@ -313,7 +271,7 @@ struct BookmarkDetailView2: View {
     // MARK: - ViewBuilder
 
     @ViewBuilder
-    private func headerView(width: CGFloat) -> some View {
+    private func headerView(width: Double) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
                 // Background blur for images that don't fill
@@ -321,7 +279,7 @@ struct BookmarkDetailView2: View {
                     url: URL(string: viewModel.bookmarkDetail.imageUrl),
                     cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: width, height: headerHeight)
                     .blur(radius: 30)
                     .clipped()
@@ -331,7 +289,7 @@ struct BookmarkDetailView2: View {
                     url: URL(string: viewModel.bookmarkDetail.imageUrl),
                     cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
                     .frame(width: width, height: headerHeight)
 
                 // Zoom icon
@@ -359,17 +317,27 @@ struct BookmarkDetailView2: View {
             .onTapGesture {
                 showingImageViewer = true
             }
+            .accessibilityAddTraits(.isButton)
         }
     }
 
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(viewModel.bookmarkDetail.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.bottom, 2)
-                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+            HStack(alignment: .top) {
+                Text(viewModel.bookmarkDetail.title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(nativeTextColor)
+                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                Spacer()
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    Image(systemName: "safari")
+                        .font(.title3)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            }
             metaInfoSection
         }
         .padding(.horizontal)
@@ -378,10 +346,25 @@ struct BookmarkDetailView2: View {
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
-                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Authors: " : "Author: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                HStack(spacing: 4) {
+                    Image(systemName: "person")
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text("·")
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(formatDate(viewModel.bookmarkDetail.created))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            } else {
+                metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             }
-            metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
-            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            if !(viewModel.settings?.hideWordCount ?? false) {
+                metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            }
 
             // Labels section
             if !viewModel.bookmarkDetail.labels.isEmpty {
@@ -414,23 +397,21 @@ struct BookmarkDetailView2: View {
                 }
             }
 
-            metaRow(icon: "safari") {
-                Button(action: {
-                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                }) {
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-
             if appSettings.enableTTS {
                 metaRow(icon: "speaker.wave.2") {
                     Button(action: {
                         viewModel.addBookmarkToSpeechQueue()
-                        playerUIState.showPlayer()
                     }) {
                         Text("Read article aloud")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                metaRow(icon: "text.line.first.and.arrowtriangle.forward") {
+                    Button(action: {
+                        viewModel.addBookmarkToSpeechQueueNext()
+                    }) {
+                        Text("Listen Next")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -439,13 +420,48 @@ struct BookmarkDetailView2: View {
         }
     }
 
+    // MARK: - Color Theme Helpers
+
+    private var nativeBackgroundColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return Color(.systemBackground)
+        case .custom:
+            if let hex = viewModel.settings?.customBackgroundColor {
+                return Color(hex: hex)
+            }
+            return Color(.systemBackground)
+        default:
+            return theme.backgroundColor ?? Color(.systemBackground)
+        }
+    }
+
+    private var nativeTextColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return .primary
+        case .custom:
+            if let hex = viewModel.settings?.customTextColor {
+                return Color(hex: hex)
+            }
+            return .primary
+        default:
+            return theme.textColor ?? .primary
+        }
+    }
+
+    private var nativeSecondaryTextColor: Color {
+        nativeTextColor.opacity(0.6)
+    }
+
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(nativeSecondaryTextColor)
         }
     }
 
@@ -453,6 +469,7 @@ struct BookmarkDetailView2: View {
     private func metaRow(icon: String, @ViewBuilder content: () -> some View) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             content()
         }
     }
@@ -485,7 +502,7 @@ struct BookmarkDetailView2: View {
                     },
                     onScrollToPosition: { position in
                         // Calculate scroll position: add header height and webview offset
-                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                        let imageHeight: Double = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
                         let targetPosition = imageHeight + position
 
                         // Scroll to the annotation
@@ -497,7 +514,7 @@ struct BookmarkDetailView2: View {
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
                 .padding(.horizontal, 4)
-                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
+                .id(settings.webViewIdentifier)
             }
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
@@ -520,7 +537,7 @@ struct BookmarkDetailView2: View {
         }
     }
 
-    private func jumpButton(containerHeight: CGFloat) -> some View {
+    private func jumpButton(containerHeight: Double) -> some View {
         Button(action: {
             let maxOffset = webViewHeight - containerHeight
             let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
@@ -550,7 +567,7 @@ struct BookmarkDetailView2: View {
         } else if let parsedDate = isoFormatterNoMillis.date(from: dateString) {
             date = parsedDate
         }
-        if let date = date {
+        if let date {
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
             displayFormatter.timeStyle = .short
@@ -564,7 +581,7 @@ struct BookmarkDetailView2: View {
 #Preview {
     if #available(iOS 26.0, *) {
         NavigationView {
-            BookmarkDetailView2(
+            ArticleReaderView(
                 bookmarkId: "123",
                 useNativeWebView: .constant(true),
                 viewModel: .init(MockUseCaseFactory())

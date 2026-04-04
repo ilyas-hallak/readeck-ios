@@ -6,7 +6,7 @@
 
 import Foundation
 
-class ServerInfoRepository: PServerInfoRepository {
+final class ServerInfoRepository: PServerInfoRepository {
     private let apiClient: PInfoApiClient
     private let logger = Logger.network
 
@@ -79,6 +79,7 @@ class ServerInfoRepository: PServerInfoRepository {
 
     // MARK: - Cache Management
 
+    // swiftlint:disable:next discouraged_optional_boolean
     private func getCachedReachability() -> Bool? {
         queue.sync {
             guard let lastCheck = lastCheckTime,

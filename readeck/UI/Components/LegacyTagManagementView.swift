@@ -5,8 +5,8 @@
 import SwiftUI
 
 struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-    
+    var spacing: Double = 8
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let result = FlowResult(
             in: proposal.replacingUnspecifiedDimensions().width,
@@ -15,14 +15,14 @@ struct FlowLayout: Layout {
         )
         return result.bounds
     }
-    
+
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let result = FlowResult(
             in: bounds.width,
             subviews: subviews,
             spacing: spacing
         )
-        
+
         for (index, subview) in subviews.enumerated() {
             subview.place(at: CGPoint(
                 x: bounds.minX + result.frames[index].minX,
@@ -35,27 +35,27 @@ struct FlowLayout: Layout {
 struct FlowResult {
     var frames: [CGRect] = []
     var bounds: CGSize = .zero
-    
-    init(in maxWidth: CGFloat, subviews: LayoutSubviews, spacing: CGFloat) {
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        
+
+    init(in maxWidth: Double, subviews: LayoutSubviews, spacing: Double) {
+        var x: Double = 0
+        var y: Double = 0
+        var lineHeight: Double = 0
+
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
-            
+
             if x + size.width > maxWidth && x > 0 {
                 x = 0
                 y += lineHeight + spacing
                 lineHeight = 0
             }
-            
+
             frames.append(CGRect(x: x, y: y, width: size.width, height: size.height))
             lineHeight = max(lineHeight, size.height)
             x += size.width + spacing
             bounds.width = max(bounds.width, x - spacing)
         }
-        
+
         bounds.height = y + lineHeight
     }
 }
@@ -69,7 +69,7 @@ enum AddBookmarkFieldFocus {
 struct FocusModifier: ViewModifier {
     let focusBinding: FocusState<AddBookmarkFieldFocus?>.Binding?
     let field: AddBookmarkFieldFocus
-    
+
     func body(content: Content) -> some View {
         if let binding = focusBinding {
             content.focused(binding, equals: field)
@@ -80,24 +80,23 @@ struct FocusModifier: ViewModifier {
 }
 
 struct LegacyTagManagementView: View {
-    
     // MARK: - Properties
-    
+
     let allLabels: [BookmarkLabel]
     let selectedLabelsSet: Set<String>
     let searchText: Binding<String>
     let isLabelsLoading: Bool
     let filteredLabels: [BookmarkLabel]
     let searchFieldFocus: FocusState<AddBookmarkFieldFocus?>.Binding?
-    
+
     // MARK: - Callbacks
-    
+
     let onAddCustomTag: () -> Void
     let onToggleLabel: (String) -> Void
     let onRemoveLabel: (String) -> Void
-    
+
     // MARK: - Initialization
-    
+
     init(
         allLabels: [BookmarkLabel],
         selectedLabels: Set<String>,
@@ -119,7 +118,7 @@ struct LegacyTagManagementView: View {
         self.onToggleLabel = onToggleLabel
         self.onRemoveLabel = onRemoveLabel
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             searchField
@@ -128,9 +127,9 @@ struct LegacyTagManagementView: View {
             selectedLabels
         }
     }
-    
+
     // MARK: - View Components
-    
+
     @ViewBuilder
     private var searchField: some View {
         TextField("Search or add new tag...", text: searchText)
@@ -143,11 +142,11 @@ struct LegacyTagManagementView: View {
             }
             .modifier(FocusModifier(focusBinding: searchFieldFocus, field: .labels))
     }
-    
+
     @ViewBuilder
     private var customTagSuggestion: some View {
-        if !searchText.wrappedValue.isEmpty && 
-           !allLabels.contains(where: { $0.name.lowercased() == searchText.wrappedValue.lowercased() }) && 
+        if !searchText.wrappedValue.isEmpty &&
+           !allLabels.contains(where: { $0.name.lowercased() == searchText.wrappedValue.lowercased() }) &&
            !selectedLabelsSet.contains(searchText.wrappedValue) {
             HStack {
                 Text("Add new tag:")
@@ -174,7 +173,7 @@ struct LegacyTagManagementView: View {
             .cornerRadius(10)
         }
     }
-    
+
     @ViewBuilder
     private var availableLabels: some View {
         if !allLabels.isEmpty {
@@ -190,7 +189,7 @@ struct LegacyTagManagementView: View {
                     }
                     Spacer()
                 }
-                
+
                 if isLabelsLoading {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -214,7 +213,7 @@ struct LegacyTagManagementView: View {
             .padding(.top, 8)
         }
     }
-    
+
     @ViewBuilder
     private var labelsScrollView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -225,11 +224,10 @@ struct LegacyTagManagementView: View {
                             UnifiedLabelChip(
                                 label: label.name,
                                 isSelected: false,
-                                isRemovable: false,
-                                onTap: {
-                                    onToggleLabel(label.name)
-                                }
-                            )
+                                isRemovable: false
+                            ) {
+                                onToggleLabel(label.name)
+                            }
                         }
                         Spacer()
                     }
@@ -239,26 +237,26 @@ struct LegacyTagManagementView: View {
         }
         .frame(height: calculateMaxHeight())
     }
-    
+
     private var chunkedLabels: [[BookmarkLabel]] {
         let maxRows = 3
         let labelsPerRow = max(1, availableUnselectedLabels.count / maxRows + (availableUnselectedLabels.count % maxRows > 0 ? 1 : 0))
         return availableUnselectedLabels.chunked(into: labelsPerRow)
     }
-    
+
     private var availableUnselectedLabels: [BookmarkLabel] {
         let labelsToShow = searchText.wrappedValue.isEmpty ? allLabels : filteredLabels
         return labelsToShow.filter { !selectedLabelsSet.contains($0.name) }
     }
-    
-    private func calculateMaxHeight() -> CGFloat {
+
+    private func calculateMaxHeight() -> Double {
         // Berechne Höhe für maximal 3 Reihen
-        let rowHeight: CGFloat = 32 // Höhe eines Labels
-        let spacing: CGFloat = 8
-        let maxRows: CGFloat = 3
+        let rowHeight: Double = 32 // Höhe eines Labels
+        let spacing: Double = 8
+        let maxRows: Double = 3
         return (rowHeight * maxRows) + (spacing * (maxRows - 1))
     }
-    
+
     @ViewBuilder
     private var selectedLabels: some View {
         if !selectedLabelsSet.isEmpty {
@@ -266,7 +264,7 @@ struct LegacyTagManagementView: View {
                 Text("Selected tags")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 FlowLayout(spacing: 8) {
                     ForEach(selectedLabelsSet.sorted(), id: \.self) { label in
                         UnifiedLabelChip(
@@ -290,7 +288,7 @@ struct LegacyTagManagementView: View {
 
 extension Array {
     func chunked(into size: Int) -> [[Element]] {
-        return stride(from: 0, to: count, by: size).map {
+        stride(from: 0, to: count, by: size).map {
             Array(self[$0..<Swift.min($0 + size, count)])
         }
     }

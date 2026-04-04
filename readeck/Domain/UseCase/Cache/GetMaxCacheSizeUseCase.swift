@@ -4,7 +4,7 @@ protocol PGetMaxCacheSizeUseCase {
     func execute() async throws -> UInt
 }
 
-class GetMaxCacheSizeUseCase: PGetMaxCacheSizeUseCase {
+final class GetMaxCacheSizeUseCase: PGetMaxCacheSizeUseCase {
     private let settingsRepository: PSettingsRepository
 
     init(settingsRepository: PSettingsRepository) {
@@ -12,6 +12,6 @@ class GetMaxCacheSizeUseCase: PGetMaxCacheSizeUseCase {
     }
 
     func execute() async throws -> UInt {
-        return try await settingsRepository.getMaxCacheSize()
+        try await settingsRepository.getMaxCacheSize()
     }
 }

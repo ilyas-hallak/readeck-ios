@@ -11,8 +11,8 @@ import Kingfisher
 struct OfflineImageDebugView: View {
     let bookmarkId: String
 
-    @State private var debugInfo: DebugInfo = DebugInfo()
-    @EnvironmentObject var appSettings: AppSettings
+    @State private var debugInfo = DebugInfo()
+    @EnvironmentObject private var appSettings: AppSettings
 
     var body: some View {
         ScrollView {
@@ -111,7 +111,7 @@ struct OfflineImageDebugView: View {
                 debugInfo.heroImageInCache = isCached
             }
         } catch {
-            print("Error loading bookmark: \(error)")
+            Logger.general.error("Error loading bookmark: \(error)")
         }
     }
 

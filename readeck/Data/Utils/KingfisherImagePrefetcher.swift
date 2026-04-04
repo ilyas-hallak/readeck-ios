@@ -9,8 +9,7 @@ import Foundation
 import Kingfisher
 
 /// Wrapper around Kingfisher for prefetching and caching images for offline use
-class KingfisherImagePrefetcher {
-
+final class KingfisherImagePrefetcher {
     // MARK: - Public Methods
 
     /// Prefetches images and stores them in Kingfisher cache for offline access
@@ -70,7 +69,7 @@ class KingfisherImagePrefetcher {
         // Download and cache with custom key
         let image = await downloadImage(from: url)
 
-        if let image = image {
+        if let image {
             try? await ImageCache.default.store(image, forKey: key)
             Logger.sync.info("✅ Cached image with custom key: \(key)")
         } else {
@@ -125,7 +124,7 @@ class KingfisherImagePrefetcher {
         [
             .cacheOriginalImage,
             .diskCacheExpiration(.never), // Keep images as long as article is cached
-            .backgroundDecode,
+            .backgroundDecode
         ]
     }
 

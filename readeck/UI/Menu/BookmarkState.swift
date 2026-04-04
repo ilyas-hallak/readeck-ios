@@ -8,11 +8,11 @@
 import Foundation
 
 enum BookmarkState: String, CaseIterable {
-    case all = "all"
-    case unread = "unread"
-    case favorite = "favorite"
-    case archived = "archived"
-    
+    case all
+    case unread
+    case favorite
+    case archived
+
     var displayName: String {
         switch self {
         case .all:
@@ -25,7 +25,7 @@ enum BookmarkState: String, CaseIterable {
             return NSLocalizedString("Archive Tab", comment: "")
         }
     }
-    
+
     var systemImage: String {
         switch self {
         case .all:

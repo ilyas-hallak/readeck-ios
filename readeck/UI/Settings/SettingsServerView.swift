@@ -36,7 +36,7 @@ struct SettingsServerView: View {
                             .foregroundColor(.primary)
                         Spacer()
                     }
-                    
+
                     // List of headers in small text
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(Array(viewModel.customHeaders.keys.sorted()), id: \.self) { key in

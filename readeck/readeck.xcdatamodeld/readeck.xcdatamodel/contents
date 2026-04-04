@@ -60,14 +60,25 @@
         <attribute name="bookmarkSortDirection" optional="YES" attributeType="String"/>
         <attribute name="bookmarkSortField" optional="YES" attributeType="String"/>
         <attribute name="cardLayoutStyle" optional="YES" attributeType="String"/>
+        <attribute name="customBackgroundColor" optional="YES" attributeType="String"/>
+        <attribute name="customCSS" optional="YES" attributeType="String"/>
+        <attribute name="customTextColor" optional="YES" attributeType="String"/>
         <attribute name="disableReaderBackSwipe" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="enableTTS" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="fontFamily" optional="YES" attributeType="String"/>
         <attribute name="fontSize" optional="YES" attributeType="String"/>
+        <attribute name="fontSizeNumeric" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="hideHeroImage" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="hideProgressBar" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="hideWordCount" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="horizontalMargin" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="lineHeight" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="readerColorTheme" optional="YES" attributeType="String"/>
         <attribute name="offlineEnabled" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="offlineLastSyncDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="offlineMaxUnreadArticles" optional="YES" attributeType="Double" defaultValueString="20" usesScalarValueType="YES"/>
         <attribute name="offlineSaveImages" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="swipeActionConfig" optional="YES" attributeType="String"/>
         <attribute name="tagSortOrder" optional="YES" attributeType="String"/>
         <attribute name="theme" optional="YES" attributeType="String"/>
         <attribute name="token" optional="YES" attributeType="String"/>

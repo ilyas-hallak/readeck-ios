@@ -4,7 +4,7 @@ protocol PReadBookmarkUseCase {
     func execute(bookmarkDetail: BookmarkDetail)
 }
 
-class ReadBookmarkUseCase: PReadBookmarkUseCase {
+final class ReadBookmarkUseCase: PReadBookmarkUseCase {
     private let addToSpeechQueue: AddTextToSpeechQueueUseCase
 
     init(addToSpeechQueue: AddTextToSpeechQueueUseCase = AddTextToSpeechQueueUseCase()) {
@@ -14,4 +14,4 @@ class ReadBookmarkUseCase: PReadBookmarkUseCase {
     func execute(bookmarkDetail: BookmarkDetail) {
         addToSpeechQueue.execute(bookmarkDetail: bookmarkDetail)
     }
-} 
+}

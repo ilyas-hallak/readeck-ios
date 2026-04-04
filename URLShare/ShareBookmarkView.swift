@@ -2,16 +2,17 @@ import SwiftUI
 import CoreData
 
 struct ShareBookmarkView: View {
+    // swiftlint:disable:next swiftui_state_private
     @ObservedObject var viewModel: ShareBookmarkViewModel
-    @State private var keyboardHeight: CGFloat = 0
+    @State private var keyboardHeight: Double = 0
     @FocusState private var focusedField: AddBookmarkFieldFocus?
 
     @Environment(\.managedObjectContext) private var viewContext
-    
+
     private func dismissKeyboard() {
         NotificationCenter.default.post(name: .dismissKeyboard, object: nil)
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             if !viewModel.isConfigured || viewModel.sessionExpired {
@@ -58,6 +59,7 @@ struct ShareBookmarkView: View {
         .onTapGesture {
             dismissKeyboard()
         }
+        .accessibilityAddTraits(.isButton)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -71,9 +73,9 @@ struct ShareBookmarkView: View {
             }
         }
     }
-    
+
     // MARK: - View Components
-    
+
     @ViewBuilder
     private var logoSection: some View {
         Image("readeck")
@@ -108,7 +110,7 @@ struct ShareBookmarkView: View {
         }
         .frame(maxWidth: .infinity)
     }
-    
+
     @ViewBuilder
     private var serverStatusSection: some View {
         if !viewModel.isServerReachable {
@@ -128,7 +130,7 @@ struct ShareBookmarkView: View {
             .padding(.top, 8)
         }
     }
-    
+
     @ViewBuilder
     private var urlSection: some View {
         if let url = viewModel.url {
@@ -146,7 +148,7 @@ struct ShareBookmarkView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-    
+
     @ViewBuilder
     private var titleSection: some View {
         TextField("Enter an optional title...", text: $viewModel.title)
@@ -169,7 +171,7 @@ struct ShareBookmarkView: View {
                 }
             }
     }
-    
+
     @ViewBuilder
     private var tagManagementSection: some View {
         CoreDataTagManagementView(
@@ -198,7 +200,7 @@ struct ShareBookmarkView: View {
         .padding(.top, 20)
         .padding(.horizontal, 16)
     }
-    
+
     @ViewBuilder
     private var statusSection: some View {
         if let status = viewModel.statusMessage {
@@ -209,7 +211,7 @@ struct ShareBookmarkView: View {
                 .padding(.horizontal, 16)
         }
     }
-    
+
     @ViewBuilder
     private var saveButtonSection: some View {
         Button(action: { viewModel.save() }) {
@@ -233,7 +235,7 @@ struct ShareBookmarkView: View {
         .padding(.bottom, 32)
         .disabled(viewModel.isSaving)
     }
-    
+
     // MARK: - Helper Functions
 
     private func addCustomTag() {
