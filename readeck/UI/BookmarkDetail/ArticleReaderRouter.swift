@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Container view that routes to the appropriate BookmarkDetail implementation
+/// Routes to the appropriate article reader implementation
 /// based on iOS version availability or user preference
-struct BookmarkDetailView: View {
+struct ArticleReaderRouter: View {
     let bookmarkId: String
 
     @AppStorage("useNativeWebView") private var useNativeWebView = true
@@ -11,23 +11,23 @@ struct BookmarkDetailView: View {
         if #available(iOS 26.0, *) {
             if Bundle.main.isProduction {
                 // Temporary production stopper: use legacy renderer until native font loading is proven stable.
-                BookmarkDetailLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
+                ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
             } else if useNativeWebView {
                 // Use modern SwiftUI-native implementation on iOS 26+
-                BookmarkDetailView2(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
+                ArticleReaderView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
             } else {
                 // Use legacy WKWebView-based implementation
-                BookmarkDetailLegacyView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
+                ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
             }
         } else {
             // iOS < 26: always use Legacy
-            BookmarkDetailLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
+            ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
         }
     }
 }
 
 #Preview {
     NavigationView {
-        BookmarkDetailView(bookmarkId: "123")
+        ArticleReaderRouter(bookmarkId: "123")
     }
 }

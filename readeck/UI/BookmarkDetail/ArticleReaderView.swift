@@ -2,7 +2,7 @@ import SwiftUI
 import SafariServices
 
 @available(iOS 26.0, *)
-struct BookmarkDetailView2: View {
+struct ArticleReaderView: View {
     let bookmarkId: String
     @Binding var useNativeWebView: Bool
 
@@ -11,16 +11,16 @@ struct BookmarkDetailView2: View {
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: Double = 300
     @State private var contentEndPosition: Double = 0
-    @State private var initialContentEndPosition: Double = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
     @State private var readingProgress = 0.0
-    @State private var lastSentProgress = 0.0
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
+    @State private var isToolbarVisible: Bool = true
+    @State private var scrollTracker = ScrollTracker()
 
     // MARK: - Envs
 
@@ -46,6 +46,8 @@ struct BookmarkDetailView2: View {
             .toolbar {
                 toolbarContent
             }
+            .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
+            .animation(.easeInOut(duration: 0.25), value: isToolbarVisible)
             .sheet(isPresented: $showingFontSettings) {
                 fontSettingsSheet
             }
@@ -153,18 +155,6 @@ struct BookmarkDetailView2: View {
     private var scrollViewContent: some View {
         GeometryReader { geometry in
             ScrollView {
-                // Invisible GeometryReader to track scroll offset
-                GeometryReader { scrollGeo in
-                    Color.clear.preference(
-                        key: ScrollOffsetPreferenceKey.self,
-                        value: CGPoint(
-                            x: scrollGeo.frame(in: .named("scrollView")).minX,
-                            y: scrollGeo.frame(in: .named("scrollView")).minY
-                        )
-                    )
-                }
-                .frame(height: 0)
-
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
                         if !(viewModel.settings?.hideHeroImage ?? false) {
@@ -208,45 +198,19 @@ struct BookmarkDetailView2: View {
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 contentEndPosition = endPosition
 
-                let containerHeight = geometry.size.height
+                let result = scrollTracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
 
-                // Update initial position if content grows (WebView still loading) or first time
-                // We always take the maximum position seen (when scrolled to top, this is total content height)
-                if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
-                    initialContentEndPosition = endPosition
+                if let progress = result.readingProgress {
+                    readingProgress = progress
+
+                    if result.shouldUpdateProgress {
+                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
+                    }
                 }
 
-                // Calculate progress from how much the end marker has moved up
-                guard initialContentEndPosition > 0 else { return }
-
-                let totalScrollableDistance = initialContentEndPosition - containerHeight
-
-                guard totalScrollableDistance > 0 else { return }
-
-                // How far has the marker moved from its initial position?
-                let scrolled = initialContentEndPosition - endPosition
-                let rawProgress = scrolled / totalScrollableDistance
-                var progress = min(max(rawProgress, 0), 1)
-
-                // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
-                if lastSentProgress >= 0.995 {
-                    progress = max(progress, 1.0)
+                if let visible = result.isToolbarVisible {
+                    isToolbarVisible = visible
                 }
-
-                // Check if we should update: threshold OR reaching 100% for first time
-                let threshold = 0.03
-                let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
-                let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
-
-                readingProgress = progress
-
-                if shouldUpdate {
-                    lastSentProgress = progress
-                    viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
-                }
-            }
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { _ in
-                // Not needed anymore, we track via ContentHeightPreferenceKey
             }
         }
     }
@@ -617,7 +581,7 @@ struct BookmarkDetailView2: View {
 #Preview {
     if #available(iOS 26.0, *) {
         NavigationView {
-            BookmarkDetailView2(
+            ArticleReaderView(
                 bookmarkId: "123",
                 useNativeWebView: .constant(true),
                 viewModel: .init(MockUseCaseFactory())

@@ -36,7 +36,7 @@ struct CachedArticlesPreviewView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId)
+            ArticleReaderRouter(bookmarkId: bookmarkId)
                 .toolbar(.hidden, for: .tabBar)
         }
         .task {

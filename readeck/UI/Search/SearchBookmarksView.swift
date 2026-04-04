@@ -106,7 +106,7 @@ struct SearchBookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId)
+            ArticleReaderRouter(bookmarkId: bookmarkId)
         }
         .onAppear {
             if isFirstAppearance {

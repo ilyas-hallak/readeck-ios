@@ -51,6 +51,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
+    private lazy var labelsRepository: PLabelsRepository = LabelsRepository(api: api)
     private let offlineCacheRepository: POfflineCacheRepository = OfflineCacheRepository()
     private let networkMonitorRepository: PNetworkMonitorRepository = NetworkMonitorRepository()
 
@@ -115,21 +116,15 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeGetLabelsUseCase() -> PGetLabelsUseCase {
-        let api = API(tokenProvider: KeychainTokenProvider())
-        let labelsRepository = LabelsRepository(api: api)
-        return GetLabelsUseCase(labelsRepository: labelsRepository)
+        GetLabelsUseCase(labelsRepository: labelsRepository)
     }
 
     func makeCreateLabelUseCase() -> PCreateLabelUseCase {
-        let api = API(tokenProvider: KeychainTokenProvider())
-        let labelsRepository = LabelsRepository(api: api)
-        return CreateLabelUseCase(labelsRepository: labelsRepository)
+        CreateLabelUseCase(labelsRepository: labelsRepository)
     }
 
     func makeSyncTagsUseCase() -> PSyncTagsUseCase {
-        let api = API(tokenProvider: KeychainTokenProvider())
-        let labelsRepository = LabelsRepository(api: api)
-        return SyncTagsUseCase(labelsRepository: labelsRepository)
+        SyncTagsUseCase(labelsRepository: labelsRepository)
     }
 
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase {
