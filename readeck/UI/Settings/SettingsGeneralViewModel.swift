@@ -15,6 +15,7 @@ class SettingsGeneralViewModel {
     // MARK: - Reading Settings
     var enableReaderMode: Bool = false
     var enableTTS: Bool = false
+    var disableReaderBackSwipe: Bool = false
     var autoMarkAsRead: Bool = false
     var urlOpener: UrlOpener = .inAppBrowser
     
@@ -39,6 +40,7 @@ class SettingsGeneralViewModel {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 enableTTS = settings.enableTTS ?? false
+                disableReaderBackSwipe = settings.disableReaderBackSwipe ?? false
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
                 bookmarkSortField = settings.bookmarkSortField ?? .created
@@ -54,6 +56,7 @@ class SettingsGeneralViewModel {
     func saveGeneralSettings() async {
         do {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
+            try await saveSettingsUseCase.execute(disableReaderBackSwipe: disableReaderBackSwipe)
             try await saveSettingsUseCase.execute(theme: selectedTheme)
             try await saveSettingsUseCase.execute(urlOpener: urlOpener)
             

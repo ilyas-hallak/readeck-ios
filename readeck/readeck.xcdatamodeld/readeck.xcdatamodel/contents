@@ -60,6 +60,7 @@
         <attribute name="bookmarkSortDirection" optional="YES" attributeType="String"/>
         <attribute name="bookmarkSortField" optional="YES" attributeType="String"/>
         <attribute name="cardLayoutStyle" optional="YES" attributeType="String"/>
+        <attribute name="disableReaderBackSwipe" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="enableTTS" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="fontFamily" optional="YES" attributeType="String"/>
         <attribute name="fontSize" optional="YES" attributeType="String"/>

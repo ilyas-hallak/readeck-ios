@@ -22,6 +22,7 @@ struct Settings {
     var bookmarkSortField: BookmarkSortField? = nil
     var bookmarkSortDirection: BookmarkSortDirection? = nil
 
+    var disableReaderBackSwipe: Bool? = nil
     var urlOpener: UrlOpener? = nil
 
     var isLoggedIn: Bool {
