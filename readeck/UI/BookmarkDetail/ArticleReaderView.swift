@@ -11,20 +11,16 @@ struct ArticleReaderView: View {
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: CGFloat = 300
     @State private var contentEndPosition: CGFloat = 0
-    @State private var initialContentEndPosition: CGFloat = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
     @State private var readingProgress: Double = 0.0
-    @State private var lastSentProgress: Double = 0.0
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
     @State private var isToolbarVisible: Bool = true
-    @State private var previousEndPosition: CGFloat? = nil
-    @State private var previousContainerHeight: CGFloat = 0
-    @State private var accumulatedScrollUp: CGFloat = 0
+    @State private var scrollTracker = ScrollTracker()
 
     // MARK: - Envs
 
@@ -33,7 +29,6 @@ struct ArticleReaderView: View {
     @Environment(\.dismiss) private var dismiss
 
     private let headerHeight: CGFloat = 360
-    private let scrollUpThresholdRatio: CGFloat = 0.12
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
@@ -199,92 +194,18 @@ struct ArticleReaderView: View {
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 contentEndPosition = endPosition
 
-                let containerHeight = geometry.size.height
-                let containerChanged = abs(containerHeight - previousContainerHeight) > 1
-                if containerChanged {
-                    // Container height changed (toolbar show/hide) — skip this delta
-                    // and don't let it inflate initialContentEndPosition
-                    previousContainerHeight = containerHeight
-                    previousEndPosition = endPosition
-                    return
-                }
-                previousContainerHeight = containerHeight
+                let result = scrollTracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
 
-                // Update initial position if content grows (WebView still loading) or first time
-                // We always take the maximum position seen (when scrolled to top, this is total content height)
-                if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
-                    initialContentEndPosition = endPosition
-                }
+                if let progress = result.readingProgress {
+                    readingProgress = progress
 
-                // Calculate progress from how much the end marker has moved up
-                guard initialContentEndPosition > 0 else { return }
-
-                let totalScrollableDistance = initialContentEndPosition - containerHeight
-
-                guard totalScrollableDistance > 0 else {
-                    if !isToolbarVisible {
-                        isToolbarVisible = true
+                    if result.shouldUpdateProgress {
+                        viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                     }
-                    return
                 }
 
-                // How far has the marker moved from its initial position?
-                let scrolled = initialContentEndPosition - endPosition
-                let rawProgress = scrolled / totalScrollableDistance
-                var progress = min(max(rawProgress, 0), 1)
-
-                // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
-                if lastSentProgress >= 0.995 {
-                    progress = max(progress, 1.0)
-                }
-
-                // Check if we should update: threshold OR reaching 100% for first time
-                let threshold: Double = 0.03
-                let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
-                let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
-
-                readingProgress = progress
-
-                if shouldUpdate {
-                    lastSentProgress = progress
-                    viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
-                }
-
-                // Toolbar visibility: derive scroll direction from endPosition changes
-                // endPosition decreases when scrolling down, increases when scrolling up
-                guard let prev = previousEndPosition else {
-                    previousEndPosition = endPosition
-                    return
-                }
-                let delta = endPosition - prev
-                previousEndPosition = endPosition
-
-                // Always show toolbar when at or near top
-                if progress <= 0.01 {
-                    if !isToolbarVisible {
-                        isToolbarVisible = true
-                    }
-                    accumulatedScrollUp = 0
-                    return
-                }
-
-                let screenHeight = containerHeight
-                guard screenHeight > 0 else { return }
-
-                if delta < -1 {
-                    // Scrolling down — hide toolbar
-                    accumulatedScrollUp = 0
-                    if isToolbarVisible {
-                        isToolbarVisible = false
-                    }
-                } else if delta > 1 {
-                    // Scrolling up — accumulate distance
-                    accumulatedScrollUp += delta
-                    let scrollUpThreshold = screenHeight * scrollUpThresholdRatio
-                    if accumulatedScrollUp >= scrollUpThreshold && !isToolbarVisible {
-                        isToolbarVisible = true
-                        accumulatedScrollUp = 0
-                    }
+                if let visible = result.isToolbarVisible {
+                    isToolbarVisible = visible
                 }
             }
         }
