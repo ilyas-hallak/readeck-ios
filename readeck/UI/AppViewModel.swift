@@ -11,18 +11,19 @@ import Combine
 
 @MainActor
 @Observable
-class AppViewModel {
+final class AppViewModel {
     private let settingsRepository: PSettingsRepository
     private let factory: UseCaseFactory
     private let syncTagsUseCase: PSyncTagsUseCase
     let networkMonitorUseCase: PNetworkMonitorUseCase
 
-    var hasFinishedSetup: Bool = true
-    var isServerReachable: Bool = false
-    var isNetworkConnected: Bool = true
+    var hasFinishedSetup = true
+    var isServerReachable = false
+    var isNetworkConnected = true
 
     private var lastAppStartTagSyncTime: Date?
     private var cancellables = Set<AnyCancellable>()
+    private var notificationObservers: [Any] = []
 
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.factory = factory
@@ -34,9 +35,9 @@ class AppViewModel {
         setupNetworkMonitoring()
         loadSetupStatus()
     }
-    
+
     private func setupNotificationObservers() {
-        NotificationCenter.default.addObserver(
+        let unauthorizedObserver = NotificationCenter.default.addObserver(
             forName: .unauthorizedAPIResponse,
             object: nil,
             queue: .main
@@ -45,8 +46,9 @@ class AppViewModel {
                 await self?.handleUnauthorizedResponse()
             }
         }
-        
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(unauthorizedObserver)
+
+        let setupObserver = NotificationCenter.default.addObserver(
             forName: .setupStatusChanged,
             object: nil,
             queue: .main
@@ -55,8 +57,9 @@ class AppViewModel {
                 self?.loadSetupStatus()
             }
         }
+        notificationObservers.append(setupObserver)
     }
-    
+
     private func handleUnauthorizedResponse() async {
         Logger.viewModel.info("Handling 401 Unauthorized - logging out user")
 
@@ -69,7 +72,7 @@ class AppViewModel {
             Logger.viewModel.error("Error during logout: \(error.localizedDescription)")
         }
     }
-    
+
     private func setupNetworkMonitoring() {
         // Start monitoring network status
         networkMonitorUseCase.startMonitoring()
@@ -137,7 +140,7 @@ class AppViewModel {
 
         // Run offline sync in background without blocking app start
         Task.detached(priority: .background) { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
 
             do {
                 let settings = try await self.settingsRepository.loadOfflineSettings()

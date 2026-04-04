@@ -16,13 +16,14 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
 
     private let coreDataManager = CoreDataManager.shared
     private let api: PAPI
+    private let logger = Logger.sync
 
     init(api: PAPI = API()) {
         self.api = api
     }
-    
+
     // MARK: - Sync Methods
-    
+
     func syncOfflineBookmarks() async {
         await MainActor.run {
             isSyncing = true
@@ -64,9 +65,8 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                 await MainActor.run {
                     syncStatus = "Synced \(successCount) bookmarks..."
                 }
-
             } catch {
-                print("Failed to sync bookmark: \(url) - \(error)")
+                logger.error("Failed to sync bookmark: \(url) - \(error)")
                 failedCount += 1
 
                 // If first sync attempt fails, server is likely unreachable - abort
@@ -100,9 +100,9 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             self.syncStatus = nil
         }
     }
-    
+
     func getOfflineBookmarksCount() -> Int {
-        return getOfflineBookmarks().count
+        getOfflineBookmarks().count
     }
 
     open func getOfflineBookmarks() -> [ArticleURLEntity] {
@@ -110,7 +110,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             let fetchRequest: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
             return try coreDataManager.context.safeFetch(fetchRequest)
         } catch {
-            print("Failed to fetch offline bookmarks: \(error)")
+            logger.error("Failed to fetch offline bookmarks: \(error)")
             return []
         }
     }
@@ -118,14 +118,13 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     open func deleteOfflineBookmark(_ entity: ArticleURLEntity) {
         do {
             try coreDataManager.context.safePerform { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
 
                 self.coreDataManager.context.delete(entity)
                 self.coreDataManager.save()
             }
         } catch {
-            print("Failed to delete offline bookmark: \(error)")
+            logger.error("Failed to delete offline bookmark: \(error)")
         }
     }
-    
 }

@@ -5,7 +5,7 @@ import SwiftUI
 struct ArticleReaderRouter: View {
     let bookmarkId: String
 
-    @AppStorage("useNativeWebView") private var useNativeWebView: Bool = true
+    @AppStorage("useNativeWebView") private var useNativeWebView = true
 
     var body: some View {
         if #available(iOS 26.0, *) {

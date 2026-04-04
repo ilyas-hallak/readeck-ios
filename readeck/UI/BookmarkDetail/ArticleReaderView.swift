@@ -9,13 +9,13 @@ struct ArticleReaderView: View {
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
-    @State private var webViewHeight: CGFloat = 300
-    @State private var contentEndPosition: CGFloat = 0
+    @State private var webViewHeight: Double = 300
+    @State private var contentEndPosition: Double = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
-    @State private var readingProgress: Double = 0.0
-    @State private var showJumpToProgressButton: Bool = false
+    @State private var readingProgress = 0.0
+    @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
@@ -24,11 +24,10 @@ struct ArticleReaderView: View {
 
     // MARK: - Envs
 
-    @EnvironmentObject var playerUIState: PlayerUIState
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
-    private let headerHeight: CGFloat = 360
+    private let headerHeight: Double = 360
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
@@ -38,6 +37,7 @@ struct ArticleReaderView: View {
 
     var body: some View {
         mainView
+            .background(nativeBackgroundColor)
     }
 
     private var mainView: some View {
@@ -98,9 +98,11 @@ struct ArticleReaderView: View {
     private var content: some View {
         VStack(spacing: 0) {
             // Progress bar at top
-            ProgressView(value: readingProgress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .frame(height: 3)
+            if !(viewModel.settings?.hideProgressBar ?? false) {
+                ProgressView(value: readingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(height: 3)
+            }
 
             // Main scroll content
             scrollViewContent
@@ -155,10 +157,12 @@ struct ArticleReaderView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
-                        headerView(width: geometry.size.width)
+                        if !(viewModel.settings?.hideHeroImage ?? false) {
+                            headerView(width: geometry.size.width)
+                        }
 
                         VStack(alignment: .leading, spacing: 16) {
-                            Color.clear.frame(width: geometry.size.width, height: viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight)
+                            Color.clear.frame(width: geometry.size.width, height: (viewModel.bookmarkDetail.imageUrl.isEmpty || (viewModel.settings?.hideHeroImage ?? false)) ? 84 : headerHeight)
 
                             titleSection
 
@@ -213,7 +217,6 @@ struct ArticleReaderView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-
         if Bundle.main.isDebugBuild {
             // Toggle button (left)
             ToolbarItem(placement: .navigationBarLeading) {
@@ -254,19 +257,10 @@ struct ArticleReaderView: View {
 
     private var fontSettingsSheet: some View {
         NavigationView {
-            VStack {
-                FontSettingsView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-
-                Spacer()
-            }
-            .navigationTitle("Font Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+            FontSelectionView()
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
                         showingFontSettings = false
                     }
                 }
@@ -277,7 +271,7 @@ struct ArticleReaderView: View {
     // MARK: - ViewBuilder
 
     @ViewBuilder
-    private func headerView(width: CGFloat) -> some View {
+    private func headerView(width: Double) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
                 // Background blur for images that don't fill
@@ -285,7 +279,7 @@ struct ArticleReaderView: View {
                     url: URL(string: viewModel.bookmarkDetail.imageUrl),
                     cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: width, height: headerHeight)
                     .blur(radius: 30)
                     .clipped()
@@ -295,7 +289,7 @@ struct ArticleReaderView: View {
                     url: URL(string: viewModel.bookmarkDetail.imageUrl),
                     cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
                 )
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
                     .frame(width: width, height: headerHeight)
 
                 // Zoom icon
@@ -323,17 +317,27 @@ struct ArticleReaderView: View {
             .onTapGesture {
                 showingImageViewer = true
             }
+            .accessibilityAddTraits(.isButton)
         }
     }
 
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(viewModel.bookmarkDetail.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.bottom, 2)
-                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+            HStack(alignment: .top) {
+                Text(viewModel.bookmarkDetail.title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(nativeTextColor)
+                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                Spacer()
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    Image(systemName: "safari")
+                        .font(.title3)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            }
             metaInfoSection
         }
         .padding(.horizontal)
@@ -342,10 +346,25 @@ struct ArticleReaderView: View {
     private var metaInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !viewModel.bookmarkDetail.authors.isEmpty {
-                metaRow(icon: "person", text: (viewModel.bookmarkDetail.authors.count > 1 ? "Authors: " : "Author: ") + viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                HStack(spacing: 4) {
+                    Image(systemName: "person")
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(viewModel.bookmarkDetail.authors.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text("·")
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                    Text(formatDate(viewModel.bookmarkDetail.created))
+                        .font(.subheadline)
+                        .foregroundColor(nativeSecondaryTextColor)
+                }
+            } else {
+                metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
             }
-            metaRow(icon: "calendar", text: formatDate(viewModel.bookmarkDetail.created))
-            metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            if !(viewModel.settings?.hideWordCount ?? false) {
+                metaRow(icon: "textformat", text: "\(viewModel.bookmarkDetail.wordCount ?? 0) words • \(viewModel.bookmarkDetail.readingTime ?? 0) min read")
+            }
 
             // Labels section
             if !viewModel.bookmarkDetail.labels.isEmpty {
@@ -378,23 +397,21 @@ struct ArticleReaderView: View {
                 }
             }
 
-            metaRow(icon: "safari") {
-                Button(action: {
-                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-                }) {
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-
             if appSettings.enableTTS {
                 metaRow(icon: "speaker.wave.2") {
                     Button(action: {
                         viewModel.addBookmarkToSpeechQueue()
-                        playerUIState.showPlayer()
                     }) {
                         Text("Read article aloud")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                metaRow(icon: "text.line.first.and.arrowtriangle.forward") {
+                    Button(action: {
+                        viewModel.addBookmarkToSpeechQueueNext()
+                    }) {
+                        Text("Listen Next")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -403,13 +420,48 @@ struct ArticleReaderView: View {
         }
     }
 
+    // MARK: - Color Theme Helpers
+
+    private var nativeBackgroundColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return Color(.systemBackground)
+        case .custom:
+            if let hex = viewModel.settings?.customBackgroundColor {
+                return Color(hex: hex)
+            }
+            return Color(.systemBackground)
+        default:
+            return theme.backgroundColor ?? Color(.systemBackground)
+        }
+    }
+
+    private var nativeTextColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system: return .primary
+        case .custom:
+            if let hex = viewModel.settings?.customTextColor {
+                return Color(hex: hex)
+            }
+            return .primary
+        default:
+            return theme.textColor ?? .primary
+        }
+    }
+
+    private var nativeSecondaryTextColor: Color {
+        nativeTextColor.opacity(0.6)
+    }
+
     @ViewBuilder
     private func metaRow(icon: String, text: String) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(nativeSecondaryTextColor)
         }
     }
 
@@ -417,6 +469,7 @@ struct ArticleReaderView: View {
     private func metaRow(icon: String, @ViewBuilder content: () -> some View) -> some View {
         HStack {
             Image(systemName: icon)
+                .foregroundColor(nativeSecondaryTextColor)
             content()
         }
     }
@@ -449,7 +502,7 @@ struct ArticleReaderView: View {
                     },
                     onScrollToPosition: { position in
                         // Calculate scroll position: add header height and webview offset
-                        let imageHeight: CGFloat = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
+                        let imageHeight: Double = viewModel.bookmarkDetail.imageUrl.isEmpty ? 84 : headerHeight
                         let targetPosition = imageHeight + position
 
                         // Scroll to the annotation
@@ -461,7 +514,7 @@ struct ArticleReaderView: View {
                 .frame(height: webViewHeight)
                 .cornerRadius(14)
                 .padding(.horizontal, 4)
-                .id("\(settings.fontFamily?.rawValue ?? "system")-\(settings.fontSize?.rawValue ?? "medium")")
+                .id(settings.webViewIdentifier)
             }
         } else if viewModel.isLoadingArticle {
             ProgressView("Loading article...")
@@ -484,7 +537,7 @@ struct ArticleReaderView: View {
         }
     }
 
-    private func jumpButton(containerHeight: CGFloat) -> some View {
+    private func jumpButton(containerHeight: Double) -> some View {
         Button(action: {
             let maxOffset = webViewHeight - containerHeight
             let offset = maxOffset * (Double(viewModel.readProgress) / 100.0)
@@ -514,7 +567,7 @@ struct ArticleReaderView: View {
         } else if let parsedDate = isoFormatterNoMillis.date(from: dateString) {
             date = parsedDate
         }
-        if let date = date {
+        if let date {
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
             displayFormatter.timeStyle = .short

@@ -6,7 +6,7 @@ protocol PSyncTagsUseCase {
 
 /// Triggers background synchronization of tags from server to Core Data
 /// Uses cache-first strategy - returns immediately after triggering sync
-class SyncTagsUseCase: PSyncTagsUseCase {
+final class SyncTagsUseCase: PSyncTagsUseCase {
     private let labelsRepository: PLabelsRepository
 
     init(labelsRepository: PLabelsRepository) {

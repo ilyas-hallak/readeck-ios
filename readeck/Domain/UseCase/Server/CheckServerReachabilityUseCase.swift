@@ -11,7 +11,7 @@ protocol PCheckServerReachabilityUseCase {
     func getServerInfo() async throws -> ServerInfo
 }
 
-class CheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
+final class CheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
     private let repository: PServerInfoRepository
 
     init(repository: PServerInfoRepository) {
@@ -19,10 +19,10 @@ class CheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
     }
 
     func execute() async -> Bool {
-        return await repository.checkServerReachability()
+        await repository.checkServerReachability()
     }
 
     func getServerInfo() async throws -> ServerInfo {
-        return try await repository.getServerInfo(endpoint: nil)
+        try await repository.getServerInfo(endpoint: nil)
     }
 }

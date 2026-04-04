@@ -40,7 +40,7 @@ protocol UseCaseFactory {
     func makeAuthRepository() -> PAuthRepository
 }
 
-class DefaultUseCaseFactory: UseCaseFactory {
+final class DefaultUseCaseFactory: UseCaseFactory {
     private let tokenProvider = KeychainTokenProvider()
     private lazy var api: PAPI = API(tokenProvider: tokenProvider)
     private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider)
@@ -58,61 +58,61 @@ class DefaultUseCaseFactory: UseCaseFactory {
     static let shared = DefaultUseCaseFactory()
 
     private init() {}
-    
+
     func makeLoginUseCase() -> PLoginUseCase {
         LoginUseCase(repository: authRepository)
     }
-    
+
     func makeGetBookmarksUseCase() -> PGetBookmarksUseCase {
         GetBookmarksUseCase(repository: bookmarksRepository)
     }
-    
+
     func makeGetBookmarkUseCase() -> PGetBookmarkUseCase {
         GetBookmarkUseCase(repository: bookmarksRepository)
     }
-    
+
     func makeGetBookmarkArticleUseCase() -> PGetBookmarkArticleUseCase {
         GetBookmarkArticleUseCase(repository: bookmarksRepository)
     }
-    
+
     func makeSaveSettingsUseCase() -> PSaveSettingsUseCase {
         SaveSettingsUseCase(settingsRepository: settingsRepository)
     }
-    
+
     func makeLoadSettingsUseCase() -> PLoadSettingsUseCase {
         LoadSettingsUseCase(authRepository: authRepository)
     }
 
     func makeUpdateBookmarkUseCase() -> PUpdateBookmarkUseCase {
-        return UpdateBookmarkUseCase(repository: bookmarksRepository)
+        UpdateBookmarkUseCase(repository: bookmarksRepository)
     }
-    
+
     func makeLogoutUseCase() -> PLogoutUseCase {
-        return LogoutUseCase(settingsRepository: settingsRepository)
+        LogoutUseCase(settingsRepository: settingsRepository)
     }
 
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase {
-        return DeleteBookmarkUseCase(repository: bookmarksRepository)
+        DeleteBookmarkUseCase(repository: bookmarksRepository)
     }
 
     func makeCreateBookmarkUseCase() -> PCreateBookmarkUseCase {
-        return CreateBookmarkUseCase(repository: bookmarksRepository)
+        CreateBookmarkUseCase(repository: bookmarksRepository)
     }
 
     func makeSearchBookmarksUseCase() -> PSearchBookmarksUseCase {
-        return SearchBookmarksUseCase(repository: bookmarksRepository)
+        SearchBookmarksUseCase(repository: bookmarksRepository)
     }
 
     func makeSaveServerSettingsUseCase() -> PSaveServerSettingsUseCase {
-        return SaveServerSettingsUseCase(repository: settingsRepository)
+        SaveServerSettingsUseCase(repository: settingsRepository)
     }
-    
+
     func makeAddLabelsToBookmarkUseCase() -> PAddLabelsToBookmarkUseCase {
-        return AddLabelsToBookmarkUseCase(repository: bookmarksRepository)
+        AddLabelsToBookmarkUseCase(repository: bookmarksRepository)
     }
-    
+
     func makeRemoveLabelsFromBookmarkUseCase() -> PRemoveLabelsFromBookmarkUseCase {
-        return RemoveLabelsFromBookmarkUseCase(repository: bookmarksRepository)
+        RemoveLabelsFromBookmarkUseCase(repository: bookmarksRepository)
     }
 
     func makeGetLabelsUseCase() -> PGetLabelsUseCase {
@@ -128,43 +128,43 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeAddTextToSpeechQueueUseCase() -> PAddTextToSpeechQueueUseCase {
-        return AddTextToSpeechQueueUseCase()
+        AddTextToSpeechQueueUseCase()
     }
-    
+
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase {
-        return OfflineBookmarkSyncUseCase()
+        OfflineBookmarkSyncUseCase()
     }
-    
+
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase {
-        return LoadCardLayoutUseCase(settingsRepository: settingsRepository)
+        LoadCardLayoutUseCase(settingsRepository: settingsRepository)
     }
-    
+
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase {
-        return SaveCardLayoutUseCase(settingsRepository: settingsRepository)
+        SaveCardLayoutUseCase(settingsRepository: settingsRepository)
     }
 
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase {
-        return CheckServerReachabilityUseCase(repository: serverInfoRepository)
+        CheckServerReachabilityUseCase(repository: serverInfoRepository)
     }
 
     func makeGetServerInfoUseCase() -> PGetServerInfoUseCase {
-        return GetServerInfoUseCase(repository: serverInfoRepository)
+        GetServerInfoUseCase(repository: serverInfoRepository)
     }
 
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {
-        return GetBookmarkAnnotationsUseCase(repository: annotationsRepository)
+        GetBookmarkAnnotationsUseCase(repository: annotationsRepository)
     }
 
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase {
-        return DeleteAnnotationUseCase(repository: annotationsRepository)
+        DeleteAnnotationUseCase(repository: annotationsRepository)
     }
 
     func makeSettingsRepository() -> PSettingsRepository {
-        return settingsRepository
+        settingsRepository
     }
 
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase {
-        return OfflineCacheSyncUseCase(
+        OfflineCacheSyncUseCase(
             offlineCacheRepository: offlineCacheRepository,
             bookmarksRepository: bookmarksRepository,
             settingsRepository: settingsRepository
@@ -172,39 +172,39 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase {
-        return NetworkMonitorUseCase(repository: networkMonitorRepository)
+        NetworkMonitorUseCase(repository: networkMonitorRepository)
     }
 
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase {
-        return GetCachedBookmarksUseCase(offlineCacheRepository: offlineCacheRepository)
+        GetCachedBookmarksUseCase(offlineCacheRepository: offlineCacheRepository)
     }
 
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase {
-        return GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
+        GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
     }
 
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {
-        return CreateAnnotationUseCase(repository: annotationsRepository)
+        CreateAnnotationUseCase(repository: annotationsRepository)
     }
 
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase {
-        return GetCacheSizeUseCase(settingsRepository: settingsRepository)
+        GetCacheSizeUseCase(settingsRepository: settingsRepository)
     }
 
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase {
-        return GetMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+        GetMaxCacheSizeUseCase(settingsRepository: settingsRepository)
     }
 
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase {
-        return UpdateMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+        UpdateMaxCacheSizeUseCase(settingsRepository: settingsRepository)
     }
 
     func makeClearCacheUseCase() -> PClearCacheUseCase {
-        return ClearCacheUseCase(settingsRepository: settingsRepository)
+        ClearCacheUseCase(settingsRepository: settingsRepository)
     }
 
     private lazy var oauthRepository: POAuthRepository = OAuthRepository(api: api)
-    private lazy var oauthManager: OAuthManager = OAuthManager(repository: oauthRepository)
+    private lazy var oauthManager = OAuthManager(repository: oauthRepository)
 
     @MainActor func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
         let coordinator = OAuthFlowCoordinator(manager: oauthManager)
@@ -212,6 +212,6 @@ class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeAuthRepository() -> PAuthRepository {
-        return authRepository
+        authRepository
     }
 }

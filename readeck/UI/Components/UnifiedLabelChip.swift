@@ -17,7 +17,7 @@ struct UnifiedLabelChip: View {
     let isRemovable: Bool
     let onTap: () -> Void
     let onRemove: (() -> Void)?
-    
+
     init(label: String, isSelected: Bool = false, isRemovable: Bool = false, onTap: @escaping () -> Void, onRemove: (() -> Void)? = nil) {
         self.label = label
         self.isSelected = isSelected
@@ -25,7 +25,7 @@ struct UnifiedLabelChip: View {
         self.onTap = onTap
         self.onRemove = onRemove
     }
-    
+
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 6) {
@@ -35,8 +35,8 @@ struct UnifiedLabelChip: View {
                     .foregroundColor(isSelected ? .white : .primary)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                
-                if isRemovable, let onRemove = onRemove {
+
+                if isRemovable, let onRemove {
                     Button(action: onRemove) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.caption)
@@ -66,17 +66,15 @@ struct UnifiedLabelChip: View {
         UnifiedLabelChip(
             label: "Sample Label",
             isSelected: false,
-            isRemovable: false,
-            onTap: {}
-        )
-        
+            isRemovable: false
+        )            {}
+
         UnifiedLabelChip(
             label: "Selected Label",
             isSelected: true,
-            isRemovable: false,
-            onTap: {}
-        )
-        
+            isRemovable: false
+        )            {}
+
         UnifiedLabelChip(
             label: "Removable Label",
             isSelected: false,
@@ -84,7 +82,7 @@ struct UnifiedLabelChip: View {
             onTap: {},
             onRemove: {}
         )
-        
+
         UnifiedLabelChip(
             label: "Selected & Removable",
             isSelected: true,
@@ -94,4 +92,4 @@ struct UnifiedLabelChip: View {
         )
     }
     .padding()
-} 
+}

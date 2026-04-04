@@ -11,7 +11,8 @@ protocol PLogoutUseCase {
     func execute() async throws
 }
 
-class LogoutUseCase: PLogoutUseCase {
+final class LogoutUseCase: PLogoutUseCase {
+    private let logger = Logger.auth
     private let settingsRepository: PSettingsRepository
     private let tokenManager: TokenManager
 
@@ -22,25 +23,25 @@ class LogoutUseCase: PLogoutUseCase {
         self.settingsRepository = settingsRepository
         self.tokenManager = tokenManager
     }
-    
+
     func execute() async throws {
         // Clear the token
         try await tokenManager.clearToken()
-        
+
         // Reset hasFinishedSetup to false
         try await settingsRepository.saveHasFinishedSetup(false)
-        
+
         // Clear user session data
         try await settingsRepository.saveToken("")
         try await settingsRepository.saveUsername("")
         try await settingsRepository.savePassword("")
-        
+
         KeychainHelper.shared.saveToken("")
         KeychainHelper.shared.saveEndpoint("")
-        
+
         // Note: We keep the endpoint for potential re-login
         // but clear the authentication data
-        
-        print("LogoutUseCase: User logged out successfully")
+
+        logger.info("User logged out successfully")
     }
-} 
+}

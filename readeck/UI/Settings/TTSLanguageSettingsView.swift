@@ -1,14 +1,9 @@
-//
-//  TTSLanguageSettingsView.swift
-//  readeck
-//
-//  Created by Claude on 04.02.26.
-//
-
 import SwiftUI
+import AVFoundation
 
 struct TTSLanguageSettingsView: View {
-    @AppStorage("tts_preferred_language") private var preferredLanguage: String = "en-US"
+    @AppStorage("tts_preferred_language") private var preferredLanguage = "en-US"
+    @ObservedObject private var voiceManager = VoiceManager.shared
 
     private let supportedLanguages: [(code: String, name: String)] = [
         ("de-DE", "Deutsch"),
@@ -16,57 +11,36 @@ struct TTSLanguageSettingsView: View {
         ("en-GB", "English (UK)"),
         ("es-ES", "Español"),
         ("fr-FR", "Français"),
-        ("it-IT", "Italiano"),
-        ("pt-PT", "Português"),
-        ("nl-NL", "Nederlands"),
-        ("pl-PL", "Polski"),
-        ("ru-RU", "Русский"),
-        ("ja-JP", "日本語"),
-        ("zh-CN", "中文"),
-        ("ko-KR", "한국어"),
-        ("ar-SA", "العربية"),
-        ("tr-TR", "Türkçe"),
-        ("sv-SE", "Svenska"),
-        ("da-DK", "Dansk"),
-        ("nb-NO", "Norsk"),
-        ("fi-FI", "Suomi"),
-        ("cs-CZ", "Čeština"),
-        ("hu-HU", "Magyar"),
-        ("ro-RO", "Română"),
-        ("sk-SK", "Slovenčina"),
-        ("uk-UA", "Українська"),
-        ("el-GR", "Ελληνικά"),
-        ("he-IL", "עברית"),
-        ("hi-IN", "हिन्दी"),
-        ("th-TH", "ไทย"),
-        ("id-ID", "Bahasa Indonesia"),
-        ("vi-VN", "Tiếng Việt"),
+        ("it-IT", "Italiano")
     ].sorted { $0.name < $1.name }
 
     var body: some View {
         List {
             Section {
                 ForEach(supportedLanguages, id: \.code) { language in
-                    Button {
-                        preferredLanguage = language.code
+                    NavigationLink {
+                        VoiceListView(languageCode: language.code, languageName: language.name)
                     } label: {
                         HStack {
                             Text(language.name)
-                                .foregroundColor(.primary)
                             Spacer()
-                            if preferredLanguage == language.code {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
+                            if let voiceId = voiceManager.getSelectedVoiceIdentifier(for: language.code),
+                               let voice = voiceManager.availableVoices.first(where: { $0.identifier == voiceId }) {
+                                Text(voice.name)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("Auto")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
                 }
             } header: {
-                Text("Preferred Language")
+                Text("Languages & Voices")
             } footer: {
-                Text(
-                    "Articles will be read in their detected language. This setting is used as fallback."
-                )
+                Text("Select a voice for each language. Articles are read in their detected language.")
             }
 
             Section {
@@ -74,7 +48,7 @@ struct TTSLanguageSettingsView: View {
                     openAccessibilitySettings()
                 } label: {
                     HStack {
-                        Label("Download Extended Voices", systemImage: "arrow.down.circle")
+                        Label("Download Premium Voices", systemImage: "arrow.down.circle")
                         Spacer()
                         Image(systemName: "arrow.up.forward.app")
                             .font(.caption)
@@ -82,13 +56,17 @@ struct TTSLanguageSettingsView: View {
                     }
                 }
             } footer: {
-                Text(
-                    "Download additional high-quality Siri voices in iOS Settings > Accessibility > Spoken Content > Voices."
-                )
+                Text("Premium voices sound more natural. Download them in iOS Settings > Accessibility > Spoken Content > Voices.")
             }
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Language & Voices")
+        .onAppear {
+            voiceManager.refreshVoices()
+        }
+        .onDisappear {
+            voiceManager.stopPreview()
+        }
     }
 
     private func openAccessibilitySettings() {

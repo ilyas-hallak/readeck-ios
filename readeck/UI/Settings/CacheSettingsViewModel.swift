@@ -9,8 +9,7 @@ import Foundation
 import Observation
 
 @Observable
-class CacheSettingsViewModel {
-
+final class CacheSettingsViewModel {
     // MARK: - Dependencies
 
     private let getCacheSizeUseCase: PGetCacheSizeUseCase
@@ -20,10 +19,10 @@ class CacheSettingsViewModel {
 
     // MARK: - Published State
 
-    var cacheSize: String = "0 MB"
+    var cacheSize = "0 MB"
     var maxCacheSize: Double = 200 // in MB
-    var isClearing: Bool = false
-    var showClearAlert: Bool = false
+    var isClearing = false
+    var showClearAlert = false
 
     // MARK: - Initialization
 

@@ -4,6 +4,42 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 3.0.0
+
+### Granular Reader Styling
+
+**Full control over your reading experience**
+- Numeric font size slider (10-30px) for precise text sizing
+- Adjustable horizontal margins (0-40px)
+- Line height control (1.0-2.5) for comfortable line density
+- Toggle to hide progress bar, word count/reading time, or hero image
+
+**Color Themes**
+- 7 built-in color themes: System, Sepia, Night Blue, Mint, Solarized Light, Solarized Dark, Gray
+- Custom color picker for background and text color
+- Colors apply to both the article content and the native UI (title, metadata)
+
+**Metadata Cleanup**
+- Compact author format without "Author:" prefix
+- Author and date combined on one line
+- Source URL moved to a safari icon next to the title
+
+**Power User**
+- Custom CSS injection for full styling control
+- All reader settings accessible from both the article view and app settings
+
+---
+
+## Version 2.1.0
+
+### Bug Fixes & Improvements
+
+- **Fix: Annotations now display correctly** when reopening articles (thanks @sibson)
+- **New: Reset reading progress** via context menu (thanks @astratto)
+- Improved error handling and stability fixes
+
+---
+
 ## Version 2.0.0
 
 ### 📖 Offline Reading - The Feature You've Been Waiting For!

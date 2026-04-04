@@ -2,20 +2,20 @@ import Foundation
 import Observation
 
 @Observable
-class LabelsViewModel {
+final class LabelsViewModel {
     private let getLabelsUseCase: PGetLabelsUseCase
-    
+
     var labels: [BookmarkLabel] = []
     var isLoading: Bool
     var errorMessage: String?
-    
+
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared, labels: [BookmarkLabel] = [], isLoading: Bool = false, errorMessage: String? = nil) {
         self.labels = labels
         self.isLoading = isLoading
         self.errorMessage = errorMessage
         getLabelsUseCase = factory.makeGetLabelsUseCase()
     }
-    
+
     @MainActor
     func loadLabels() async {
         isLoading = true
@@ -27,4 +27,4 @@ class LabelsViewModel {
         }
         isLoading = false
     }
-} 
+}
