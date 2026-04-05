@@ -24,6 +24,10 @@ final class AppSettings: ObservableObject {
         settings?.enableTTS ?? false
     }
 
+    var disableReaderBackSwipe: Bool {
+        settings?.disableReaderBackSwipe ?? false
+    }
+
     var theme: Theme {
         settings?.theme ?? .system
     }
