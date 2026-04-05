@@ -13,6 +13,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockCheckReachability = ConfigurableCheckServerReachabilityUseCase()
     let mockCreateBookmark = ConfigurableCreateBookmarkUseCase()
     let mockSettingsRepository = MockSettingsRepository()
+    let mockSummarizeArticle = ConfigurableSummarizeArticleUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -54,5 +55,5 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeClearCacheUseCase() -> PClearCacheUseCase { MockClearCacheUseCase() }
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase { MockLoginWithOAuthUseCase() }
     func makeAuthRepository() -> PAuthRepository { MockAuthRepository() }
-    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase { MockSummarizeArticleUseCase() }
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase { mockSummarizeArticle }
 }
