@@ -23,8 +23,7 @@ struct Settings {
     var bookmarkSortField: BookmarkSortField?
     var bookmarkSortDirection: BookmarkSortDirection?
 
-    // swiftlint:disable:next discouraged_optional_boolean
-    var disableReaderBackSwipe: Bool?
+    var disableReaderBackSwipe = false
     var urlOpener: UrlOpener?
     var swipeActionConfig: SwipeActionConfig?
 

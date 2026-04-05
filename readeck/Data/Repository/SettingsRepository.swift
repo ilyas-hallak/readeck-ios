@@ -59,9 +59,7 @@ final class SettingsRepository: PSettingsRepository {
                         existingSettings.enableTTS = enableTTS
                     }
 
-                    if let disableReaderBackSwipe = settings.disableReaderBackSwipe {
-                        existingSettings.disableReaderBackSwipe = disableReaderBackSwipe
-                    }
+                    existingSettings.disableReaderBackSwipe = settings.disableReaderBackSwipe
 
                     if let theme = settings.theme {
                         existingSettings.theme = theme.rawValue
@@ -185,7 +183,7 @@ final class SettingsRepository: PSettingsRepository {
                         tagSortOrder: TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue),
                         bookmarkSortField: BookmarkSortField(rawValue: settingEntity?.bookmarkSortField ?? BookmarkSortField.created.rawValue),
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
-                        disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe,
+                        disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe ?? false,
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
                         swipeActionConfig: swipeActionConfig,
                         fontSizeNumeric: fontSizeNumeric,

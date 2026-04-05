@@ -40,7 +40,7 @@ final class SettingsGeneralViewModel {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 enableTTS = settings.enableTTS ?? false
-                disableReaderBackSwipe = settings.disableReaderBackSwipe ?? false
+                disableReaderBackSwipe = settings.disableReaderBackSwipe
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
                 bookmarkSortField = settings.bookmarkSortField ?? .created
