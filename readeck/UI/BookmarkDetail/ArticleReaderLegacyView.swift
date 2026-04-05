@@ -401,18 +401,6 @@ struct ArticleReaderLegacyView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Toggle button (left)
-            ToolbarItem(placement: .navigationBarLeading) {
-                if #available(iOS 26.0, *), !ProcessInfo.processInfo.isiOSAppOnMac {
-                    Button(action: {
-                        useNativeWebView.toggle()
-                    }) {
-                        Image(systemName: "waveform")
-                            .foregroundColor(.accentColor)
-                    }
-                }
-            }
-
             // Top toolbar (right)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 12) {

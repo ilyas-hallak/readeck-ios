@@ -46,7 +46,9 @@ struct ScrollTracker {
 
         let totalScrollableDistance = initialContentEndPosition - containerHeight
 
-        guard totalScrollableDistance > 0 else {
+        // Don't collapse toolbar for short articles (less than 1.5x screen height of scrollable content)
+        let minScrollDistance = containerHeight * 1.5
+        guard totalScrollableDistance > minScrollDistance else {
             toolbarVisible = true
             return Result(readingProgress: 0, shouldUpdateProgress: false, isToolbarVisible: true)
         }
@@ -84,8 +86,8 @@ struct ScrollTracker {
         let delta = endPosition - prev
         previousEndPosition = endPosition
 
-        // Always show toolbar near top
-        if progress <= 0.01 {
+        // Always show toolbar near top — also prevents hide from scroll bounce
+        if progress <= 0.05 {
             accumulatedScrollUp = 0
             if !toolbarVisible {
                 toolbarVisible = true
