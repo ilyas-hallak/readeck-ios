@@ -35,6 +35,7 @@ struct ArticleReaderLegacyView: View {
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
+    @State private var showingSummarySheet = false
 
     // MARK: - Envs
 
@@ -459,6 +460,12 @@ struct ArticleReaderLegacyView: View {
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
         }
+        .sheet(isPresented: $showingSummarySheet) {
+            ArticleSummarySheet(
+                articleContent: viewModel.articleContent,
+                summarizeUseCase: DefaultUseCaseFactory.shared.makeSummarizeArticleUseCase()
+            )
+        }
         .onChange(of: showingFontSettings) { _, isShowing in
             if !isShowing {
                 // Reload settings when sheet is dismissed
@@ -646,6 +653,18 @@ struct ArticleReaderLegacyView: View {
                 }
             }
 
+
+            if SummarizeArticleUseCase.isAvailable && !viewModel.articleContent.isEmpty {
+                metaRow(icon: "sparkles") {
+                    Button(action: {
+                        showingSummarySheet = true
+                    }) {
+                        Text("Summarize".localized)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
 
             if appSettings.enableTTS {
                 metaRow(icon: "speaker.wave.2") {
