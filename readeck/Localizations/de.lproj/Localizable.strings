@@ -267,3 +267,12 @@
 "css.snippet.linksPlain.description" = "Unterstreichung von Links entfernen";
 "css.snippet.blockquotePlain.title" = "Schlichte Zitate";
 "css.snippet.blockquotePlain.description" = "Rahmen, Hintergrund und Kursivschrift von Zitaten entfernen";
+
+/* Article Summary */
+"Summarize" = "Zusammenfassen";
+"Summary" = "Zusammenfassung";
+"Generating summary..." = "Zusammenfassung wird erstellt...";
+"Retry" = "Erneut versuchen";
+"Language" = "Sprache";
+"AI summarization is not available on this device." = "KI-Zusammenfassung ist auf diesem Gerät nicht verfügbar.";
+"No article content to summarize." = "Kein Artikelinhalt zum Zusammenfassen vorhanden.";

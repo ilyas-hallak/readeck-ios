@@ -175,3 +175,12 @@
 "Highest quality — most natural sounding. Requires download in iOS Settings." = "Highest quality — most natural sounding. Requires download in iOS Settings.";
 "Good quality with natural intonation. Requires download in iOS Settings." = "Good quality with natural intonation. Requires download in iOS Settings.";
 "Built-in voice. No download required." = "Built-in voice. No download required.";
+
+/* Article Summary */
+"Summarize" = "Summarize";
+"Summary" = "Summary";
+"Generating summary..." = "Generating summary...";
+"Retry" = "Retry";
+"Language" = "Language";
+"AI summarization is not available on this device." = "AI summarization is not available on this device.";
+"No article content to summarize." = "No article content to summarize.";

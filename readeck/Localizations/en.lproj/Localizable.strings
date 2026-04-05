@@ -259,3 +259,12 @@
 "css.snippet.linksPlain.description" = "Remove underline decoration from links";
 "css.snippet.blockquotePlain.title" = "Plain Blockquotes";
 "css.snippet.blockquotePlain.description" = "Remove border, background and italic from quotes";
+
+/* Article Summary */
+"Summarize" = "Summarize";
+"Summary" = "Summary";
+"Generating summary..." = "Generating summary...";
+"Retry" = "Retry";
+"Language" = "Language";
+"AI summarization is not available on this device." = "AI summarization is not available on this device.";
+"No article content to summarize." = "No article content to summarize.";
