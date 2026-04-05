@@ -38,6 +38,7 @@ protocol UseCaseFactory {
     func makeClearCacheUseCase() -> PClearCacheUseCase
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase
     func makeAuthRepository() -> PAuthRepository
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
@@ -213,5 +214,9 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeAuthRepository() -> PAuthRepository {
         authRepository
+    }
+
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase {
+        SummarizeArticleUseCase()
     }
 }

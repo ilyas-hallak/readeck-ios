@@ -54,4 +54,5 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeClearCacheUseCase() -> PClearCacheUseCase { MockClearCacheUseCase() }
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase { MockLoginWithOAuthUseCase() }
     func makeAuthRepository() -> PAuthRepository { MockAuthRepository() }
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase { MockSummarizeArticleUseCase() }
 }

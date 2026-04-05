@@ -488,6 +488,10 @@ extension MockUseCaseFactory {
     func makeAuthRepository() -> PAuthRepository {
         MockAuthRepository()
     }
+
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase {
+        MockSummarizeArticleUseCase()
+    }
 }
 
 final class MockLoginWithOAuthUseCase: PLoginWithOAuthUseCase {
@@ -525,5 +529,13 @@ final class MockAuthRepository: PAuthRepository {
 
     func switchToClassicAuth(endpoint: String, username: String, password: String) async throws -> User {
         User(id: "mock_user", token: "mock_token")
+    }
+}
+
+final class MockSummarizeArticleUseCase: PSummarizeArticleUseCase {
+    static var isAvailable: Bool { true }
+
+    func execute(articleHTML: String, targetLanguage: String) async throws -> String {
+        "This is a mock summary of the article."
     }
 }
