@@ -1,70 +1,27 @@
 import SwiftUI
-import UIKit
 
 struct DisableBackSwipeModifier: ViewModifier {
-    let disabled: Bool
+    let isDisabled: Bool
+    @Environment(\.dismiss) private var dismiss
 
     func body(content: Content) -> some View {
-        content
-            .background(DisableBackSwipeRepresentable(disabled: disabled))
-    }
-}
-
-private struct DisableBackSwipeRepresentable: UIViewControllerRepresentable {
-    let disabled: Bool
-
-    func makeUIViewController(context: Context) -> DisableBackSwipeViewController {
-        DisableBackSwipeViewController(disabled: disabled)
-    }
-
-    func updateUIViewController(_ uiViewController: DisableBackSwipeViewController, context: Context) {
-        uiViewController.setBackSwipeDisabled(disabled)
-    }
-}
-
-private class DisableBackSwipeViewController: UIViewController {
-    var disabled: Bool
-
-    init(disabled: Bool) {
-        self.disabled = disabled
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        setBackSwipeDisabled(disabled)
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setBackSwipeDisabled(disabled)
-    }
-
-    func setBackSwipeDisabled(_ disabled: Bool) {
-        findNavigationController()?.interactivePopGestureRecognizer?.isEnabled = !disabled
-    }
-
-    private func findNavigationController() -> UINavigationController? {
-        if let nav = navigationController {
-            return nav
+        if isDisabled {
+            content
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                Text("Back")
+                            }
+                        }
+                    }
+                }
+        } else {
+            content
         }
-        var responder: UIResponder? = view
-        while let next = responder?.next {
-            if let nav = next as? UINavigationController {
-                return nav
-            }
-            responder = next
-        }
-        return nil
-    }
-}
-
-extension View {
-    func disableBackSwipe(_ disabled: Bool) -> some View {
-        modifier(DisableBackSwipeModifier(disabled: disabled))
     }
 }

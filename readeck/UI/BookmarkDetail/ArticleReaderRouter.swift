@@ -27,7 +27,7 @@ struct ArticleReaderRouter: View {
                 ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
             }
         }
-        .disableBackSwipe(appSettings.disableReaderBackSwipe)
+        .modifier(DisableBackSwipeModifier(isDisabled: appSettings.disableReaderBackSwipe))
     }
 }
 
