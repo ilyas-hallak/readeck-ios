@@ -65,16 +65,26 @@ final class SummarizeArticleUseCase: PSummarizeArticleUseCase {
     // MARK: - HTML Stripping
 
     func stripHTML(_ html: String) -> String {
-        guard let data = html.data(using: .utf8) else { return html }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
-        ]
-        if let attributed = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
-            return attributed.string
-        }
-        // Fallback: simple regex strip
-        return html.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        var text = html
+        // Remove script and style blocks
+        text = text.replacingOccurrences(of: "<script[^>]*>[\\s\\S]*?</script>", with: "", options: .regularExpression)
+        text = text.replacingOccurrences(of: "<style[^>]*>[\\s\\S]*?</style>", with: "", options: .regularExpression)
+        // Replace <br>, <p>, <div> with newlines
+        text = text.replacingOccurrences(of: "<br[^>]*>", with: "\n", options: .regularExpression)
+        text = text.replacingOccurrences(of: "</p>", with: "\n\n", options: .regularExpression)
+        text = text.replacingOccurrences(of: "</div>", with: "\n", options: .regularExpression)
+        // Remove all remaining tags
+        text = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Decode common HTML entities
+        text = text.replacingOccurrences(of: "&amp;", with: "&")
+        text = text.replacingOccurrences(of: "&lt;", with: "<")
+        text = text.replacingOccurrences(of: "&gt;", with: ">")
+        text = text.replacingOccurrences(of: "&quot;", with: "\"")
+        text = text.replacingOccurrences(of: "&#39;", with: "'")
+        text = text.replacingOccurrences(of: "&nbsp;", with: " ")
+        // Collapse multiple newlines
+        text = text.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // MARK: - Summarization
@@ -146,8 +156,16 @@ final class SummarizeArticleUseCase: PSummarizeArticleUseCase {
                 Write the summary in \(targetLanguage). Remove redundancies and maintain logical flow.
                 """
             let mergeSession = LanguageModelSession(instructions: mergeInstructions)
-            let mergeResponse = try await mergeSession.respond(to: merged)
-            return mergeResponse.content
+            do {
+                let mergeResponse = try await mergeSession.respond(to: merged)
+                return mergeResponse.content
+            } catch let error as LanguageModelSession.GenerationError {
+                if case .refusal(let refusal, _) = error {
+                    let explanation = (try? await refusal.explanation)?.content ?? "The model refused to summarize this content."
+                    throw SummarizeArticleError.generationFailed(explanation)
+                }
+                throw SummarizeArticleError.generationFailed(error.localizedDescription)
+            }
         } else {
             // Recursive: summarize the summaries
             return try await summarizeWithChunking(text: merged, targetLanguage: targetLanguage, lengthInstruction: lengthInstruction)

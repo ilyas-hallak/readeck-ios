@@ -66,7 +66,7 @@ struct ArticleReaderView: View {
             .sheet(isPresented: $showingSummarySheet) {
                 ArticleSummarySheet(
                     articleContent: viewModel.articleContent,
-                    summarizeUseCase: DefaultUseCaseFactory.shared.makeSummarizeArticleUseCase()
+                    summarizeUseCase: viewModel.makeSummarizeUseCase()
                 )
             }
             .onChange(of: showingFontSettings) { _, isShowing in
@@ -404,7 +404,7 @@ struct ArticleReaderView: View {
                 }
             }
 
-            if SummarizeArticleUseCase.isAvailable && !viewModel.articleContent.isEmpty {
+            if viewModel.canSummarize {
                 metaRow(icon: "sparkles") {
                     Button(action: {
                         showingSummarySheet = true

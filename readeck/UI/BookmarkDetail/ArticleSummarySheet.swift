@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ArticleSummarySheet: View {
     @State private var viewModel: ArticleSummaryViewModel
+    @State private var summaryTask: Task<Void, Never>?
 
     init(articleContent: String, summarizeUseCase: PSummarizeArticleUseCase) {
         _viewModel = State(initialValue: ArticleSummaryViewModel(
@@ -70,7 +71,8 @@ struct ArticleSummarySheet: View {
             await viewModel.summarize()
         }
         .onChange(of: viewModel.selectedLanguage) { _, _ in
-            Task {
+            summaryTask?.cancel()
+            summaryTask = Task {
                 await viewModel.summarize()
             }
         }

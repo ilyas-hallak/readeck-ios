@@ -7,9 +7,10 @@ import FoundationModels
 final class ArticleSummaryViewModel {
     private let summarizeUseCase: PSummarizeArticleUseCase
     private let articleContent: String
+    private var currentTask: Task<Void, Never>?
 
     var summary: String = ""
-    var isLoading: Bool = false
+    var isLoading: Bool = true
     var error: Error?
     var selectedLanguage: String
 
@@ -35,6 +36,7 @@ final class ArticleSummaryViewModel {
 
     @MainActor
     func summarize() async {
+        currentTask?.cancel()
         isLoading = true
         error = nil
         summary = ""
@@ -42,10 +44,14 @@ final class ArticleSummaryViewModel {
         let displayName = Locale.current.localizedString(forLanguageCode: selectedLanguage) ?? selectedLanguage
 
         do {
+            try Task.checkCancellation()
             summary = try await summarizeUseCase.execute(
                 articleHTML: articleContent,
                 targetLanguage: displayName
             )
+        } catch is CancellationError {
+            // Ignore - new task will take over
+            return
         } catch {
             self.error = error
         }

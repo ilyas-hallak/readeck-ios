@@ -10,6 +10,7 @@ final class BookmarkDetailViewModel {
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
+    private let summarizeArticleUseCase: PSummarizeArticleUseCase
 
     var bookmarkDetail = BookmarkDetail.empty
     var articleContent = ""
@@ -27,6 +28,11 @@ final class BookmarkDetailViewModel {
     var showHeroImage: Bool { settings?.hideHeroImage != true }
     var showWordCount: Bool { settings?.hideWordCount != true }
     var hasVisibleHeroImage: Bool { showHeroImage && !bookmarkDetail.imageUrl.isEmpty }
+    var canSummarize: Bool { SummarizeArticleUseCase.isAvailable && !articleContent.isEmpty }
+
+    func makeSummarizeUseCase() -> PSummarizeArticleUseCase {
+        summarizeArticleUseCase
+    }
 
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
@@ -39,6 +45,7 @@ final class BookmarkDetailViewModel {
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
+        self.summarizeArticleUseCase = factory.makeSummarizeArticleUseCase()
         self.factory = factory
 
         readProgressSubject
