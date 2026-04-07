@@ -537,4 +537,6 @@ final class MockSummarizeArticleUseCase: PSummarizeArticleUseCase {
     func execute(articleHTML: String, targetLanguage: String) async throws -> String {
         "This is a mock summary of the article."
     }
+
+    func prewarm() {}
 }

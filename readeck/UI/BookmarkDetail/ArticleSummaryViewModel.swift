@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationModels)
-import FoundationModels
-#endif
 
 @Observable
 final class ArticleSummaryViewModel {
@@ -17,23 +14,17 @@ final class ArticleSummaryViewModel {
     var hasGenerated: Bool = false
 
     var availableLanguages: [(code: String, displayName: String)] {
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            return SummarizeArticleUseCase.supportedLanguages.compactMap { lang in
-                guard let langCode = lang.languageCode?.identifier else { return nil }
-                let identifier = lang.maximalIdentifier
-                let locale = Locale(identifier: identifier)
-                var displayName = Locale.current.localizedString(forLanguageCode: langCode) ?? langCode
-                if let region = lang.region {
-                    let regionName = Locale.current.localizedString(forRegionCode: region.identifier) ?? region.identifier
-                    displayName = "\(displayName) (\(regionName))"
-                }
-                return (code: identifier, displayName: displayName)
+        SummarizationRepository.supportedLanguages.map { identifier in
+            let locale = Locale(identifier: identifier)
+            let langCode = locale.language.languageCode?.identifier ?? identifier
+            var displayName = Locale.current.localizedString(forLanguageCode: langCode) ?? langCode
+            if let region = locale.language.region {
+                let regionName = Locale.current.localizedString(forRegionCode: region.identifier) ?? region.identifier
+                displayName = "\(displayName) (\(regionName))"
             }
-            .sorted { $0.displayName < $1.displayName }
+            return (code: identifier, displayName: displayName)
         }
-        #endif
-        return []
+        .sorted { $0.displayName < $1.displayName }
     }
 
     init(articleContent: String, summarizeUseCase: PSummarizeArticleUseCase) {
@@ -42,13 +33,9 @@ final class ArticleSummaryViewModel {
         self.selectedLanguage = Locale.current.language.maximalIdentifier
     }
 
-    #if canImport(FoundationModels)
-    @available(iOS 26.0, *)
     func prewarm() {
-        let session = LanguageModelSession()
-        session.prewarm()
+        summarizeUseCase.prewarm()
     }
-    #endif
 
     @MainActor
     func summarize() async {

@@ -5,59 +5,9 @@ import Foundation
 @Suite("SummarizeArticleUseCase Tests")
 struct SummarizeArticleUseCaseTests {
 
-    // MARK: - HTML Stripping
-
-    @Test("stripHTML removes tags and returns plain text")
-    func stripHTMLRemovesTags() {
-        let useCase = SummarizeArticleUseCase()
-        let html = "<p>Hello <strong>world</strong></p>"
-        let result = useCase.stripHTML(html)
-        #expect(result.contains("Hello"))
-        #expect(result.contains("world"))
-        #expect(!result.contains("<p>"))
-        #expect(!result.contains("<strong>"))
-    }
-
-    @Test("stripHTML handles empty string")
-    func stripHTMLEmpty() {
-        let useCase = SummarizeArticleUseCase()
-        let result = useCase.stripHTML("")
-        #expect(result.isEmpty)
-    }
-
-    // MARK: - Chunking
-
-    @Test("splitIntoChunks returns single chunk for short text")
-    func splitShortText() {
-        let useCase = SummarizeArticleUseCase()
-        let text = "Short text."
-        let chunks = useCase.splitIntoChunks(text: text)
-        #expect(chunks.count == 1)
-        #expect(chunks[0] == "Short text.")
-    }
-
-    @Test("splitIntoChunks splits at paragraph boundaries")
-    func splitAtParagraphs() {
-        let useCase = SummarizeArticleUseCase()
-        // Create text that exceeds maxChunkCharacters (12000)
-        let paragraph = String(repeating: "word ", count: 2000) // ~10000 chars
-        let text = paragraph + "\n\n" + paragraph
-        let chunks = useCase.splitIntoChunks(text: text)
-        #expect(chunks.count == 2)
-    }
-
-    @Test("splitIntoChunks handles empty text")
-    func splitEmptyText() {
-        let useCase = SummarizeArticleUseCase()
-        let chunks = useCase.splitIntoChunks(text: "")
-        #expect(chunks.isEmpty)
-    }
-
-    // MARK: - Execute with empty content
-
     @Test("execute throws emptyContent for whitespace-only input")
     func executeEmptyContent() async {
-        let useCase = SummarizeArticleUseCase()
+        let useCase = SummarizeArticleUseCase(repository: MockSummarizationRepository())
         do {
             _ = try await useCase.execute(articleHTML: "   ", targetLanguage: "English")
             #expect(Bool(false), "Should have thrown")
@@ -68,13 +18,43 @@ struct SummarizeArticleUseCaseTests {
         }
     }
 
-    // MARK: - Summary Length Instruction
-
-    @Test("short article gets single chunk")
-    func shortArticleInstruction() {
-        let useCase = SummarizeArticleUseCase()
-        let shortText = String(repeating: "word ", count: 100) // ~100 words
-        let chunks = useCase.splitIntoChunks(text: shortText)
-        #expect(chunks.count == 1)
+    @Test("lengthInstruction returns correct instruction for short articles")
+    func shortLengthInstruction() {
+        let instruction = SummarizeArticleUseCase.lengthInstruction(for: 100)
+        #expect(instruction.contains("2-3 sentences"))
     }
+
+    @Test("lengthInstruction returns correct instruction for medium articles")
+    func mediumLengthInstruction() {
+        let instruction = SummarizeArticleUseCase.lengthInstruction(for: 1000)
+        #expect(instruction.contains("short paragraph"))
+    }
+
+    @Test("lengthInstruction returns correct instruction for long articles")
+    func longLengthInstruction() {
+        let instruction = SummarizeArticleUseCase.lengthInstruction(for: 3000)
+        #expect(instruction.contains("multiple paragraphs"))
+    }
+
+    @Test("buildInstructions includes language and length")
+    func buildInstructions() {
+        let result = SummarizeArticleUseCase.buildInstructions(lengthInstruction: "Be brief.", targetLanguage: "German")
+        #expect(result.contains("Be brief."))
+        #expect(result.contains("German"))
+    }
+}
+
+class MockSummarizationRepository: PSummarizationRepository {
+    static var isAvailable: Bool { true }
+    static var supportedLanguages: [String] { ["en-US", "de-DE"] }
+    var summarizeCallCount = 0
+    var lastInstructions: String?
+
+    func summarize(text: String, instructions: String) async throws -> String {
+        summarizeCallCount += 1
+        lastInstructions = instructions
+        return "Mock summary"
+    }
+
+    func prewarm() {}
 }

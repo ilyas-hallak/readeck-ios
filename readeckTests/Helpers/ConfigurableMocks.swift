@@ -116,6 +116,8 @@ class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
         lastTargetLanguage = targetLanguage
         return try result.get()
     }
+
+    func prewarm() {}
 }
 
 // MARK: - Simple Test Error
