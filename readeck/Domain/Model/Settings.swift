@@ -23,6 +23,7 @@ struct Settings {
     var bookmarkSortField: BookmarkSortField?
     var bookmarkSortDirection: BookmarkSortDirection?
 
+    var disableReaderBackSwipe = false
     var urlOpener: UrlOpener?
     var swipeActionConfig: SwipeActionConfig?
 

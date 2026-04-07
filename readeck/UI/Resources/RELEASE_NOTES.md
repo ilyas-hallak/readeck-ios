@@ -28,6 +28,13 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Custom CSS injection for full styling control
 - All reader settings accessible from both the article view and app settings
 
+### Disable Back Swipe in Reader
+
+- **New setting to disable the edge swipe back gesture** in the article reader
+- Makes it easier to select and highlight text near the screen edges
+- Toggle in Settings → Reading Settings
+- Adds a dedicated back button in the navigation bar when enabled
+
 ---
 
 ## Version 2.1.0

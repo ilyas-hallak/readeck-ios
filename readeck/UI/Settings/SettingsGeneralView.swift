@@ -45,6 +45,19 @@ struct SettingsGeneralView: View {
                 Text("Activate Listen to Article to have your articles read to you. This feature is currently in beta — you may encounter occasional issues.")
             }
 
+            Section {
+                Toggle("Disable Back Swipe in Reader", isOn: $viewModel.disableReaderBackSwipe)
+                    .onChange(of: viewModel.disableReaderBackSwipe) {
+                        Task {
+                            await viewModel.saveGeneralSettings()
+                        }
+                    }
+            } header: {
+                Text("Reading")
+            } footer: {
+                Text("Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges.")
+            }
+
             if Bundle.main.isDebugBuild {
                 Section {
                     Toggle("Safari Reader Mode", isOn: $viewModel.enableReaderMode)

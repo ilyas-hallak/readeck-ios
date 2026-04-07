@@ -12,6 +12,7 @@ struct DebugMenuView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appSettings: AppSettings
     @StateObject private var viewModel = DebugMenuViewModel()
+    @AppStorage("useNativeWebView") private var useNativeWebView = true
 
     var body: some View {
         NavigationView {
@@ -115,6 +116,17 @@ struct DebugMenuView: View {
                     Text("Data Management")
                 } footer: {
                     Text("⚠️ Reset Core Data will delete all local bookmarks and cache")
+                }
+
+                // MARK: - Reader Section
+                if #available(iOS 26.0, *) {
+                    Section {
+                        Toggle("Use Native WebView", isOn: $useNativeWebView)
+                    } header: {
+                        Text("Reader")
+                    } footer: {
+                        Text("Switch between the native SwiftUI reader and the legacy WKWebView-based reader.")
+                    }
                 }
 
                 // MARK: - Advanced Section

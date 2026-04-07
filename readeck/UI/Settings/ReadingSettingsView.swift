@@ -41,6 +41,19 @@ struct ReadingSettingsView: View {
                         }
                     }
                 }
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("Disable Back Swipe in Reader", isOn: $viewModel.disableReaderBackSwipe)
+                        .onChange(of: viewModel.disableReaderBackSwipe) {
+                            Task {
+                                await viewModel.saveGeneralSettings()
+                            }
+                        }
+
+                    Text("Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
             } header: {
                 Text("Reading Settings")
             }
