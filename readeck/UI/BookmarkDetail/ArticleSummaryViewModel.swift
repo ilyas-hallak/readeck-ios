@@ -20,9 +20,15 @@ final class ArticleSummaryViewModel {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             return SummarizeArticleUseCase.supportedLanguages.compactMap { lang in
-                guard let code = lang.languageCode?.identifier else { return nil }
-                let displayName = Locale.current.localizedString(forLanguageCode: code) ?? code
-                return (code: code, displayName: displayName)
+                guard let langCode = lang.languageCode?.identifier else { return nil }
+                let identifier = lang.maximalIdentifier
+                let locale = Locale(identifier: identifier)
+                var displayName = Locale.current.localizedString(forLanguageCode: langCode) ?? langCode
+                if let region = lang.region {
+                    let regionName = Locale.current.localizedString(forRegionCode: region.identifier) ?? region.identifier
+                    displayName = "\(displayName) (\(regionName))"
+                }
+                return (code: identifier, displayName: displayName)
             }
             .sorted { $0.displayName < $1.displayName }
         }
@@ -33,7 +39,7 @@ final class ArticleSummaryViewModel {
     init(articleContent: String, summarizeUseCase: PSummarizeArticleUseCase) {
         self.articleContent = articleContent
         self.summarizeUseCase = summarizeUseCase
-        self.selectedLanguage = Locale.current.language.languageCode?.identifier ?? "en"
+        self.selectedLanguage = Locale.current.language.maximalIdentifier
     }
 
     #if canImport(FoundationModels)
@@ -52,7 +58,9 @@ final class ArticleSummaryViewModel {
         error = nil
         summaryMarkdown = ""
 
-        let displayName = Locale.current.localizedString(forLanguageCode: selectedLanguage) ?? selectedLanguage
+        let locale = Locale(identifier: selectedLanguage)
+        let langCode = locale.language.languageCode?.identifier ?? selectedLanguage
+        let displayName = Locale.current.localizedString(forLanguageCode: langCode) ?? selectedLanguage
 
         do {
             try Task.checkCancellation()
