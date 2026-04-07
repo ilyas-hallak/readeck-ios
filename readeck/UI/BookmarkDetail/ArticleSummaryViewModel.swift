@@ -9,10 +9,12 @@ final class ArticleSummaryViewModel {
     private let articleContent: String
     private var currentTask: Task<Void, Never>?
 
-    var summary: String = ""
-    var isLoading: Bool = true
+    var summaryMarkdown: String = ""
+    var isLoading: Bool = false
+    var isExpanded: Bool = false
     var error: Error?
     var selectedLanguage: String
+    var hasGenerated: Bool = false
 
     var availableLanguages: [(code: String, displayName: String)] {
         #if canImport(FoundationModels)
@@ -34,23 +36,32 @@ final class ArticleSummaryViewModel {
         self.selectedLanguage = Locale.current.language.languageCode?.identifier ?? "en"
     }
 
+    #if canImport(FoundationModels)
+    @available(iOS 26.0, *)
+    func prewarm() {
+        let session = LanguageModelSession()
+        session.prewarm()
+    }
+    #endif
+
     @MainActor
     func summarize() async {
         currentTask?.cancel()
         isLoading = true
+        isExpanded = true
         error = nil
-        summary = ""
+        summaryMarkdown = ""
 
         let displayName = Locale.current.localizedString(forLanguageCode: selectedLanguage) ?? selectedLanguage
 
         do {
             try Task.checkCancellation()
-            summary = try await summarizeUseCase.execute(
+            summaryMarkdown = try await summarizeUseCase.execute(
                 articleHTML: articleContent,
                 targetLanguage: displayName
             )
+            hasGenerated = true
         } catch is CancellationError {
-            // Ignore - new task will take over
             return
         } catch {
             self.error = error

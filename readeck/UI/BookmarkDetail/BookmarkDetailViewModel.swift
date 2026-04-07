@@ -30,9 +30,7 @@ final class BookmarkDetailViewModel {
     var hasVisibleHeroImage: Bool { showHeroImage && !bookmarkDetail.imageUrl.isEmpty }
     var canSummarize: Bool { SummarizeArticleUseCase.isAvailable && !articleContent.isEmpty }
 
-    func makeSummarizeUseCase() -> PSummarizeArticleUseCase {
-        summarizeArticleUseCase
-    }
+    private(set) var summaryViewModel: ArticleSummaryViewModel!
 
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
@@ -47,6 +45,10 @@ final class BookmarkDetailViewModel {
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.summarizeArticleUseCase = factory.makeSummarizeArticleUseCase()
         self.factory = factory
+        self.summaryViewModel = ArticleSummaryViewModel(
+            articleContent: "",
+            summarizeUseCase: summarizeArticleUseCase
+        )
 
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
@@ -90,6 +92,15 @@ final class BookmarkDetailViewModel {
         if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
             articleContent = cachedHTML
             processArticleContent()
+            self.summaryViewModel = ArticleSummaryViewModel(
+                articleContent: self.articleContent,
+                summarizeUseCase: self.summarizeArticleUseCase
+            )
+            #if canImport(FoundationModels)
+            if #available(iOS 26.0, *) {
+                summaryViewModel.prewarm()
+            }
+            #endif
             isLoadingArticle = false
             Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
 
@@ -121,6 +132,15 @@ final class BookmarkDetailViewModel {
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
+            self.summaryViewModel = ArticleSummaryViewModel(
+                articleContent: self.articleContent,
+                summarizeUseCase: self.summarizeArticleUseCase
+            )
+            #if canImport(FoundationModels)
+            if #available(iOS 26.0, *) {
+                summaryViewModel.prewarm()
+            }
+            #endif
             Logger.viewModel.info("✅ Fetched article from server (\(articleContent.utf8.count) bytes)")
         } catch {
             errorMessage = "Error loading article"

@@ -19,7 +19,6 @@ struct ArticleReaderView: View {
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
-    @State private var showingSummarySheet = false
     @State private var isToolbarVisible: Bool = true
     @State private var scrollTracker = ScrollTracker()
 
@@ -62,12 +61,6 @@ struct ArticleReaderView: View {
             }
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
-            }
-            .sheet(isPresented: $showingSummarySheet) {
-                ArticleSummarySheet(
-                    articleContent: viewModel.articleContent,
-                    summarizeUseCase: viewModel.makeSummarizeUseCase()
-                )
             }
             .onChange(of: showingFontSettings) { _, isShowing in
                 if !isShowing {
@@ -346,6 +339,9 @@ struct ArticleReaderView: View {
                 }
             }
             metaInfoSection
+            if viewModel.canSummarize {
+                ArticleSummaryCardView(viewModel: viewModel.summaryViewModel)
+            }
         }
         .padding(.horizontal)
     }
@@ -400,18 +396,6 @@ struct ArticleReaderView: View {
                             }
                         }
                         .padding(.trailing, 8)
-                    }
-                }
-            }
-
-            if viewModel.canSummarize {
-                metaRow(icon: "sparkles") {
-                    Button(action: {
-                        showingSummarySheet = true
-                    }) {
-                        Text("Summarize".localized)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
                     }
                 }
             }
