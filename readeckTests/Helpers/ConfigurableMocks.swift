@@ -11,7 +11,8 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
     var executeCalled = false
     var lastState: BookmarkState?
 
-    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?) async throws -> BookmarksPage {
+    // swiftlint:disable:next discouraged_optional_collection
+    func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage {
         executeCalled = true
         lastState = state
         return try result.get()
@@ -102,6 +103,21 @@ class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase {
     func createFromURLWithTitle(_ url: String, title: String) async throws -> String { try result.get() }
     func createFromURLWithLabels(_ url: String, labels: [String]) async throws -> String { try result.get() }
     func createFromClipboard() async throws -> String? { try result.get() }
+}
+
+class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
+    static var isAvailable: Bool { true }
+    var result: Result<String, Error> = .success("Test summary")
+    var executeCalled = false
+    var lastTargetLanguage: String?
+
+    func execute(articleHTML: String, targetLanguage: String) async throws -> String {
+        executeCalled = true
+        lastTargetLanguage = targetLanguage
+        return try result.get()
+    }
+
+    func prewarm() {}
 }
 
 // MARK: - Simple Test Error

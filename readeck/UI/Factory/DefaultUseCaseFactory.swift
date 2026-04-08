@@ -38,6 +38,7 @@ protocol UseCaseFactory {
     func makeClearCacheUseCase() -> PClearCacheUseCase
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase
     func makeAuthRepository() -> PAuthRepository
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
@@ -54,6 +55,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var labelsRepository: PLabelsRepository = LabelsRepository(api: api)
     private let offlineCacheRepository: POfflineCacheRepository = OfflineCacheRepository()
     private let networkMonitorRepository: PNetworkMonitorRepository = NetworkMonitorRepository()
+    private lazy var summarizationRepository: PSummarizationRepository = SummarizationRepository()
 
     static let shared = DefaultUseCaseFactory()
 
@@ -213,5 +215,9 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeAuthRepository() -> PAuthRepository {
         authRepository
+    }
+
+    func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase {
+        SummarizeArticleUseCase(repository: summarizationRepository)
     }
 }

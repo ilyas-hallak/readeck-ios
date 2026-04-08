@@ -10,7 +10,6 @@ final class BookmarkDetailViewModel {
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
-
     var bookmarkDetail = BookmarkDetail.empty
     var articleContent = ""
     var articleParagraphs: [String] = []
@@ -27,6 +26,9 @@ final class BookmarkDetailViewModel {
     var showHeroImage: Bool { settings?.hideHeroImage != true }
     var showWordCount: Bool { settings?.hideWordCount != true }
     var hasVisibleHeroImage: Bool { showHeroImage && !bookmarkDetail.imageUrl.isEmpty }
+    var canSummarize: Bool { SummarizeArticleUseCase.isAvailable && !articleContent.isEmpty }
+
+    private(set) var summaryViewModel: ArticleSummaryViewModel!
 
     private var factory: UseCaseFactory?
     private var cancellables = Set<AnyCancellable>()
@@ -40,6 +42,7 @@ final class BookmarkDetailViewModel {
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.factory = factory
+        self.summaryViewModel = ArticleSummaryViewModel()
 
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
@@ -83,6 +86,12 @@ final class BookmarkDetailViewModel {
         if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
             articleContent = cachedHTML
             processArticleContent()
+            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
+            #if canImport(FoundationModels)
+            if #available(iOS 26.0, *) {
+                summaryViewModel.prewarm()
+            }
+            #endif
             isLoadingArticle = false
             Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
 
@@ -114,6 +123,12 @@ final class BookmarkDetailViewModel {
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
+            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
+            #if canImport(FoundationModels)
+            if #available(iOS 26.0, *) {
+                summaryViewModel.prewarm()
+            }
+            #endif
             Logger.viewModel.info("✅ Fetched article from server (\(articleContent.utf8.count) bytes)")
         } catch {
             errorMessage = "Error loading article"

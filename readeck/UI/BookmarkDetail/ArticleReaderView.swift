@@ -327,6 +327,9 @@ struct ArticleReaderView: View {
                 }
             }
             metaInfoSection
+            if viewModel.canSummarize {
+                ArticleSummaryCardView(viewModel: viewModel.summaryViewModel)
+            }
         }
         .padding(.horizontal)
     }
