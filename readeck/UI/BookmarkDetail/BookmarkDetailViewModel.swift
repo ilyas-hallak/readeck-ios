@@ -10,8 +10,6 @@ final class BookmarkDetailViewModel {
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
-    private let summarizeArticleUseCase: PSummarizeArticleUseCase
-
     var bookmarkDetail = BookmarkDetail.empty
     var articleContent = ""
     var articleParagraphs: [String] = []
@@ -43,12 +41,8 @@ final class BookmarkDetailViewModel {
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
-        self.summarizeArticleUseCase = factory.makeSummarizeArticleUseCase()
         self.factory = factory
-        self.summaryViewModel = ArticleSummaryViewModel(
-            articleContent: "",
-            summarizeUseCase: summarizeArticleUseCase
-        )
+        self.summaryViewModel = ArticleSummaryViewModel()
 
         readProgressSubject
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
@@ -92,10 +86,7 @@ final class BookmarkDetailViewModel {
         if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
             articleContent = cachedHTML
             processArticleContent()
-            self.summaryViewModel = ArticleSummaryViewModel(
-                articleContent: self.articleContent,
-                summarizeUseCase: self.summarizeArticleUseCase
-            )
+            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
             #if canImport(FoundationModels)
             if #available(iOS 26.0, *) {
                 summaryViewModel.prewarm()
@@ -132,10 +123,7 @@ final class BookmarkDetailViewModel {
         do {
             articleContent = try await getBookmarkArticleUseCase.execute(id: id)
             processArticleContent()
-            self.summaryViewModel = ArticleSummaryViewModel(
-                articleContent: self.articleContent,
-                summarizeUseCase: self.summarizeArticleUseCase
-            )
+            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
             #if canImport(FoundationModels)
             if #available(iOS 26.0, *) {
                 summaryViewModel.prewarm()

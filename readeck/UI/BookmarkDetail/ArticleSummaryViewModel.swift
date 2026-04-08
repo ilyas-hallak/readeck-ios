@@ -3,7 +3,7 @@ import Foundation
 @Observable
 final class ArticleSummaryViewModel {
     private let summarizeUseCase: PSummarizeArticleUseCase
-    private let articleContent: String
+    let articleContent: String
     private var currentTask: Task<Void, Never>?
 
     var summaryMarkdown: String = ""
@@ -27,9 +27,9 @@ final class ArticleSummaryViewModel {
         .sorted { $0.displayName < $1.displayName }
     }
 
-    init(articleContent: String, summarizeUseCase: PSummarizeArticleUseCase) {
+    init(articleContent: String = "", _ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.articleContent = articleContent
-        self.summarizeUseCase = summarizeUseCase
+        self.summarizeUseCase = factory.makeSummarizeArticleUseCase()
         self.selectedLanguage = Locale.current.language.maximalIdentifier
     }
 
