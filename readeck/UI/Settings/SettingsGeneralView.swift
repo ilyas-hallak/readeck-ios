@@ -35,6 +35,7 @@ struct SettingsGeneralView: View {
 
                 Toggle("Listen to Article", isOn: $viewModel.enableTTS)
                     .onChange(of: viewModel.enableTTS) {
+                        guard !viewModel.isLoading else { return }
                         Task {
                             await viewModel.saveGeneralSettings()
                         }
@@ -48,6 +49,7 @@ struct SettingsGeneralView: View {
             Section {
                 Toggle("Disable Back Swipe in Reader", isOn: $viewModel.disableReaderBackSwipe)
                     .onChange(of: viewModel.disableReaderBackSwipe) {
+                        guard !viewModel.isLoading else { return }
                         Task {
                             await viewModel.saveGeneralSettings()
                         }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FontSelectionView: View {
     @State private var viewModel: FontSettingsViewModel
+    @State private var showCSSHelp = false
     @Environment(\.dismiss) private var dismiss
 
     init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
@@ -101,6 +102,7 @@ struct FontSelectionView: View {
                 }
             }
             .onChange(of: viewModel.selectedFontFamily) {
+                guard !viewModel.isLoading else { return }
                 Task { await viewModel.saveFontSettings() }
             }
 
@@ -240,7 +242,7 @@ struct FontSelectionView: View {
                     value: $viewModel.horizontalMargin,
                     label: "\(Int(viewModel.horizontalMargin))px",
                     range: 0...40,
-                    step: 4
+                    step: 1
                 ) {
                     Task { await viewModel.saveReaderLayout() }
                 }
@@ -318,14 +320,17 @@ struct FontSelectionView: View {
         Section {
             Toggle("Hide progress bar", isOn: $viewModel.hideProgressBar)
                 .onChange(of: viewModel.hideProgressBar) {
+                    guard !viewModel.isLoading else { return }
                     Task { await viewModel.saveVisibilitySettings() }
                 }
             Toggle("Hide word count & reading time", isOn: $viewModel.hideWordCount)
                 .onChange(of: viewModel.hideWordCount) {
+                    guard !viewModel.isLoading else { return }
                     Task { await viewModel.saveVisibilitySettings() }
                 }
             Toggle("Hide hero image", isOn: $viewModel.hideHeroImage)
                 .onChange(of: viewModel.hideHeroImage) {
+                    guard !viewModel.isLoading else { return }
                     Task { await viewModel.saveVisibilitySettings() }
                 }
         } header: {
@@ -341,13 +346,26 @@ struct FontSelectionView: View {
                 .font(.system(.caption, design: .monospaced))
                 .frame(minHeight: 100)
                 .onChange(of: viewModel.customCSS) {
+                    guard !viewModel.isLoading else { return }
                     Task { await viewModel.saveCustomCSS() }
                 }
-            Text("Custom CSS rules appended after all default styles. Use at your own risk.")
+            Text("css.help.hint".localized)
                 .font(.caption)
                 .foregroundColor(.secondary)
         } header: {
-            Text("Custom CSS")
+            HStack {
+                Text("Custom CSS")
+                Spacer()
+                Button {
+                    showCSSHelp = true
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .font(.subheadline)
+                }
+            }
+        }
+        .sheet(isPresented: $showCSSHelp) {
+            CustomCSSHelpView(customCSS: $viewModel.customCSS)
         }
     }
 }

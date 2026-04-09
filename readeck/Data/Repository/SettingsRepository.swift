@@ -59,7 +59,9 @@ final class SettingsRepository: PSettingsRepository {
                         existingSettings.enableTTS = enableTTS
                     }
 
-                    existingSettings.disableReaderBackSwipe = settings.disableReaderBackSwipe
+                    if let disableReaderBackSwipe = settings.disableReaderBackSwipe {
+                        existingSettings.disableReaderBackSwipe = disableReaderBackSwipe
+                    }
 
                     if let theme = settings.theme {
                         existingSettings.theme = theme.rawValue
@@ -163,10 +165,11 @@ final class SettingsRepository: PSettingsRepository {
                     let storedFontSizeNumeric = settingEntity?.fontSizeNumeric ?? 0
                     let fontSizeNumeric: Double? = storedFontSizeNumeric > 0 ? storedFontSizeNumeric : nil
 
-                    // horizontalMargin/lineHeight: 0 means not set (use defaults)
-                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? 0
-                    let horizontalMargin: Double? = storedHorizontalMargin > 0 ? storedHorizontalMargin : nil
+                    // horizontalMargin: 0 is a valid user value (no margin), negative means not set
+                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? -1
+                    let horizontalMargin: Double? = storedHorizontalMargin >= 0 ? storedHorizontalMargin : nil
 
+                    // lineHeight: 0 is not valid, so > 0 check is correct
                     let storedLineHeight = settingEntity?.lineHeight ?? 0
                     let lineHeight: Double? = storedLineHeight > 0 ? storedLineHeight : nil
 
@@ -183,7 +186,7 @@ final class SettingsRepository: PSettingsRepository {
                         tagSortOrder: TagSortOrder(rawValue: settingEntity?.tagSortOrder ?? TagSortOrder.byCount.rawValue),
                         bookmarkSortField: BookmarkSortField(rawValue: settingEntity?.bookmarkSortField ?? BookmarkSortField.created.rawValue),
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
-                        disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe ?? false,
+                        disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe,
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
                         swipeActionConfig: swipeActionConfig,
                         fontSizeNumeric: fontSizeNumeric,

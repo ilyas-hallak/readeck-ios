@@ -104,7 +104,7 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
 
     func execute(disableReaderBackSwipe: Bool) async throws {
         try await settingsRepository.saveSettings(
-            .init(disableReaderBackSwipe: disableReaderBackSwipe)
+            .init(disableReaderBackSwipe: Optional(disableReaderBackSwipe))
         )
     }
 

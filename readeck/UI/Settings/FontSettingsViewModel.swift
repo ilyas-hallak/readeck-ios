@@ -28,6 +28,9 @@ final class FontSettingsViewModel {
     var hideWordCount: Bool = false
     var hideHeroImage: Bool = false
 
+    // MARK: - Loading State
+    var isLoading = false
+
     // MARK: - Custom CSS
     var customCSS: String = ""
 
@@ -186,6 +189,9 @@ final class FontSettingsViewModel {
 
     @MainActor
     func loadFontSettings() async {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 selectedFontFamily = settings.fontFamily ?? .system
