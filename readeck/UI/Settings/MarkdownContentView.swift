@@ -6,10 +6,16 @@ import MarkdownUI
 /// the underlying Markdown library if needed in the future.
 struct MarkdownContentView: View {
     let content: String
+    var textColor: Color?
 
     var body: some View {
         Markdown(content)
             .textSelection(.enabled)
+            .markdownTextStyle {
+                if let textColor {
+                    ForegroundColor(textColor)
+                }
+            }
     }
 }
 

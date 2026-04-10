@@ -24,6 +24,7 @@ struct FontSettingsView: View {
                     }
                 }
                 .onChange(of: viewModel.selectedFontFamily) {
+                    guard !viewModel.isLoading else { return }
                     Task {
                         await viewModel.saveFontSettings()
                     }
@@ -42,6 +43,7 @@ struct FontSettingsView: View {
                     }
                     Slider(value: $viewModel.fontSizeNumeric, in: 10...30, step: 1)
                         .onChange(of: viewModel.fontSizeNumeric) {
+                            guard !viewModel.isLoading else { return }
                             Task {
                                 await viewModel.saveFontSettings()
                             }
@@ -61,6 +63,7 @@ struct FontSettingsView: View {
                     }
                     Slider(value: $viewModel.horizontalMargin, in: 0...40, step: 1)
                         .onChange(of: viewModel.horizontalMargin) {
+                            guard !viewModel.isLoading else { return }
                             Task {
                                 await viewModel.saveReaderLayout()
                             }
@@ -76,6 +79,7 @@ struct FontSettingsView: View {
                     }
                     Slider(value: $viewModel.lineHeight, in: 1.0...2.5, step: 0.1)
                         .onChange(of: viewModel.lineHeight) {
+                            guard !viewModel.isLoading else { return }
                             Task {
                                 await viewModel.saveReaderLayout()
                             }
@@ -88,14 +92,22 @@ struct FontSettingsView: View {
             Section {
                 Toggle("Hide progress bar", isOn: $viewModel.hideProgressBar)
                     .onChange(of: viewModel.hideProgressBar) {
+                        guard !viewModel.isLoading else { return }
                         Task { await viewModel.saveVisibilitySettings() }
                     }
                 Toggle("Hide word count & reading time", isOn: $viewModel.hideWordCount)
                     .onChange(of: viewModel.hideWordCount) {
+                        guard !viewModel.isLoading else { return }
                         Task { await viewModel.saveVisibilitySettings() }
                     }
                 Toggle("Hide hero image", isOn: $viewModel.hideHeroImage)
                     .onChange(of: viewModel.hideHeroImage) {
+                        guard !viewModel.isLoading else { return }
+                        Task { await viewModel.saveVisibilitySettings() }
+                    }
+                Toggle("Hide article summary", isOn: $viewModel.hideSummary)
+                    .onChange(of: viewModel.hideSummary) {
+                        guard !viewModel.isLoading else { return }
                         Task { await viewModel.saveVisibilitySettings() }
                     }
             } header: {
@@ -127,6 +139,7 @@ struct FontSettingsView: View {
                     .font(.system(.caption, design: .monospaced))
                     .frame(minHeight: 100)
                     .onChange(of: viewModel.customCSS) {
+                        guard !viewModel.isLoading else { return }
                         Task { await viewModel.saveCustomCSS() }
                     }
                 Text("css.help.hint".localized)

@@ -100,6 +100,14 @@ struct SwipeActionsDetailView: View {
                 }
             } header: {
                 Text("Left Swipe")
+            } footer: {
+                HStack(spacing: 4) {
+                    Image(systemName: "rectangle.lefthalf.inset.filled.arrow.left")
+                    Text("First action appears at the edge")
+                    Image(systemName: "arrow.right")
+                }
+                .font(.caption2)
+                .foregroundColor(.secondary)
             }
 
             Section {
@@ -130,6 +138,14 @@ struct SwipeActionsDetailView: View {
                 }
             } header: {
                 Text("Right Swipe")
+            } footer: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.left")
+                    Text("First action appears at the edge")
+                    Image(systemName: "rectangle.righthalf.inset.filled.arrow.right")
+                }
+                .font(.caption2)
+                .foregroundColor(.secondary)
             }
 
             Section {

@@ -27,6 +27,10 @@ final class FontSettingsViewModel {
     var hideProgressBar: Bool = false
     var hideWordCount: Bool = false
     var hideHeroImage: Bool = false
+    var hideSummary: Bool = false
+
+    // MARK: - Loading State
+    var isLoading = false
 
     // MARK: - Custom CSS
     var customCSS: String = ""
@@ -186,6 +190,9 @@ final class FontSettingsViewModel {
 
     @MainActor
     func loadFontSettings() async {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 selectedFontFamily = settings.fontFamily ?? .system
@@ -205,6 +212,7 @@ final class FontSettingsViewModel {
                 hideProgressBar = settings.hideProgressBar ?? false
                 hideWordCount = settings.hideWordCount ?? false
                 hideHeroImage = settings.hideHeroImage ?? false
+                hideSummary = settings.hideSummary ?? false
                 customCSS = settings.customCSS ?? ""
                 readerColorTheme = settings.readerColorTheme ?? .system
                 if let bgHex = settings.customBackgroundColor {
@@ -249,7 +257,8 @@ final class FontSettingsViewModel {
             try await saveSettingsUseCase.execute(
                 readerVisibility: hideProgressBar,
                 hideWordCount: hideWordCount,
-                hideHeroImage: hideHeroImage
+                hideHeroImage: hideHeroImage,
+                hideSummary: hideSummary
             )
         } catch {
             errorMessage = "Error saving visibility settings"

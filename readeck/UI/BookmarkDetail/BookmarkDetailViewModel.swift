@@ -26,7 +26,7 @@ final class BookmarkDetailViewModel {
     var showHeroImage: Bool { settings?.hideHeroImage != true }
     var showWordCount: Bool { settings?.hideWordCount != true }
     var hasVisibleHeroImage: Bool { showHeroImage && !bookmarkDetail.imageUrl.isEmpty }
-    var canSummarize: Bool { SummarizeArticleUseCase.isAvailable && !articleContent.isEmpty }
+    var canSummarize: Bool { SummarizeArticleUseCase.isAvailable && !articleContent.isEmpty && settings?.hideSummary != true }
 
     private(set) var summaryViewModel: ArticleSummaryViewModel!
 
