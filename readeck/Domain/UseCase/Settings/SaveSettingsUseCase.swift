@@ -4,7 +4,7 @@ protocol PSaveSettingsUseCase {
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws
     func execute(selectedFontFamily: FontFamily, fontSizeNumeric: Double) async throws
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws
-    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool) async throws
+    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws
     func execute(customCSS: String) async throws
     func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws
     func execute(enableTTS: Bool) async throws
@@ -49,12 +49,13 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
         )
     }
 
-    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool) async throws {
+    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws {
         try await settingsRepository.saveSettings(
             .init(
                 hideProgressBar: hideProgressBar,
                 hideWordCount: hideWordCount,
-                hideHeroImage: hideHeroImage
+                hideHeroImage: hideHeroImage,
+                hideSummary: hideSummary
             )
         )
     }
@@ -104,7 +105,7 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
 
     func execute(disableReaderBackSwipe: Bool) async throws {
         try await settingsRepository.saveSettings(
-            .init(disableReaderBackSwipe: Optional(disableReaderBackSwipe))
+            .init(disableReaderBackSwipe: disableReaderBackSwipe)
         )
     }
 

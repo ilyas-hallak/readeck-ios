@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ArticleSummaryCardView: View {
     @Bindable var viewModel: ArticleSummaryViewModel
+    var backgroundColor: Color = Color(.secondarySystemBackground)
+    var textColor: Color = .primary
     @State private var summaryTask: Task<Void, Never>?
 
     var body: some View {
@@ -17,7 +19,7 @@ struct ArticleSummaryCardView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
+                .fill(backgroundColor)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -34,7 +36,7 @@ struct ArticleSummaryCardView: View {
                 .foregroundColor(.accentColor)
             Text(viewModel.hasGenerated ? "Summary".localized : "Summarize".localized)
                 .font(.subheadline.weight(.medium))
-                .foregroundColor(.primary)
+                .foregroundColor(textColor)
             Spacer()
 
             if viewModel.isLoading {
@@ -43,7 +45,7 @@ struct ArticleSummaryCardView: View {
             } else if viewModel.hasGenerated {
                 Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(textColor.opacity(0.6))
             }
         }
         .padding(.horizontal, 14)
@@ -75,7 +77,7 @@ struct ArticleSummaryCardView: View {
                         .scaleEffect(0.8)
                     Text("Generating summary...".localized)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(textColor.opacity(0.6))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
@@ -83,7 +85,7 @@ struct ArticleSummaryCardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(error.localizedDescription)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(textColor.opacity(0.6))
                     Button("Retry".localized) {
                         Task { await viewModel.summarize() }
                     }
@@ -92,7 +94,7 @@ struct ArticleSummaryCardView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
             } else if !viewModel.summaryMarkdown.isEmpty {
-                MarkdownContentView(content: viewModel.summaryMarkdown)
+                MarkdownContentView(content: viewModel.summaryMarkdown, textColor: textColor)
                     .font(.subheadline)
                     .padding(.horizontal, 14)
                     .padding(.bottom, 4)

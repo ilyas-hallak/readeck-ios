@@ -105,6 +105,11 @@ struct FontSettingsView: View {
                         guard !viewModel.isLoading else { return }
                         Task { await viewModel.saveVisibilitySettings() }
                     }
+                Toggle("Hide article summary", isOn: $viewModel.hideSummary)
+                    .onChange(of: viewModel.hideSummary) {
+                        guard !viewModel.isLoading else { return }
+                        Task { await viewModel.saveVisibilitySettings() }
+                    }
             } header: {
                 Text("Visibility")
             }

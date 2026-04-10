@@ -112,6 +112,9 @@ final class SettingsRepository: PSettingsRepository {
                     if let hideHeroImage = settings.hideHeroImage {
                         existingSettings.hideHeroImage = hideHeroImage
                     }
+                    if let hideSummary = settings.hideSummary {
+                        existingSettings.hideSummary = hideSummary
+                    }
                     if let customCSS = settings.customCSS {
                         existingSettings.customCSS = customCSS
                     }
@@ -195,6 +198,7 @@ final class SettingsRepository: PSettingsRepository {
                         hideProgressBar: settingEntity?.hideProgressBar,
                         hideWordCount: settingEntity?.hideWordCount,
                         hideHeroImage: settingEntity?.hideHeroImage,
+                        hideSummary: settingEntity?.hideSummary,
                         customCSS: settingEntity?.customCSS,
                         readerColorTheme: ReaderColorTheme(rawValue: settingEntity?.readerColorTheme ?? ReaderColorTheme.system.rawValue),
                         customBackgroundColor: settingEntity?.customBackgroundColor,

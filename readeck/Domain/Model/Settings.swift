@@ -34,6 +34,7 @@ struct Settings {
     var hideProgressBar: Bool?
     var hideWordCount: Bool?
     var hideHeroImage: Bool?
+    var hideSummary: Bool?
     var customCSS: String?
     var readerColorTheme: ReaderColorTheme?
     var customBackgroundColor: String?  // hex string

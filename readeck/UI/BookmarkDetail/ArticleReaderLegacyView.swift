@@ -542,10 +542,28 @@ struct ArticleReaderLegacyView: View {
             }
             metaInfoSection
             if viewModel.canSummarize {
-                ArticleSummaryCardView(viewModel: viewModel.summaryViewModel)
+                ArticleSummaryCardView(viewModel: viewModel.summaryViewModel, backgroundColor: summaryCardBackgroundColor, textColor: nativeTextColor)
             }
         }
         .padding(.horizontal)
+    }
+
+    private var summaryCardBackgroundColor: Color {
+        let theme = viewModel.settings?.readerColorTheme ?? .system
+        switch theme {
+        case .system:
+            return Color(.secondarySystemBackground)
+        case .custom:
+            if let hex = viewModel.settings?.customBackgroundColor {
+                return Color(hex: hex).opacity(0.85)
+            }
+            return Color(.secondarySystemBackground)
+        default:
+            if let bg = theme.backgroundColor {
+                return bg.opacity(0.85)
+            }
+            return Color(.secondarySystemBackground)
+        }
     }
 
     @ViewBuilder
@@ -610,7 +628,7 @@ struct ArticleReaderLegacyView: View {
             if !viewModel.bookmarkDetail.labels.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "tag")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(nativeSecondaryTextColor)
                         .padding(.top, 2)
 
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -619,7 +637,7 @@ struct ArticleReaderLegacyView: View {
                                 Text(label)
                                     .font(.caption)
                                     .fontWeight(.medium)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(nativeTextColor)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .background(
