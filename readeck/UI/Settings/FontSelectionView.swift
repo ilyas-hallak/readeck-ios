@@ -41,6 +41,9 @@ struct FontSelectionView: View {
         .task {
             await viewModel.loadFontSettings()
         }
+        .sheet(isPresented: $showCSSHelp) {
+            CustomCSSHelpView(customCSS: $viewModel.customCSS)
+        }
     }
 
     // MARK: - Preview
@@ -363,9 +366,6 @@ struct FontSelectionView: View {
                         .font(.subheadline)
                 }
             }
-        }
-        .sheet(isPresented: $showCSSHelp) {
-            CustomCSSHelpView(customCSS: $viewModel.customCSS)
         }
     }
 }
