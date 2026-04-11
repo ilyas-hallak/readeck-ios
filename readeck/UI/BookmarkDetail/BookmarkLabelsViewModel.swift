@@ -1,12 +1,12 @@
 import Foundation
 
 @Observable
-class BookmarkLabelsViewModel {
+final class BookmarkLabelsViewModel {
     private let addLabelsUseCase: PAddLabelsToBookmarkUseCase
     private let removeLabelsUseCase: PRemoveLabelsFromBookmarkUseCase
     private let getLabelsUseCase: PGetLabelsUseCase
     private let syncTagsUseCase: PSyncTagsUseCase
-    
+
     var isLoading = false
     var isInitialLoading = false
     var errorMessage: String?
@@ -14,21 +14,20 @@ class BookmarkLabelsViewModel {
     var currentLabels: [String] = []
     var newLabelText = ""
     var searchText = ""
-    
+
     var allLabels: [BookmarkLabel] = []
-    
+
     var availableLabels: [BookmarkLabel] {
-        return allLabels.filter { !currentLabels.contains($0.name) }
+        allLabels.filter { !currentLabels.contains($0.name) }
     }
-    
+
     var filteredLabels: [BookmarkLabel] {
         if searchText.isEmpty {
             return availableLabels
-        } else {
-            return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
+        return availableLabels.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
-    
+
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared, initialLabels: [String] = []) {
         self.currentLabels = initialLabels
 
@@ -37,7 +36,7 @@ class BookmarkLabelsViewModel {
         self.getLabelsUseCase = factory.makeGetLabelsUseCase()
         self.syncTagsUseCase = factory.makeSyncTagsUseCase()
     }
-    
+
     /// Triggers background sync of tags from server to Core Data
     /// CoreDataTagManagementView will automatically update via @FetchRequest
     @MainActor
@@ -57,12 +56,12 @@ class BookmarkLabelsViewModel {
             showErrorAlert = true
         }
     }
-    
+
     @MainActor
     func addLabels(to bookmarkId: String, labels: [String]) async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
             let uniqueLabels = Set(currentLabels + labels)
             currentLabels = currentLabels.filter { uniqueLabels.contains($0) } + labels.filter { !currentLabels.contains($0) }
@@ -75,27 +74,27 @@ class BookmarkLabelsViewModel {
             errorMessage = "Error adding labels"
             showErrorAlert = true
         }
-        
+
         isLoading = false
     }
-    
+
     @MainActor
     func addLabel(to bookmarkId: String, label: String) async {
         let splitLabels = LabelUtils.splitLabelsFromInput(label)
         let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels)
-        
+
         guard !uniqueLabels.isEmpty else { return }
-        
+
         await addLabels(to: bookmarkId, labels: uniqueLabels)
         newLabelText = ""
         searchText = ""
     }
-    
+
     @MainActor
     func removeLabels(from bookmarkId: String, labels: [String]) async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
             try await removeLabelsUseCase.execute(bookmarkId: bookmarkId, labels: labels)
             // Update local labels
@@ -107,15 +106,15 @@ class BookmarkLabelsViewModel {
             errorMessage = "Error removing labels"
             showErrorAlert = true
         }
-        
+
         isLoading = false
     }
-    
+
     @MainActor
     func removeLabel(from bookmarkId: String, label: String) async {
         await removeLabels(from: bookmarkId, labels: [label])
     }
-    
+
     // Convenience method für das Umschalten eines Labels (hinzufügen wenn nicht vorhanden, entfernen wenn vorhanden)
     @MainActor
     func toggleLabel(for bookmarkId: String, label: String) async {
@@ -125,7 +124,7 @@ class BookmarkLabelsViewModel {
             await addLabel(to: bookmarkId, label: label)
         }
     }
-    
+
     func updateLabels(_ labels: [String]) {
         currentLabels = labels
     }

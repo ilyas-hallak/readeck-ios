@@ -16,13 +16,14 @@ struct AnnotationsListView: View {
     private var viewState: ViewState {
         if viewModel.isLoading {
             return .loading
-        } else if let error = viewModel.errorMessage, viewModel.showErrorAlert {
-            return .error(error)
-        } else if viewModel.annotations.isEmpty {
-            return .empty
-        } else {
-            return .loaded(viewModel.annotations)
         }
+        if let error = viewModel.errorMessage, viewModel.showErrorAlert {
+            return .error(error)
+        }
+        if viewModel.annotations.isEmpty {
+            return .empty
+        }
+        return .loaded(viewModel.annotations)
     }
 
     var body: some View {
@@ -113,7 +114,7 @@ struct AnnotationsListView: View {
         } else if let parsedDate = isoFormatterNoMillis.date(from: dateString) {
             date = parsedDate
         }
-        if let date = date {
+        if let date {
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
             displayFormatter.timeStyle = .short

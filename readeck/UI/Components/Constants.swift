@@ -18,10 +18,10 @@ struct Constants {
 }
 
 enum AnnotationColor: String, CaseIterable, Codable {
-    case yellow = "yellow"
-    case green = "green"
-    case blue = "blue"
-    case red = "red"
+    case yellow
+    case green
+    case blue
+    case red
 
     // Base hex color for buttons and overlays
     var hexColor: String {
@@ -45,7 +45,7 @@ enum AnnotationColor: String, CaseIterable, Codable {
 
     func swiftUIColor(isDark: Bool) -> Color {
         let (r, g, b) = rgb
-        return Color(red: r/255, green: g/255, blue: b/255)
+        return Color(red: r / 255, green: g / 255, blue: b / 255)
     }
 
     // CSS rgba string for JavaScript (for highlighting)

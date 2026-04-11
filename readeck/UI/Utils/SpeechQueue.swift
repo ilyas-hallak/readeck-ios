@@ -6,13 +6,34 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let title: String
     let content: String?
     let url: String
+    // swiftlint:disable:next discouraged_optional_collection
     let labels: [String]?
     let imageUrl: String?
     let language: String
+    var lastCharacterIndex: Int = 0
+    var totalCharacters: Int = 0
+}
+
+extension Bookmark {
+    func toSpeechQueueItem() -> SpeechQueueItem {
+        let text = title + "\n" + description.stripHTML
+        return SpeechQueueItem(
+            id: self.id,
+            title: title,
+            content: description,
+            url: url,
+            labels: labels,
+            imageUrl: resources.image?.src,
+            language: (lang ?? "").isEmpty ? "en" : (lang ?? "en"),
+            lastCharacterIndex: 0,
+            totalCharacters: text.trimmingCharacters(in: .whitespacesAndNewlines).count
+        )
+    }
 }
 
 extension BookmarkDetail {
     func toSpeechQueueItem(_ content: String? = nil) -> SpeechQueueItem {
+        let text = content ?? self.content ?? ""
         return SpeechQueueItem(
             id: self.id,
             title: title,
@@ -20,171 +41,300 @@ extension BookmarkDetail {
             url: url,
             labels: labels,
             imageUrl: imageUrl,
-            language: lang.isEmpty ? "en" : lang
+            language: lang.isEmpty ? "en" : lang,
+            lastCharacterIndex: 0,
+            totalCharacters: (title + "\n" + text).trimmingCharacters(in: .whitespacesAndNewlines).count
         )
     }
 }
 
-class SpeechQueue: ObservableObject {
+final class SpeechQueue: ObservableObject {
+    private let logger = Logger.general
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
     private let ttsManager: TTSManager
     private let queueKey = "tts_queue"
+    private var lastSaveTime: Date = .distantPast
 
     static let shared = SpeechQueue()
 
     // Convert ISO 639-1 language codes (e.g., "de", "en") to BCP 47 (e.g., "de-DE", "en-US")
     private func convertToBCP47(_ isoCode: String) -> String {
+        // Already a BCP 47 code (e.g. "en-US", "pt-BR")
+        if isoCode.contains("-") { return isoCode }
+
         let mapping: [String: String] = [
             "de": "de-DE",
             "en": "en-US",
             "es": "es-ES",
             "fr": "fr-FR",
             "it": "it-IT",
-            "pt": "pt-PT",
+            "pt": "pt-BR",
             "nl": "nl-NL",
-            "pl": "pl-PL",
-            "ru": "ru-RU",
             "ja": "ja-JP",
             "zh": "zh-CN",
             "ko": "ko-KR",
+            "ru": "ru-RU",
             "ar": "ar-SA",
-            "tr": "tr-TR",
+            "pl": "pl-PL",
             "sv": "sv-SE",
             "da": "da-DK",
-            "no": "nb-NO",
+            "nb": "nb-NO",
             "fi": "fi-FI",
-            "cs": "cs-CZ",
-            "hu": "hu-HU",
-            "ro": "ro-RO",
-            "sk": "sk-SK",
-            "uk": "uk-UA",
-            "el": "el-GR",
-            "he": "he-IL",
-            "hi": "hi-IN",
-            "th": "th-TH",
-            "id": "id-ID",
-            "vi": "vi-VN"
+            "tr": "tr-TR"
         ]
-        return mapping[isoCode.lowercased()] ?? "en-US"
+        return mapping[isoCode.lowercased()] ?? "\(isoCode)-\(isoCode.uppercased())"
     }
 
     @Published var queueItems: [SpeechQueueItem] = []
-    @Published var currentText: String = ""
-    @Published var hasItems: Bool = false
+    @Published var currentText = ""
+    @Published var hasItems = false
 
     var queueCount: Int {
-        return queueItems.count
+        queueItems.count
     }
 
     var currentItem: SpeechQueueItem? {
-        return queueItems.first
+        queueItems.first
     }
 
     private init(ttsManager: TTSManager = .shared) {
         self.ttsManager = ttsManager
         loadQueue()
         updatePublishedProperties()
+
+        ttsManager.onUtteranceFinished = { [weak self] in
+            self?.onCurrentItemFinished()
+        }
+        ttsManager.onUtteranceCancelled = { [weak self] in
+            self?.onCurrentItemCancelled()
+        }
+        ttsManager.onPositionUpdate = { [weak self] charIndex in
+            self?.updateCurrentPosition(charIndex)
+        }
     }
-    
+
     func enqueue(_ item: SpeechQueueItem) {
+        dispatchPrecondition(condition: .onQueue(.main))
         queue.append(item)
         updatePublishedProperties()
         saveQueue()
         processQueue()
     }
-    
+
     func enqueue(contentsOf items: [SpeechQueueItem]) {
+        dispatchPrecondition(condition: .onQueue(.main))
         queue.append(contentsOf: items)
         updatePublishedProperties()
         saveQueue()
         processQueue()
     }
-    
+
     func stop() {
-        print("[SpeechQueue] stop() aufgerufen")
-        updatePublishedProperties()
+        dispatchPrecondition(condition: .onQueue(.main))
+        logger.debug("SpeechQueue stop() called")
         saveQueue()
         ttsManager.stop()
         isProcessing = false
+        updatePublishedProperties()
     }
-    
+
+    func pauseAndSave() {
+        ttsManager.pause()
+        saveQueue()
+    }
+
+    func resumeOrReplay() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        if ttsManager.isCurrentlyPaused() {
+            ttsManager.resume()
+        } else if ttsManager.isCurrentlySpeaking() {
+            return
+        } else if !queue.isEmpty {
+            isProcessing = false
+            processQueue()
+        }
+    }
+
     func clear() {
-        print("[SpeechQueue] clear() aufgerufen")
+        dispatchPrecondition(condition: .onQueue(.main))
+        logger.debug("SpeechQueue clear() called")
         queue.removeAll()
         updatePublishedProperties()
         saveQueue()
         ttsManager.stop()
         isProcessing = false
     }
-    
+
     private func updatePublishedProperties() {
         queueItems = queue
         currentText = queue.first?.content ?? ""
         hasItems = !queue.isEmpty || ttsManager.isCurrentlySpeaking()
     }
-    
+
     private func processQueue() {
         guard !isProcessing, !queue.isEmpty else { return }
         isProcessing = true
         let next = queue[0]
         updatePublishedProperties()
         saveQueue()
-        let currentIndex = queueItems.count - queue.count
-        let textToSpeak = (next.title + "\n" + (next.content ?? "")).trimmingCharacters(in: .whitespacesAndNewlines)
+        let textToSpeak = (next.title + "\n" + (next.content ?? "").stripHTML).trimmingCharacters(in: .whitespacesAndNewlines)
         let languageCode = convertToBCP47(next.language)
-        ttsManager.speak(text: textToSpeak, language: languageCode, utteranceIndex: currentIndex, totalUtterances: queueItems.count)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            self?.waitForSpeechToFinish()
-        }
+        ttsManager.speak(
+            text: textToSpeak,
+            language: languageCode,
+            utteranceIndex: 0,
+            totalUtterances: queue.count,
+            startFromCharacter: next.lastCharacterIndex
+        )
+
+        let source = URL(string: next.url)?.host
+        ttsManager.updateNowPlaying(title: next.title, source: source, imageUrl: next.imageUrl)
     }
-    
-    private func waitForSpeechToFinish() {
-        if ttsManager.isCurrentlySpeaking() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.waitForSpeechToFinish()
-            }
+
+    private func onCurrentItemCancelled() {
+        isProcessing = false
+        updatePublishedProperties()
+    }
+
+    private func onCurrentItemFinished() {
+        guard isProcessing else { return }
+        isProcessing = false
+        if queue.count > 1 {
+            queue.removeFirst()
+            updatePublishedProperties()
+            saveQueue()
+            processQueue()
         } else {
+            // Last item — keep it visible, reset position for replay
             if !queue.isEmpty {
-                queue.removeFirst()
-                print("[SpeechQueue] Artikel fertig abgespielt und aus Queue entfernt")
+                queue[0].lastCharacterIndex = 0
             }
-            self.isProcessing = false
-            self.updatePublishedProperties()
-            self.saveQueue()
-            self.processQueue()
+            updatePublishedProperties()
+            saveQueue()
         }
     }
-    
+
+    // MARK: - Queue Management
+
+    func insertAfterCurrent(_ item: SpeechQueueItem) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        if queue.isEmpty {
+            enqueue(item)
+        } else {
+            queue.insert(item, at: 1)
+            updatePublishedProperties()
+            saveQueue()
+            if !isProcessing {
+                processQueue()
+            }
+        }
+    }
+
+    func move(from source: IndexSet, to destination: Int) {
+        // Don't allow moving the currently playing item (index 0)
+        let adjustedSource = source.filter { $0 > 0 }
+        guard !adjustedSource.isEmpty else { return }
+        let adjustedDestination = max(1, destination)
+        queue.move(fromOffsets: IndexSet(adjustedSource), toOffset: adjustedDestination)
+        updatePublishedProperties()
+        saveQueue()
+    }
+
+    func remove(at offsets: IndexSet) {
+        let removingCurrent = offsets.contains(0)
+        queue.remove(atOffsets: offsets)
+        updatePublishedProperties()
+        saveQueue()
+        if removingCurrent {
+            ttsManager.stop()
+            isProcessing = false
+            processQueue()
+        }
+    }
+
+    func skipTo(index: Int) {
+        guard index > 0, index < queue.count else { return }
+        let item = queue.remove(at: index)
+        queue.insert(item, at: 0)
+        ttsManager.stop()
+        isProcessing = false
+        updatePublishedProperties()
+        saveQueue()
+        processQueue()
+    }
+
+    func skipToNext() {
+        guard !queue.isEmpty else { return }
+        ttsManager.stop()
+        queue.removeFirst()
+        isProcessing = false
+        updatePublishedProperties()
+        saveQueue()
+        processQueue()
+    }
+
+    func seekBack(seconds: Double = 30) {
+        ttsManager.seekBack(seconds: seconds)
+    }
+
+    func seekForward(seconds: Double = 30) {
+        ttsManager.seekForward(seconds: seconds)
+    }
+
+    func seekToPosition(_ percentage: Double) {
+        guard let current = queue.first else { return }
+        let totalChars = current.totalCharacters
+        let targetChar = Int(percentage * Double(totalChars))
+        ttsManager.seek(toCharacter: targetChar)
+    }
+
+    // MARK: - Position Tracking
+
+    func updateCurrentPosition(_ characterIndex: Int) {
+        guard !queue.isEmpty else { return }
+        queue[0].lastCharacterIndex = characterIndex
+        queueItems = queue
+
+        // Save every 5 seconds
+        let now = Date()
+        if now.timeIntervalSince(lastSaveTime) >= 5.0 {
+            lastSaveTime = now
+            saveQueue()
+        }
+    }
+
+    func savePositionNow() {
+        saveQueue()
+    }
+
     // MARK: - Persistenz
     private func saveQueue() {
         let defaults = UserDefaults.standard
         do {
             let data = try JSONEncoder().encode(queue)
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("[SpeechQueue] Speichere Queue (\(queue.count)) als JSON: \n\(jsonString)")
-            }
+            logger.debug("SpeechQueue saving queue (\(queue.count) items)")
             defaults.set(data, forKey: queueKey)
         } catch {
-            print("[SpeechQueue] Fehler beim Speichern der Queue:", error)
+            logger.error("SpeechQueue failed to save queue: \(error.localizedDescription)")
         }
     }
-    
+
     private func loadQueue() {
         let defaults = UserDefaults.standard
         if let data = defaults.data(forKey: queueKey) {
             do {
                 let savedQueue = try JSONDecoder().decode([SpeechQueueItem].self, from: data)
                 queue = savedQueue
-                print("[SpeechQueue] Queue geladen (", queue.count, ")")
+                logger.debug("SpeechQueue loaded queue (\(queue.count) items)")
             } catch {
-                print("[SpeechQueue] Fehler beim Laden der Queue:", error)
+                logger.error("SpeechQueue failed to load queue: \(error.localizedDescription)")
                 defaults.removeObject(forKey: queueKey)
                 queue = []
             }
         }
         if queue.isEmpty {
-            print("[SpeechQueue] Queue ist nach dem Laden leer!")
+            logger.debug("SpeechQueue is empty after loading")
         }
     }
 }

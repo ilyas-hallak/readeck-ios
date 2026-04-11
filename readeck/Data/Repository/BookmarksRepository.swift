@@ -1,12 +1,13 @@
 import Foundation
 
-class BookmarksRepository: PBookmarksRepository {
+final class BookmarksRepository: PBookmarksRepository {
     private var api: PAPI
 
     init(api: PAPI) {
         self.api = api
     }
 
+    // swiftlint:disable:next discouraged_optional_collection
     func fetchBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil, sort: String? = nil) async throws -> BookmarksPage {
         let bookmarkDtos = try await api.getBookmarks(state: state, limit: limit, offset: offset, search: search, type: type, tag: tag, sort: sort)
         return bookmarkDtos.toDomain()
@@ -37,7 +38,7 @@ class BookmarksRepository: PBookmarksRepository {
     }
 
     func fetchBookmarkArticle(id: String) async throws -> String {
-        return try await api.getBookmarkArticle(id: id)
+        try await api.getBookmarkArticle(id: id)
     }
 
     func createBookmark(createRequest: CreateBookmarkRequest) async throws -> String {

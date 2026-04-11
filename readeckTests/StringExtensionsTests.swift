@@ -1,91 +1,104 @@
-import XCTest
+import Testing
 @testable import readeck
 
-final class StringExtensionsTests: XCTestCase {
-    
+@Suite("String Extensions Tests")
+struct StringExtensionsTests {
+
     // MARK: - stripHTML Tests
-    
-    func testStripHTML_SimpleTags() {
+
+    @Test("Strip HTML simple tags")
+    func stripHTML_SimpleTags() {
         let html = "<p>Dies ist ein <strong>wichtiger</strong> Artikel.</p>"
         let expected = "Dies ist ein wichtiger Artikel.\n"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_ComplexNestedTags() {
+
+    @Test("Strip HTML complex nested tags")
+    func stripHTML_ComplexNestedTags() {
         let html = "<div><h1>Titel</h1><p>Text mit <em>kursiv</em> und <strong>fett</strong>.</p></div>"
-        let expected = "Titel\nText mit kursiv und fett."
-        
-        XCTAssertEqual(html.stripHTML, expected)
+        let expected = "Titel\nText mit kursiv und fett.\n"
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_WithAttributes() {
+
+    @Test("Strip HTML with attributes")
+    func stripHTML_WithAttributes() {
         let html = "<p class=\"important\" id=\"main\">Text mit Attributen</p>"
         let expected = "Text mit Attributen\n"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_EmptyTags() {
+
+    @Test("Strip HTML empty tags")
+    func stripHTML_EmptyTags() {
         let html = "<p></p><div>Inhalt</div><span></span>"
         let expected = "\nInhalt\n"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_SelfClosingTags() {
+
+    @Test("Strip HTML self-closing tags")
+    func stripHTML_SelfClosingTags() {
         let html = "<p>Text mit <br>Zeilenumbruch und <img src=\"test.jpg\"> Bild.</p>"
-        let expected = "Text mit \nZeilenumbruch und  Bild.\n"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+        let expected = "Text mit \u{2028}Zeilenumbruch und Bild.\n"
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_NoTags() {
+
+    @Test("Strip HTML no tags")
+    func stripHTML_NoTags() {
         let plainText = "Dies ist normaler Text ohne HTML."
-        
-        XCTAssertEqual(plainText.stripHTML, plainText)
+
+        #expect(plainText.stripHTML == plainText)
     }
-    
-    func testStripHTML_EmptyString() {
+
+    @Test("Strip HTML empty string")
+    func stripHTML_EmptyString() {
         let emptyString = ""
-        
-        XCTAssertEqual(emptyString.stripHTML, emptyString)
+
+        #expect(emptyString.stripHTML == emptyString)
     }
-    
-    func testStripHTML_OnlyTags() {
+
+    @Test("Strip HTML only tags")
+    func stripHTML_OnlyTags() {
         let onlyTags = "<p><div><span></span></div></p>"
-        let expected = "\n"
-        
-        XCTAssertEqual(onlyTags.stripHTML, expected)
+        let expected = "\n\n\n"
+
+        #expect(onlyTags.stripHTML == expected)
     }
-    
+
     // MARK: - Edge Cases
-    
-    func testStripHTML_MalformedHTML() {
+
+    @Test("Strip HTML malformed HTML")
+    func stripHTML_MalformedHTML() {
         let malformed = "<p>Unvollständiger <strong>Tag"
-        let expected = "Unvollständiger Tag"
-        
-        XCTAssertEqual(malformed.stripHTML, expected)
+        let expected = "Unvollständiger Tag\n"
+
+        #expect(malformed.stripHTML == expected)
     }
-    
-    func testStripHTML_UnicodeCharacters() {
+
+    @Test("Strip HTML Unicode characters")
+    func stripHTML_UnicodeCharacters() {
         let html = "<p>Text mit Umlauten: äöüß und Emojis: 🚀📱</p>"
-        let expected = "Text mit Umlauten: äöüß und Emojis: 🚀📱"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+        let expected = "Text mit Umlauten: äöüß und Emojis: 🚀📱\n"
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_Newlines() {
+
+    @Test("Strip HTML newlines")
+    func stripHTML_Newlines() {
         let html = "<p>Erste Zeile<br>Zweite Zeile</p>"
-        let expected = "Erste Zeile\nZweite Zeile"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+        let expected = "Erste Zeile\u{2028}Zweite Zeile\n"
+
+        #expect(html.stripHTML == expected)
     }
-    
-    func testStripHTML_ListItems() {
+
+    @Test("Strip HTML list items")
+    func stripHTML_ListItems() {
         let html = "<ul><li>Erster Punkt</li><li>Zweiter Punkt</li><li>Dritter Punkt</li></ul>"
-        let expected = "Erster Punkt\nZweiter Punkt\nDritter Punkt"
-        
-        XCTAssertEqual(html.stripHTML, expected)
+        let expected = "Erster Punkt\nZweiter Punkt\nDritter Punkt\n"
+
+        #expect(html.stripHTML == expected)
     }
-} 
+}

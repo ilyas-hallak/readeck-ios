@@ -3,20 +3,20 @@ import SwiftUI
 struct ImageViewerView: View {
     let imageUrl: String
     @Environment(\.dismiss) private var dismiss
-    @State private var scale: CGFloat = 1.0
-    @State private var lastScale: CGFloat = 1.0
+    @State private var scale = 1.0
+    @State private var lastScale = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
     @State private var dragOffset: CGSize = .zero
     @State private var isDraggingToDismiss = false
-    
+
     var body: some View {
         NavigationView {
-            GeometryReader { geometry in
+            GeometryReader { _ in
                 ZStack {
                     Color.black
                         .ignoresSafeArea()
-                    
+
                     CachedAsyncImage(url: URL(string: imageUrl))
                         .scaledToFit()
                         .scaleEffect(scale)
@@ -65,7 +65,7 @@ struct ImageViewerView: View {
                                             lastOffset = offset
                                             let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
                                             let velocity = sqrt(pow(value.velocity.width, 2) + pow(value.velocity.height, 2))
-                                            
+
                                             if dragDistance > 100 || velocity > 500 {
                                                 dismiss()
                                             } else {

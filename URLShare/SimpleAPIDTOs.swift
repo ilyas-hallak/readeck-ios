@@ -13,10 +13,12 @@ public struct ServerInfoDto: Codable {
 }
 
 public struct CreateBookmarkRequestDto: Codable {
+    // swiftlint:disable:next discouraged_optional_collection
     public let labels: [String]?
     public let title: String?
     public let url: String
-    
+
+    // swiftlint:disable:next discouraged_optional_collection
     public init(url: String, title: String? = nil, labels: [String]? = nil) {
         self.url = url
         self.title = title
@@ -34,14 +36,14 @@ public struct BookmarkLabelDto: Codable, Identifiable {
     public let name: String
     public let count: Int
     public let href: String
-    
+
     public enum CodingKeys: String, CodingKey {
         case name, count, href
     }
-    
+
     public init(name: String, count: Int, href: String) {
         self.name = name
         self.count = count
         self.href = href
     }
-} 
+}

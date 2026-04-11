@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable discouraged_optional_collection discouraged_optional_boolean
 struct UpdateBookmarkRequestDto: Codable {
     let addLabels: [String]?
     let isArchived: Bool?
@@ -10,7 +11,7 @@ struct UpdateBookmarkRequestDto: Codable {
     let readProgress: Int?
     let removeLabels: [String]?
     let title: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case addLabels = "add_labels"
         case isArchived = "is_archived"
@@ -23,3 +24,4 @@ struct UpdateBookmarkRequestDto: Codable {
         case title
     }
 }
+// swiftlint:enable discouraged_optional_collection discouraged_optional_boolean

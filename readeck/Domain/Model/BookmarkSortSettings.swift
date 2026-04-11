@@ -1,12 +1,12 @@
 import Foundation
 
 enum BookmarkSortField: String, CaseIterable {
-    case created = "created"
-    case published = "published"
-    case domain = "domain"
-    case duration = "duration"
-    case site = "site"
-    case title = "title"
+    case created
+    case published
+    case domain
+    case duration
+    case site
+    case title
 
     var displayName: String {
         switch self {

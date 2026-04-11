@@ -5,6 +5,7 @@ struct BookmarksPage {
     let currentPage: Int?
     let totalCount: Int?
     let totalPages: Int?
+    // swiftlint:disable:next discouraged_optional_collection
     let links: [String]?
 }
 

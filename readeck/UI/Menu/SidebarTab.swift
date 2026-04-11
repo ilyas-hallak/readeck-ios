@@ -9,9 +9,9 @@ import Foundation
 
 enum SidebarTab: Hashable, CaseIterable, Identifiable {
     case search, all, unread, favorite, archived, article, videos, pictures, tags, settings
-    
+
     var id: Self { self }
-    
+
     var label: String {
         switch self {
         case .all: return NSLocalizedString("All", comment: "")
@@ -26,7 +26,7 @@ enum SidebarTab: Hashable, CaseIterable, Identifiable {
         case .tags: return NSLocalizedString("Tags", comment: "")
         }
     }
-    
+
     var systemImage: String {
         switch self {
         case .unread: return "house"

@@ -10,7 +10,6 @@ import Kingfisher
 
 /// Utility for embedding images as Base64 data URIs in HTML
 struct HTMLImageEmbedder {
-
     private let imageExtractor = HTMLImageExtractor()
 
     /// Embeds all images in HTML as Base64 data URIs for offline viewing

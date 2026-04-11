@@ -10,8 +10,7 @@ import Social
 import UniformTypeIdentifiers
 import SwiftUI
 
-class ShareViewController: UIViewController {
-
+final class ShareViewController: UIViewController {
     private var hostingController: UIHostingController<AnyView>?
 
     override func viewDidLoad() {
@@ -31,7 +30,7 @@ class ShareViewController: UIViewController {
         ])
         hostingController.didMove(toParent: self)
         self.hostingController = hostingController
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(dismissKeyboard),
@@ -39,11 +38,11 @@ class ShareViewController: UIViewController {
             object: nil
         )
     }
-    
+
     @objc private func dismissKeyboard() {
         self.view.endEditing(true)
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }

@@ -1,9 +1,8 @@
-
 protocol PLoginUseCase {
     func execute(endpoint: String, username: String, password: String) async throws -> User
 }
 
-class LoginUseCase: PLoginUseCase {
+final class LoginUseCase: PLoginUseCase {
     private let repository: PAuthRepository
 
     init(repository: PAuthRepository) {
@@ -11,6 +10,6 @@ class LoginUseCase: PLoginUseCase {
     }
 
     func execute(endpoint: String, username: String, password: String) async throws -> User {
-        return try await repository.login(endpoint: endpoint, username: username, password: password)
+        try await repository.login(endpoint: endpoint, username: username, password: password)
     }
 }

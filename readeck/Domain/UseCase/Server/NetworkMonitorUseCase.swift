@@ -21,7 +21,6 @@ protocol PNetworkMonitorUseCase {
 // MARK: - Implementation
 
 final class NetworkMonitorUseCase: PNetworkMonitorUseCase {
-
     // MARK: - Dependencies
 
     private let repository: PNetworkMonitorRepository

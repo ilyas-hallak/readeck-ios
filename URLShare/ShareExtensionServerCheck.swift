@@ -1,10 +1,11 @@
 import Foundation
 
 /// Simple server check manager for Share Extension with caching
-class ShareExtensionServerCheck {
+final class ShareExtensionServerCheck {
     static let shared = ShareExtensionServerCheck()
 
     // Cache properties
+    // swiftlint:disable:next discouraged_optional_boolean
     private var cachedResult: Bool?
     private var lastCheckTime: Date?
     private let cacheTTL: TimeInterval = 30.0
@@ -25,6 +26,7 @@ class ShareExtensionServerCheck {
 
     // MARK: - Cache Management
 
+    // swiftlint:disable:next discouraged_optional_boolean
     private func getCachedResult() -> Bool? {
         guard let lastCheck = lastCheckTime,
               Date().timeIntervalSince(lastCheck) < cacheTTL,

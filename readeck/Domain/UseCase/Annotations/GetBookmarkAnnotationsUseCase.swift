@@ -4,7 +4,7 @@ protocol PGetBookmarkAnnotationsUseCase {
     func execute(bookmarkId: String) async throws -> [Annotation]
 }
 
-class GetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
+final class GetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
     private let repository: PAnnotationsRepository
 
     init(repository: PAnnotationsRepository) {
@@ -12,6 +12,6 @@ class GetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
     }
 
     func execute(bookmarkId: String) async throws -> [Annotation] {
-        return try await repository.fetchAnnotations(bookmarkId: bookmarkId)
+        try await repository.fetchAnnotations(bookmarkId: bookmarkId)
     }
 }

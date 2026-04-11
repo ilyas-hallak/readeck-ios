@@ -17,7 +17,7 @@ struct RButton<Label: View>: View {
     let isDisabled: Bool
     let icon: String?
     let label: () -> Label
-    
+
     init(isLoading: Bool = false, isDisabled: Bool = false, icon: String? = nil, action: @escaping () -> Void, @ViewBuilder label: @escaping () -> Label) {
         self.action = action
         self.isLoading = isLoading
@@ -25,7 +25,7 @@ struct RButton<Label: View>: View {
         self.icon = icon
         self.label = label
     }
-    
+
     var body: some View {
         Button(action: {
             if !isLoading && !isDisabled {
@@ -37,7 +37,7 @@ struct RButton<Label: View>: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                 }
-                if let icon = icon {
+                if let icon {
                     Image(systemName: icon)
                 }
                 label()
@@ -63,19 +63,19 @@ struct RButton<Label: View>: View {
         }
         .padding()
         .preferredColorScheme(.light)
-        
+
         RButton(isLoading: true, isDisabled: false, action: {}) {
             Text("Loading...")
         }
         .padding()
         .preferredColorScheme(.dark)
-        
+
         RButton(isLoading: false, isDisabled: true, icon: nil, action: {}) {
             Text("Disabled")
         }
         .padding()
         .preferredColorScheme(.dark)
-        
+
         RButton(isLoading: false, isDisabled: false, icon: nil, action: {}) {
             Text("No Icon")
         }

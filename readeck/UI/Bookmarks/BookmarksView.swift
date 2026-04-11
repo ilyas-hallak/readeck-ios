@@ -3,7 +3,6 @@ import Foundation
 import SwiftUI
 
 struct BookmarksView: View {
-
     // MARK: States
 
     @State private var viewModel = BookmarksViewModel()
@@ -16,14 +15,13 @@ struct BookmarksView: View {
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
-    @EnvironmentObject var playerUIState: PlayerUIState
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
     let tag: String?
 
     // MARK: Environments
 
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    @Environment(\.verticalSizeClass) var verticalSizeClass
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     // MARK: Initializer
 
@@ -63,18 +61,20 @@ struct BookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId)
+            ArticleReaderRouter(bookmarkId: bookmarkId)
                 .toolbar(.hidden, for: .tabBar)
+        }
+        .sheet(item: $viewModel.showTagsBookmark) { bookmark in
+            BookmarkLabelsView(bookmarkId: bookmark.id, initialLabels: bookmark.labels)
         }
         .sheet(isPresented: $showingAddBookmark) {
             AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
         }
         .sheet(
-            isPresented: $viewModel.showingAddBookmarkFromShare,
-            content: {
-                AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
-            }
-        )
+            isPresented: $viewModel.showingAddBookmarkFromShare
+        ) {
+            AddBookmarkView(prefilledURL: shareURL, prefilledTitle: shareTitle)
+        }
         .task {
             // Set appSettings reference
             viewModel.appSettings = appSettings
@@ -86,6 +86,14 @@ struct BookmarksView: View {
 
             Logger.ui.info("📲 BookmarksView.task - Loading bookmarks, isNetworkConnected: \(appSettings.isNetworkConnected)")
             await viewModel.loadBookmarks(state: state, type: type, tag: tag)
+        }
+        .onChange(of: viewModel.showTagsBookmark) { oldValue, newValue in
+            // Refresh bookmarks when tags sheet is dismissed (labels may have changed)
+            if oldValue != nil && newValue == nil {
+                Task {
+                    await viewModel.refreshBookmarks()
+                }
+            }
         }
         .onChange(of: showingAddBookmark) { oldValue, newValue in
             // Refresh bookmarks when sheet is dismissed
@@ -113,7 +121,7 @@ struct BookmarksView: View {
             }
         }
     }
-    
+
     // MARK: - Computed Properties
 
     private var shouldShowCenteredState: Bool {
@@ -126,9 +134,9 @@ struct BookmarksView: View {
         // 2. Offline mode in non-Unread tabs (Archive/Starred/All)
         return (isEmpty && hasError) || isOfflineNonUnread
     }
-    
+
     // MARK: - View Components
-    
+
     @ViewBuilder
     private var centeredStateView: some View {
         VStack(spacing: 20) {
@@ -147,19 +155,19 @@ struct BookmarksView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(R.color.bookmark_list_bg))
     }
-    
+
     @ViewBuilder
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.3)
                 .tint(.accentColor)
-            
+
             VStack(spacing: 8) {
                 Text("Loading \(state.displayName)")
                     .font(.headline)
                     .foregroundColor(.primary)
-                
+
                 Text("Please wait while we fetch your bookmarks...")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -168,7 +176,7 @@ struct BookmarksView: View {
         }
         .padding(.horizontal, 40)
     }
-    
+
     @ViewBuilder
     private var offlineUnavailableView: some View {
         VStack(spacing: 20) {
@@ -248,7 +256,7 @@ struct BookmarksView: View {
         }
         .padding(.horizontal, 40)
     }
-    
+
     @ViewBuilder
     private var bookmarksList: some View {
         List {
@@ -258,7 +266,7 @@ struct BookmarksView: View {
                     if viewModel.pendingDeletes[bookmark.id] != nil {
                         return
                     }
-                    
+
                     if UIDevice.isPhone {
                         selectedBookmarkId = bookmark.id
                     } else {
@@ -277,22 +285,16 @@ struct BookmarksView: View {
                         currentState: state,
                         layout: viewModel.cardLayoutStyle,
                         pendingDelete: viewModel.pendingDeletes[bookmark.id],
-                        onArchive: { bookmark in
-                            Task {
-                                await viewModel.toggleArchive(bookmark: bookmark)
-                            }
-                        },
-                        onDelete: { bookmark in
-                            viewModel.deleteBookmarkWithUndo(bookmark: bookmark)
-                        },
-                        onToggleFavorite: { bookmark in
-                            Task {
-                                await viewModel.toggleFavorite(bookmark: bookmark)
-                            }
+                        swipeActionConfig: appSettings.swipeActionConfig,
+                        onSwipeAction: { action, bookmark in
+                            viewModel.handleSwipeAction(action, bookmark: bookmark)
                         },
                         onUndoDelete: { bookmarkId in
                             viewModel.undoDelete(bookmarkId: bookmarkId)
-                        }
+                        },
+                        onPlayNext: appSettings.enableTTS ? { bookmark in
+                            SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                        } : nil
                     )
                     .onAppear {
                         if bookmark.id == viewModel.bookmarks?.bookmarks.last?.id {
@@ -323,7 +325,7 @@ struct BookmarksView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color(R.color.bookmark_list_bg))
             }
-            
+
             // Show loading indicator for pagination
             if viewModel.isLoading && !(viewModel.bookmarks?.bookmarks.isEmpty == true) {
                 HStack {
@@ -354,7 +356,7 @@ struct BookmarksView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var skeletonLoadingView: some View {
         ScrollView {
@@ -373,7 +375,7 @@ struct BookmarksView: View {
             await viewModel.refreshBookmarks()
         }
     }
-    
+
     @ViewBuilder
     private var offlineBanner: some View {
         HStack(spacing: 12) {

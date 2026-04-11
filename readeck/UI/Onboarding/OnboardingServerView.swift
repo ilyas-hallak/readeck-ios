@@ -66,10 +66,9 @@ struct OnboardingServerView: View {
         if showLoginFields {
             // Phase 2: Need endpoint, username, and password
             return !viewModel.endpoint.isEmpty && !viewModel.username.isEmpty && !viewModel.password.isEmpty
-        } else {
-            // Phase 1: Only need endpoint
-            return !viewModel.endpoint.isEmpty
         }
+        // Phase 1: Only need endpoint
+        return !viewModel.endpoint.isEmpty
     }
 
     private var classicLoginForm: some View {
@@ -104,9 +103,11 @@ struct OnboardingServerView: View {
             VStack(spacing: 16) {
                 // Server Endpoint
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("",
-                              text: $viewModel.endpoint,
-                              prompt: Text("Server Endpoint").foregroundColor(.secondary))
+                    TextField(
+                        "",
+                        text: $viewModel.endpoint,
+                        prompt: Text("Server Endpoint").foregroundColor(.secondary)
+                    )
                         .textFieldStyle(.roundedBorder)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
@@ -118,17 +119,17 @@ struct OnboardingServerView: View {
                     // Quick Input Chips
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            QuickInputChip(text: "http://", action: {
+                            QuickInputChip(text: "http://") {
                                 if !viewModel.endpoint.starts(with: "http") {
                                     viewModel.endpoint = "http://" + viewModel.endpoint
                                 }
-                            })
-                            QuickInputChip(text: "https://", action: {
+                            }
+                            QuickInputChip(text: "https://") {
                                 if !viewModel.endpoint.starts(with: "http") {
                                     viewModel.endpoint = "https://" + viewModel.endpoint
                                 }
-                            })
-                            QuickInputChip(text: "192.168.", action: {
+                            }
+                            QuickInputChip(text: "192.168.") {
                                 if viewModel.endpoint.isEmpty || viewModel.endpoint == "http://" || viewModel.endpoint == "https://" {
                                     if viewModel.endpoint.starts(with: "http") {
                                         viewModel.endpoint += "192.168."
@@ -136,12 +137,12 @@ struct OnboardingServerView: View {
                                         viewModel.endpoint = "http://192.168."
                                     }
                                 }
-                            })
-                            QuickInputChip(text: ":8000", action: {
+                            }
+                            QuickInputChip(text: ":8000") {
                                 if !viewModel.endpoint.contains(":") || viewModel.endpoint.hasSuffix("://") {
                                     viewModel.endpoint += ":8000"
                                 }
-                            })
+                            }
                         }
                         .padding(.horizontal, 1)
                     }
@@ -156,9 +157,11 @@ struct OnboardingServerView: View {
                 if showLoginFields {
                     // Username
                     VStack(alignment: .leading, spacing: 8) {
-                        TextField("",
-                                  text: $viewModel.username,
-                                  prompt: Text("Username").foregroundColor(.secondary))
+                        TextField(
+                            "",
+                            text: $viewModel.username,
+                            prompt: Text("Username").foregroundColor(.secondary)
+                        )
                             .textFieldStyle(.roundedBorder)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
@@ -169,16 +172,18 @@ struct OnboardingServerView: View {
 
                     // Password
                     VStack(alignment: .leading, spacing: 8) {
-                        SecureField("",
-                                    text: $viewModel.password,
-                                    prompt: Text("Password").foregroundColor(.secondary))
+                        SecureField(
+                            "",
+                            text: $viewModel.password,
+                            prompt: Text("Password").foregroundColor(.secondary)
+                        )
                             .textFieldStyle(.roundedBorder)
                             .onChange(of: viewModel.password) {
                                 viewModel.clearMessages()
                             }
                     }
                 }
-                
+
                 // Custom HTTP Headers Section
                 CustomHeadersSectionView(
                     customHeaders: $viewModel.customHeaders,

@@ -6,9 +6,9 @@
 //
 
 enum UrlOpener: String, CaseIterable {
-    case inAppBrowser = "inAppBrowser"
-    case defaultBrowser = "defaultBrowser"
-    
+    case inAppBrowser
+    case defaultBrowser
+
     var displayName: String {
         switch self {
         case .inAppBrowser: return "In App Browser"

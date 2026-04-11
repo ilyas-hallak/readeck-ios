@@ -1,0 +1,63 @@
+# SwiftLint Configuration for Readeck iOS
+# Based on sindresorhus/swiftlint-config (Apple sample code style)
+
+parent_config: https://raw.githubusercontent.com/sindresorhus/swiftlint-config/main/.swiftlint.yml
+
+excluded:
+  - .build
+  - .claude
+  - DerivedData
+  - readeckTests
+  - readeckUITests
+  - Tests
+  - Package.swift
+
+disabled_rules:
+  - switch_case_on_newline
+  - no_extension_access_modifier
+  - conditional_returns_on_newline
+
+# Project-specific overrides
+line_length:
+  warning: 150
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 500
+  error: 1000
+
+function_body_length:
+  warning: 50
+  error: 100
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - r
+    - g
+    - b
+    - t
+    - x
+    - y
+    - i
+    - j
+    - k
+    - ButtonLabel
+    - JumpButton
+    - _body
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25

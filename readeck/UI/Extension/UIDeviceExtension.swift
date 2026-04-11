@@ -9,10 +9,10 @@ import UIKit
 
 extension UIDevice {
     static var isPad: Bool {
-        return UIDevice.current.userInterfaceIdiom == .pad
+        UIDevice.current.userInterfaceIdiom == .pad
     }
-    
+
     static var isPhone: Bool {
-        return UIDevice.current.userInterfaceIdiom == .phone
+        UIDevice.current.userInterfaceIdiom == .phone
     }
 }

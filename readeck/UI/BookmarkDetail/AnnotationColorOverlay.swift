@@ -39,7 +39,7 @@ struct AnnotationColorOverlay: View {
 
 #Preview {
     AnnotationColorOverlay { color in
-        print("Selected: \(color)")
+        Logger.ui.debug("Selected: \(color)")
     }
     .padding()
 }

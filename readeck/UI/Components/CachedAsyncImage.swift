@@ -113,7 +113,7 @@ struct CachedAsyncImage: View {
 
     private func checkCache(for url: URL) async {
         // Try custom cache key first, then fallback to URL-based cache
-        if let cacheKey = cacheKey, await tryLoadFromCustomKey(cacheKey) {
+        if let cacheKey, await tryLoadFromCustomKey(cacheKey) {
             return
         }
 
@@ -183,13 +183,13 @@ struct CachedAsyncImage: View {
 struct AuthenticatedImageRequestModifier: ImageDownloadRequestModifier {
     func modified(for request: URLRequest) -> URLRequest? {
         var modifiedRequest = request
-        
+
         if let token = KeychainHelper.shared.loadToken() {
             modifiedRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        
+
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &modifiedRequest)
-        
+
         return modifiedRequest
     }
 }
