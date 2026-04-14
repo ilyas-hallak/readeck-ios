@@ -17,12 +17,14 @@ public struct CreateBookmarkRequestDto: Codable {
     public let labels: [String]?
     public let title: String?
     public let url: String
+    public let html: String?
 
     // swiftlint:disable:next discouraged_optional_collection
-    public init(url: String, title: String? = nil, labels: [String]? = nil) {
+    public init(url: String, title: String? = nil, labels: [String]? = nil, html: String? = nil) {
         self.url = url
         self.title = title
         self.labels = labels
+        self.html = html
     }
 }
 
