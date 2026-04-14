@@ -17,10 +17,8 @@ final class ShareViewController: UIViewController {
         super.viewDidLoad()
         let viewModel = ShareBookmarkViewModel(extensionContext: extensionContext)
 
-        // Extract HTML from JavaScript preprocessing results
-        extractPageHTML { html in
-            viewModel.pageHTML = html
-        }
+        // Extract URL, title, and HTML from JavaScript preprocessing results
+        extractJSPreprocessingResults(into: viewModel)
 
         let swiftUIView = ShareBookmarkView(viewModel: viewModel)
             .environment(\.managedObjectContext, CoreDataManager.shared.context)
@@ -45,11 +43,8 @@ final class ShareViewController: UIViewController {
         )
     }
 
-    private func extractPageHTML(completion: @escaping (String?) -> Void) {
-        guard let extensionContext else {
-            completion(nil)
-            return
-        }
+    private func extractJSPreprocessingResults(into viewModel: ShareBookmarkViewModel) {
+        guard let extensionContext else { return }
 
         for item in extensionContext.inputItems {
             guard let inputItem = item as? NSExtensionItem else { continue }
@@ -57,20 +52,23 @@ final class ShareViewController: UIViewController {
                 if attachment.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
                     attachment.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { result, _ in
                         guard let dictionary = result as? NSDictionary,
-                              let jsResults = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary,
-                              let html = jsResults["html"] as? String else {
-                            completion(nil)
+                              let jsResults = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary else {
                             return
                         }
                         DispatchQueue.main.async {
-                            completion(html)
+                            if let url = jsResults["url"] as? String {
+                                viewModel.url = url
+                            }
+                            if let title = jsResults["title"] as? String, !title.isEmpty {
+                                viewModel.title = title
+                            }
+                            viewModel.pageHTML = jsResults["html"] as? String
                         }
                     }
                     return
                 }
             }
         }
-        completion(nil)
     }
 
     @objc private func dismissKeyboard() {
