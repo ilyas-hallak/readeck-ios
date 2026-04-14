@@ -123,7 +123,7 @@ final class SimpleAPI {
 
     // MARK: - API Methods
     // swiftlint:disable:next discouraged_optional_collection
-    static func addBookmark(title: String, url: String, labels: [String]? = nil, showStatus: @escaping (String, Bool) -> Void) async {
+    static func addBookmark(title: String, url: String, labels: [String]? = nil, html: String? = nil, showStatus: @escaping (String, Bool) -> Void) async {
         logger.info("Adding bookmark: \(url)")
         guard let token = await getValidToken() else {
             showStatus("No token found. Please log in via the main app.", true)
@@ -133,7 +133,7 @@ final class SimpleAPI {
             showStatus("No server endpoint found.", true)
             return
         }
-        let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: labels)
+        let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: labels, html: html)
         guard let requestData = try? JSONEncoder().encode(requestDto) else {
             showStatus("Failed to encode request.", true)
             return
