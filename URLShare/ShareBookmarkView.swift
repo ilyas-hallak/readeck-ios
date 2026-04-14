@@ -190,11 +190,7 @@ struct ShareBookmarkView: View {
                     .labelsHidden()
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Color(.secondarySystemGroupedBackground))
-            .cornerRadius(10)
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
+            .padding(.top, 20)
         }
     }
 
