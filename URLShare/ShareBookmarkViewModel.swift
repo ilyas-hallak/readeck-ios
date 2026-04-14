@@ -13,6 +13,8 @@ final class ShareBookmarkViewModel: ObservableObject {
     @Published var isServerReachable = true
     @Published var isConfigured = true
     @Published var sessionExpired = false
+    @Published var pageHTML: String?
+    @Published var includeHTML = false
     let tagSortOrder: TagSortOrder = .byCount  // Share Extension always uses byCount
     let extensionContext: NSExtensionContext?
 
@@ -117,9 +119,14 @@ final class ShareBookmarkViewModel: ObservableObject {
             if serverReachable {
                 // Online - try to save via API
                 logger.info("Attempting to save bookmark via API")
-                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels)) { [weak self] message, error in
+                let htmlToSend = includeHTML ? pageHTML : nil
+                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels), html: htmlToSend) { [weak self] message, error in
                     self?.logger.info("API save completed - Success: \(!error), Message: \(message)")
-                    self?.statusMessage = (message, error, error ? "❌" : "✅")
+                    if !error && self?.includeHTML == true {
+                        self?.statusMessage = ("Saved with page content", false, "✅")
+                    } else {
+                        self?.statusMessage = (message, error, error ? "❌" : "✅")
+                    }
                     self?.isSaving = false
                     if !error {
                         self?.logger.debug("Bookmark saved successfully, completing extension request")
@@ -133,10 +140,12 @@ final class ShareBookmarkViewModel: ObservableObject {
             } else {
                 // Server not reachable - save locally
                 logger.info("Server not reachable, attempting local save")
+                let htmlToSend = includeHTML ? pageHTML : nil
                 let success = OfflineBookmarkManager.shared.saveOfflineBookmark(
                     url: url,
                     title: title,
-                    tags: Array(selectedLabels)
+                    tags: Array(selectedLabels),
+                    html: htmlToSend
                 )
                 logger.info("Local save result: \(success)")
 
