@@ -3,16 +3,13 @@ var ExtensionPreprocessingJS = new Object();
 ExtensionPreprocessingJS.run = function(arguments) {
     var html = document.documentElement.outerHTML;
 
-    // Ensure charset is declared as utf-8 since the DOM always delivers Unicode.
-    // Without this, backends may misinterpret the encoding based on the original
-    // page's meta tag (e.g. iso-8859-1) even though the content is now utf-8.
-    var charsetRe = /<meta[^>]+charset\s*=\s*["']?[^"'\s;>]+["']?[^>]*>/i;
-    var utf8Meta = '<meta charset="utf-8">';
-    if (charsetRe.test(html)) {
-        html = html.replace(charsetRe, utf8Meta);
-    } else if (/<head[^>]*>/i.test(html)) {
-        html = html.replace(/<head[^>]*>/i, '$&' + utf8Meta);
-    }
+    // Remove all charset declarations and inject a fresh utf-8 meta at the top
+    // of <head>. The DOM always delivers Unicode so the content is always utf-8,
+    // but leaving the original declaration (e.g. iso-8859-1) causes backends to
+    // misinterpret the bytes. We strip all occurrences to handle pages where
+    // WebKit normalises the DOM and produces multiple charset meta tags.
+    html = html.replace(/<meta[^>]+charset[^>]*>/gi, '');
+    html = html.replace(/(<head[^>]*>)/i, '$1<meta charset="utf-8">');
 
     arguments.completionFunction({
         "url": document.URL,

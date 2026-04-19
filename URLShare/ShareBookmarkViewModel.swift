@@ -114,12 +114,15 @@ final class ShareBookmarkViewModel: ObservableObject {
 
         // Check server connectivity
         Task {
-            let serverReachable = await serverCheck.checkServerReachability()
-            logger.debug("Server connectivity for save: \(serverReachable)")
-            if serverReachable {
+            let serverInfo = await serverCheck.checkServerReachability()
+            logger.debug("Server connectivity for save: \(serverInfo != nil), version: \(serverInfo?.version ?? "unknown")")
+            if let serverInfo {
                 // Online - try to save via API
                 logger.info("Attempting to save bookmark via API")
-                let htmlToSend = includeHTML ? pageHTML : nil
+                let htmlToSend = includeHTML && serverInfo.supportsHTMLBookmarks ? pageHTML : nil
+                if includeHTML && !serverInfo.supportsHTMLBookmarks {
+                    logger.info("Server version \(serverInfo.version) does not support HTML bookmarks (requires >= 0.22), sending without HTML")
+                }
                 await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels), html: htmlToSend) { [weak self] message, error in
                     self?.logger.info("API save completed - Success: \(!error), Message: \(message)")
                     if !error && self?.includeHTML == true {

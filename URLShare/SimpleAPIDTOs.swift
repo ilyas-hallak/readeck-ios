@@ -10,6 +10,13 @@ public struct ServerInfoDto: Codable {
         case buildDate = "build_date"
         case userAgent = "user_agent"
     }
+
+    // HTML bookmark submission requires Readeck >= 0.22
+    public var supportsHTMLBookmarks: Bool {
+        let parts = version.split(separator: ".").compactMap { Int($0) }
+        guard parts.count >= 2 else { return false }
+        return parts[0] > 0 || parts[1] >= 22
+    }
 }
 
 public struct CreateBookmarkRequestDto: Codable {

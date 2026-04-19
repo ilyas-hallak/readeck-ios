@@ -31,27 +31,7 @@ struct ArticleSummaryCardView: View {
     // MARK: - Header
 
     private var headerButton: some View {
-        HStack {
-            Image(systemName: "sparkles")
-                .foregroundColor(.accentColor)
-            Text(viewModel.hasGenerated ? "Summary".localized : "Summarize".localized)
-                .font(.subheadline.weight(.medium))
-                .foregroundColor(textColor)
-            Spacer()
-
-            if viewModel.isLoading {
-                ProgressView()
-                    .scaleEffect(0.8)
-            } else if viewModel.hasGenerated {
-                Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.caption)
-                    .foregroundColor(textColor.opacity(0.6))
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button {
             if viewModel.hasGenerated {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     viewModel.isExpanded.toggle()
@@ -61,7 +41,29 @@ struct ArticleSummaryCardView: View {
                     await viewModel.summarize()
                 }
             }
+        } label: {
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundColor(.accentColor)
+                Text(viewModel.hasGenerated ? "Summary".localized : "Summarize".localized)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(textColor)
+                Spacer()
+
+                if viewModel.isLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else if viewModel.hasGenerated {
+                    Image(systemName: viewModel.isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(textColor.opacity(0.6))
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Expanded Content

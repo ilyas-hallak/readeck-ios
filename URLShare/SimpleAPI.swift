@@ -88,11 +88,11 @@ final class SimpleAPI {
 
     // MARK: - Server Info
 
-    static func checkServerReachability() async -> Bool {
+    static func checkServerReachability() async -> ServerInfoDto? {
         guard let endpoint = KeychainHelper.shared.loadEndpoint(),
               !endpoint.isEmpty,
               let url = URL(string: "\(endpoint)/api/info") else {
-            return false
+            return nil
         }
 
         var request = URLRequest(url: url)
@@ -107,18 +107,17 @@ final class SimpleAPI {
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
 
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
             if let httpResponse = response as? HTTPURLResponse,
                200...299 ~= httpResponse.statusCode {
                 logger.info("Server is reachable")
-                return true
+                return try? JSONDecoder().decode(ServerInfoDto.self, from: data)
             }
         } catch {
             logger.error("Server reachability check failed: \(error.localizedDescription)")
-            return false
         }
 
-        return false
+        return nil
     }
 
     // MARK: - API Methods
