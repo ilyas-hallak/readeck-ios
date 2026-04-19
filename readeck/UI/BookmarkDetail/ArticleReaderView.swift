@@ -234,6 +234,10 @@ struct ArticleReaderView: View {
                     }
                 }
 
+                ShareLink(item: viewModel.shareContent) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+
                 Button(action: {
                     showingFontSettings = true
                 }) {

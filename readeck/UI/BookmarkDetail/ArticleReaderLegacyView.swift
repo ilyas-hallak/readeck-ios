@@ -416,6 +416,10 @@ struct ArticleReaderLegacyView: View {
                         Image(systemName: "pencil.line")
                     }
 
+                    ShareLink(item: viewModel.shareContent) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+
                     Button(action: {
                         showingFontSettings = true
                     }) {
