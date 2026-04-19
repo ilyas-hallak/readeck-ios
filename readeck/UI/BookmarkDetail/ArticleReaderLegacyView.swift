@@ -35,7 +35,6 @@ struct ArticleReaderLegacyView: View {
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
-    @State private var shareText: String?
 
     // MARK: - Envs
 
@@ -417,11 +416,7 @@ struct ArticleReaderLegacyView: View {
                         Image(systemName: "pencil.line")
                     }
 
-                    Button(action: {
-                        Task {
-                            shareText = await viewModel.shareText(for: bookmarkId)
-                        }
-                    }) {
+                    ShareLink(item: viewModel.shareContent) {
                         Image(systemName: "square.and.arrow.up")
                     }
 
@@ -455,14 +450,6 @@ struct ArticleReaderLegacyView: View {
         }
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
-        }
-        .sheet(isPresented: Binding(
-            get: { shareText != nil },
-            set: { if !$0 { shareText = nil } }
-        )) {
-            if let text = shareText {
-                ShareActivityView(activityItems: [text])
-            }
         }
         .onChange(of: showingFontSettings) { _, isShowing in
             if !isShowing {

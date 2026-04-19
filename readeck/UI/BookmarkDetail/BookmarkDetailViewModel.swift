@@ -15,6 +15,7 @@ final class BookmarkDetailViewModel {
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
     var articleParagraphs: [String] = []
+    var annotations: [Annotation] = []
     var bookmark: Bookmark?
     var isLoading = false
     var isLoadingArticle = true
@@ -23,6 +24,14 @@ final class BookmarkDetailViewModel {
     var readProgress = 0
     var selectedAnnotationId: String?
     var hasAnnotations = false
+
+    var shareContent: String {
+        var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
+        for annotation in annotations {
+            text += "\n\n  - \(annotation.text)"
+        }
+        return text
+    }
 
     var showProgressBar: Bool { settings?.hideProgressBar != true }
     var showHeroImage: Bool { settings?.hideHeroImage != true }
@@ -73,6 +82,12 @@ final class BookmarkDetailViewModel {
 
             if settings?.enableTTS == true {
                 self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
+            }
+
+            do {
+                annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: id)
+            } catch {
+                // Silent fail — annotations are supplementary
             }
         } catch {
             errorMessage = "Error loading bookmark"
@@ -250,6 +265,7 @@ final class BookmarkDetailViewModel {
                 endSelector: endSelector
             )
             Logger.viewModel.info("✅ Annotation created: \(annotation.id)")
+            annotations.append(annotation)
             hasAnnotations = true
         } catch {
             Logger.viewModel.error("❌ Failed to create annotation: \(error.localizedDescription)")
@@ -262,18 +278,4 @@ final class BookmarkDetailViewModel {
         }
     }
 
-    @MainActor
-    func shareText(for bookmarkId: String) async -> String {
-        var annotations: [Annotation] = []
-        do {
-            annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: bookmarkId)
-        } catch {
-            // Silent fail — annotations are supplementary
-        }
-        var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
-        for annotation in annotations {
-            text += "\n\n  - \(annotation.text)"
-        }
-        return text
-    }
 }
