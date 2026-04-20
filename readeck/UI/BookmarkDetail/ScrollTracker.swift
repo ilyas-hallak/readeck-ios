@@ -13,6 +13,7 @@ struct ScrollTracker {
     // MARK: - Configuration
 
     var scrollUpThresholdRatio: CGFloat = 0.12
+    var scrollDownThresholdRatio: CGFloat = 0.06
 
     // MARK: - State
 
@@ -20,6 +21,7 @@ struct ScrollTracker {
     private(set) var previousEndPosition: CGFloat?
     private(set) var previousContainerHeight: CGFloat = 0
     private(set) var accumulatedScrollUp: CGFloat = 0
+    private(set) var accumulatedScrollDown: CGFloat = 0
     private(set) var lastSentProgress: Double = 0
     private(set) var toolbarVisible: Bool = true
 
@@ -99,14 +101,18 @@ struct ScrollTracker {
         guard containerHeight > 0 else { return nil }
 
         if delta < -1 {
-            // Scrolling down
+            // Scrolling down — require a minimum distance before hiding
+            accumulatedScrollDown += abs(delta)
             accumulatedScrollUp = 0
-            if toolbarVisible {
+            let hideThreshold = containerHeight * scrollDownThresholdRatio
+            if accumulatedScrollDown >= hideThreshold && toolbarVisible {
                 toolbarVisible = false
+                accumulatedScrollDown = 0
                 return false
             }
         } else if delta > 1 {
             // Scrolling up
+            accumulatedScrollDown = 0
             accumulatedScrollUp += delta
             let threshold = containerHeight * scrollUpThresholdRatio
             if accumulatedScrollUp >= threshold && !toolbarVisible {

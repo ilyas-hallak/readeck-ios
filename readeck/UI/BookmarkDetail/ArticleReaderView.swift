@@ -47,7 +47,7 @@ struct ArticleReaderView: View {
                 toolbarContent
             }
             .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
-            .animation(.easeInOut(duration: 0.25), value: isToolbarVisible)
+            .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
             .sheet(isPresented: $showingFontSettings) {
                 fontSettingsSheet
             }

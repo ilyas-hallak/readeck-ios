@@ -88,9 +88,32 @@ final class ScrollTrackerTests: XCTestCase {
 
         // Initialize
         _ = tracker.update(endPosition: 8000, containerHeight: 700)
-        // Scroll down past "near top" zone — hides toolbar on this call
+        // Scroll down 500pt — far exceeds the 6% threshold (42pt)
         let result = tracker.update(endPosition: 7500, containerHeight: 700)
 
+        XCTAssertEqual(result.isToolbarVisible, false)
+        XCTAssertFalse(tracker.toolbarVisible)
+    }
+
+    func testToolbarDoesNotHideOnSmallScrollDown() {
+        var tracker = ScrollTracker()
+        tracker.scrollDownThresholdRatio = 0.06
+
+        _ = tracker.update(endPosition: 8000, containerHeight: 700)
+        // Small scroll down (20pt < 42pt threshold)
+        let result = tracker.update(endPosition: 7980, containerHeight: 700)
+        XCTAssertNil(result.isToolbarVisible, "Should not hide for small scroll down")
+        XCTAssertTrue(tracker.toolbarVisible)
+    }
+
+    func testToolbarHidesAfterAccumulatedScrollDown() {
+        var tracker = ScrollTracker()
+        tracker.scrollDownThresholdRatio = 0.06
+
+        _ = tracker.update(endPosition: 8000, containerHeight: 700)
+        // Accumulate 20 + 25 = 45pt > 42pt threshold
+        _ = tracker.update(endPosition: 7980, containerHeight: 700)
+        let result = tracker.update(endPosition: 7955, containerHeight: 700)
         XCTAssertEqual(result.isToolbarVisible, false)
         XCTAssertFalse(tracker.toolbarVisible)
     }
