@@ -401,26 +401,31 @@ struct ArticleReaderLegacyView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Top toolbar (right)
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 12) {
-                    Button(action: {
+                Menu {
+                    Button {
                         showingLabelsSheet = true
-                    }) {
-                        Image(systemName: "tag")
+                    } label: {
+                        Label("Manage Labels".localized, systemImage: "tag")
                     }
 
-                    Button(action: {
+                    Button {
                         showingAnnotationsSheet = true
-                    }) {
-                        Image(systemName: "pencil.line")
+                    } label: {
+                        Label("Annotations".localized, systemImage: "pencil.line")
                     }
 
-                    Button(action: {
-                        showingFontSettings = true
-                    }) {
-                        Image(systemName: "textformat")
+                    ShareLink(item: viewModel.shareContent) {
+                        Label("Share".localized, systemImage: "square.and.arrow.up")
                     }
+
+                    Button {
+                        showingFontSettings = true
+                    } label: {
+                        Label("Font Settings".localized, systemImage: "textformat")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }

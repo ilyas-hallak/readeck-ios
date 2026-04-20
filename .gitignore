@@ -80,3 +80,6 @@ documentation/
 
 # SwiftLint Remote Config Cache
 .swiftlint/RemoteConfigCache
+
+# Worktrees
+.worktrees/

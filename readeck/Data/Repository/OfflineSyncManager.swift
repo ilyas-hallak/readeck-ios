@@ -56,7 +56,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             let title = bookmark.title ?? ""
 
             do {
-                let dto = CreateBookmarkRequestDto(url: url, title: title, labels: tags.isEmpty ? nil : tags)
+                let dto = CreateBookmarkRequestDto(url: url, title: title, labels: tags.isEmpty ? nil : tags, html: bookmark.html)
                 _ = try await api.createBookmark(createRequest: dto)
 
                 deleteOfflineBookmark(bookmark)

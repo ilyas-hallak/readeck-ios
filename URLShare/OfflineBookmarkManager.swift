@@ -14,7 +14,7 @@ final class OfflineBookmarkManager: @unchecked Sendable {
 
     // MARK: - Offline Storage Methods
 
-    func saveOfflineBookmark(url: String, title: String = "", tags: [String] = []) -> Bool {
+    func saveOfflineBookmark(url: String, title: String = "", tags: [String] = [], html: String? = nil) -> Bool {
         let tagsString = tags.joined(separator: ",")
 
         do {
@@ -30,6 +30,7 @@ final class OfflineBookmarkManager: @unchecked Sendable {
                     // Update existing entry
                     existingEntity.tags = tagsString
                     existingEntity.title = title
+                    existingEntity.html = html
                 } else {
                     // Create new entry
                     let entity = ArticleURLEntity(context: self.context)
@@ -37,6 +38,7 @@ final class OfflineBookmarkManager: @unchecked Sendable {
                     entity.url = url
                     entity.title = title
                     entity.tags = tagsString
+                    entity.html = html
                 }
 
                 try self.context.save()

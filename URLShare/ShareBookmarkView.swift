@@ -35,6 +35,7 @@ struct ShareBookmarkView: View {
                                 .id(AddBookmarkFieldFocus.labels)
                             titleSection
                                 .id(AddBookmarkFieldFocus.title)
+                            sendPageContentSection
                             statusSection
                             Spacer(minLength: 100) // Space for button
                         }
@@ -170,6 +171,27 @@ struct ShareBookmarkView: View {
                     }
                 }
             }
+    }
+
+    @ViewBuilder
+    private var sendPageContentSection: some View {
+        if viewModel.pageHTML != nil {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Send page content")
+                        .font(.system(size: 15, weight: .medium))
+                    Text("Useful for paywalled articles")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Toggle("", isOn: $viewModel.includeHTML)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 20)
+        }
     }
 
     @ViewBuilder

@@ -16,6 +16,10 @@ final class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         let viewModel = ShareBookmarkViewModel(extensionContext: extensionContext)
+
+        // Extract URL, title, and HTML from JavaScript preprocessing results
+        extractJSPreprocessingResults(into: viewModel)
+
         let swiftUIView = ShareBookmarkView(viewModel: viewModel)
             .environment(\.managedObjectContext, CoreDataManager.shared.context)
         let hostingController = UIHostingController(rootView: AnyView(swiftUIView))
@@ -37,6 +41,34 @@ final class ShareViewController: UIViewController {
             name: .dismissKeyboard,
             object: nil
         )
+    }
+
+    private func extractJSPreprocessingResults(into viewModel: ShareBookmarkViewModel) {
+        guard let extensionContext else { return }
+
+        for item in extensionContext.inputItems {
+            guard let inputItem = item as? NSExtensionItem else { continue }
+            for attachment in inputItem.attachments ?? [] {
+                if attachment.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
+                    attachment.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { result, _ in
+                        guard let dictionary = result as? NSDictionary,
+                              let jsResults = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary else {
+                            return
+                        }
+                        DispatchQueue.main.async {
+                            if let url = jsResults["url"] as? String {
+                                viewModel.url = url
+                            }
+                            if let title = jsResults["title"] as? String, !title.isEmpty {
+                                viewModel.title = title
+                            }
+                            viewModel.pageHTML = jsResults["html"] as? String
+                        }
+                    }
+                    return
+                }
+            }
+        }
     }
 
     @objc private func dismissKeyboard() {

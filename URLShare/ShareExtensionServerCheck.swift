@@ -4,40 +4,35 @@ import Foundation
 final class ShareExtensionServerCheck {
     static let shared = ShareExtensionServerCheck()
 
-    // Cache properties
-    // swiftlint:disable:next discouraged_optional_boolean
-    private var cachedResult: Bool?
+    private var cachedInfo: ServerInfoDto?
     private var lastCheckTime: Date?
     private let cacheTTL: TimeInterval = 30.0
 
     private init() {}
 
-    func checkServerReachability() async -> Bool {
-        // Check cache first
+    /// Returns server info if reachable, nil otherwise.
+    func checkServerReachability() async -> ServerInfoDto? {
         if let cached = getCachedResult() {
             return cached
         }
 
-        // Use SimpleAPI for actual check
-        let result = await SimpleAPI.checkServerReachability()
-        updateCache(result: result)
-        return result
+        let info = await SimpleAPI.checkServerReachability()
+        updateCache(info: info)
+        return info
     }
 
     // MARK: - Cache Management
 
-    // swiftlint:disable:next discouraged_optional_boolean
-    private func getCachedResult() -> Bool? {
+    private func getCachedResult() -> ServerInfoDto? {
         guard let lastCheck = lastCheckTime,
-              Date().timeIntervalSince(lastCheck) < cacheTTL,
-              let cached = cachedResult else {
+              Date().timeIntervalSince(lastCheck) < cacheTTL else {
             return nil
         }
-        return cached
+        return cachedInfo
     }
 
-    private func updateCache(result: Bool) {
-        cachedResult = result
+    private func updateCache(info: ServerInfoDto?) {
+        cachedInfo = info
         lastCheckTime = Date()
     }
 }
