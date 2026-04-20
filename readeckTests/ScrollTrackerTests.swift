@@ -20,18 +20,18 @@ final class ScrollTrackerTests: XCTestCase {
     func testProgressAt50Percent() {
         var tracker = ScrollTracker()
 
-        // Initialize: content end at 1700, container 700 → scrollable distance = 1000
-        _ = tracker.update(endPosition: 1700, containerHeight: 700)
-        // Scroll to 50%: endPosition drops by 500
-        let result = tracker.update(endPosition: 1200, containerHeight: 700)
+        // Initialize: content end at 2000, container 700 → scrollable distance = 1300 (> 1.5x container)
+        _ = tracker.update(endPosition: 2000, containerHeight: 700)
+        // Scroll to 50%: endPosition drops by 650
+        let result = tracker.update(endPosition: 1350, containerHeight: 700)
         XCTAssertEqual(result.readingProgress ?? -1, 0.5, accuracy: 0.01)
     }
 
     func testProgressAt100Percent() {
         var tracker = ScrollTracker()
 
-        // Initialize: scrollable distance = 1000
-        _ = tracker.update(endPosition: 1700, containerHeight: 700)
+        // Initialize: content end at 2000, scrollable distance = 1300
+        _ = tracker.update(endPosition: 2000, containerHeight: 700)
         // Scroll to bottom
         let result = tracker.update(endPosition: 700, containerHeight: 700)
         XCTAssertEqual(result.readingProgress ?? -1, 1.0, accuracy: 0.01)
@@ -40,7 +40,7 @@ final class ScrollTrackerTests: XCTestCase {
     func testProgressLocksAt100() {
         var tracker = ScrollTracker()
 
-        _ = tracker.update(endPosition: 1700, containerHeight: 700)
+        _ = tracker.update(endPosition: 2000, containerHeight: 700)
 
         // Reach 100%
         let r1 = tracker.update(endPosition: 700, containerHeight: 700)
@@ -55,14 +55,15 @@ final class ScrollTrackerTests: XCTestCase {
     func testShouldUpdateProgress() {
         var tracker = ScrollTracker()
 
-        _ = tracker.update(endPosition: 1700, containerHeight: 700)
+        // Initialize: scrollable distance = 1300
+        _ = tracker.update(endPosition: 2000, containerHeight: 700)
 
         // Small scroll — not enough to trigger update (< 3% threshold)
-        let r1 = tracker.update(endPosition: 1690, containerHeight: 700)
+        let r1 = tracker.update(endPosition: 1990, containerHeight: 700)
         XCTAssertFalse(r1.shouldUpdateProgress)
 
-        // Larger scroll — triggers update
-        let r2 = tracker.update(endPosition: 1600, containerHeight: 700)
+        // Larger scroll — triggers update (~7% change > 3% threshold)
+        let r2 = tracker.update(endPosition: 1900, containerHeight: 700)
         XCTAssertTrue(r2.shouldUpdateProgress)
     }
 
@@ -109,12 +110,21 @@ final class ScrollTrackerTests: XCTestCase {
     func testToolbarHidesAfterAccumulatedScrollDown() {
         var tracker = ScrollTracker()
         tracker.scrollDownThresholdRatio = 0.06
+        tracker.scrollUpThresholdRatio = 0.12
 
         _ = tracker.update(endPosition: 8000, containerHeight: 700)
-        // Accumulate 20 + 25 = 45pt > 42pt threshold
-        _ = tracker.update(endPosition: 7980, containerHeight: 700)
-        let result = tracker.update(endPosition: 7955, containerHeight: 700)
-        XCTAssertEqual(result.isToolbarVisible, false)
+        // Scroll down 500pt → hides toolbar
+        _ = tracker.update(endPosition: 7500, containerHeight: 700)
+        XCTAssertFalse(tracker.toolbarVisible)
+        // Scroll up 84pt → shows toolbar (84pt == 12% of 700)
+        _ = tracker.update(endPosition: 7584, containerHeight: 700)
+        XCTAssertTrue(tracker.toolbarVisible)
+
+        // Accumulate 20 + 25 = 45pt > 42pt threshold → hides again
+        let r1 = tracker.update(endPosition: 7564, containerHeight: 700)
+        XCTAssertNil(r1.isToolbarVisible, "Should not hide yet — below threshold")
+        let r2 = tracker.update(endPosition: 7539, containerHeight: 700)
+        XCTAssertEqual(r2.isToolbarVisible, false)
         XCTAssertFalse(tracker.toolbarVisible)
     }
 
