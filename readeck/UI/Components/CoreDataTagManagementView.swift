@@ -52,21 +52,7 @@ struct CoreDataTagManagementView: View {
         self.onRemoveLabel = onRemoveLabel
 
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-
-        // Apply sort order from parameter
-        let sortDescriptors: [NSSortDescriptor]
-        switch sortOrder {
-        case .byCount:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        case .alphabetically:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        }
-        fetchRequest.sortDescriptors = sortDescriptors
+        fetchRequest.sortDescriptors = Self.sortDescriptors(for: sortOrder)
 
         if let limit = fetchLimit {
             fetchRequest.fetchLimit = limit
@@ -88,6 +74,26 @@ struct CoreDataTagManagementView: View {
         }
         .onChange(of: searchText.wrappedValue) { _, newValue in
             performSearch(query: newValue)
+        }
+        .onChange(of: sortOrder) { _, newValue in
+            tagEntities.nsSortDescriptors = Self.sortDescriptors(for: newValue)
+            if isSearchActive {
+                performSearch(query: searchText.wrappedValue)
+            }
+        }
+    }
+
+    private static func sortDescriptors(for sortOrder: TagSortOrder) -> [NSSortDescriptor] {
+        switch sortOrder {
+        case .byCount:
+            return [
+                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
+                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
+            ]
+        case .alphabetically:
+            return [
+                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
+            ]
         }
     }
 
@@ -277,20 +283,7 @@ struct CoreDataTagManagementView: View {
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
 
-        // Use same sort order as main fetch
-        let sortDescriptors: [NSSortDescriptor]
-        switch sortOrder {
-        case .byCount:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        case .alphabetically:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        }
-        fetchRequest.sortDescriptors = sortDescriptors
+        fetchRequest.sortDescriptors = Self.sortDescriptors(for: sortOrder)
 
         // NO fetchLimit - search ALL tags in database
         searchResults = (try? context.fetch(fetchRequest)) ?? []
