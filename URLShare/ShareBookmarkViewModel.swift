@@ -15,7 +15,7 @@ final class ShareBookmarkViewModel: ObservableObject {
     @Published var sessionExpired = false
     @Published var pageHTML: String?
     @Published var includeHTML = false
-    let tagSortOrder: TagSortOrder = .byCount  // Share Extension always uses byCount
+    let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
 
     private let logger = Logger.viewModel
@@ -25,6 +25,7 @@ final class ShareBookmarkViewModel: ObservableObject {
 
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
+        self.tagSortOrder = Self.loadTagSortOrder()
         logger.info("ShareBookmarkViewModel initialized with extension context: \(extensionContext != nil)")
 
         // Check if app is configured by verifying token exists
@@ -261,5 +262,20 @@ final class ShareBookmarkViewModel: ObservableObject {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+
+    private static func loadTagSortOrder() -> TagSortOrder {
+        let context = CoreDataManager.shared.context
+        var result: TagSortOrder = .byCount
+        context.performAndWait {
+            let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+            fetchRequest.fetchLimit = 1
+            if let entity = try? context.fetch(fetchRequest).first,
+               let raw = entity.tagSortOrder,
+               let parsed = TagSortOrder(rawValue: raw) {
+                result = parsed
+            }
+        }
+        return result
     }
 }
