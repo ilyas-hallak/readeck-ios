@@ -5,6 +5,7 @@
 //  Created by Ilyas Hallak on 15.12.25.
 //
 
+import Foundation
 import Testing
 @testable import readeck
 
@@ -186,5 +187,28 @@ struct ServerInfoTests {
         #expect(serverInfo != nil)
         #expect(!serverInfo.supportsOAuth, "Server with features but no oauth should report no OAuth support")
         #expect(serverInfo.supportsEmail)
+    }
+
+    // MARK: - JSON Decoding
+
+    @Test("Decodes real server /api/info response with nested version object")
+    func decode_RealServerResponse_WithNestedVersion() throws {
+        let json = """
+        {
+          "version": {
+            "canonical": "0.22.2",
+            "release": "0.22.2",
+            "build": ""
+          },
+          "features": ["oauth"]
+        }
+        """.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(ServerInfoDto.self, from: json)
+
+        #expect(dto.version.canonical == "0.22.2")
+        #expect(dto.version.release == "0.22.2")
+        #expect(dto.version.build == "")
+        #expect(dto.features == ["oauth"])
     }
 }
