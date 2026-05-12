@@ -84,6 +84,16 @@ final class BookmarksViewModel {
             }
             .store(in: &cancellables)
 
+        // Refresh when a bookmark is deleted from the reading view
+        NotificationCenter.default
+            .publisher(for: .bookmarkDeleted)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.refreshBookmarks()
+                }
+            }
+            .store(in: &cancellables)
+
         // Listen for
         NotificationCenter.default
             .publisher(for: .addBookmarkFromShare)
