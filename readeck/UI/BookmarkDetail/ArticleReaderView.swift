@@ -63,11 +63,11 @@ struct ArticleReaderView: View {
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
             }
-            .confirmationDialog(
+            .alert(
                 "Delete this bookmark?".localized,
-                isPresented: $showingDeleteConfirmation,
-                titleVisibility: .visible
+                isPresented: $showingDeleteConfirmation
             ) {
+                Button("Cancel".localized, role: .cancel) {}
                 Button("Delete".localized, role: .destructive) {
                     Task {
                         let success = await viewModel.deleteBookmark(id: bookmarkId)
@@ -76,7 +76,6 @@ struct ArticleReaderView: View {
                         }
                     }
                 }
-                Button("Cancel".localized, role: .cancel) {}
             } message: {
                 Text("This action cannot be undone.".localized)
             }
