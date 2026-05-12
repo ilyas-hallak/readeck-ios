@@ -289,6 +289,7 @@ final class BookmarkDetailViewModel {
             Logger.viewModel.info("✅ Annotation created: \(annotation.id)")
             annotations.append(annotation)
             hasAnnotations = true
+            await refreshArticleInBackground(id: bookmarkId)
         } catch {
             Logger.viewModel.error("❌ Failed to create annotation: \(error.localizedDescription)")
             // Check for specific error messages from server
