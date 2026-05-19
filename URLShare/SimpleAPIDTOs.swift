@@ -1,19 +1,19 @@
 import Foundation
 
 public struct ServerInfoDto: Codable {
-    public let version: String
-    public let buildDate: String?
-    public let userAgent: String?
+    public let version: VersionInfo
+    // swiftlint:disable:next discouraged_optional_collection
+    public let features: [String]?
 
-    public enum CodingKeys: String, CodingKey {
-        case version
-        case buildDate = "build_date"
-        case userAgent = "user_agent"
+    public struct VersionInfo: Codable {
+        public let canonical: String
+        public let release: String?
+        public let build: String?
     }
 
     // HTML bookmark submission requires Readeck >= 0.22
     public var supportsHTMLBookmarks: Bool {
-        let parts = version.split(separator: ".").compactMap { Int($0) }
+        let parts = version.canonical.split(separator: ".").compactMap { Int($0) }
         guard parts.count >= 2 else { return false }
         return parts[0] > 0 || parts[1] >= 22
     }
