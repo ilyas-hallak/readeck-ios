@@ -4,6 +4,10 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Unreleased
+
+- Added a Delete option to the article reading view's menu, so you can remove the current article without going back to the list.
+
 ## Version 3.0.0
 
 ### Granular Reader Styling

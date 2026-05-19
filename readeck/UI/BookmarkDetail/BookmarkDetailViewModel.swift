@@ -11,6 +11,7 @@ final class BookmarkDetailViewModel {
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
     private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
+    private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
 
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -53,6 +54,7 @@ final class BookmarkDetailViewModel {
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
+        self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         self.factory = factory
         self.summaryViewModel = ArticleSummaryViewModel()
 
@@ -200,6 +202,26 @@ final class BookmarkDetailViewModel {
             errorMessage = "Error archiving bookmark"
         }
         isLoading = false
+    }
+
+    @MainActor
+    func deleteBookmark(id: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await deleteBookmarkUseCase.execute(bookmarkId: id)
+            isLoading = false
+            NotificationCenter.default.post(
+                name: .bookmarkDeleted,
+                object: nil,
+                userInfo: ["id": id]
+            )
+            return true
+        } catch {
+            errorMessage = "Error deleting bookmark"
+            isLoading = false
+            return false
+        }
     }
 
     @MainActor

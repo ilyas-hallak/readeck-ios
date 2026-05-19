@@ -35,6 +35,7 @@ struct ArticleReaderLegacyView: View {
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
+    @State private var showingDeleteConfirmation = false
 
     // MARK: - Envs
 
@@ -424,6 +425,15 @@ struct ArticleReaderLegacyView: View {
                     } label: {
                         Label("Font Settings".localized, systemImage: "textformat")
                     }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        Label("Delete".localized, systemImage: "trash")
+                    }
+                    .disabled(!appSettings.isNetworkConnected)
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -451,6 +461,22 @@ struct ArticleReaderLegacyView: View {
         }
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
+        }
+        .alert(
+            "Delete this bookmark?".localized,
+            isPresented: $showingDeleteConfirmation
+        ) {
+            Button("Cancel".localized, role: .cancel) {}
+            Button("Delete".localized, role: .destructive) {
+                Task {
+                    let success = await viewModel.deleteBookmark(id: bookmarkId)
+                    if success {
+                        dismiss()
+                    }
+                }
+            }
+        } message: {
+            Text("This action cannot be undone.".localized)
         }
         .onChange(of: showingFontSettings) { _, isShowing in
             if !isShowing {

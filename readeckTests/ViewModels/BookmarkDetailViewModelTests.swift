@@ -97,4 +97,54 @@ struct BookmarkDetailViewModelTests {
         #expect(factory.mockUpdateBookmark.updateProgressCalled == true)
         #expect(factory.mockUpdateBookmark.lastProgressValue == 50)
     }
+
+    // MARK: - Delete Bookmark
+
+    @Test("Delete bookmark calls use case and returns true on success")
+    func deleteBookmarkSuccess() async {
+        let (vm, factory) = createSUT()
+        factory.mockDeleteBookmark.result = .success(())
+
+        let success = await vm.deleteBookmark(id: "789")
+
+        #expect(success == true)
+        #expect(factory.mockDeleteBookmark.deleteCalled == true)
+        #expect(factory.mockDeleteBookmark.lastDeletedId == "789")
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoading == false)
+    }
+
+    @Test("Delete bookmark returns false and sets error on failure")
+    func deleteBookmarkFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockDeleteBookmark.result = .failure(TestError.networkError)
+
+        let success = await vm.deleteBookmark(id: "789")
+
+        #expect(success == false)
+        #expect(vm.errorMessage == "Error deleting bookmark")
+        #expect(vm.isLoading == false)
+    }
+
+    @Test("Delete bookmark posts bookmarkDeleted notification on success")
+    func deleteBookmarkPostsNotification() async {
+        let (vm, factory) = createSUT()
+        factory.mockDeleteBookmark.result = .success(())
+
+        var receivedId: String?
+        let observer = NotificationCenter.default.addObserver(
+            forName: .bookmarkDeleted,
+            object: nil,
+            queue: .main
+        ) { notification in
+            receivedId = notification.userInfo?["id"] as? String
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        _ = await vm.deleteBookmark(id: "789")
+
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(receivedId == "789")
+    }
 }
