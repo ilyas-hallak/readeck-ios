@@ -4,6 +4,91 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 3.1.0
+
+### Delete While Reading
+
+- **Archive or delete articles directly from the reader** — no need to go back to the list
+
+### Bug Fixes
+
+- **Fix: Rubberband-Scrolling deaktiviert** — kein unerwünschtes Bounce-Effekt mehr beim Scrollen im Reader
+- **Fix: Highlights erscheinen sofort** nach dem Erstellen, ohne Reload erforderlich
+- **Fix: Share Extension** Server-Versions-Check funktioniert jetzt korrekt mit verschachteltem API-Format
+
+---
+
+## Version 3.0.0
+
+### Share Extension: HTML Bookmarks
+
+- **Richer bookmarks when saving from the Share Extension** — the app now sends the full page HTML along with the URL
+- Readeck can extract article content directly from the saved HTML, even if the original page is behind a paywall or login
+- Requires Readeck server version 0.22 or newer — older servers receive the URL only, as before
+- UTF-8 encoding is preserved correctly for all languages and special characters
+
+### Share Article
+
+- **Share any article directly from the reader** using the native iOS share sheet (thanks @sibson)
+
+### Article Reader Improvements
+
+- **Cleaner navigation bar** — all actions are now grouped in a single "…" menu
+- **Smoother toolbar animation** when scrolling — the navigation bar fades in and out gradually instead of jumping
+
+---
+
+### Granular Reader Styling
+
+**Full control over your reading experience**
+- Numeric font size slider (10-30px) for precise text sizing
+- Adjustable horizontal margins (0-40px)
+- Line height control (1.0-2.5) for comfortable line density
+- Toggle to hide progress bar, word count/reading time, or hero image
+
+**Color Themes**
+- 7 built-in color themes: System, Sepia, Night Blue, Mint, Solarized Light, Solarized Dark, Gray
+- Custom color picker for background and text color
+- Colors apply to both the article content and the native UI (title, metadata)
+
+**Metadata Cleanup**
+- Compact author format without "Author:" prefix
+- Author and date combined on one line
+- Source URL moved to a safari icon next to the title
+
+**Power User**
+- Custom CSS injection for full styling control
+- All reader settings accessible from both the article view and app settings
+
+### AI Article Summary (iPhone 15+)
+
+- **Summarize articles with on-device AI** using Apple Foundation Models
+- Tap the sparkles button below the article title to generate a summary
+- Summary length adapts to article length — short articles get a brief summary, long articles get a detailed one
+- Long articles are automatically chunked and summarized in parts
+- Choose the summary language from all languages supported by the on-device model
+- Collapsible card design that stays out of your way
+- Fully on-device — no data leaves your phone
+
+### Disable Back Swipe in Reader
+
+- **New setting to disable the edge swipe back gesture** in the article reader
+- Makes it easier to select and highlight text near the screen edges
+- Toggle in Settings → Reading Settings
+- Adds a dedicated back button in the navigation bar when enabled
+
+---
+
+## Version 2.1.0
+
+### Bug Fixes & Improvements
+
+- **Fix: Annotations now display correctly** when reopening articles (thanks @sibson)
+- **New: Reset reading progress** via context menu (thanks @astratto)
+- Improved error handling and stability fixes
+
+---
+
 ## Version 2.0.0
 
 ### 📖 Offline Reading - The Feature You've Been Waiting For!
