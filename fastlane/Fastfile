@@ -14,7 +14,7 @@
 # update_fastlane
 
 default_platform(:ios)
-xcversion(version: "16.4.0")
+xcodes(version: "26.4.0", select_for_current_build_only: true)
 
 platform :ios do
   #desc "Generate new localized screenshots"
