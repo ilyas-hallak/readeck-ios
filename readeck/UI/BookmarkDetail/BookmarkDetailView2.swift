@@ -201,6 +201,7 @@ struct BookmarkDetailView2: View {
             .clipped()
             .ignoresSafeArea(edges: [.top, .bottom])
             .scrollPosition($scrollPosition)
+            .disableScrollBounce()
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 contentEndPosition = endPosition
 
