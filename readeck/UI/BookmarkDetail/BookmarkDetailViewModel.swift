@@ -10,6 +10,7 @@ class BookmarkDetailViewModel {
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
+    private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
 
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -34,6 +35,7 @@ class BookmarkDetailViewModel {
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
+        self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         self.factory = factory
 
         readProgressSubject
@@ -202,6 +204,26 @@ class BookmarkDetailViewModel {
     
     func debouncedUpdateReadProgress(id: String, progress: Double, anchor: String?) {
         readProgressSubject.send((id, progress, anchor))
+    }
+
+    @MainActor
+    func deleteBookmark(id: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await deleteBookmarkUseCase.execute(bookmarkId: id)
+            isLoading = false
+            NotificationCenter.default.post(
+                name: .bookmarkDeleted,
+                object: nil,
+                userInfo: ["id": id]
+            )
+            return true
+        } catch {
+            errorMessage = "Error deleting bookmark"
+            isLoading = false
+            return false
+        }
     }
 
     @MainActor

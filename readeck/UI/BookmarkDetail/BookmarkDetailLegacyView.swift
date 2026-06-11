@@ -35,6 +35,7 @@ struct BookmarkDetailLegacyView: View {
     @State private var showJumpToProgressButton: Bool = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
+    @State private var showingDeleteConfirmation = false
 
     // MARK: - Envs
 
@@ -222,6 +223,21 @@ struct BookmarkDetailLegacyView: View {
     }
     
     var body: some View {
+        mainView
+            .alert("Delete this bookmark?", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    Task {
+                        let success = await viewModel.deleteBookmark(id: bookmarkId)
+                        if success { dismiss() }
+                    }
+                }
+            } message: {
+                Text("This action cannot be undone.")
+            }
+    }
+
+    private var mainView: some View {
         VStack(spacing: 0) {
             ProgressView(value: readingProgress)
                 .progressViewStyle(LinearProgressViewStyle())
@@ -260,10 +276,20 @@ struct BookmarkDetailLegacyView: View {
                         Image(systemName: "pencil.line")
                     }
 
-                    Button(action: {
-                        showingFontSettings = true
-                    }) {
-                        Image(systemName: "textformat")
+                    Menu {
+                        Button(action: {
+                            showingFontSettings = true
+                        }) {
+                            Label("Font Settings", systemImage: "textformat")
+                        }
+                        Divider()
+                        Button(role: .destructive, action: {
+                            showingDeleteConfirmation = true
+                        }) {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }

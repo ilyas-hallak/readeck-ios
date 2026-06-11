@@ -12,6 +12,9 @@ extension Notification.Name {
     static let dismissKeyboard = Notification.Name("DismissKeyboard")
     static let addBookmarkFromShare = Notification.Name("AddBookmarkFromShare")
     
+    // MARK: - Bookmarks
+    static let bookmarkDeleted = Notification.Name("bookmarkDeleted")
+
     // MARK: - User Preferences
     static let cardLayoutChanged = Notification.Name("cardLayoutChanged")
     static let tagSortOrderChanged = Notification.Name("tagSortOrderChanged")
