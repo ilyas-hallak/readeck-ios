@@ -340,141 +340,6 @@ final class API: PAPI {
 
     // MARK: - Bookmark article (GET + 502 recovery)
 
-    private enum BookmarkArticleGETOutcome {
-        case success(String)
-        case badGateway
-        case httpFailure(statusCode: Int)
-    }
-
-    private struct BookmarkSyncRequestBody: Encodable {
-        let id: [String]
-        let with_json: Bool
-        let with_html: Bool
-        let with_resources: Bool
-        let resource_prefix: String
-
-        init(bookmarkId: String) {
-            id = [bookmarkId]
-            with_json = false
-            with_html = true
-            with_resources = false
-            resource_prefix = "."
-        }
-    }
-
-    private func fetchBookmarkArticleGETOutcome(
-        endpoint: String,
-        timeout: TimeInterval,
-        additionalHeaders: [String: String]
-    ) async throws -> BookmarkArticleGETOutcome {
-        var request = try await buildRequest(
-            url: endpoint,
-            method: .GET,
-            body: nil,
-            useBaseURL: true,
-            additionalHeaders: additionalHeaders
-        )
-        request.timeoutInterval = timeout
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid HTTP response for \(endpoint)")
-            throw APIError.invalidResponse
-        }
-
-        if httpResponse.statusCode == 502 {
-            return .badGateway
-        }
-
-        guard 200...299 ~= httpResponse.statusCode else {
-            logger.error("Server error for \(endpoint): HTTP \(httpResponse.statusCode)")
-            logger.error("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
-            return .httpFailure(statusCode: httpResponse.statusCode)
-        }
-
-        guard let string = String(data: data, encoding: .utf8) else {
-            logger.error("Unable to decode response as UTF-8 string for \(endpoint)")
-            logger.error("Data size: \(data.count) bytes")
-            throw APIError.invalidResponse
-        }
-
-        return .success(string)
-    }
-
-    private func fetchBookmarkArticleRecoveringFrom502(id: String, endpoint: String, timeout: TimeInterval) async throws -> String {
-        switch try await fetchBookmarkArticleGETOutcome(endpoint: endpoint, timeout: timeout, additionalHeaders: [:]) {
-        case let .success(html):
-            logger.debug("Bookmark article fetch path: GET /article")
-            return html
-        case .badGateway:
-            break
-        case let .httpFailure(statusCode):
-            handleUnauthorizedResponse(statusCode)
-            throw APIError.serverError(statusCode)
-        }
-
-        switch try await fetchBookmarkArticleGETOutcome(
-            endpoint: endpoint,
-            timeout: timeout,
-            additionalHeaders: ["Accept-Encoding": "gzip, deflate, br"]
-        ) {
-        case let .success(html):
-            logger.info("Bookmark article fetch path: GET /article with Accept-Encoding after 502")
-            return html
-        case .badGateway:
-            break
-        case let .httpFailure(statusCode):
-            handleUnauthorizedResponse(statusCode)
-            throw APIError.serverError(statusCode)
-        }
-
-        logger.info("Bookmark article fetch path: POST /bookmarks/sync multipart fallback")
-        return try await fetchBookmarkArticleThroughSync(bookmarkId: id, timeout: timeout)
-    }
-
-    private func fetchBookmarkArticleThroughSync(bookmarkId: String, timeout: TimeInterval) async throws -> String {
-        let endpoint = "/api/bookmarks/sync"
-        let bodyData = try JSONEncoder().encode(BookmarkSyncRequestBody(bookmarkId: bookmarkId))
-
-        var request = try await buildRequest(
-            url: endpoint,
-            method: .POST,
-            body: bodyData,
-            useBaseURL: true
-        )
-        request.timeoutInterval = timeout
-
-        let baseURL = await self.baseURL
-        let fullURL = "\(baseURL)\(endpoint)"
-        logger.logNetworkRequest(method: "POST", url: fullURL)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            logger.error("Invalid HTTP response for sync article fallback")
-            throw APIError.invalidResponse
-        }
-
-        guard 200...299 ~= httpResponse.statusCode else {
-            logger.error("Server error for \(endpoint): HTTP \(httpResponse.statusCode)")
-            logger.error("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
-            handleUnauthorizedResponse(httpResponse.statusCode)
-            throw APIError.serverError(httpResponse.statusCode)
-        }
-
-        logger.logNetworkRequest(method: "POST", url: fullURL, statusCode: httpResponse.statusCode)
-
-        let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
-        do {
-            return try MultipartMixedHTMLExtractor.extractHTML(data: data, contentTypeValue: contentType, bookmarkId: bookmarkId)
-        } catch {
-            logger.error("Failed to parse sync multipart HTML: \(error)")
-            throw APIError.invalidResponse
-        }
-    }
-
-    // Artikel als String laden statt als JSON
     func getBookmarkArticle(id: String) async throws -> String {
         logger.debug("Fetching article for bookmark: \(id)")
         let endpoint = "/api/bookmarks/\(id)/article"
@@ -522,6 +387,118 @@ final class API: PAPI {
         }
 
         throw APIError.invalidResponse
+    }
+
+    private func fetchBookmarkArticleRecoveringFrom502(id: String, endpoint: String, timeout: TimeInterval) async throws -> String {
+        switch try await fetchBookmarkArticleGETOutcome(endpoint: endpoint, timeout: timeout, additionalHeaders: [:]) {
+        case let .success(html):
+            logger.debug("Bookmark article fetch path: GET /article")
+            return html
+        case .badGateway:
+            break
+        case let .httpFailure(statusCode):
+            handleUnauthorizedResponse(statusCode)
+            throw APIError.serverError(statusCode)
+        }
+
+        switch try await fetchBookmarkArticleGETOutcome(
+            endpoint: endpoint,
+            timeout: timeout,
+            additionalHeaders: ["Accept-Encoding": "gzip, deflate, br"]
+        ) {
+        case let .success(html):
+            logger.info("Bookmark article fetch path: GET /article with Accept-Encoding after 502")
+            return html
+        case .badGateway:
+            break
+        case let .httpFailure(statusCode):
+            handleUnauthorizedResponse(statusCode)
+            throw APIError.serverError(statusCode)
+        }
+
+        logger.info("Bookmark article fetch path: POST /bookmarks/sync multipart fallback")
+        return try await fetchBookmarkArticleThroughSync(bookmarkId: id, timeout: timeout)
+    }
+
+    private func fetchBookmarkArticleGETOutcome(
+        endpoint: String,
+        timeout: TimeInterval,
+        additionalHeaders: [String: String]
+    ) async throws -> BookmarkArticleGETOutcome {
+        var request = try await buildRequest(
+            url: endpoint,
+            method: .GET,
+            body: nil,
+            useBaseURL: true,
+            additionalHeaders: additionalHeaders
+        )
+        request.timeoutInterval = timeout
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for \(endpoint)")
+            throw APIError.invalidResponse
+        }
+
+        if httpResponse.statusCode == 502 {
+            return .badGateway
+        }
+
+        guard 200...299 ~= httpResponse.statusCode else {
+            logger.error("Server error for \(endpoint): HTTP \(httpResponse.statusCode)")
+            logger.error("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
+            return .httpFailure(statusCode: httpResponse.statusCode)
+        }
+
+        guard let string = String(data: data, encoding: .utf8) else {
+            logger.error("Unable to decode response as UTF-8 string for \(endpoint)")
+            logger.error("Data size: \(data.count) bytes")
+            throw APIError.invalidResponse
+        }
+
+        return .success(string)
+    }
+
+    private func fetchBookmarkArticleThroughSync(bookmarkId: String, timeout: TimeInterval) async throws -> String {
+        let endpoint = "/api/bookmarks/sync"
+        let bodyData = try JSONEncoder().encode(BookmarkSyncRequestBody(bookmarkId: bookmarkId))
+
+        var request = try await buildRequest(
+            url: endpoint,
+            method: .POST,
+            body: bodyData,
+            useBaseURL: true
+        )
+        request.timeoutInterval = timeout
+
+        let baseURL = await self.baseURL
+        let fullURL = "\(baseURL)\(endpoint)"
+        logger.logNetworkRequest(method: "POST", url: fullURL)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for sync article fallback")
+            throw APIError.invalidResponse
+        }
+
+        guard 200...299 ~= httpResponse.statusCode else {
+            logger.error("Server error for \(endpoint): HTTP \(httpResponse.statusCode)")
+            logger.error("Response data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
+            handleUnauthorizedResponse(httpResponse.statusCode)
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+
+        logger.logNetworkRequest(method: "POST", url: fullURL, statusCode: httpResponse.statusCode)
+
+        let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+        do {
+            return try MultipartMixedHTMLExtractor.extractHTML(data: data, contentTypeValue: contentType, bookmarkId: bookmarkId)
+        } catch {
+            logger.error("Failed to parse sync multipart HTML: \(error)")
+            throw APIError.invalidResponse
+        }
     }
 
     func createBookmark(createRequest: CreateBookmarkRequestDto) async throws -> CreateBookmarkResponseDto {
