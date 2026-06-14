@@ -9,7 +9,6 @@ import Foundation
 import CoreData
 
 extension BookmarkLabelDto {
-
     @discardableResult
     func toEntity(context: NSManagedObjectContext) -> TagEntity {
         let entity = TagEntity(context: context)

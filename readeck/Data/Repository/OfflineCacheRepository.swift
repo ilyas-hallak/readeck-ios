@@ -9,8 +9,7 @@ import Foundation
 import CoreData
 import Kingfisher
 
-class OfflineCacheRepository: POfflineCacheRepository {
-
+final class OfflineCacheRepository: POfflineCacheRepository {
     // MARK: - Dependencies
 
     private let coreDataManager = CoreDataManager.shared
@@ -80,7 +79,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
     }
 
     func hasCachedArticle(id: String) -> Bool {
-        return getCachedArticle(id: id) != nil
+        getCachedArticle(id: id) != nil
     }
 
     func getCachedBookmarks() async throws -> [Bookmark] {
@@ -98,7 +97,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
             let entities = try context.fetch(fetchRequest)
             self.logger.info("📊 getCachedBookmarks: Found \(entities.count) bookmarks with htmlContent != nil")
 
-            if entities.count > 0 {
+            if !entities.isEmpty {
                 // Log details of first cached bookmark
                 if let first = entities.first {
                     self.logger.info("   First cached: id=\(first.id ?? "nil"), title=\(first.title ?? "nil"), cachedDate=\(first.cachedDate?.description ?? "nil")")
@@ -119,8 +118,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
         fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
 
         do {
-            let count = try coreDataManager.context.count(for: fetchRequest)
-            return count
+            return try coreDataManager.context.count(for: fetchRequest)
         } catch {
             logger.error("Error counting cached articles: \(error.localizedDescription)")
             return 0
@@ -152,17 +150,19 @@ class OfflineCacheRepository: POfflineCacheRepository {
         // Collect image URLs before clearing
         let imageURLsToDelete = try await context.perform {
             let entities = try context.fetch(fetchRequest)
+            // swiftlint:disable:next discouraged_optional_collection
             return entities.compactMap { entity -> [URL]? in
                 guard let imageURLsString = entity.imageURLs else { return nil }
                 return imageURLsString
                     .split(separator: ",")
                     .compactMap { URL(string: String($0)) }
-            }.flatMap { $0 }
+            }
+            .flatMap(\.self)
         }
 
         // Clear Core Data cache
         try await context.perform { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
 
             let entities = try context.fetch(fetchRequest)
             for entity in entities {
@@ -201,19 +201,21 @@ class OfflineCacheRepository: POfflineCacheRepository {
             let allEntities = try context.fetch(fetchRequest)
             if allEntities.count > keepCount {
                 let entitiesToDelete = allEntities.prefix(allEntities.count - keepCount)
+                // swiftlint:disable:next discouraged_optional_collection
                 return entitiesToDelete.compactMap { entity -> [URL]? in
                     guard let imageURLsString = entity.imageURLs else { return nil }
                     return imageURLsString
                         .split(separator: ",")
                         .compactMap { URL(string: String($0)) }
-                }.flatMap { $0 }
+                }
+                .flatMap(\.self)
             }
             return []
         }
 
         // 2. Clear Core Data cache
         try await context.perform { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
 
             let allEntities = try context.fetch(fetchRequest)
 
@@ -252,7 +254,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
         let context = coreDataManager.context
 
         try await context.perform { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
 
             let entity = try self.findOrCreateEntity(for: bookmark.id, in: context)
             bookmark.updateEntity(entity)
@@ -315,14 +317,12 @@ class OfflineCacheRepository: POfflineCacheRepository {
             let nsString = html as NSString
             let results = regex.matches(in: html, options: [], range: NSRange(location: 0, length: nsString.length))
 
-            for result in results {
-                if result.numberOfRanges >= 2 {
-                    let urlRange = result.range(at: 1)
-                    if let url = nsString.substring(with: urlRange) as String? {
-                        // Only include absolute URLs (http/https)
-                        if url.hasPrefix("http") {
-                            imageURLs.append(url)
-                        }
+            for result in results where result.numberOfRanges >= 2 {
+                let urlRange = result.range(at: 1)
+                if let url = nsString.substring(with: urlRange) as String? {
+                    // Only include absolute URLs (http/https)
+                    if url.hasPrefix("http") {
+                        imageURLs.append(url)
                     }
                 }
             }
@@ -363,7 +363,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
                             continuation.resume(returning: nil)
                         }
                     case .failure(let error):
-                        print("❌ Kingfisher cache retrieval error: \(error)")
+                        self.logger.error("Kingfisher cache retrieval error: \(error)")
                         continuation.resume(returning: nil)
                     }
                 }
@@ -423,7 +423,7 @@ class OfflineCacheRepository: POfflineCacheRepository {
         let options: KingfisherOptionsInfo = [
             .cacheOriginalImage,
             .diskCacheExpiration(.never), // Keep images as long as article is cached
-            .backgroundDecode,
+            .backgroundDecode
         ]
 
         // Use Kingfisher's prefetcher with offline-friendly options

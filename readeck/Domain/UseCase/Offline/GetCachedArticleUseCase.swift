@@ -11,7 +11,7 @@ protocol PGetCachedArticleUseCase {
     func execute(id: String) -> String?
 }
 
-class GetCachedArticleUseCase: PGetCachedArticleUseCase {
+final class GetCachedArticleUseCase: PGetCachedArticleUseCase {
     private let offlineCacheRepository: POfflineCacheRepository
 
     init(offlineCacheRepository: POfflineCacheRepository) {
@@ -19,6 +19,6 @@ class GetCachedArticleUseCase: PGetCachedArticleUseCase {
     }
 
     func execute(id: String) -> String? {
-        return offlineCacheRepository.getCachedArticle(id: id)
+        offlineCacheRepository.getCachedArticle(id: id)
     }
 }

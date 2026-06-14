@@ -42,7 +42,7 @@ struct readeckApp: App {
                 // Start NetFox in non-production builds
                 if !Bundle.main.isProduction {
                     // Disable NetFox shake gesture since we use it for our debug menu
-                    NFX.sharedInstance().setGesture(.custom) 
+                    NFX.sharedInstance().setGesture(.custom)
                     NFX.sharedInstance().start()
                 }
                 Task {
@@ -55,7 +55,7 @@ struct readeckApp: App {
                     await loadAppSettings()
                 }
             }
-            .onChange(of: scenePhase) { oldPhase, newPhase in
+            .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
                     Task {
                         await appViewModel.onAppResume()

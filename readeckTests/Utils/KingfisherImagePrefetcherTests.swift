@@ -11,7 +11,7 @@ import Kingfisher
 @testable import readeck
 import UIKit
 
-@Suite("KingfisherImagePrefetcher Tests")
+@Suite("KingfisherImagePrefetcher Tests", .serialized)
 struct KingfisherImagePrefetcherTests {
 
     // MARK: - Test Setup & Helpers
@@ -42,10 +42,9 @@ struct KingfisherImagePrefetcherTests {
         #endif
     }
 
-    /// Clears Kingfisher cache after tests
-    private func clearCache() async {
-        await ImageCache.default.clearCache()
-    }
+    /// No-op: we use unique URLs per test instead of clearing the shared cache,
+    /// because clearMemoryCache() interferes with parallel test suites.
+    private func clearCache() {}
 
     /// Checks if an image is cached
     private func isImageCached(forKey key: String) async -> Bool {
@@ -82,33 +81,29 @@ struct KingfisherImagePrefetcherTests {
         let prefetcher = KingfisherImagePrefetcher()
 
         // Pre-cache a test image to verify it persists
-        let testURL = URL(string: "https://example.com/test.jpg")!
+        let testURL = URL(string: "https://kf-expiry-test.com/test-\(UUID()).jpg")!
         let testImage = createTestImage()
 
-        try? await ImageCache.default.store(
-            testImage,
-            forKey: testURL.cacheKey,
-            options: KingfisherParsedOptionsInfo([.diskCacheExpiration(.never)])
-        )
+        try? await ImageCache.default.store(testImage, forKey: testURL.cacheKey, toDisk: false)
 
         let isCached = await isImageCached(forKey: testURL.cacheKey)
         #expect(isCached == true)
 
-        await clearCache()
+        clearCache()
     }
 
     @Test("Verify prefetched images confirms cache status")
     func testVerifyPrefetchedImagesConfirmsCacheStatus() async {
         let prefetcher = KingfisherImagePrefetcher()
 
-        // Manually cache some test images
-        let url1 = URL(string: "https://example.com/cached1.jpg")!
-        let url2 = URL(string: "https://example.com/cached2.jpg")!
-        let url3 = URL(string: "https://example.com/not-cached.jpg")!
+        // Manually cache some test images (unique URLs to avoid cross-suite interference)
+        let url1 = URL(string: "https://kf-verify-test.com/cached1-\(UUID()).jpg")!
+        let url2 = URL(string: "https://kf-verify-test.com/cached2-\(UUID()).jpg")!
+        let url3 = URL(string: "https://kf-verify-test.com/not-cached-\(UUID()).jpg")!
 
         let testImage = createTestImage()
-        try? await ImageCache.default.store(testImage, forKey: url1.cacheKey)
-        try? await ImageCache.default.store(testImage, forKey: url2.cacheKey)
+        try? await ImageCache.default.store(testImage, forKey: url1.cacheKey, toDisk: false)
+        try? await ImageCache.default.store(testImage, forKey: url2.cacheKey, toDisk: false)
 
         // Verify the cached ones
         await prefetcher.verifyPrefetchedImages([url1, url2, url3])
@@ -122,7 +117,7 @@ struct KingfisherImagePrefetcherTests {
         #expect(isCached2 == true)
         #expect(isCached3 == false)
 
-        await clearCache()
+        clearCache()
     }
 
     // MARK: - Custom Cache Key Tests
@@ -130,12 +125,12 @@ struct KingfisherImagePrefetcherTests {
     @Test("Cache image with custom key stores correctly")
     func testCacheImageWithCustomKeyStoresCorrectly() async {
         let prefetcher = KingfisherImagePrefetcher()
-        let customKey = "bookmark-123-hero"
+        let customKey = "bookmark-\(UUID())-hero"
 
         // Pre-cache a test image with URL key so it can be "downloaded"
-        let sourceURL = URL(string: "https://example.com/hero.jpg")!
+        let sourceURL = URL(string: "https://kf-custom-key-test.com/hero-\(UUID()).jpg")!
         let testImage = createTestImage()
-        try? await ImageCache.default.store(testImage, forKey: sourceURL.cacheKey)
+        try? await ImageCache.default.store(testImage, forKey: sourceURL.cacheKey, toDisk: false)
 
         // Now use the prefetcher to cache with custom key
         await prefetcher.cacheImageWithCustomKey(url: sourceURL, key: customKey)
@@ -144,18 +139,18 @@ struct KingfisherImagePrefetcherTests {
         let isCached = await isImageCached(forKey: customKey)
         #expect(isCached == true)
 
-        await clearCache()
+        clearCache()
     }
 
     @Test("Cache image with custom key skips if already cached")
     func testCacheImageWithCustomKeySkipsIfAlreadyCached() async {
         let prefetcher = KingfisherImagePrefetcher()
-        let customKey = "bookmark-456-hero"
-        let sourceURL = URL(string: "https://example.com/hero2.jpg")!
+        let customKey = "bookmark-\(UUID())-hero-skip"
+        let sourceURL = URL(string: "https://kf-skip-test.com/hero2-\(UUID()).jpg")!
 
         // Pre-cache with custom key
         let testImage = createTestImage()
-        try? await ImageCache.default.store(testImage, forKey: customKey)
+        try? await ImageCache.default.store(testImage, forKey: customKey, toDisk: false)
 
         // Call again - should skip (verify by checking it doesn't fail)
         await prefetcher.cacheImageWithCustomKey(url: sourceURL, key: customKey)
@@ -164,7 +159,7 @@ struct KingfisherImagePrefetcherTests {
         let isCached = await isImageCached(forKey: customKey)
         #expect(isCached == true)
 
-        await clearCache()
+        clearCache()
     }
 
     // MARK: - Clear Cache Tests
@@ -173,13 +168,13 @@ struct KingfisherImagePrefetcherTests {
     func testClearCachedImagesRemovesAllURLs() async {
         let prefetcher = KingfisherImagePrefetcher()
 
-        // Cache some test images
-        let url1 = URL(string: "https://example.com/clear1.jpg")!
-        let url2 = URL(string: "https://example.com/clear2.jpg")!
+        // Cache some test images (unique URLs to avoid cross-suite interference)
+        let url1 = URL(string: "https://kf-clear-test.com/clear1-\(UUID()).jpg")!
+        let url2 = URL(string: "https://kf-clear-test.com/clear2-\(UUID()).jpg")!
         let testImage = createTestImage()
 
-        try? await ImageCache.default.store(testImage, forKey: url1.cacheKey)
-        try? await ImageCache.default.store(testImage, forKey: url2.cacheKey)
+        try? await ImageCache.default.store(testImage, forKey: url1.cacheKey, toDisk: false)
+        try? await ImageCache.default.store(testImage, forKey: url2.cacheKey, toDisk: false)
 
         // Verify they are cached
         var isCached1 = await isImageCached(forKey: url1.cacheKey)
@@ -215,15 +210,16 @@ struct KingfisherImagePrefetcherTests {
     func testPrefetchAndVerifyWorkflow() async {
         let prefetcher = KingfisherImagePrefetcher()
 
-        // Pre-populate cache with test images
+        // Pre-populate cache with test images (unique URLs)
+        let id = UUID()
         let urls = [
-            URL(string: "https://example.com/workflow1.jpg")!,
-            URL(string: "https://example.com/workflow2.jpg")!
+            URL(string: "https://kf-workflow-test.com/workflow1-\(id).jpg")!,
+            URL(string: "https://kf-workflow-test.com/workflow2-\(id).jpg")!
         ]
 
         let testImage = createTestImage()
         for url in urls {
-            try? await ImageCache.default.store(testImage, forKey: url.cacheKey)
+            try? await ImageCache.default.store(testImage, forKey: url.cacheKey, toDisk: false)
         }
 
         // Verify they were cached
@@ -234,6 +230,6 @@ struct KingfisherImagePrefetcherTests {
             #expect(isCached == true)
         }
 
-        await clearCache()
+        clearCache()
     }
 }

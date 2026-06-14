@@ -6,7 +6,7 @@ enum OfflineBookmarkSyncState: Equatable {
     case syncing(count: Int, status: String?)
     case success(syncedCount: Int)
     case error(String)
-    
+
     var localBookmarkCount: Int {
         switch self {
         case .idle:
@@ -21,7 +21,7 @@ enum OfflineBookmarkSyncState: Equatable {
             return 0
         }
     }
-    
+
     var isSyncing: Bool {
         switch self {
         case .syncing:
@@ -30,7 +30,7 @@ enum OfflineBookmarkSyncState: Equatable {
             return false
         }
     }
-    
+
     var syncStatus: String? {
         switch self {
         case .syncing(_, let status):
@@ -41,7 +41,7 @@ enum OfflineBookmarkSyncState: Equatable {
             return nil
         }
     }
-    
+
     var showSuccessMessage: Bool {
         switch self {
         case .success:
@@ -50,7 +50,7 @@ enum OfflineBookmarkSyncState: Equatable {
             return false
         }
     }
-    
+
     var syncedBookmarkCount: Int {
         switch self {
         case .success(let count):

@@ -18,7 +18,7 @@ struct OfflineSettingsTests {
     func testDefaultInitialization() {
         let settings = OfflineSettings()
 
-        #expect(settings.enabled == true)
+        #expect(settings.enabled == false)
         #expect(settings.maxUnreadArticles == 20.0)
         #expect(settings.saveImages == false)
         #expect(settings.lastSyncDate == nil)

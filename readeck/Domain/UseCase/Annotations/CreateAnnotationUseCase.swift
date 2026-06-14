@@ -18,7 +18,7 @@ protocol PCreateAnnotationUseCase {
     ) async throws -> Annotation
 }
 
-class CreateAnnotationUseCase: PCreateAnnotationUseCase {
+final class CreateAnnotationUseCase: PCreateAnnotationUseCase {
     private let repository: PAnnotationsRepository
 
     init(repository: PAnnotationsRepository) {
@@ -33,7 +33,7 @@ class CreateAnnotationUseCase: PCreateAnnotationUseCase {
         startSelector: String,
         endSelector: String
     ) async throws -> Annotation {
-        return try await repository.createAnnotation(
+        try await repository.createAnnotation(
             bookmarkId: bookmarkId,
             color: color,
             startOffset: startOffset,

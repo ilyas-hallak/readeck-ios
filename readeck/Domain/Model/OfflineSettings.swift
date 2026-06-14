@@ -8,9 +8,9 @@
 import Foundation
 
 struct OfflineSettings: Codable {
-    var enabled: Bool = false
+    var enabled = false
     var maxUnreadArticles: Double = 20
-    var saveImages: Bool = false
+    var saveImages = false
     var lastSyncDate: Date?
 
     var maxUnreadArticlesInt: Int {

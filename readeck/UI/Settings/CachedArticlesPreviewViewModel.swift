@@ -9,8 +9,7 @@ import Foundation
 import SwiftUI
 
 @Observable
-class CachedArticlesPreviewViewModel {
-
+final class CachedArticlesPreviewViewModel {
     // MARK: - Dependencies
 
     private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase

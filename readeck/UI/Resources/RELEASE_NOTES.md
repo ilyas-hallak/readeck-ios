@@ -38,6 +38,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ---
 
+
 ### Granular Reader Styling
 
 **Full control over your reading experience**
@@ -69,6 +70,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - Choose the summary language from all languages supported by the on-device model
 - Collapsible card design that stays out of your way
 - Fully on-device — no data leaves your phone
+
 
 ### Disable Back Swipe in Reader
 

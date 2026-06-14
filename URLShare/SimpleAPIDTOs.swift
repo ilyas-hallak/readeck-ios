@@ -10,17 +10,28 @@ public struct ServerInfoDto: Codable {
         case buildDate = "build_date"
         case userAgent = "user_agent"
     }
+
+    // HTML bookmark submission requires Readeck >= 0.22
+    public var supportsHTMLBookmarks: Bool {
+        let parts = version.split(separator: ".").compactMap { Int($0) }
+        guard parts.count >= 2 else { return false }
+        return parts[0] > 0 || parts[1] >= 22
+    }
 }
 
 public struct CreateBookmarkRequestDto: Codable {
+    // swiftlint:disable:next discouraged_optional_collection
     public let labels: [String]?
     public let title: String?
     public let url: String
-    
-    public init(url: String, title: String? = nil, labels: [String]? = nil) {
+    public let html: String?
+
+    // swiftlint:disable:next discouraged_optional_collection
+    public init(url: String, title: String? = nil, labels: [String]? = nil, html: String? = nil) {
         self.url = url
         self.title = title
         self.labels = labels
+        self.html = html
     }
 }
 
@@ -34,14 +45,14 @@ public struct BookmarkLabelDto: Codable, Identifiable {
     public let name: String
     public let count: Int
     public let href: String
-    
+
     public enum CodingKeys: String, CodingKey {
         case name, count, href
     }
-    
+
     public init(name: String, count: Int, href: String) {
         self.name = name
         self.count = count
         self.href = href
     }
-} 
+}

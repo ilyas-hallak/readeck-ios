@@ -8,7 +8,8 @@ struct SearchBookmarksView: View {
     @Namespace private var namespace
     @State private var isFirstAppearance = true
     @State private var cardLayoutStyle: CardLayoutStyle = .magazine
-    
+    @EnvironmentObject private var appSettings: AppSettings
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -34,18 +35,18 @@ struct SearchBookmarksView: View {
             .background(Color(.systemGray6))
             .cornerRadius(12)
             .padding([.horizontal, .top])
-            
+
             if viewModel.isLoading {
                 ProgressView("Searching...")
                     .padding()
             }
-            
+
             if let error = viewModel.errorMessage {
                 Text(error)
                     .foregroundColor(.red)
                     .padding()
             }
-            
+
             if let bookmarks = viewModel.bookmarks?.bookmarks, !bookmarks.isEmpty {
                 List(bookmarks) { bookmark in
                     Button(action: {
@@ -63,12 +64,13 @@ struct SearchBookmarksView: View {
                         }
                     }) {
                         BookmarkCardView(
-                            bookmark: bookmark, 
-                            currentState: .all, 
+                            bookmark: bookmark,
+                            currentState: .all,
                             layout: cardLayoutStyle,
-                            onArchive: {_ in }, 
-                            onDelete: {_ in }, 
-                            onToggleFavorite: {_ in }
+                            onSwipeAction: { _, _ in },
+                            onPlayNext: appSettings.enableTTS ? { bookmark in
+                                SpeechQueue.shared.insertAfterCurrent(bookmark.toSpeechQueueItem())
+                            } : nil
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -104,7 +106,7 @@ struct SearchBookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            BookmarkDetailView(bookmarkId: bookmarkId)
+            ArticleReaderRouter(bookmarkId: bookmarkId)
         }
         .onAppear {
             if isFirstAppearance {
@@ -119,7 +121,7 @@ struct SearchBookmarksView: View {
             }
         }
     }
-    
+
     private func loadCardLayoutStyle() {
         Task {
             let loadCardLayoutUseCase = DefaultUseCaseFactory.shared.makeLoadCardLayoutUseCase()

@@ -1,10 +1,10 @@
 import Foundation
 
 enum CardLayoutStyle: String, CaseIterable, Codable {
-    case compact = "compact"
-    case magazine = "magazine"
-    case natural = "natural"
-    
+    case compact
+    case magazine
+    case natural
+
     var displayName: String {
         switch self {
         case .compact:
@@ -15,7 +15,7 @@ enum CardLayoutStyle: String, CaseIterable, Codable {
             return "Natural"
         }
     }
-    
+
     var description: String {
         switch self {
         case .compact:

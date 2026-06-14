@@ -7,8 +7,8 @@ struct AddBookmarkView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var appSettings: AppSettings
     @FocusState private var focusedField: AddBookmarkFieldFocus?
-    @State private var keyboardHeight: CGFloat = 0
-    
+    @State private var keyboardHeight: Double = 0
+
     init(prefilledURL: String? = nil, prefilledTitle: String? = nil) {
         _viewModel = State(initialValue: AddBookmarkViewModel())
         if let url = prefilledURL {
@@ -18,7 +18,7 @@ struct AddBookmarkView: View {
             viewModel.title = title
         }
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -68,9 +68,9 @@ struct AddBookmarkView: View {
             viewModel.clearForm()
         }
     }
-    
+
     // MARK: - View Components
-    
+
     @ViewBuilder
     private var formContent: some View {
         ScrollViewReader { proxy in
@@ -86,15 +86,15 @@ struct AddBookmarkView: View {
                             .id("titleField")
                     }
                     .padding(.horizontal, 20)
-                    
+
                     Spacer(minLength: 120)
                 }
                 .padding(.top, 20) // Add top padding for offset
             }
             .padding(.bottom, keyboardHeight / 2)
             .onChange(of: focusedField) { field in
-                guard let field = field else { return }
-                
+                guard let field else { return }
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         switch field {
@@ -110,13 +110,15 @@ struct AddBookmarkView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var urlField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField("",
-                      text: $viewModel.url,
-                      prompt: Text(verbatim: "https://example.com"))
+            TextField(
+                "",
+                text: $viewModel.url,
+                prompt: Text(verbatim: "https://example.com")
+            )
                 .textFieldStyle(CustomTextFieldStyle())
                 .keyboardType(.URL)
                 .autocapitalization(.none)
@@ -125,11 +127,11 @@ struct AddBookmarkView: View {
                 .onChange(of: viewModel.url) { _, _ in
                     viewModel.checkClipboard()
                 }
-            
+
             clipboardButton
         }
     }
-    
+
     @ViewBuilder
     private var clipboardButton: some View {
         if viewModel.showClipboardButton {
@@ -138,21 +140,21 @@ struct AddBookmarkView: View {
                     Text("URL in clipboard:")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Text(viewModel.clipboardURL ?? "")
                         .font(.subheadline)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
-                
+
                 Spacer()
-                
+
                 HStack(spacing: 8) {
                     Button("Paste") {
                         viewModel.pasteFromClipboard()
                     }
                     .buttonStyle(SecondaryButtonStyle())
-                    
+
                     Button(action: {
                         viewModel.dismissClipboard()
                     }) {
@@ -169,7 +171,7 @@ struct AddBookmarkView: View {
             .padding(.top, 4)
         }
     }
-    
+
     @ViewBuilder
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -178,7 +180,7 @@ struct AddBookmarkView: View {
                 .focused($focusedField, equals: .title)
         }
     }
-    
+
     @ViewBuilder
     private var labelsField: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -205,7 +207,7 @@ struct AddBookmarkView: View {
             )
         }
     }
-    
+
     @ViewBuilder
     private var bottomActionArea: some View {
         VStack(spacing: 16) {
@@ -217,7 +219,7 @@ struct AddBookmarkView: View {
         }
         .background(Color(.systemBackground))
     }
-    
+
     @ViewBuilder
     private var saveButton: some View {
         Button(action: {
@@ -236,7 +238,7 @@ struct AddBookmarkView: View {
                 } else {
                     Image(systemName: "bookmark.fill")
                 }
-                
+
                 Text(viewModel.isLoading ? "Saving..." : "Save bookmark")
                     .fontWeight(.semibold)
             }

@@ -4,7 +4,7 @@ protocol PDeleteAnnotationUseCase {
     func execute(bookmarkId: String, annotationId: String) async throws
 }
 
-class DeleteAnnotationUseCase: PDeleteAnnotationUseCase {
+final class DeleteAnnotationUseCase: PDeleteAnnotationUseCase {
     private let repository: PAnnotationsRepository
 
     init(repository: PAnnotationsRepository) {

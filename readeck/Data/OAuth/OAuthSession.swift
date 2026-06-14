@@ -10,7 +10,7 @@ import Foundation
 
 /// Wrapper for ASWebAuthenticationSession to handle OAuth browser flow
 @MainActor
-class OAuthSession: NSObject {
+final class OAuthSession: NSObject {
     private var authSession: ASWebAuthenticationSession?
     private let logger = Logger.network
 
@@ -31,9 +31,9 @@ class OAuthSession: NSObject {
             url: url,
             callbackURLScheme: callbackURLScheme
         ) { [weak self] callbackURL, error in
-            guard let self = self else { return }
+            guard let self else { return }
 
-            if let error = error {
+            if let error {
                 self.logger.error("OAuth authentication failed: \(error.localizedDescription)")
 
                 // Check if user cancelled
@@ -47,7 +47,7 @@ class OAuthSession: NSObject {
                 return
             }
 
-            guard let callbackURL = callbackURL else {
+            guard let callbackURL else {
                 self.logger.error("OAuth callback URL is nil")
                 completion(.failure(OAuthError.invalidCallback))
                 return

@@ -11,7 +11,7 @@ protocol PGetCachedBookmarksUseCase {
     func execute() async throws -> [Bookmark]
 }
 
-class GetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
+final class GetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
     private let offlineCacheRepository: POfflineCacheRepository
 
     init(offlineCacheRepository: POfflineCacheRepository) {
@@ -19,6 +19,6 @@ class GetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
     }
 
     func execute() async throws -> [Bookmark] {
-        return try await offlineCacheRepository.getCachedBookmarks()
+        try await offlineCacheRepository.getCachedBookmarks()
     }
 }

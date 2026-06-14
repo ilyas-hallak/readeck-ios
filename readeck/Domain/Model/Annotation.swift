@@ -13,7 +13,7 @@ struct Annotation: Identifiable, Hashable {
         hasher.combine(id)
     }
 
-    static func == (lhs: Annotation, rhs: Annotation) -> Bool {
+    static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.id == rhs.id
     }
 }

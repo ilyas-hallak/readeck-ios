@@ -5,7 +5,7 @@ enum CreateBookmarkError: Error, LocalizedError {
     case duplicateBookmark
     case networkError
     case serverError(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -18,4 +18,4 @@ enum CreateBookmarkError: Error, LocalizedError {
             return message
         }
     }
-} 
+}

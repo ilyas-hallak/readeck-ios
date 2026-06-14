@@ -1,7 +1,7 @@
 import Foundation
 
 @Observable
-class AnnotationsListViewModel {
+final class AnnotationsListViewModel {
     private let getAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
     private let deleteAnnotationUseCase: PDeleteAnnotationUseCase
 

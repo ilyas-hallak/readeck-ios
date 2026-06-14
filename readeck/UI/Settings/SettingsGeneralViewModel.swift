@@ -3,42 +3,48 @@ import Observation
 import SwiftUI
 
 @Observable
-class SettingsGeneralViewModel {
+final class SettingsGeneralViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
-    
+
     // MARK: - UI Settings
     var selectedTheme: Theme = .system
     // MARK: - Sync Settings
-    var autoSyncEnabled: Bool = true
-    var syncInterval: Int = 15
+    var autoSyncEnabled = true
+    var syncInterval = 15
     // MARK: - Reading Settings
-    var enableReaderMode: Bool = false
-    var enableTTS: Bool = false
-    var autoMarkAsRead: Bool = false
+    var enableReaderMode = false
+    var enableTTS = false
+    var disableReaderBackSwipe = false
+    var isLoading = false
+    var autoMarkAsRead = false
     var urlOpener: UrlOpener = .inAppBrowser
-    
+
     // MARK: - Sort Settings
     var bookmarkSortField: BookmarkSortField = .created
     var bookmarkSortDirection: BookmarkSortDirection = .descending
-    
+
     // MARK: - Messages
-    
+
     var errorMessage: String?
     var successMessage: String?
-    
+
     // MARK: - Data Management (Placeholder)
 
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
-    
+
     @MainActor
     func loadGeneralSettings() async {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
             if let settings = try await loadSettingsUseCase.execute() {
                 enableTTS = settings.enableTTS ?? false
+                disableReaderBackSwipe = settings.disableReaderBackSwipe ?? false
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
                 bookmarkSortField = settings.bookmarkSortField ?? .created
@@ -49,23 +55,24 @@ class SettingsGeneralViewModel {
             errorMessage = "Error loading settings"
         }
     }
-    
+
     @MainActor
     func saveGeneralSettings() async {
         do {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
+            try await saveSettingsUseCase.execute(disableReaderBackSwipe: disableReaderBackSwipe)
             try await saveSettingsUseCase.execute(theme: selectedTheme)
             try await saveSettingsUseCase.execute(urlOpener: urlOpener)
-            
+
             successMessage = "Settings saved"
-            
+
             // send notification to apply settings to the app
             NotificationCenter.default.post(name: .settingsChanged, object: nil)
         } catch {
             errorMessage = "Error saving settings"
         }
     }
-    
+
     @MainActor
     func saveBookmarkSortSettings() async {
         do {
@@ -79,9 +86,9 @@ class SettingsGeneralViewModel {
             errorMessage = "Error saving settings"
         }
     }
-    
+
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
     }
-} 
+}

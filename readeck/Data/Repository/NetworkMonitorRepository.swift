@@ -22,10 +22,9 @@ protocol PNetworkMonitorRepository {
 // MARK: - Implementation
 
 final class NetworkMonitorRepository: PNetworkMonitorRepository {
-
     // MARK: - Properties
 
-    private let monitor: NWPathMonitor = NWPathMonitor()
+    private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.readeck.networkmonitor")
     private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
     private var hasPathConnection = true
@@ -40,7 +39,7 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     init() {
         // Check current network status synchronously before starting monitor
         let currentPath = monitor.currentPath
-        let hasInterfaces = currentPath.availableInterfaces.count > 0
+        let hasInterfaces = !currentPath.availableInterfaces.isEmpty
         let initialStatus = currentPath.status == .satisfied && hasInterfaces
 
         _isConnectedSubject = CurrentValueSubject<Bool, Never>(initialStatus)
@@ -57,10 +56,10 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
 
     func startMonitoring() {
         monitor.pathUpdateHandler = { [weak self] path in
-            guard let self = self else { return }
+            guard let self else { return }
 
             // More sophisticated check: path must be satisfied AND have actual interfaces
-            let hasInterfaces = path.availableInterfaces.count > 0
+            let hasInterfaces = !path.availableInterfaces.isEmpty
             let isConnected = path.status == .satisfied && hasInterfaces
 
             self.hasPathConnection = isConnected

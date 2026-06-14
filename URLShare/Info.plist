@@ -13,6 +13,8 @@
 				<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
 				<integer>1</integer>
 			</dict>
+			<key>NSExtensionJavaScriptPreprocessingFile</key>
+			<string>ShareExtension</string>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.share-services</string>

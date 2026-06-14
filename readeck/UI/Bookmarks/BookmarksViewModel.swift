@@ -3,14 +3,14 @@ import Combine
 import SwiftUI
 
 @Observable
-class BookmarksViewModel {
+final class BookmarksViewModel {
     private let getBooksmarksUseCase: PGetBookmarksUseCase
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
     private let logger = Logger.viewModel
-    
+
     var bookmarks: BookmarksPage?
     var isLoading = false
     var isInitialLoading = true
@@ -18,11 +18,13 @@ class BookmarksViewModel {
     var isNetworkError = false
     var currentState: BookmarkState = .unread
     var currentType = [BookmarkType.article]
-    var currentTag: String? = nil
+    var currentTag: String?
     var cardLayoutStyle: CardLayoutStyle = .magazine
 
     weak var appSettings: AppSettings?
-    
+
+    var showTagsBookmark: Bookmark?
+
     var showingAddBookmarkFromShare = false
     var shareURL = ""
     var shareTitle = ""
@@ -38,13 +40,13 @@ class BookmarksViewModel {
     private var offset = 0
     private var hasMoreData = true
     private var searchWorkItem: DispatchWorkItem?
-    
-    var searchQuery: String = "" {
+
+    var searchQuery = "" {
         didSet {
             throttleSearch()
         }
     }
-    
+
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         getBooksmarksUseCase = factory.makeGetBookmarksUseCase()
         updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
@@ -58,7 +60,7 @@ class BookmarksViewModel {
             await loadCardLayout()
         }
     }
-    
+
     private func setupNotificationObserver() {
         // Listen for card layout changes
         NotificationCenter.default
@@ -90,35 +92,35 @@ class BookmarksViewModel {
             }
             .store(in: &cancellables)
     }
-    
+
     private func handleShareNotification(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let url = userInfo["url"] as? String,
               !url.isEmpty else {
             return
         }
-        
+
         DispatchQueue.main.async {
             self.shareURL = url
             self.shareTitle = userInfo["title"] as? String ?? ""
             self.showingAddBookmarkFromShare = true
         }
     }
-    
+
     private func throttleSearch() {
         searchWorkItem?.cancel()
-        
+
         let workItem = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             Task {
                 await self.loadBookmarks(state: self.currentState)
             }
         }
-        
+
         searchWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
-    
+
     @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
         guard !isUpdating else {
@@ -152,7 +154,7 @@ class BookmarksViewModel {
         Logger.viewModel.info("🌐 Device appears online - making API request")
         do {
             let sortToken = buildSortToken()
-            logger.debug("Loading bookmarks - state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"), search: \(searchQuery.isEmpty ? "none" : searchQuery)")
+            logger.debug("Loading bookmarks - state: \(state.rawValue), type: \(type.map(\.rawValue)), tag: \(tag ?? "none"), search: \(searchQuery.isEmpty ? "none" : searchQuery)")
             let newBookmarks = try await getBooksmarksUseCase.execute(
                 state: state,
                 limit: limit,
@@ -167,7 +169,7 @@ class BookmarksViewModel {
             isNetworkError = false
             logger.info("Successfully loaded \(newBookmarks.bookmarks.count) bookmarks")
         } catch {
-            handleError(error, context: "load bookmarks (state: \(state.rawValue), type: \(type.map { $0.rawValue }), tag: \(tag ?? "none"))")
+            handleError(error, context: "load bookmarks (state: \(state.rawValue), type: \(type.map(\.rawValue)), tag: \(tag ?? "none"))")
             // Don't clear bookmarks on error - keep existing data visible
         }
 
@@ -216,7 +218,7 @@ class BookmarksViewModel {
         errorMessage = "No internet connection"
         await loadCachedBookmarks()
     }
-    
+
     @MainActor
     func loadMoreBookmarks() async {
         guard !isLoading && hasMoreData && !isUpdating else { return } // prevent multiple loads
@@ -237,7 +239,8 @@ class BookmarksViewModel {
                 search: nil,
                 type: currentType,
                 tag: currentTag,
-                sort: sortToken)
+                sort: sortToken
+            )
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
             logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
@@ -247,12 +250,12 @@ class BookmarksViewModel {
 
         isLoading = false
     }
-    
+
     @MainActor
     func refreshBookmarks() async {
         await loadBookmarks(state: currentState)
     }
-    
+
     @MainActor
     func retryLoading() async {
         errorMessage = nil
@@ -261,17 +264,17 @@ class BookmarksViewModel {
     }
 
     private func buildSortToken() -> String? {
-        guard let appSettings = appSettings else { return nil }
+        guard let appSettings else { return nil }
         // Search usually has its own relevance sorting
         if !searchQuery.isEmpty {
             return nil
         }
-        
+
         let field = appSettings.bookmarkSortField.rawValue
         let direction = appSettings.bookmarkSortDirection == .descending ? "-" : ""
         return "\(direction)\(field)"
     }
-    
+
     @MainActor
     func toggleArchive(bookmark: Bookmark) async {
         do {
@@ -279,14 +282,13 @@ class BookmarksViewModel {
                 bookmarkId: bookmark.id,
                 isArchived: !bookmark.isArchived
             )
-            
+
             await loadBookmarks(state: currentState)
-            
         } catch {
             errorMessage = "Error archiving bookmark"
         }
     }
-    
+
     @MainActor
     func toggleFavorite(bookmark: Bookmark) async {
         do {
@@ -294,14 +296,31 @@ class BookmarksViewModel {
                 bookmarkId: bookmark.id,
                 isMarked: !bookmark.isMarked
             )
-            
+
             await loadBookmarks(state: currentState)
-            
         } catch {
             errorMessage = "Error marking bookmark"
         }
     }
-    
+
+    @MainActor
+    func handleSwipeAction(_ action: SwipeAction, bookmark: Bookmark) {
+        switch action {
+        case .archive:
+            Task { await toggleArchive(bookmark: bookmark) }
+        case .favorite:
+            Task { await toggleFavorite(bookmark: bookmark) }
+        case .delete:
+            deleteBookmarkWithUndo(bookmark: bookmark)
+        case .showTags:
+            showTagsBookmark = bookmark
+        case .openInBrowser:
+            if let appSettings = appSettings {
+                URLUtil.open(url: bookmark.url, urlOpener: appSettings.urlOpener)
+            }
+        }
+    }
+
     @MainActor
     func resetReadProgress(bookmark: Bookmark) async {
         do {
@@ -310,27 +329,26 @@ class BookmarksViewModel {
                 progress: 0,
                 anchor: nil
             )
-            
+
             await loadBookmarks(state: currentState)
-            
         } catch {
             errorMessage = "Error resetting reading progress"
         }
     }
-    
+
     @MainActor
     func deleteBookmarkWithUndo(bookmark: Bookmark) {
         // Don't remove from UI immediately - just mark as pending
         let pendingDelete = PendingDelete(bookmark: bookmark)
         pendingDeletes[bookmark.id] = pendingDelete
-        
+
         // Start countdown timer for this specific delete
         startDeleteCountdown(for: bookmark.id)
-        
+
         // Schedule actual delete after 3 seconds
         let deleteTask = Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-            
+
             // Check if not cancelled and still pending
             if !Task.isCancelled, pendingDeletes[bookmark.id] != nil {
                 await executeDelete(bookmark: bookmark)
@@ -341,46 +359,46 @@ class BookmarksViewModel {
                 }
             }
         }
-        
+
         // Store the task in the pending delete
         pendingDeletes[bookmark.id]?.deleteTask = deleteTask
     }
-    
+
     @MainActor
     func undoDelete(bookmarkId: String) {
         guard let pendingDelete = pendingDeletes[bookmarkId] else { return }
-        
+
         // Cancel the delete task and timer
         pendingDelete.deleteTask?.cancel()
         pendingDelete.timer?.invalidate()
-        
+
         // Remove from pending deletes
         pendingDeletes.removeValue(forKey: bookmarkId)
     }
-    
+
     private func startDeleteCountdown(for bookmarkId: String) {
         let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
             DispatchQueue.main.async {
-                guard let self = self,
+                guard let self,
                       let pendingDelete = self.pendingDeletes[bookmarkId] else {
                     timer.invalidate()
                     return
                 }
-                
+
                 pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
-                
+
                 // Trigger UI update by modifying the dictionary
                 self.pendingDeletes[bookmarkId] = pendingDelete
-                
+
                 if pendingDelete.progress >= 1.0 {
                     timer.invalidate()
                 }
             }
         }
-        
+
         pendingDeletes[bookmarkId]?.timer = timer
     }
-    
+
     private func executeDelete(bookmark: Bookmark) async {
         do {
             try await deleteBookmarkUseCase.execute(bookmarkId: bookmark.id)
@@ -403,9 +421,9 @@ class BookmarksViewModel {
     private func loadCardLayout() async {
         cardLayoutStyle = await loadCardLayoutUseCase.execute()
     }
-    
+
     // MARK: - Error Handling Helpers
-    
+
     private func formatServerErrorMessage(statusCode: Int) -> String {
         switch statusCode {
         case 401:
@@ -420,10 +438,10 @@ class BookmarksViewModel {
             return "Server error (code: \(statusCode)). Please try again."
         }
     }
-    
+
     private func handleError(_ error: Error, context: String) {
         logger.error("Failed to \(context): \(error.localizedDescription)")
-        
+
         // Handle APIError cases
         if let apiError = error as? APIError {
             switch apiError {
@@ -461,13 +479,13 @@ class BookmarksViewModel {
     }
 }
 
-class PendingDelete: Identifiable {
+final class PendingDelete: Identifiable {
     let id = UUID()
     let bookmark: Bookmark
-    var progress: Double = 0.0
+    var progress = 0.0
     var timer: Timer?
     var deleteTask: Task<Void, Never>?
-    
+
     init(bookmark: Bookmark) {
         self.bookmark = bookmark
     }

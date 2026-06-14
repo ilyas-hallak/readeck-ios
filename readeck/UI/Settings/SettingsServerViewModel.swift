@@ -3,8 +3,7 @@ import Observation
 import SwiftUI
 
 @Observable
-class SettingsServerViewModel {
-
+final class SettingsServerViewModel {
     // MARK: - Use Cases
 
     private let loginUseCase: PLoginUseCase
@@ -26,14 +25,14 @@ class SettingsServerViewModel {
     // MARK: - OAuth Support
     var serverSupportsOAuth = false
 
-    
+
     var customHeaders: [String: String] = [:]
     var showingHeadersSection = false
-    
-    var editingHeaderKey: String? = nil
-    var editingHeaderKeyValue: String = ""
-    var editingHeaderValue: String = ""
-    
+
+    var editingHeaderKey: String?
+    var editingHeaderKeyValue = ""
+    var editingHeaderValue = ""
+
     // MARK: - Messages
     var errorMessage: String?
     var successMessage: String?
@@ -52,11 +51,11 @@ class SettingsServerViewModel {
         self.authRepository = factory.makeAuthRepository()
         self.settingsRepository = factory.makeSettingsRepository()
     }
-    
+
     var isSetupMode: Bool {
         !hasFinishedSetup
     }
-    
+
     @MainActor
     func loadServerSettings() async {
         do {
@@ -76,7 +75,7 @@ class SettingsServerViewModel {
             errorMessage = "Error loading settings"
         }
     }
-    
+
     @MainActor
     func saveServerSettings() async {
         guard canLogin else {
@@ -108,7 +107,7 @@ class SettingsServerViewModel {
             isLoggedIn = false
         }
     }
-    
+
     @MainActor
     func logout() async {
         do {
@@ -120,12 +119,12 @@ class SettingsServerViewModel {
             errorMessage = "Error logging out"
         }
     }
-    
+
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
     }
-    
+
     var canLogin: Bool {
         !username.isEmpty && !password.isEmpty
     }
@@ -162,10 +161,10 @@ class SettingsServerViewModel {
 
         do {
             let normalizedEndpoint = EndpointValidator.normalize(endpoint)
-            
+
             // Save custom headers to Keychain BEFORE OAuth login so they're available during the OAuth flow
             _ = KeychainHelper.shared.saveCustomHeaders(customHeaders)
-            
+
             let (token, clientId) = try await loginWithOAuthUseCase.execute(endpoint: normalizedEndpoint)
 
             // Save OAuth token, client ID and mark as logged in
@@ -183,7 +182,7 @@ class SettingsServerViewModel {
             isLoggedIn = false
         }
     }
-    
+
     @MainActor
     func addHeader(key: String, value: String) {
         let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -194,14 +193,14 @@ class SettingsServerViewModel {
         newHeaders[trimmedKey] = value
         customHeaders = newHeaders
     }
-    
+
     @MainActor
     func removeHeader(key: String) {
         var newHeaders = customHeaders
         newHeaders.removeValue(forKey: key)
         customHeaders = newHeaders
     }
-    
+
     @MainActor
     func updateHeader(key: String, value: String) {
         let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -212,23 +211,23 @@ class SettingsServerViewModel {
         newHeaders[trimmedKey] = value
         customHeaders = newHeaders
     }
-    
+
     // MARK: - Header Editing Methods
-    
+
     @MainActor
     func startEditingHeader(key: String) {
         editingHeaderKey = key
         editingHeaderKeyValue = key
         editingHeaderValue = customHeaders[key] ?? ""
     }
-    
+
     @MainActor
     func cancelEditingHeader() {
         editingHeaderKey = nil
         editingHeaderKeyValue = ""
         editingHeaderValue = ""
     }
-    
+
     @MainActor
     func finishEditingHeader(originalKey: String, newKey: String, newValue: String) {
         if newKey != originalKey {

@@ -11,7 +11,7 @@ protocol PProfileApiClient {
     func getProfile() async throws -> UserProfileDto
 }
 
-class ProfileApiClient: PProfileApiClient {
+final class ProfileApiClient: PProfileApiClient {
     private let tokenProvider: TokenProvider
     private let logger = Logger.network
 

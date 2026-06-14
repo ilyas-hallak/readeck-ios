@@ -16,7 +16,7 @@ protocol TokenProvider {
     func getOAuthClientId() async -> String?
 }
 
-class KeychainTokenProvider: TokenProvider {
+final class KeychainTokenProvider: TokenProvider {
     private let keychainHelper = KeychainHelper.shared
     private let logger = Logger.network
 
@@ -39,10 +39,9 @@ class KeychainTokenProvider: TokenProvider {
                     logger.info("OAuth token expired or expiring soon, attempting refresh")
                     if let refreshedToken = await refreshOAuthTokenIfNeeded() {
                         return refreshedToken.accessToken
-                    } else {
-                        logger.warning("Failed to refresh OAuth token, returning expired token")
-                        return oauthToken.accessToken
                     }
+                    logger.warning("Failed to refresh OAuth token, returning expired token")
+                    return oauthToken.accessToken
                 }
                 return oauthToken.accessToken
             }

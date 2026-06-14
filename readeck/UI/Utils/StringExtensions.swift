@@ -11,7 +11,7 @@ extension String {
             ],
             documentAttributes: nil
         )
-        
+
         return attributedString?.string ?? self
-    }   
-} 
+    }
+}

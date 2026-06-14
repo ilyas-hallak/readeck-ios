@@ -58,23 +58,22 @@ open class Snapshot: NSObject {
     static var waitForAnimations = true
     static var cacheDirectory: URL?
     static var screenshotsDirectory: URL? {
-        return cacheDirectory?.appendingPathComponent("screenshots", isDirectory: true)
+        cacheDirectory?.appendingPathComponent("screenshots", isDirectory: true)
     }
     static var deviceLanguage = ""
     static var currentLocale = ""
 
     open class func setupSnapshot(_ app: XCUIApplication, waitForAnimations: Bool = true) {
-
-        Snapshot.app = app
-        Snapshot.waitForAnimations = waitForAnimations
+        Self.app = app
+        Self.waitForAnimations = waitForAnimations
 
         do {
             let cacheDir = try getCacheDirectory()
-            Snapshot.cacheDirectory = cacheDir
+            Self.cacheDirectory = cacheDir
             setLanguage(app)
             setLocale(app)
             setLaunchArguments(app)
-        } catch let error {
+        } catch {
             NSLog(error.localizedDescription)
         }
     }
@@ -149,7 +148,7 @@ open class Snapshot: NSObject {
 
         NSLog("snapshot: \(name)") // more information about this, check out https://docs.fastlane.tools/actions/snapshot/#how-does-it-work
 
-        if Snapshot.waitForAnimations {
+        if Self.waitForAnimations {
             sleep(1) // Waiting for the animation to be finished (kind of)
         }
 
@@ -169,7 +168,7 @@ open class Snapshot: NSObject {
 
             let screenshot = XCUIScreen.main.screenshot()
             #if os(iOS) && !targetEnvironment(macCatalyst)
-            let image = XCUIDevice.shared.orientation.isLandscape ?  fixLandscapeOrientation(image: screenshot.image) : screenshot.image
+            let image = XCUIDevice.shared.orientation.isLandscape ? fixLandscapeOrientation(image: screenshot.image) : screenshot.image
             #else
             let image = screenshot.image
             #endif
@@ -188,7 +187,7 @@ open class Snapshot: NSObject {
                 #else
                     try image.pngData()?.write(to: path, options: .atomic)
                 #endif
-            } catch let error {
+            } catch {
                 NSLog("Problem writing screenshot: \(name) to \(screenshotsDir)/\(simulator)-\(name).png")
                 NSLog(error.localizedDescription)
             }
@@ -199,15 +198,11 @@ open class Snapshot: NSObject {
         #if os(watchOS)
             return image
         #else
-            if #available(iOS 10.0, *) {
-                let format = UIGraphicsImageRendererFormat()
-                format.scale = image.scale
-                let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
-                return renderer.image { context in
-                    image.draw(in: CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height))
-                }
-            } else {
-                return image
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = image.scale
+            let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+            return renderer.image { _ in
+                image.draw(in: CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height))
             }
         #endif
     }
@@ -262,7 +257,7 @@ private extension XCUIElementAttributes {
         return allowListedIdentifiers.contains(identifier)
     }
 
-    func isStatusBar(_ deviceWidth: CGFloat) -> Bool {
+    func isStatusBar(_ deviceWidth: Double) -> Bool {
         if elementType == .statusBar { return true }
         guard frame.origin == .zero else { return false }
 
@@ -275,7 +270,7 @@ private extension XCUIElementAttributes {
 
 private extension XCUIElementQuery {
     var networkLoadingIndicators: XCUIElementQuery {
-        let isNetworkLoadingIndicator = NSPredicate { (evaluatedObject, _) in
+        let isNetworkLoadingIndicator = NSPredicate { evaluatedObject, _ in
             guard let element = evaluatedObject as? XCUIElementAttributes else { return false }
 
             return element.isNetworkLoadingIndicator
@@ -292,7 +287,7 @@ private extension XCUIElementQuery {
 
         let deviceWidth = app.windows.firstMatch.frame.width
 
-        let isStatusBar = NSPredicate { (evaluatedObject, _) in
+        let isStatusBar = NSPredicate { evaluatedObject, _ in
             guard let element = evaluatedObject as? XCUIElementAttributes else { return false }
 
             return element.isStatusBar(deviceWidth)
@@ -302,9 +297,9 @@ private extension XCUIElementQuery {
     }
 }
 
-private extension CGFloat {
-    func isBetween(_ numberA: CGFloat, and numberB: CGFloat) -> Bool {
-        return numberA...numberB ~= self
+private extension Double {
+    func isBetween(_ numberA: Double, and numberB: Double) -> Bool {
+        numberA...numberB ~= self
     }
 }
 

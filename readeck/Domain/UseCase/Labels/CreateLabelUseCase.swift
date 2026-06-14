@@ -4,7 +4,7 @@ protocol PCreateLabelUseCase {
     func execute(name: String) async throws
 }
 
-class CreateLabelUseCase: PCreateLabelUseCase {
+final class CreateLabelUseCase: PCreateLabelUseCase {
     private let labelsRepository: PLabelsRepository
 
     init(labelsRepository: PLabelsRepository) {

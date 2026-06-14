@@ -6,7 +6,7 @@ protocol PLoginWithOAuthUseCase {
     func execute(endpoint: String) async throws -> (OAuthToken, String)
 }
 
-class LoginWithOAuthUseCase: PLoginWithOAuthUseCase {
+final class LoginWithOAuthUseCase: PLoginWithOAuthUseCase {
     private let oauthCoordinator: OAuthFlowCoordinator
 
     init(oauthCoordinator: OAuthFlowCoordinator) {
@@ -14,7 +14,7 @@ class LoginWithOAuthUseCase: PLoginWithOAuthUseCase {
     }
 
     func execute(endpoint: String) async throws -> (OAuthToken, String) {
-        return try await oauthCoordinator.executeOAuthFlow(endpoint: endpoint)
+        try await oauthCoordinator.executeOAuthFlow(endpoint: endpoint)
     }
 }
 

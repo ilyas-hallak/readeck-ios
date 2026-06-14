@@ -2,7 +2,6 @@ import SwiftUI
 import CoreData
 
 struct CoreDataTagManagementView: View {
-
     // MARK: - Properties
 
     let selectedLabelsSet: Set<String>
@@ -26,7 +25,7 @@ struct CoreDataTagManagementView: View {
     // MARK: - Search State
 
     @State private var searchResults: [TagEntity] = []
-    @State private var isSearchActive: Bool = false
+    @State private var isSearchActive = false
 
     // MARK: - Initialization
 
@@ -53,21 +52,7 @@ struct CoreDataTagManagementView: View {
         self.onRemoveLabel = onRemoveLabel
 
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-
-        // Apply sort order from parameter
-        let sortDescriptors: [NSSortDescriptor]
-        switch sortOrder {
-        case .byCount:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        case .alphabetically:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        }
-        fetchRequest.sortDescriptors = sortDescriptors
+        fetchRequest.sortDescriptors = Self.sortDescriptors(for: sortOrder)
 
         if let limit = fetchLimit {
             fetchRequest.fetchLimit = limit
@@ -87,8 +72,28 @@ struct CoreDataTagManagementView: View {
             availableLabels
             selectedLabels
         }
-        .onChange(of: searchText.wrappedValue) { oldValue, newValue in
+        .onChange(of: searchText.wrappedValue) { _, newValue in
             performSearch(query: newValue)
+        }
+        .onChange(of: sortOrder) { _, newValue in
+            tagEntities.nsSortDescriptors = Self.sortDescriptors(for: newValue)
+            if isSearchActive {
+                performSearch(query: searchText.wrappedValue)
+            }
+        }
+    }
+
+    private static func sortDescriptors(for sortOrder: TagSortOrder) -> [NSSortDescriptor] {
+        switch sortOrder {
+        case .byCount:
+            return [
+                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
+                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
+            ]
+        case .alphabetically:
+            return [
+                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
+            ]
         }
     }
 
@@ -213,11 +218,10 @@ struct CoreDataTagManagementView: View {
                             UnifiedLabelChip(
                                 label: name,
                                 isSelected: false,
-                                isRemovable: false,
-                                onTap: {
-                                    onToggleLabel(name)
-                                }
-                            )
+                                isRemovable: false
+                            ) {
+                                onToggleLabel(name)
+                            }
                             .fixedSize(horizontal: true, vertical: false)
                         }
                     }
@@ -231,20 +235,20 @@ struct CoreDataTagManagementView: View {
     // MARK: - Computed Properties & Helper Functions
 
     private var allTagNames: [String] {
-        tagEntities.compactMap { $0.name }
+        tagEntities.compactMap(\.name)
     }
 
     private var filteredTagsCount: Int {
         if isSearchActive {
             return searchResults.count
-        } else if searchText.wrappedValue.isEmpty {
-            return tagEntities.count
-        } else {
-            return tagEntities.filter { entity in
-                guard let name = entity.name else { return false }
-                return name.localizedCaseInsensitiveContains(searchText.wrappedValue)
-            }.count
         }
+        if searchText.wrappedValue.isEmpty {
+            return tagEntities.count
+        }
+        return tagEntities.filter { entity in
+            guard let name = entity.name else { return false }
+            return name.localizedCaseInsensitiveContains(searchText.wrappedValue)
+        }.count
     }
 
     private var availableUnselectedTagsCount: Int {
@@ -253,14 +257,13 @@ struct CoreDataTagManagementView: View {
                 guard let name = entity.name else { return false }
                 return !selectedLabelsSet.contains(name)
             }.count
-        } else {
-            return tagEntities.filter { entity in
-                guard let name = entity.name else { return false }
-                let matchesSearch = searchText.wrappedValue.isEmpty || name.localizedCaseInsensitiveContains(searchText.wrappedValue)
-                let isNotSelected = !selectedLabelsSet.contains(name)
-                return matchesSearch && isNotSelected
-            }.count
         }
+        return tagEntities.filter { entity in
+            guard let name = entity.name else { return false }
+            let matchesSearch = searchText.wrappedValue.isEmpty || name.localizedCaseInsensitiveContains(searchText.wrappedValue)
+            let isNotSelected = !selectedLabelsSet.contains(name)
+            return matchesSearch && isNotSelected
+        }.count
     }
 
     private func shouldShowTag(_ name: String) -> Bool {
@@ -280,20 +283,7 @@ struct CoreDataTagManagementView: View {
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
 
-        // Use same sort order as main fetch
-        let sortDescriptors: [NSSortDescriptor]
-        switch sortOrder {
-        case .byCount:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.count, ascending: false),
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        case .alphabetically:
-            sortDescriptors = [
-                NSSortDescriptor(keyPath: \TagEntity.name, ascending: true)
-            ]
-        }
-        fetchRequest.sortDescriptors = sortDescriptors
+        fetchRequest.sortDescriptors = Self.sortDescriptors(for: sortOrder)
 
         // NO fetchLimit - search ALL tags in database
         searchResults = (try? context.fetch(fetchRequest)) ?? []

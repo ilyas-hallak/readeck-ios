@@ -29,7 +29,6 @@ protocol POfflineCacheSyncUseCase {
 /// - Implements retry logic for temporary server errors (502, 503, 504)
 /// - Cleans up old cached articles (FIFO) to respect maxArticles limit
 final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
-
     // MARK: - Dependencies
 
     private let offlineCacheRepository: POfflineCacheRepository
@@ -154,9 +153,8 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
                             logCacheError(error: error, bookmark: bookmark, attempt: attempt)
                             errorCount += 1
                             break // Give up
-                        } else {
-                            Logger.sync.warning("⚠️ Temporary error, will retry: \(error.localizedDescription)")
                         }
+                        Logger.sync.warning("⚠️ Temporary error, will retry: \(error.localizedDescription)")
                     }
                 }
             }
@@ -177,7 +175,6 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
             // Clear progress message after 3 seconds
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             _syncProgressSubject.send(nil)
-
         } catch {
             Logger.sync.error("❌ Offline sync failed: \(error.localizedDescription)")
             _syncProgressSubject.send("❌ Sync failed")

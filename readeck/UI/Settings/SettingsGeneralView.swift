@@ -33,8 +33,9 @@ struct SettingsGeneralView: View {
                     }
                 }
 
-                Toggle("Read Aloud Feature", isOn: $viewModel.enableTTS)
+                Toggle("Listen to Article", isOn: $viewModel.enableTTS)
                     .onChange(of: viewModel.enableTTS) {
+                        guard !viewModel.isLoading else { return }
                         Task {
                             await viewModel.saveGeneralSettings()
                         }
@@ -42,7 +43,21 @@ struct SettingsGeneralView: View {
             } header: {
                 Text("General")
             } footer: {
-                Text("Activate the Read Aloud Feature to read aloud your articles. This is a really early preview and might not work perfectly.")
+                Text("Activate Listen to Article to have your articles read to you. This feature is currently in beta — you may encounter occasional issues.")
+            }
+
+            Section {
+                Toggle("Disable Back Swipe in Reader", isOn: $viewModel.disableReaderBackSwipe)
+                    .onChange(of: viewModel.disableReaderBackSwipe) {
+                        guard !viewModel.isLoading else { return }
+                        Task {
+                            await viewModel.saveGeneralSettings()
+                        }
+                    }
+            } header: {
+                Text("Reading")
+            } footer: {
+                Text("Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges.")
             }
 
             if Bundle.main.isDebugBuild {

@@ -6,15 +6,15 @@ struct BookmarkLabelsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var appSettings: AppSettings
-    
+
     init(bookmarkId: String, initialLabels: [String], viewModel: BookmarkLabelsViewModel? = nil) {
         self.bookmarkId = bookmarkId
         self._viewModel = State(initialValue: viewModel ?? BookmarkLabelsViewModel(initialLabels: initialLabels))
-        
+
         UIPageControl.appearance().currentPageIndicatorTintColor = UIColor(Color.primary)
         UIPageControl.appearance().pageIndicatorTintColor = UIColor(Color.primary).withAlphaComponent(0.2)
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 12) {
@@ -46,6 +46,7 @@ struct BookmarkLabelsView: View {
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
+            .accessibilityAddTraits(.isButton)
             .onAppear {
                 Task {
                     await viewModel.syncTags()
@@ -53,11 +54,11 @@ struct BookmarkLabelsView: View {
             }
         }
     }
-    
+
     // MARK: - View Components
-    
-    
-    
+
+
+
     @ViewBuilder
     private var availableLabelsSection: some View {
         VStack(alignment: .leading, spacing: 8) {

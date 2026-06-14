@@ -3,25 +3,29 @@ import SwiftUI
 import UniformTypeIdentifiers
 import CoreData
 
-class ShareBookmarkViewModel: ObservableObject {
+final class ShareBookmarkViewModel: ObservableObject {
     @Published var url: String?
-    @Published var title: String = ""
+    @Published var title = ""
     @Published var selectedLabels: Set<String> = []
-    @Published var statusMessage: (text: String, isError: Bool, emoji: String)? = nil
-    @Published var isSaving: Bool = false
-    @Published var searchText: String = ""
-    @Published var isServerReachable: Bool = true
-    @Published var isConfigured: Bool = true
-    @Published var sessionExpired: Bool = false
-    let tagSortOrder: TagSortOrder = .byCount  // Share Extension always uses byCount
+    @Published var statusMessage: (text: String, isError: Bool, emoji: String)?
+    @Published var isSaving = false
+    @Published var searchText = ""
+    @Published var isServerReachable = true
+    @Published var isConfigured = true
+    @Published var sessionExpired = false
+    @Published var pageHTML: String?
+    @Published var includeHTML = false
+    let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
 
     private let logger = Logger.viewModel
     private let serverCheck = ShareExtensionServerCheck.shared
     private let tagRepository = TagRepository()
+    private var notificationObserver: Any?
 
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
+        self.tagSortOrder = Self.loadTagSortOrder()
         logger.info("ShareBookmarkViewModel initialized with extension context: \(extensionContext != nil)")
 
         // Check if app is configured by verifying token exists
@@ -32,20 +36,20 @@ class ShareBookmarkViewModel: ObservableObject {
 
         extractSharedContent()
     }
-    
+
     private func extractSharedContent() {
         logger.debug("Starting to extract shared content")
-        guard let extensionContext = extensionContext else { 
+        guard let extensionContext else {
             logger.warning("No extension context available for content extraction")
-            return 
+            return
         }
-        
+
         var extractedUrl: String?
         var extractedTitle: String?
-        
+
         for item in extensionContext.inputItems {
             guard let inputItem = item as? NSExtensionItem else { continue }
-            
+
             // Use the inputItem's attributedTitle or attributedContentText as potential title
             if let attributedTitle = inputItem.attributedTitle?.string, !attributedTitle.isEmpty {
                 extractedTitle = attributedTitle
@@ -54,28 +58,28 @@ class ShareBookmarkViewModel: ObservableObject {
                 extractedTitle = attributedContent
                 logger.info("Extracted title from content text: \(attributedContent)")
             }
-            
+
             for attachment in inputItem.attachments ?? [] {
                 if attachment.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                    attachment.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] (url, error) in
+                    attachment.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] url, error in
                         DispatchQueue.main.async {
                             if let url = url as? URL {
                                 self?.url = url.absoluteString
                                 self?.logger.info("Extracted URL from shared content: \(url.absoluteString)")
-                                
+
                                 // Set title if we extracted one and current title is empty
                                 if let title = extractedTitle, self?.title.isEmpty == true {
                                     self?.title = title
                                     self?.logger.info("Set title from shared content: \(title)")
                                 }
-                            } else if let error = error {
+                            } else if let error {
                                 self?.logger.error("Failed to extract URL: \(error.localizedDescription)")
                             }
                         }
                     }
                 }
                 if attachment.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                    attachment.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] (text, error) in
+                    attachment.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] text, error in
                         DispatchQueue.main.async {
                             if let text = text as? String {
                                 // Only treat as URL if it's a valid URL and we don't have one yet
@@ -89,7 +93,7 @@ class ShareBookmarkViewModel: ObservableObject {
                                         self?.logger.info("Set title from shared text: \(text)")
                                     }
                                 }
-                            } else if let error = error {
+                            } else if let error {
                                 self?.logger.error("Failed to extract text: \(error.localizedDescription)")
                             }
                         }
@@ -101,7 +105,7 @@ class ShareBookmarkViewModel: ObservableObject {
 
     func save() {
         logger.info("Starting to save bookmark with title: '\(title)', URL: '\(url ?? "nil")', labels: \(selectedLabels.count)")
-        guard let url = url, !url.isEmpty else {
+        guard let url, !url.isEmpty else {
             logger.warning("Save attempted without valid URL")
             statusMessage = ("No URL found.", true, "❌")
             return
@@ -111,14 +115,22 @@ class ShareBookmarkViewModel: ObservableObject {
 
         // Check server connectivity
         Task {
-            let serverReachable = await serverCheck.checkServerReachability()
-            logger.debug("Server connectivity for save: \(serverReachable)")
-            if serverReachable {
+            let serverInfo = await serverCheck.checkServerReachability()
+            logger.debug("Server connectivity for save: \(serverInfo != nil), version: \(serverInfo?.version ?? "unknown")")
+            if let serverInfo {
                 // Online - try to save via API
                 logger.info("Attempting to save bookmark via API")
-                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels)) { [weak self] message, error in
+                let htmlToSend = includeHTML && serverInfo.supportsHTMLBookmarks ? pageHTML : nil
+                if includeHTML && !serverInfo.supportsHTMLBookmarks {
+                    logger.info("Server version \(serverInfo.version) does not support HTML bookmarks (requires >= 0.22), sending without HTML")
+                }
+                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels), html: htmlToSend) { [weak self] message, error in
                     self?.logger.info("API save completed - Success: \(!error), Message: \(message)")
-                    self?.statusMessage = (message, error, error ? "❌" : "✅")
+                    if !error && self?.includeHTML == true {
+                        self?.statusMessage = ("Saved with page content", false, "✅")
+                    } else {
+                        self?.statusMessage = (message, error, error ? "❌" : "✅")
+                    }
                     self?.isSaving = false
                     if !error {
                         self?.logger.debug("Bookmark saved successfully, completing extension request")
@@ -132,10 +144,12 @@ class ShareBookmarkViewModel: ObservableObject {
             } else {
                 // Server not reachable - save locally
                 logger.info("Server not reachable, attempting local save")
+                let htmlToSend = includeHTML ? pageHTML : nil
                 let success = OfflineBookmarkManager.shared.saveOfflineBookmark(
                     url: url,
                     title: title,
-                    tags: Array(selectedLabels)
+                    tags: Array(selectedLabels),
+                    html: htmlToSend
                 )
                 logger.info("Local save result: \(success)")
 
@@ -165,7 +179,7 @@ class ShareBookmarkViewModel: ObservableObject {
 
         // Fetch available labels from Core Data
         let fetchRequest: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
-        let availableLabels = (try? context.fetch(fetchRequest))?.compactMap { $0.name } ?? []
+        let availableLabels = (try? context.fetch(fetchRequest))?.compactMap(\.name) ?? []
 
         let currentLabels = Array(selectedLabels)
         let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels, availableLabels: availableLabels)
@@ -187,7 +201,7 @@ class ShareBookmarkViewModel: ObservableObject {
         let endpoint = KeychainHelper.shared.loadEndpoint()
 
         // Check if endpoint exists first
-        guard let endpoint = endpoint, !endpoint.isEmpty else {
+        guard let endpoint, !endpoint.isEmpty else {
             logger.warning("Share extension opened but app is not configured (missing endpoint)")
             isConfigured = false
             return
@@ -220,7 +234,7 @@ class ShareBookmarkViewModel: ObservableObject {
     }
 
     private func setupNotificationObservers() {
-        NotificationCenter.default.addObserver(
+        notificationObserver = NotificationCenter.default.addObserver(
             forName: .unauthorizedAPIResponse,
             object: nil,
             queue: .main
@@ -249,4 +263,19 @@ class ShareBookmarkViewModel: ObservableObject {
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-} 
+
+    private static func loadTagSortOrder() -> TagSortOrder {
+        let context = CoreDataManager.shared.context
+        var result: TagSortOrder = .byCount
+        context.performAndWait {
+            let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
+            fetchRequest.fetchLimit = 1
+            if let entity = try? context.fetch(fetchRequest).first,
+               let raw = entity.tagSortOrder,
+               let parsed = TagSortOrder(rawValue: raw) {
+                result = parsed
+            }
+        }
+        return result
+    }
+}

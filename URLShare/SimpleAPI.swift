@@ -1,6 +1,6 @@
 import Foundation
 
-class SimpleAPI {
+final class SimpleAPI {
     private static let logger = Logger.network
 
     // MARK: - Token Management
@@ -20,16 +20,14 @@ class SimpleAPI {
                 logger.info("OAuth token expired or expiring soon, attempting refresh")
                 if let refreshedToken = await refreshOAuthToken() {
                     return refreshedToken.accessToken
-                } else {
-                    logger.warning("Failed to refresh OAuth token")
-                    return oauthToken.accessToken // Return expired token, will likely get 401
                 }
+                logger.warning("Failed to refresh OAuth token")
+                return oauthToken.accessToken
             }
             return oauthToken.accessToken
-        } else {
-            // Classic API token authentication
-            return KeychainHelper.shared.loadToken()
         }
+        // Classic API token authentication
+        return KeychainHelper.shared.loadToken()
     }
 
     private static func willExpireSoon(_ token: OAuthToken) -> Bool {
@@ -90,11 +88,11 @@ class SimpleAPI {
 
     // MARK: - Server Info
 
-    static func checkServerReachability() async -> Bool {
+    static func checkServerReachability() async -> ServerInfoDto? {
         guard let endpoint = KeychainHelper.shared.loadEndpoint(),
               !endpoint.isEmpty,
               let url = URL(string: "\(endpoint)/api/info") else {
-            return false
+            return nil
         }
 
         var request = URLRequest(url: url)
@@ -109,22 +107,22 @@ class SimpleAPI {
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
 
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
             if let httpResponse = response as? HTTPURLResponse,
                200...299 ~= httpResponse.statusCode {
                 logger.info("Server is reachable")
-                return true
+                return try? JSONDecoder().decode(ServerInfoDto.self, from: data)
             }
         } catch {
             logger.error("Server reachability check failed: \(error.localizedDescription)")
-            return false
         }
 
-        return false
+        return nil
     }
 
     // MARK: - API Methods
-    static func addBookmark(title: String, url: String, labels: [String]? = nil, showStatus: @escaping (String, Bool) -> Void) async {
+    // swiftlint:disable:next discouraged_optional_collection
+    static func addBookmark(title: String, url: String, labels: [String]? = nil, html: String? = nil, showStatus: @escaping (String, Bool) -> Void) async {
         logger.info("Adding bookmark: \(url)")
         guard let token = await getValidToken() else {
             showStatus("No token found. Please log in via the main app.", true)
@@ -134,7 +132,7 @@ class SimpleAPI {
             showStatus("No server endpoint found.", true)
             return
         }
-        let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: labels)
+        let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: labels, html: html)
         guard let requestData = try? JSONEncoder().encode(requestDto) else {
             showStatus("Failed to encode request.", true)
             return
@@ -156,9 +154,9 @@ class SimpleAPI {
                 showStatus("Invalid server response.", true)
                 return
             }
-            
+
             logger.logNetworkRequest(method: "POST", url: "/api/bookmarks", statusCode: httpResponse.statusCode)
-            
+
             guard 200...299 ~= httpResponse.statusCode else {
                 if httpResponse.statusCode == 401 {
                     DispatchQueue.main.async {
@@ -173,7 +171,7 @@ class SimpleAPI {
                 showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
                 return
             }
-            
+
             if let resp = try? JSONDecoder().decode(CreateBookmarkResponseDto.self, from: data) {
                 logger.info("Bookmark created successfully: \(resp.message)")
                 showStatus("Saved: \(resp.message)", false)
@@ -186,7 +184,8 @@ class SimpleAPI {
             showStatus("Network error: \(error.localizedDescription)", true)
         }
     }
-    
+
+    // swiftlint:disable:next discouraged_optional_collection
     static func getBookmarkLabels(showStatus: @escaping (String, Bool) -> Void) async -> [BookmarkLabelDto]? {
         logger.info("Fetching bookmark labels")
         guard let token = await getValidToken() else {
@@ -213,7 +212,7 @@ class SimpleAPI {
                 showStatus("Invalid server response.", true)
                 return nil
             }
-            
+
             logger.logNetworkRequest(method: "GET", url: "/api/bookmarks/labels", statusCode: httpResponse.statusCode)
 
             guard 200...299 ~= httpResponse.statusCode else {
@@ -230,7 +229,7 @@ class SimpleAPI {
                 showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
                 return nil
             }
-            
+
             let labels = try JSONDecoder().decode([BookmarkLabelDto].self, from: data)
             logger.info("Successfully fetched \(labels.count) bookmark labels")
             return labels
@@ -240,4 +239,4 @@ class SimpleAPI {
             return nil
         }
     }
-} 
+}

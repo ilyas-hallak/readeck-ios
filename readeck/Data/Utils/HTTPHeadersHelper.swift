@@ -11,11 +11,11 @@
 
 import Foundation
 
-class HTTPHeadersHelper {
+final class HTTPHeadersHelper {
     static let shared = HTTPHeadersHelper()
     private init() {}
 
-    private static let protectedHeaders = ["Content-Type", "Authorization", "content-type", "authorization"] 
+    private static let protectedHeaders = ["Content-Type", "Authorization", "content-type", "authorization"]
     private static let protectedHeadersLowercase = protectedHeaders.map { $0.lowercased() }
 
     private let keychainHelper = KeychainHelper.shared

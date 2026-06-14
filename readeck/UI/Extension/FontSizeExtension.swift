@@ -9,6 +9,6 @@ import SwiftUI
 
 extension FontSize {
     var systemFont: Font {
-        return Font.system(size: size)
+        Font.system(size: size)
     }
 }

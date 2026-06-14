@@ -20,6 +20,8 @@ struct SettingsContainerView: View {
         List {
             AppearanceSettingsView()
 
+            SwipeActionsSettingsView()
+
             Section {
                 Toggle("Enable Offline Reading".localized, isOn: $offlineViewModel.offlineSettings.enabled)
                     .onChange(of: offlineViewModel.offlineSettings.enabled) {

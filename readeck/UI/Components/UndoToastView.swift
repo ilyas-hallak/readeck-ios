@@ -4,28 +4,28 @@ struct UndoToastView: View {
     let bookmarkTitle: String
     let progress: Double
     let onUndo: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "trash")
                 .foregroundColor(.white)
                 .font(.system(size: 16, weight: .medium))
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("Bookmark deleted")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
-                
+
                 Text(bookmarkTitle)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.8))
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
-            
+
             Spacer()
-            
+
             Button("Undo") {
                 onUndo()
             }
@@ -59,9 +59,8 @@ struct UndoToastView: View {
         Spacer()
         UndoToastView(
             bookmarkTitle: "How to Build Great Products",
-            progress: 0.6,
-            onUndo: {}
-        )
+            progress: 0.6
+        )            {}
         .padding()
     }
     .background(Color.gray.opacity(0.3))

@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct LabelsView: View {
-    @State var viewModel = LabelsViewModel()
+    @State private var viewModel = LabelsViewModel()
     @Binding var selectedTag: BookmarkLabel?
-    
+
     init(viewModel: LabelsViewModel = LabelsViewModel(), selectedTag: Binding<BookmarkLabel?>) {
         self.viewModel = viewModel
         self._selectedTag = selectedTag
     }
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             if viewModel.isLoading {
@@ -46,7 +46,7 @@ struct LabelsView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func ButtonLabel(_ label: BookmarkLabel) -> some View {
         HStack {
