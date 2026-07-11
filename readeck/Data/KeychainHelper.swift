@@ -85,6 +85,19 @@ final class KeychainHelper {
         loadString(forKey: "readeck_oauth_client_id")
     }
 
+    // Deliberately separate from readeck_endpoint (the active-session endpoint,
+    // which is cleared on logout): this key must survive logout so the same
+    // dynamically-registered OAuth client is reused on the next login instead
+    // of orphaning it server-side.
+    @discardableResult
+    func saveOAuthClientEndpoint(_ endpoint: String) -> Bool {
+        saveString(endpoint, forKey: "readeck_oauth_client_endpoint")
+    }
+
+    func loadOAuthClientEndpoint() -> String? {
+        loadString(forKey: "readeck_oauth_client_endpoint")
+    }
+
     @discardableResult
     func saveCustomHeaders(_ headers: [String: String]) -> Bool {
         guard let jsonData = try? JSONEncoder().encode(headers),

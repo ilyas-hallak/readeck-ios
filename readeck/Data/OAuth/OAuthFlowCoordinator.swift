@@ -19,6 +19,7 @@ final class OAuthFlowCoordinator {
     private var currentVerifier: String?
     private var currentState: String?
     private var currentEndpoint: String?
+    private var isFlowInProgress = false
 
     init(manager: OAuthManager) {
         self.manager = manager
@@ -29,11 +30,33 @@ final class OAuthFlowCoordinator {
     /// - Parameter endpoint: Server endpoint URL
     /// - Returns: (OAuth access token, Client ID)
     func executeOAuthFlow(endpoint: String) async throws -> (OAuthToken, String) {
+        guard !isFlowInProgress else {
+            logger.error("OAuth flow already in progress, ignoring duplicate request")
+            throw OAuthError.flowAlreadyInProgress
+        }
+        isFlowInProgress = true
+        defer { isFlowInProgress = false }
+
         logger.info("🔐 Starting OAuth flow for endpoint: \(endpoint)")
 
-        // Phase 1: Register client and generate PKCE
-        logger.info("Phase 1: Registering OAuth client...")
-        let (client, verifier, challenge, state) = try await manager.startOAuthFlow(endpoint: endpoint)
+        // Phase 1: Reuse a previously registered client for this endpoint, or register a new one.
+        // Uses a dedicated keychain key (not the active-session endpoint) so the client
+        // survives logout and isn't orphaned on the next login.
+        logger.info("Phase 1: Preparing OAuth client...")
+        let existingClientId: String?
+        if KeychainHelper.shared.loadOAuthClientEndpoint() == endpoint {
+            existingClientId = KeychainHelper.shared.loadOAuthClientId()
+        } else {
+            existingClientId = nil
+        }
+        let (client, verifier, challenge, state) = try await manager.startOAuthFlow(
+            endpoint: endpoint,
+            existingClientId: existingClientId
+        )
+
+        // Persist immediately so a retry before login completes also reuses this client
+        KeychainHelper.shared.saveOAuthClientId(client.clientId)
+        KeychainHelper.shared.saveOAuthClientEndpoint(endpoint)
 
         // Store state for later use
         self.currentClient = client
