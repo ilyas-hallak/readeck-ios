@@ -5,7 +5,7 @@
 A native iOS client for [readeck](https://readeck.org) bookmark management.
 
 The official repository is on Codeberg:
-https://codeberg.org/readeck/readeck
+https://codeberg.org/readeck/readeck-ios
 
 ## Download
 
