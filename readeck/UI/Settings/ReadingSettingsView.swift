@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ReadingSettingsView: View {
     @State private var viewModel: SettingsGeneralViewModel
+    @AppStorage("autoAdvanceAfterArchive") private var autoAdvanceAfterArchive = true
 
     init(viewModel: SettingsGeneralViewModel = SettingsGeneralViewModel()) {
         self.viewModel = viewModel
@@ -52,6 +53,15 @@ struct ReadingSettingsView: View {
                         }
 
                     Text("Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("Auto-Advance After Archiving", isOn: $autoAdvanceAfterArchive)
+
+                    Text("Automatically opens the next article in your list after you archive the one you're reading.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
