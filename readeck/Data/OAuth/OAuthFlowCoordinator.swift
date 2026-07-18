@@ -19,6 +19,7 @@ final class OAuthFlowCoordinator {
     private var currentVerifier: String?
     private var currentState: String?
     private var currentEndpoint: String?
+    private var isFlowInProgress = false
 
     init(manager: OAuthManager) {
         self.manager = manager
@@ -29,6 +30,13 @@ final class OAuthFlowCoordinator {
     /// - Parameter endpoint: Server endpoint URL
     /// - Returns: (OAuth access token, Client ID)
     func executeOAuthFlow(endpoint: String) async throws -> (OAuthToken, String) {
+        guard !isFlowInProgress else {
+            logger.error("OAuth flow already in progress, ignoring duplicate request")
+            throw OAuthError.flowAlreadyInProgress
+        }
+        isFlowInProgress = true
+        defer { isFlowInProgress = false }
+
         logger.info("🔐 Starting OAuth flow for endpoint: \(endpoint)")
 
         // Phase 1: Register client and generate PKCE

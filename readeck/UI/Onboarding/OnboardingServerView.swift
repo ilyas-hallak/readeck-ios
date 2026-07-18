@@ -10,6 +10,7 @@ import SwiftUI
 struct OnboardingServerView: View {
     @State private var viewModel = SettingsServerViewModel()
     @State private var showLoginFields = false
+    @State private var oauthFailed = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
@@ -71,6 +72,15 @@ struct OnboardingServerView: View {
         return !viewModel.endpoint.isEmpty
     }
 
+    private var buttonTitle: String {
+        if viewModel.isLoading {
+            if showLoginFields { return "Logging in..." }
+            return oauthFailed ? "Retrying..." : "Checking..."
+        }
+        if showLoginFields { return "Login & Save" }
+        return oauthFailed ? "Retry" : "Continue"
+    }
+
     private var classicLoginForm: some View {
         VStack(spacing: 20) {
             // Readeck Logo with green background
@@ -114,6 +124,7 @@ struct OnboardingServerView: View {
                         .disableAutocorrection(true)
                         .onChange(of: viewModel.endpoint) {
                             viewModel.clearMessages()
+                            oauthFailed = false
                         }
 
                     // Quick Input Chips
@@ -236,15 +247,20 @@ struct OnboardingServerView: View {
             VStack(spacing: 10) {
                 Button(action: {
                     Task {
-                        if !showLoginFields {
+                        if oauthFailed {
+                            // Retry OAuth instead of immediately falling back to classic login
+                            await viewModel.loginWithOAuth()
+                            if viewModel.errorMessage == nil {
+                                oauthFailed = false
+                            }
+                        } else if !showLoginFields {
                             // Phase 1: Check server for OAuth support
                             await viewModel.checkServerOAuthSupport()
                             if viewModel.serverSupportsOAuth {
                                 // Try OAuth login
                                 await viewModel.loginWithOAuth()
-                                // If OAuth fails, error message is shown, user can fallback to classic
                                 if viewModel.errorMessage != nil {
-                                    showLoginFields = true
+                                    oauthFailed = true
                                 }
                             } else {
                                 // No OAuth → show login fields for classic auth
@@ -262,7 +278,7 @@ struct OnboardingServerView: View {
                                 .scaleEffect(0.8)
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         }
-                        Text(viewModel.isLoading ? (showLoginFields ? "Logging in..." : "Checking...") : (showLoginFields ? "Login & Save" : "Continue"))
+                        Text(buttonTitle)
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
@@ -272,6 +288,16 @@ struct OnboardingServerView: View {
                     .cornerRadius(10)
                 }
                 .disabled(!buttonEnabled || viewModel.isLoading)
+
+                if oauthFailed {
+                    Button("Use username & password instead") {
+                        oauthFailed = false
+                        showLoginFields = true
+                        viewModel.clearMessages()
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                }
             }
         }
     }
