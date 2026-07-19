@@ -198,6 +198,13 @@ final class BookmarkDetailViewModel {
         do {
             try await updateBookmarkUseCase.toggleArchive(bookmarkId: id, isArchived: isArchive)
             bookmarkDetail.isArchived = true
+            if isArchive {
+                NotificationCenter.default.post(
+                    name: .bookmarkArchived,
+                    object: nil,
+                    userInfo: ["id": id]
+                )
+            }
         } catch {
             errorMessage = "Error archiving bookmark"
         }

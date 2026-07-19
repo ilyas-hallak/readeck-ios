@@ -11,13 +11,13 @@ struct BookmarksView: View {
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
+    @AppStorage("autoAdvanceAfterArchive") private var autoAdvanceAfterArchive = true
 
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
     @EnvironmentObject private var appSettings: AppSettings
     let tag: String?
-    var onBookmarksLoaded: (([Bookmark]) -> Void)? = nil
 
     // MARK: Environments
 
@@ -26,18 +26,11 @@ struct BookmarksView: View {
 
     // MARK: Initializer
 
-    init(
-        state: BookmarkState,
-        type: [BookmarkType],
-        selectedBookmark: Binding<Bookmark?>,
-        tag: String? = nil,
-        onBookmarksLoaded: (([Bookmark]) -> Void)? = nil
-    ) {
+    init(state: BookmarkState, type: [BookmarkType], selectedBookmark: Binding<Bookmark?>, tag: String? = nil) {
         self.state = state
         self.type = type
         self._selectedBookmark = selectedBookmark
         self.tag = tag
-        self.onBookmarksLoaded = onBookmarksLoaded
     }
 
     var body: some View {
@@ -69,14 +62,8 @@ struct BookmarksView: View {
                 set: { selectedBookmarkId = $0 }
             )
         ) { bookmarkId in
-            ArticleReaderRouter(
-                bookmarkId: bookmarkId,
-                bookmarkIds: viewModel.bookmarks?.bookmarks.map(\.id) ?? [],
-                onNavigateToNextBookmark: { nextBookmarkId in
-                    selectedBookmarkId = nextBookmarkId
-                }
-            )
-            .toolbar(.hidden, for: .tabBar)
+            ArticleReaderRouter(bookmarkId: bookmarkId)
+                .toolbar(.hidden, for: .tabBar)
         }
         .sheet(item: $viewModel.showTagsBookmark) { bookmark in
             BookmarkLabelsView(bookmarkId: bookmark.id, initialLabels: bookmark.labels)
@@ -101,8 +88,32 @@ struct BookmarksView: View {
             Logger.ui.info("📲 BookmarksView.task - Loading bookmarks, isNetworkConnected: \(appSettings.isNetworkConnected)")
             await viewModel.loadBookmarks(state: state, type: type, tag: tag)
         }
-        .onChange(of: viewModel.bookmarks?.bookmarks.map(\.id)) { _, _ in
-            onBookmarksLoaded?(viewModel.bookmarks?.bookmarks ?? [])
+        .onReceive(NotificationCenter.default.publisher(for: .bookmarkArchived)) { notification in
+            // Auto-advance to the next article after archiving the one being read.
+            // Opt-in via setting; the list + selection both live here, so no state
+            // needs to be threaded down into the reader.
+            guard autoAdvanceAfterArchive,
+                  let archivedId = notification.userInfo?["id"] as? String else {
+                return
+            }
+            let ids = viewModel.bookmarks?.bookmarks.map(\.id) ?? []
+            switch nextSelection(after: archivedId, in: ids) {
+            case .next(let nextId):
+                if UIDevice.isPhone {
+                    selectedBookmarkId = nextId
+                } else {
+                    selectedBookmark = viewModel.bookmarks?.bookmarks.first { $0.id == nextId }
+                }
+            case .clear:
+                // Last article — dismiss the reader / clear the detail column.
+                if UIDevice.isPhone {
+                    selectedBookmarkId = nil
+                } else {
+                    selectedBookmark = nil
+                }
+            case .noop:
+                break
+            }
         }
         .onChange(of: viewModel.showTagsBookmark) { oldValue, newValue in
             // Refresh bookmarks when tags sheet is dismissed (labels may have changed)

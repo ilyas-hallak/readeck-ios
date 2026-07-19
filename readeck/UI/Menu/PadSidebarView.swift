@@ -12,7 +12,6 @@ struct PadSidebarView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State private var selectedBookmark: Bookmark?
     @State private var selectedTag: BookmarkLabel?
-    @State private var currentBookmarkList: [Bookmark] = []
     @EnvironmentObject private var appSettings: AppSettings
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     @State private var isPlayerDismissed = false
@@ -93,27 +92,27 @@ struct PadSidebarView: View {
                     case .search:
                         SearchBookmarksView(selectedBookmark: $selectedBookmark)
                     case .all:
-                        BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .all, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .unread:
-                        BookmarksView(state: .unread, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .unread, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .favorite:
-                        BookmarksView(state: .favorite, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .favorite, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .archived:
-                        BookmarksView(state: .archived, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .archived, type: [.article, .video, .photo], selectedBookmark: $selectedBookmark)
                     case .settings:
                         SettingsView()
                     case .article:
-                        BookmarksView(state: .all, type: [.article], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .all, type: [.article], selectedBookmark: $selectedBookmark)
                     case .videos:
-                        BookmarksView(state: .all, type: [.video], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .all, type: [.video], selectedBookmark: $selectedBookmark)
                     case .pictures:
-                        BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark, onBookmarksLoaded: { currentBookmarkList = $0 })
+                        BookmarksView(state: .all, type: [.photo], selectedBookmark: $selectedBookmark)
                     case .tags:
                         NavigationStack {
                             LabelsView(selectedTag: $selectedTag)
                         }
                         .navigationDestination(item: $selectedTag) { label in
-                            BookmarksView(state: .all, type: [], selectedBookmark: $selectedBookmark, tag: label.name, onBookmarksLoaded: { currentBookmarkList = $0 })
+                            BookmarksView(state: .all, type: [], selectedBookmark: $selectedBookmark, tag: label.name)
                                 .navigationTitle("\(label.name) (\(label.count))")
                                 .onDisappear {
                                     selectedTag = nil
@@ -125,18 +124,7 @@ struct PadSidebarView: View {
             }
         } detail: {
             if let bookmark = selectedBookmark, selectedTab != .settings {
-                ArticleReaderRouter(
-                    bookmarkId: bookmark.id,
-                    bookmarkIds: currentBookmarkList.map(\.id),
-                    onNavigateToNextBookmark: { nextBookmarkId in
-                        if let next = currentBookmarkList.first(where: { $0.id == nextBookmarkId }) {
-                            selectedBookmark = next
-                        }
-                    },
-                    onNoMoreBookmarks: {
-                        selectedBookmark = nil
-                    }
-                )
+                ArticleReaderRouter(bookmarkId: bookmark.id)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
                             Button {
