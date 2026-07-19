@@ -9,6 +9,22 @@ public struct ServerInfoDto: Codable {
         public let canonical: String
         public let release: String?
         public let build: String?
+
+        // Accept both the modern object form and the legacy plain-string form of `version`.
+        public init(from decoder: Decoder) throws {
+            if let single = try? decoder.singleValueContainer(),
+               let versionString = try? single.decode(String.self) {
+                self.canonical = versionString
+                self.release = versionString
+                self.build = nil
+                return
+            }
+
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.canonical = try container.decode(String.self, forKey: .canonical)
+            self.release = try container.decodeIfPresent(String.self, forKey: .release)
+            self.build = try container.decodeIfPresent(String.self, forKey: .build)
+        }
     }
 
     // HTML bookmark submission requires Readeck >= 0.22

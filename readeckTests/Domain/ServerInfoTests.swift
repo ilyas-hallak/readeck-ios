@@ -211,4 +211,51 @@ struct ServerInfoTests {
         #expect(dto.version.build == "")
         #expect(dto.features == ["oauth"])
     }
+
+    @Test("Decodes real 0.20.1 response without features array")
+    func decode_RealServerResponse_0201_WithoutFeatures() throws {
+        // Actual /api/info from a Readeck 0.20.1 instance — no "features" key at all.
+        let json = #"{"version":{"canonical":"0.20.1","release":"0.20.1","build":""}}"#.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(ServerInfoDto.self, from: json)
+
+        #expect(dto.version.canonical == "0.20.1")
+        #expect(dto.features == nil)
+    }
+
+    @Test("Decodes legacy plain-string version")
+    func decode_LegacyPlainStringVersion() throws {
+        // Older Readeck servers return `version` as a plain string, not an object.
+        let json = #"{"version":"0.15.0"}"#.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(ServerInfoDto.self, from: json)
+
+        #expect(dto.version.canonical == "0.15.0")
+        #expect(dto.version.release == "0.15.0")
+        #expect(dto.version.build == nil)
+        #expect(dto.features == nil)
+    }
+
+    @Test("Decodes version object with missing build/release")
+    func decode_VersionObject_MissingBuildAndRelease() throws {
+        // Some server versions omit build (and/or release) from the version object.
+        let json = #"{"version":{"canonical":"0.19.0"},"features":["oauth"]}"#.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(ServerInfoDto.self, from: json)
+
+        #expect(dto.version.canonical == "0.19.0")
+        #expect(dto.version.release == nil)
+        #expect(dto.version.build == nil)
+        #expect(dto.features == ["oauth"])
+    }
+
+    @Test("Decodes version object with explicit null build")
+    func decode_VersionObject_NullBuild() throws {
+        let json = #"{"version":{"canonical":"0.19.0","release":"0.19.0","build":null}}"#.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(ServerInfoDto.self, from: json)
+
+        #expect(dto.version.canonical == "0.19.0")
+        #expect(dto.version.build == nil)
+    }
 }
