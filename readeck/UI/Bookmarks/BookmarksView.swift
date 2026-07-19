@@ -11,7 +11,6 @@ struct BookmarksView: View {
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
-    @AppStorage("autoAdvanceAfterArchive") private var autoAdvanceAfterArchive = true
 
     let state: BookmarkState
     let type: [BookmarkType]
@@ -92,7 +91,7 @@ struct BookmarksView: View {
             // Auto-advance to the next article after archiving the one being read.
             // Opt-in via setting; the list + selection both live here, so no state
             // needs to be threaded down into the reader.
-            guard autoAdvanceAfterArchive,
+            guard appSettings.autoAdvanceAfterArchive,
                   let archivedId = notification.userInfo?["id"] as? String else {
                 return
             }

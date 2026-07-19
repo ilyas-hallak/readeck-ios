@@ -24,6 +24,8 @@ struct Settings {
     var bookmarkSortDirection: BookmarkSortDirection?
 
     var disableReaderBackSwipe: Bool?
+    // swiftlint:disable:next discouraged_optional_boolean
+    var autoAdvanceAfterArchive: Bool?
     var urlOpener: UrlOpener?
     var swipeActionConfig: SwipeActionConfig?
 

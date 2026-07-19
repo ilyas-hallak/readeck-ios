@@ -28,6 +28,10 @@ final class AppSettings: ObservableObject {
         settings?.disableReaderBackSwipe ?? false
     }
 
+    var autoAdvanceAfterArchive: Bool {
+        settings?.autoAdvanceAfterArchive ?? true
+    }
+
     var theme: Theme {
         settings?.theme ?? .system
     }

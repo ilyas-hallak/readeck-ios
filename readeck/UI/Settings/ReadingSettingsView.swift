@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ReadingSettingsView: View {
     @State private var viewModel: SettingsGeneralViewModel
-    @AppStorage("autoAdvanceAfterArchive") private var autoAdvanceAfterArchive = true
 
     init(viewModel: SettingsGeneralViewModel = SettingsGeneralViewModel()) {
         self.viewModel = viewModel
@@ -59,7 +58,13 @@ struct ReadingSettingsView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Toggle("Auto-Advance After Archiving", isOn: $autoAdvanceAfterArchive)
+                    Toggle("Auto-Advance After Archiving", isOn: $viewModel.autoAdvanceAfterArchive)
+                        .onChange(of: viewModel.autoAdvanceAfterArchive) {
+                            guard !viewModel.isLoading else { return }
+                            Task {
+                                await viewModel.saveGeneralSettings()
+                            }
+                        }
 
                     Text("Automatically opens the next article in your list after you archive the one you're reading.")
                         .font(.caption)
