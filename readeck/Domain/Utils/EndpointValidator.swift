@@ -10,6 +10,8 @@ import Foundation
 /// Validates and normalizes server endpoint URLs for consistent API usage
 struct EndpointValidator {
     /// Normalizes an endpoint URL by:
+    /// - Sanitizing characters iOS may inject while typing (smart-punctuation
+    ///   dashes, non-breaking/zero-width whitespace) that silently corrupt the URL
     /// - Trimming whitespace
     /// - Ensuring proper scheme (http/https, defaults to https if missing)
     /// - Preserving custom ports
@@ -24,8 +26,9 @@ struct EndpointValidator {
     /// - "http://100.80.0.1:8080" → "http://100.80.0.1:8080"
     /// - "https://server:3000/path/" → "https://server:3000/path"
     /// - "192.168.1.100:9090?query=test" → "https://192.168.1.100:9090"
+    /// - "my–server.com" (en dash) → "https://my-server.com"
     static func normalize(_ endpoint: String) -> String {
-        var normalized = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
+        var normalized = sanitize(endpoint)
 
         // Handle empty input
         guard !normalized.isEmpty else {
@@ -72,6 +75,40 @@ struct EndpointValidator {
     }
 
     // MARK: - Private Helpers
+
+    /// Typographic dashes iOS smart punctuation may substitute for a plain hyphen.
+    private static let typographicDashes: Set<Character> = [
+        "\u{2010}", "\u{2011}", "\u{2012}", "\u{2013}", "\u{2014}", "\u{2015}", "\u{2212}"
+    ]
+
+    /// Zero-width / byte-order-mark scalars that can slip in unseen and break URL parsing.
+    private static let invisibleScalars: Set<Unicode.Scalar> = [
+        "\u{200B}", "\u{200C}", "\u{200D}", "\u{FEFF}"
+    ]
+
+    /// Removes characters that a user never intends in a server URL but iOS may inject
+    /// while typing: smart-punctuation dashes (→ plain hyphen), any whitespace
+    /// (incl. non-breaking spaces), and zero-width/BOM characters. A server endpoint
+    /// contains no interior whitespace, so dropping all of it is safe and also handles
+    /// leading/trailing trimming.
+    private static func sanitize(_ raw: String) -> String {
+        var result = ""
+        result.reserveCapacity(raw.count)
+        for character in raw {
+            if typographicDashes.contains(character) {
+                result.append("-")
+            } else if character.isWhitespace {
+                continue
+            } else if character.unicodeScalars.count == 1,
+                      let scalar = character.unicodeScalars.first,
+                      invisibleScalars.contains(scalar) {
+                continue
+            } else {
+                result.append(character)
+            }
+        }
+        return result
+    }
 
     private static func buildNormalizedURL(from components: URLComponents) -> String {
         var urlComponents = components

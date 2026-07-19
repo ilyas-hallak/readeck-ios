@@ -317,6 +317,72 @@ struct EndpointValidatorTests {
         )
     }
 
+    // MARK: - Input Sanitization (iOS smart punctuation / invisible characters)
+
+    @Test("Normalize converts en dash to hyphen")
+    func normalize_EnDashToHyphen() {
+        #expect(
+            EndpointValidator.normalize("https://my\u{2013}server.com") ==
+            "https://my-server.com"
+        )
+    }
+
+    @Test("Normalize converts em dash to hyphen (no scheme)")
+    func normalize_EmDashToHyphen() {
+        #expect(
+            EndpointValidator.normalize("my\u{2014}server.com") ==
+            "https://my-server.com"
+        )
+    }
+
+    @Test("Normalize converts multiple typographic dashes")
+    func normalize_MultipleTypographicDashes() {
+        #expect(
+            EndpointValidator.normalize("https://a\u{2011}b\u{2212}c.example.com") ==
+            "https://a-b-c.example.com"
+        )
+    }
+
+    @Test("Normalize removes non-breaking space")
+    func normalize_RemovesNonBreakingSpace() {
+        #expect(
+            EndpointValidator.normalize("https://example.com\u{00A0}") ==
+            "https://example.com"
+        )
+    }
+
+    @Test("Normalize removes interior non-breaking space")
+    func normalize_RemovesInteriorNonBreakingSpace() {
+        #expect(
+            EndpointValidator.normalize("https://exa\u{00A0}mple.com") ==
+            "https://example.com"
+        )
+    }
+
+    @Test("Normalize removes zero-width space")
+    func normalize_RemovesZeroWidthSpace() {
+        #expect(
+            EndpointValidator.normalize("https://example.com\u{200B}") ==
+            "https://example.com"
+        )
+    }
+
+    @Test("Normalize removes byte-order-mark")
+    func normalize_RemovesBOM() {
+        #expect(
+            EndpointValidator.normalize("\u{FEFF}https://example.com") ==
+            "https://example.com"
+        )
+    }
+
+    @Test("Normalize handles dash and invisible chars together")
+    func normalize_DashAndInvisibleCombined() {
+        #expect(
+            EndpointValidator.normalize("  my\u{2013}server.example.com\u{200B}  ") ==
+            "https://my-server.example.com"
+        )
+    }
+
     // MARK: - Edge Cases
 
     @Test("Normalize empty string")
