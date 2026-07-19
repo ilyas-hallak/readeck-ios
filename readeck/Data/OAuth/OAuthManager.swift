@@ -60,7 +60,9 @@ final class OAuthManager {
         // Generate CSRF state
         let state = UUID().uuidString
 
-        // Register OAuth client
+        // Register a fresh OAuth client on every login. Readeck does not persist
+        // dynamically-registered clients across authorize flows, so reusing a stored
+        // client id makes the server reject /authorize with "invalid_client".
         let client = try await repository.registerClient(
             endpoint: endpoint,
             clientName: Self.clientName,
@@ -138,6 +140,7 @@ enum OAuthError: LocalizedError {
     case stateMismatch
     case invalidCallback
     case userCancelled
+    case flowAlreadyInProgress
 
     var errorDescription: String? {
         switch self {
@@ -147,6 +150,8 @@ enum OAuthError: LocalizedError {
             return "Invalid OAuth callback URL"
         case .userCancelled:
             return "OAuth authorization was cancelled by user"
+        case .flowAlreadyInProgress:
+            return "An OAuth login is already in progress"
         }
     }
 }

@@ -26,7 +26,7 @@ final class OAuthRepository: POAuthRepository {
 
         let request = OAuthClientCreateDto(
             clientName: clientName,
-            clientUri: "https://github.com/yourusername/readeck-ios", // TODO: Update with actual URL
+            clientUri: "https://github.com/ilyas-hallak/readeck-ios",
             softwareId: softwareId,
             softwareVersion: appVersion,
             redirectUris: [redirectUri],

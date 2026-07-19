@@ -138,6 +138,9 @@ final class SettingsServerViewModel {
             return
         }
 
+        isLoading = true
+        defer { isLoading = false }
+
         let normalizedEndpoint = EndpointValidator.normalize(endpoint)
 
         do {
