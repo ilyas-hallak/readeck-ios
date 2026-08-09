@@ -12,6 +12,7 @@ protocol PSaveSettingsUseCase {
     func execute(urlOpener: UrlOpener) async throws
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws
     func execute(disableReaderBackSwipe: Bool) async throws
+    func execute(autoAdvanceAfterArchive: Bool) async throws
     func execute(swipeActionConfig: SwipeActionConfig) async throws
 }
 
@@ -106,6 +107,12 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(disableReaderBackSwipe: Bool) async throws {
         try await settingsRepository.saveSettings(
             .init(disableReaderBackSwipe: disableReaderBackSwipe)
+        )
+    }
+
+    func execute(autoAdvanceAfterArchive: Bool) async throws {
+        try await settingsRepository.saveSettings(
+            .init(autoAdvanceAfterArchive: autoAdvanceAfterArchive)
         )
     }
 

@@ -27,6 +27,11 @@ struct ArticleReaderRouter: View {
                 ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
             }
         }
+        // Forces a fresh view (and @State) per article. Without this, navigating
+        // directly from one bookmarkId to another (as auto-advance-after-archive
+        // does) reuses the existing reader instance, so the content never reloads —
+        // previously unreachable since navigation only ever went nil->id or id->nil.
+        .id(bookmarkId)
         .modifier(DisableBackSwipeModifier(isDisabled: appSettings.disableReaderBackSwipe))
     }
 }

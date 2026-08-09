@@ -56,6 +56,21 @@ struct ReadingSettingsView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
                 }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("Auto-Advance After Archiving", isOn: $viewModel.autoAdvanceAfterArchive)
+                        .onChange(of: viewModel.autoAdvanceAfterArchive) {
+                            guard !viewModel.isLoading else { return }
+                            Task {
+                                await viewModel.saveGeneralSettings()
+                            }
+                        }
+
+                    Text("Automatically opens the next article in your list after you archive the one you're reading.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
             } header: {
                 Text("Reading Settings")
             }
