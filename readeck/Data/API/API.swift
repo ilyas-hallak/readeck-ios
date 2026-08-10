@@ -340,10 +340,17 @@ final class API: PAPI {
 
     // MARK: - Bookmark article (GET + 502 recovery)
 
+    /// Gateway/upstream status codes where the origin is likely fine but the proxy failed to relay
+    /// the response. Covers the standard 502/503/504 plus Cloudflare origin codes 520–524
+    /// (524 = proxy timed out waiting for the origin, the typical failure for very large articles).
+    /// All of these are recovered via the streaming sync fallback and are worth retrying.
+    static let recoverableGatewayStatusCodes: Set<Int> = [502, 503, 504, 520, 521, 522, 523, 524]
+
     func getBookmarkArticle(id: String) async throws -> String {
         logger.debug("Fetching article for bookmark: \(id)")
         let endpoint = "/api/bookmarks/\(id)/article"
-        // Proxied instances may return transient 502/503/504 while the origin is slow or busy.
+        // Proxied instances (e.g. Cloudflare) may return transient 502/503/504 or 520–524 while the
+        // origin is slow or busy — common for very large articles that take long to generate.
         let requestTimeout: TimeInterval = 300
         let maxAttempts = 4
 
@@ -354,7 +361,7 @@ final class API: PAPI {
             }
 
             do {
-                let result = try await fetchBookmarkArticleRecoveringFrom502(
+                let result = try await fetchBookmarkArticleRecoveringFromGatewayError(
                     id: id,
                     endpoint: endpoint,
                     timeout: requestTimeout
@@ -367,7 +374,7 @@ final class API: PAPI {
                     if case .serverError(let code) = apiError { return code }
                     return nil
                 }()
-                let isTransientHTTP = apiStatus.map { [502, 503, 504].contains($0) } ?? false
+                let isTransientHTTP = apiStatus.map { Self.recoverableGatewayStatusCodes.contains($0) } ?? false
                 let isTimeout = (error as? URLError)?.code == .timedOut
                 let canRetry = attempt < maxAttempts && (isTransientHTTP || isTimeout)
 
@@ -389,12 +396,12 @@ final class API: PAPI {
         throw APIError.invalidResponse
     }
 
-    private func fetchBookmarkArticleRecoveringFrom502(id: String, endpoint: String, timeout: TimeInterval) async throws -> String {
+    private func fetchBookmarkArticleRecoveringFromGatewayError(id: String, endpoint: String, timeout: TimeInterval) async throws -> String {
         switch try await fetchBookmarkArticleGETOutcome(endpoint: endpoint, timeout: timeout, additionalHeaders: [:]) {
         case let .success(html):
             logger.debug("Bookmark article fetch path: GET /article")
             return html
-        case .badGateway:
+        case .gatewayError:
             break
         case let .httpFailure(statusCode):
             handleUnauthorizedResponse(statusCode)
@@ -407,16 +414,16 @@ final class API: PAPI {
             additionalHeaders: ["Accept-Encoding": "gzip, deflate, br"]
         ) {
         case let .success(html):
-            logger.info("Bookmark article fetch path: GET /article with Accept-Encoding after 502")
+            logger.info("Bookmark article fetch path: GET /article with Accept-Encoding after gateway error")
             return html
-        case .badGateway:
+        case .gatewayError:
             break
         case let .httpFailure(statusCode):
             handleUnauthorizedResponse(statusCode)
             throw APIError.serverError(statusCode)
         }
 
-        logger.info("Bookmark article fetch path: POST /bookmarks/sync multipart fallback")
+        logger.info("Bookmark article fetch path: POST /bookmarks/sync multipart fallback after gateway error")
         return try await fetchBookmarkArticleThroughSync(bookmarkId: id, timeout: timeout)
     }
 
@@ -441,8 +448,8 @@ final class API: PAPI {
             throw APIError.invalidResponse
         }
 
-        if httpResponse.statusCode == 502 {
-            return .badGateway
+        if Self.recoverableGatewayStatusCodes.contains(httpResponse.statusCode) {
+            return .gatewayError(statusCode: httpResponse.statusCode)
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
