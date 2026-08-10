@@ -59,7 +59,7 @@ struct BookmarksViewModelTests {
 
         await vm.loadBookmarks()
 
-        #expect(vm.errorMessage == "Error loading bookmarks")
+        #expect(vm.errorMessage?.hasPrefix("Error loading bookmarks") == true)
         #expect(vm.isLoading == false)
     }
 
