@@ -240,6 +240,7 @@ final class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
     func execute(disableReaderBackSwipe: Bool) async throws {}
     func execute(autoAdvanceAfterArchive: Bool) async throws {}
+    func execute(showUnreadBadge: Bool) async throws {}
     func execute(swipeActionConfig: SwipeActionConfig) async throws {}
 }
 

@@ -58,6 +58,20 @@ final class AppViewModel {
             }
         }
         notificationObservers.append(setupObserver)
+
+        // Keep the unread app-icon badge in sync when items leave the unread list.
+        for name in [Notification.Name.bookmarkArchived, .bookmarkDeleted] {
+            let observer = NotificationCenter.default.addObserver(
+                forName: name,
+                object: nil,
+                queue: .main
+            ) { _ in
+                Task { @MainActor in
+                    await BadgeManager.shared.refresh()
+                }
+            }
+            notificationObservers.append(observer)
+        }
     }
 
     private func handleUnauthorizedResponse() async {
@@ -103,6 +117,7 @@ final class AppViewModel {
         await checkServerReachability()
         await syncTagsOnAppStart()
         syncOfflineArticlesIfNeeded()
+        await BadgeManager.shared.refresh()
     }
 
     private func checkServerReachability() async {

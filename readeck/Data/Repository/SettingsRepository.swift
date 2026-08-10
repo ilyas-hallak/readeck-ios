@@ -67,6 +67,10 @@ final class SettingsRepository: PSettingsRepository {
                         existingSettings.autoAdvanceAfterArchive = autoAdvanceAfterArchive
                     }
 
+                    if let showUnreadBadge = settings.showUnreadBadge {
+                        existingSettings.showUnreadBadge = showUnreadBadge
+                    }
+
                     if let theme = settings.theme {
                         existingSettings.theme = theme.rawValue
                     }
@@ -195,6 +199,7 @@ final class SettingsRepository: PSettingsRepository {
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
                         disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe,
                         autoAdvanceAfterArchive: settingEntity?.autoAdvanceAfterArchive,
+                        showUnreadBadge: settingEntity?.showUnreadBadge,
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
                         swipeActionConfig: swipeActionConfig,
                         fontSizeNumeric: fontSizeNumeric,

@@ -26,6 +26,8 @@ struct Settings {
     var disableReaderBackSwipe: Bool?
     // swiftlint:disable:next discouraged_optional_boolean
     var autoAdvanceAfterArchive: Bool?
+    // swiftlint:disable:next discouraged_optional_boolean
+    var showUnreadBadge: Bool?
     var urlOpener: UrlOpener?
     var swipeActionConfig: SwipeActionConfig?
 

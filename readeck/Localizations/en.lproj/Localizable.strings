@@ -270,3 +270,7 @@
 "No article content to summarize." = "No article content to summarize.";
 "Delete this bookmark?" = "Delete this bookmark?";
 "This action cannot be undone." = "This action cannot be undone.";
+
+/* Unread Badge */
+"Show Unread Count on App Icon" = "Show Unread Count on App Icon";
+"Shows the number of unread articles as a badge on the app icon. Updates when you open the app or archive an article." = "Shows the number of unread articles as a badge on the app icon. Updates when you open the app or archive an article.";

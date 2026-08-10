@@ -17,6 +17,7 @@ final class SettingsGeneralViewModel {
     var enableTTS = false
     var disableReaderBackSwipe = false
     var autoAdvanceAfterArchive = true
+    var showUnreadBadge = false
     var isLoading = false
     var autoMarkAsRead = false
     var urlOpener: UrlOpener = .inAppBrowser
@@ -47,6 +48,7 @@ final class SettingsGeneralViewModel {
                 enableTTS = settings.enableTTS ?? false
                 disableReaderBackSwipe = settings.disableReaderBackSwipe ?? false
                 autoAdvanceAfterArchive = settings.autoAdvanceAfterArchive ?? true
+                showUnreadBadge = settings.showUnreadBadge ?? false
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
                 bookmarkSortField = settings.bookmarkSortField ?? .created
@@ -64,6 +66,7 @@ final class SettingsGeneralViewModel {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
             try await saveSettingsUseCase.execute(disableReaderBackSwipe: disableReaderBackSwipe)
             try await saveSettingsUseCase.execute(autoAdvanceAfterArchive: autoAdvanceAfterArchive)
+            try await saveSettingsUseCase.execute(showUnreadBadge: showUnreadBadge)
             try await saveSettingsUseCase.execute(theme: selectedTheme)
             try await saveSettingsUseCase.execute(urlOpener: urlOpener)
 
