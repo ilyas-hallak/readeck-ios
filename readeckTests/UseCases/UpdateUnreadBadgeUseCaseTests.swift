@@ -90,6 +90,19 @@ struct UpdateUnreadBadgeUseCaseTests {
         #expect(badge.lastBadgeCount == nil)
     }
 
+    @Test("Enabling applies the count even before the flag is persisted")
+    func enableAppliesCountBeforeFlagPersisted() async {
+        // Regression: setEnabled(true) must not gate on the stored showUnreadBadge,
+        // which the caller persists only after this returns.
+        let (sut, badge) = makeSUT(
+            settings: Settings(token: "abc", showUnreadBadge: false),
+            totalCount: 4
+        )
+        let result = await sut.setEnabled(true)
+        #expect(result == true)
+        #expect(badge.lastBadgeCount == 4)
+    }
+
     @Test("Disabling clears the badge and returns true")
     func disableClears() async {
         let (sut, badge) = makeSUT(

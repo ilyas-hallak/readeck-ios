@@ -51,7 +51,9 @@ final class UpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
             Logger.general.info("Unread badge: notification permission denied")
             return false
         }
-        await refresh()
+        // The user just enabled the feature — apply the count immediately without
+        // gating on the stored flag, which the caller may not have persisted yet.
+        await applyUnreadCount()
         return true
     }
 
@@ -62,7 +64,19 @@ final class UpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
             await badgeService.setBadgeCount(0)
             return
         }
-        guard settings?.isLoggedIn == true else { return }
+        await applyUnreadCount(settings: settings)
+    }
+
+    /// Fetches the current unread count and applies it to the badge. Requires the
+    /// user to be logged in; leaves the badge untouched on fetch errors (e.g. offline).
+    private func applyUnreadCount(settings: Settings? = nil) async {
+        let resolvedSettings: Settings?
+        if let settings {
+            resolvedSettings = settings
+        } else {
+            resolvedSettings = try? await settingsRepository.loadSettings()
+        }
+        guard resolvedSettings?.isLoggedIn == true else { return }
 
         do {
             let page = try await getBookmarksUseCase.execute(
