@@ -278,3 +278,10 @@
 "No article content to summarize." = "Kein Artikelinhalt zum Zusammenfassen vorhanden.";
 "Delete this bookmark?" = "Dieses Lesezeichen löschen?";
 "This action cannot be undone." = "Diese Aktion kann nicht rückgängig gemacht werden.";
+
+// After-archiving behaviour (Reading Settings)
+"After Archiving" = "Nach dem Archivieren";
+"Stay on Article" = "Beim Artikel bleiben";
+"Open Next Article" = "Nächsten Artikel öffnen";
+"Return to List" = "Zurück zur Liste";
+"Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list." = "Lege fest, was passiert, wenn du den gerade gelesenen Artikel archivierst oder löschst: beim Artikel bleiben, den nächsten in deiner Liste öffnen oder zur Liste zurückkehren.";
