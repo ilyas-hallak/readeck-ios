@@ -212,6 +212,7 @@ struct ArticleReaderView: View {
             .clipped()
             .ignoresSafeArea(edges: [.top, .bottom])
             .scrollPosition($scrollPosition)
+            .disableScrollBounce()
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 contentEndPosition = endPosition
 
