@@ -83,6 +83,22 @@ struct BookmarksViewModelTests {
         #expect(factory.mockUpdateBookmark.toggleArchiveCalled == true)
     }
 
+    @Test("Archiving preserves the active type filter (regression: Codeberg #39)")
+    func toggleArchivePreservesTypeFilter() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarks.result = .success(
+            BookmarksPage(bookmarks: [.mock], currentPage: 1, totalCount: 1, totalPages: 1, links: nil)
+        )
+        // Load the Unread tab showing all types (articles, videos, photos).
+        await vm.loadBookmarks(state: .unread, type: [.article, .video, .photo])
+
+        await vm.toggleArchive(bookmark: .mock)
+
+        // The reload after archiving must keep the active filter instead of falling back to
+        // [.article]; otherwise videos/photos vanish from the list until the tab is switched.
+        #expect(factory.mockGetBookmarks.lastType == [.article, .video, .photo])
+    }
+
     // MARK: - Toggle Favorite
 
     @Test("Toggle favorite calls update use case")

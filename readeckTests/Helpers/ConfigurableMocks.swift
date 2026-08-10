@@ -10,11 +10,16 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
     )
     var executeCalled = false
     var lastState: BookmarkState?
+    // swiftlint:disable:next discouraged_optional_collection
+    var lastType: [BookmarkType]?
+    var lastTag: String?
 
     // swiftlint:disable:next discouraged_optional_collection
     func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage {
         executeCalled = true
         lastState = state
+        lastType = type
+        lastTag = tag
         return try result.get()
     }
 }
