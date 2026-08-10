@@ -6,6 +6,7 @@ import SwiftUI
 final class SettingsGeneralViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
+    private let updateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase
 
     // MARK: - UI Settings
     var selectedTheme: Theme = .system
@@ -36,6 +37,24 @@ final class SettingsGeneralViewModel {
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+        self.updateUnreadBadgeUseCase = factory.makeUpdateUnreadBadgeUseCase()
+    }
+
+    /// Handles a change to the unread-badge toggle: requests permission when
+    /// enabling, reverts the toggle if it was denied, then persists settings.
+    @MainActor
+    func updateUnreadBadge() async {
+        if showUnreadBadge {
+            let granted = await updateUnreadBadgeUseCase.setEnabled(true)
+            guard granted else {
+                // Permission denied — revert the toggle.
+                showUnreadBadge = false
+                return
+            }
+        } else {
+            await updateUnreadBadgeUseCase.setEnabled(false)
+        }
+        await saveGeneralSettings()
     }
 
     @MainActor

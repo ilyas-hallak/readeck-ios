@@ -62,7 +62,7 @@ struct readeckApp: App {
                     }
                 } else if newPhase == .background {
                     Task {
-                        await BadgeManager.shared.refresh()
+                        await appViewModel.refreshBadge()
                     }
                 }
             }

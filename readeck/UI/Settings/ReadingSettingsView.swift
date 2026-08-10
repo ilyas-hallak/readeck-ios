@@ -81,17 +81,7 @@ struct ReadingSettingsView: View {
                         .onChange(of: viewModel.showUnreadBadge) {
                             guard !viewModel.isLoading else { return }
                             Task {
-                                if viewModel.showUnreadBadge {
-                                    let granted = await BadgeManager.shared.setEnabled(true)
-                                    if !granted {
-                                        // Permission denied — revert the toggle (re-triggers onChange with false).
-                                        viewModel.showUnreadBadge = false
-                                        return
-                                    }
-                                } else {
-                                    _ = await BadgeManager.shared.setEnabled(false)
-                                }
-                                await viewModel.saveGeneralSettings()
+                                await viewModel.updateUnreadBadge()
                             }
                         }
 

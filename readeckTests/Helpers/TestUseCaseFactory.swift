@@ -56,4 +56,5 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase { MockLoginWithOAuthUseCase() }
     func makeAuthRepository() -> PAuthRepository { MockAuthRepository() }
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase { mockSummarizeArticle }
+    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase { MockUpdateUnreadBadgeUseCase() }
 }

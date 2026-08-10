@@ -493,6 +493,16 @@ extension MockUseCaseFactory {
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase {
         MockSummarizeArticleUseCase()
     }
+
+    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase {
+        MockUpdateUnreadBadgeUseCase()
+    }
+}
+
+final class MockUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
+    func refresh() async {}
+    @discardableResult
+    func setEnabled(_ enabled: Bool) async -> Bool { true }
 }
 
 final class MockLoginWithOAuthUseCase: PLoginWithOAuthUseCase {

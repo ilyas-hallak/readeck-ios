@@ -15,6 +15,7 @@ final class AppViewModel {
     private let settingsRepository: PSettingsRepository
     private let factory: UseCaseFactory
     private let syncTagsUseCase: PSyncTagsUseCase
+    private let updateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase
     let networkMonitorUseCase: PNetworkMonitorUseCase
 
     var hasFinishedSetup = true
@@ -29,6 +30,7 @@ final class AppViewModel {
         self.factory = factory
         self.settingsRepository = factory.makeSettingsRepository()
         self.syncTagsUseCase = factory.makeSyncTagsUseCase()
+        self.updateUnreadBadgeUseCase = factory.makeUpdateUnreadBadgeUseCase()
         self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
 
         setupNotificationObservers()
@@ -65,9 +67,9 @@ final class AppViewModel {
                 forName: name,
                 object: nil,
                 queue: .main
-            ) { _ in
+            ) { [weak self] _ in
                 Task { @MainActor in
-                    await BadgeManager.shared.refresh()
+                    await self?.updateUnreadBadgeUseCase.refresh()
                 }
             }
             notificationObservers.append(observer)
@@ -117,7 +119,13 @@ final class AppViewModel {
         await checkServerReachability()
         await syncTagsOnAppStart()
         syncOfflineArticlesIfNeeded()
-        await BadgeManager.shared.refresh()
+        await updateUnreadBadgeUseCase.refresh()
+    }
+
+    /// Recomputes the unread app-icon badge. Exposed for scene-phase transitions
+    /// (e.g. entering background) so views don't reach into the badge use case directly.
+    func refreshBadge() async {
+        await updateUnreadBadgeUseCase.refresh()
     }
 
     private func checkServerReachability() async {
