@@ -23,11 +23,11 @@ enum ArchiveAdvanceMode: String, CaseIterable, Identifiable {
     var localizedTitle: String {
         switch self {
         case .stay:
-            return NSLocalizedString("Stay on Article", comment: "Archive-advance mode")
+            return "Stay on Article".localized
         case .nextArticle:
-            return NSLocalizedString("Open Next Article", comment: "Archive-advance mode")
+            return "Open Next Article".localized
         case .returnToList:
-            return NSLocalizedString("Return to List", comment: "Archive-advance mode")
+            return "Return to List".localized
         }
     }
 }

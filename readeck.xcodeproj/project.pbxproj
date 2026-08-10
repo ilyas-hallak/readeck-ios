@@ -86,6 +86,7 @@
 				Data/API/DTOs/OAuthTokenResponseDto.swift,
 				Data/CoreData/CoreDataManager.swift,
 				"Data/Extensions/NSManagedObjectContext+SafeFetch.swift",
+				"Data/Extensions/String+Localization.swift",
 				Data/KeychainHelper.swift,
 				Data/Utils/HTTPHeadersHelper.swift,
 				Data/Utils/LabelUtils.swift,
