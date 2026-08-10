@@ -32,6 +32,50 @@ struct BookmarksView: View {
         self.tag = tag
     }
 
+    // MARK: After-archive / after-delete behaviour
+
+    /// Reacts to the currently-open article being archived or deleted, following
+    /// the user's "After Archiving" preference:
+    /// `.stay` keeps the article open, `.nextArticle` advances the reader to the
+    /// next item in the list, `.returnToList` dismisses the reader.
+    ///
+    /// When the article was *deleted* it no longer exists, so `.stay` and the
+    /// "unknown position" case fall back to closing the reader instead of sitting
+    /// on a gone article. For `.nextArticle` deletions the reader defers its own
+    /// dismissal to us, so this is the sole driver of the post-delete navigation.
+    private func handleReaderMutation(of mutatedId: String, wasDeleted: Bool) {
+        switch appSettings.archiveAdvanceMode {
+        case .stay:
+            if wasDeleted { clearReaderSelection() }
+        case .returnToList:
+            clearReaderSelection()
+        case .nextArticle:
+            let ids = viewModel.bookmarks?.bookmarks.map(\.id) ?? []
+            switch nextSelection(after: mutatedId, in: ids) {
+            case .next(let nextId):
+                if UIDevice.isPhone {
+                    selectedBookmarkId = nextId
+                } else {
+                    selectedBookmark = viewModel.bookmarks?.bookmarks.first { $0.id == nextId }
+                }
+            case .clear:
+                // Last article — dismiss the reader / clear the detail column.
+                clearReaderSelection()
+            case .noop:
+                // Position unknown (e.g. not in the current list): only close on delete.
+                if wasDeleted { clearReaderSelection() }
+            }
+        }
+    }
+
+    private func clearReaderSelection() {
+        if UIDevice.isPhone {
+            selectedBookmarkId = nil
+        } else {
+            selectedBookmark = nil
+        }
+    }
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -88,30 +132,13 @@ struct BookmarksView: View {
             await viewModel.loadBookmarks(state: state, type: type, tag: tag)
         }
         .onReceive(NotificationCenter.default.publisher(for: .bookmarkArchived)) { notification in
-            // Auto-advance to the next article after archiving the one being read.
-            // Opt-in via setting; the list + selection both live here, so no state
-            // needs to be threaded down into the reader.
-            guard appSettings.autoAdvanceAfterArchive,
-                  let archivedId = notification.userInfo?["id"] as? String else {
-                return
+            if let id = notification.userInfo?["id"] as? String {
+                handleReaderMutation(of: id, wasDeleted: false)
             }
-            let ids = viewModel.bookmarks?.bookmarks.map(\.id) ?? []
-            switch nextSelection(after: archivedId, in: ids) {
-            case .next(let nextId):
-                if UIDevice.isPhone {
-                    selectedBookmarkId = nextId
-                } else {
-                    selectedBookmark = viewModel.bookmarks?.bookmarks.first { $0.id == nextId }
-                }
-            case .clear:
-                // Last article — dismiss the reader / clear the detail column.
-                if UIDevice.isPhone {
-                    selectedBookmarkId = nil
-                } else {
-                    selectedBookmark = nil
-                }
-            case .noop:
-                break
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .bookmarkDeleted)) { notification in
+            if let id = notification.userInfo?["id"] as? String {
+                handleReaderMutation(of: id, wasDeleted: true)
             }
         }
         .onChange(of: viewModel.showTagsBookmark) { oldValue, newValue in

@@ -24,8 +24,10 @@ struct Settings {
     var bookmarkSortDirection: BookmarkSortDirection?
 
     var disableReaderBackSwipe: Bool?
+    // Legacy boolean, kept for migration into `archiveAdvanceMode`.
     // swiftlint:disable:next discouraged_optional_boolean
     var autoAdvanceAfterArchive: Bool?
+    var archiveAdvanceMode: ArchiveAdvanceMode?
     var urlOpener: UrlOpener?
     var swipeActionConfig: SwipeActionConfig?
 

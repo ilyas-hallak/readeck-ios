@@ -67,6 +67,13 @@ final class SettingsRepository: PSettingsRepository {
                         existingSettings.autoAdvanceAfterArchive = autoAdvanceAfterArchive
                     }
 
+                    if let archiveAdvanceMode = settings.archiveAdvanceMode {
+                        existingSettings.archiveAdvanceMode = archiveAdvanceMode.rawValue
+                        // Keep the legacy boolean in sync so an older app version
+                        // (which only reads it) still behaves sensibly after a downgrade.
+                        existingSettings.autoAdvanceAfterArchive = (archiveAdvanceMode != .stay)
+                    }
+
                     if let theme = settings.theme {
                         existingSettings.theme = theme.rawValue
                     }
@@ -195,6 +202,17 @@ final class SettingsRepository: PSettingsRepository {
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
                         disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe,
                         autoAdvanceAfterArchive: settingEntity?.autoAdvanceAfterArchive,
+                        archiveAdvanceMode: {
+                            if let raw = settingEntity?.archiveAdvanceMode,
+                               let mode = ArchiveAdvanceMode(rawValue: raw) {
+                                return mode
+                            }
+                            // Migrate from the legacy boolean: true → advance, false → stay.
+                            if let legacy = settingEntity?.autoAdvanceAfterArchive {
+                                return legacy ? .nextArticle : .stay
+                            }
+                            return nil
+                        }(),
                         urlOpener: UrlOpener(rawValue: settingEntity?.urlOpener ?? UrlOpener.inAppBrowser.rawValue),
                         swipeActionConfig: swipeActionConfig,
                         fontSizeNumeric: fontSizeNumeric,
