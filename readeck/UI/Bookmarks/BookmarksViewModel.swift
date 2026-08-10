@@ -123,7 +123,7 @@ final class BookmarksViewModel {
         let workItem = DispatchWorkItem { [weak self] in
             guard let self else { return }
             Task {
-                await self.loadBookmarks(state: self.currentState)
+                await self.loadBookmarks(state: self.currentState, type: self.currentType, tag: self.currentTag)
             }
         }
 
@@ -263,7 +263,7 @@ final class BookmarksViewModel {
 
     @MainActor
     func refreshBookmarks() async {
-        await loadBookmarks(state: currentState)
+        await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
     }
 
     @MainActor
@@ -293,7 +293,7 @@ final class BookmarksViewModel {
                 isArchived: !bookmark.isArchived
             )
 
-            await loadBookmarks(state: currentState)
+            await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
         } catch {
             errorMessage = "Error archiving bookmark"
         }
@@ -307,7 +307,7 @@ final class BookmarksViewModel {
                 isMarked: !bookmark.isMarked
             )
 
-            await loadBookmarks(state: currentState)
+            await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
         } catch {
             errorMessage = "Error marking bookmark"
         }
@@ -340,7 +340,7 @@ final class BookmarksViewModel {
                 anchor: nil
             )
 
-            await loadBookmarks(state: currentState)
+            await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
         } catch {
             errorMessage = "Error resetting reading progress"
         }
