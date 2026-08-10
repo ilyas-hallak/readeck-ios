@@ -16,7 +16,7 @@ final class SettingsGeneralViewModel {
     var enableReaderMode = false
     var enableTTS = false
     var disableReaderBackSwipe = false
-    var autoAdvanceAfterArchive = true
+    var archiveAdvanceMode: ArchiveAdvanceMode = .nextArticle
     var showUnreadBadge = false
     var isLoading = false
     var autoMarkAsRead = false
@@ -47,7 +47,8 @@ final class SettingsGeneralViewModel {
             if let settings = try await loadSettingsUseCase.execute() {
                 enableTTS = settings.enableTTS ?? false
                 disableReaderBackSwipe = settings.disableReaderBackSwipe ?? false
-                autoAdvanceAfterArchive = settings.autoAdvanceAfterArchive ?? true
+                archiveAdvanceMode = settings.archiveAdvanceMode
+                    ?? (settings.autoAdvanceAfterArchive == false ? .stay : .nextArticle)
                 showUnreadBadge = settings.showUnreadBadge ?? false
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
@@ -65,7 +66,7 @@ final class SettingsGeneralViewModel {
         do {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
             try await saveSettingsUseCase.execute(disableReaderBackSwipe: disableReaderBackSwipe)
-            try await saveSettingsUseCase.execute(autoAdvanceAfterArchive: autoAdvanceAfterArchive)
+            try await saveSettingsUseCase.execute(archiveAdvanceMode: archiveAdvanceMode)
             try await saveSettingsUseCase.execute(showUnreadBadge: showUnreadBadge)
             try await saveSettingsUseCase.execute(theme: selectedTheme)
             try await saveSettingsUseCase.execute(urlOpener: urlOpener)

@@ -146,6 +146,91 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
         XCTAssertEqual(html, "<article>x</article>")
     }
 
+    func testGetBookmarkArticle_cloudflare524_thenSyncMultipartReturnsHTML() async throws {
+        // 524 = Cloudflare timed out waiting for the origin — the typical failure for very large
+        // articles (#49). Both GET attempts hit 524; recovery must fall through to /sync.
+        let boundary = "sep524"
+        let multipartBody = [
+            "--\(boundary)",
+            "Type: html",
+            "Bookmark-Id: bm1",
+            "",
+            "<article>long</article>",
+            "--\(boundary)--",
+            ""
+        ].joined(separator: "\r\n")
+
+        ArticleRecoveryURLProtocol.requestHandler = { request in
+            let path = request.url?.path ?? ""
+            if path.hasSuffix("/article") {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 524,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: nil
+                )!
+                return (response, Data())
+            }
+            if path.hasSuffix("/sync") {
+                XCTAssertEqual(request.httpMethod, "POST")
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: ["Content-Type": "multipart/mixed; boundary=\(boundary)"]
+                )!
+                return (response, Data(multipartBody.utf8))
+            }
+            XCTFail("Unexpected path: \(path)")
+            throw URLError(.badURL)
+        }
+
+        let api = API(tokenProvider: TestMockTokenProvider())
+        let html = try await api.getBookmarkArticle(id: "bm1")
+        XCTAssertEqual(html, "<article>long</article>")
+    }
+
+    func testGetBookmarkArticle_503_recoversViaSync() async throws {
+        let boundary = "sep503"
+        let multipartBody = [
+            "--\(boundary)",
+            "Type: html",
+            "Bookmark-Id: bm1",
+            "",
+            "<article>y</article>",
+            "--\(boundary)--",
+            ""
+        ].joined(separator: "\r\n")
+
+        ArticleRecoveryURLProtocol.requestHandler = { request in
+            let path = request.url?.path ?? ""
+            if path.hasSuffix("/article") {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 503,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: nil
+                )!
+                return (response, Data())
+            }
+            if path.hasSuffix("/sync") {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: ["Content-Type": "multipart/mixed; boundary=\(boundary)"]
+                )!
+                return (response, Data(multipartBody.utf8))
+            }
+            XCTFail("Unexpected path: \(path)")
+            throw URLError(.badURL)
+        }
+
+        let api = API(tokenProvider: TestMockTokenProvider())
+        let html = try await api.getBookmarkArticle(id: "bm1")
+        XCTAssertEqual(html, "<article>y</article>")
+    }
+
     func testGetBookmarkArticle_allPathsFail_throws502() async throws {
         ArticleRecoveryURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(

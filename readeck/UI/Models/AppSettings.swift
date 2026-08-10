@@ -28,8 +28,12 @@ final class AppSettings: ObservableObject {
         settings?.disableReaderBackSwipe ?? false
     }
 
-    var autoAdvanceAfterArchive: Bool {
-        settings?.autoAdvanceAfterArchive ?? true
+    var archiveAdvanceMode: ArchiveAdvanceMode {
+        if let mode = settings?.archiveAdvanceMode {
+            return mode
+        }
+        // Migration fallback for settings loaded before this field existed.
+        return settings?.autoAdvanceAfterArchive == false ? .stay : .nextArticle
     }
 
     var theme: Theme {

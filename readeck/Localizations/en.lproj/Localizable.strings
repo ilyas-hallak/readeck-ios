@@ -274,3 +274,10 @@
 /* Unread Badge */
 "Show Unread Count on App Icon" = "Show Unread Count on App Icon";
 "Shows the number of unread articles as a badge on the app icon. Updates when you open the app or archive an article." = "Shows the number of unread articles as a badge on the app icon. Updates when you open the app or archive an article.";
+
+// After-archiving behaviour (Reading Settings)
+"After Archiving" = "After Archiving";
+"Stay on Article" = "Stay on Article";
+"Open Next Article" = "Open Next Article";
+"Return to List" = "Return to List";
+"Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list." = "Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list.";

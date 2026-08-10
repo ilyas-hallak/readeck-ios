@@ -58,15 +58,19 @@ struct ReadingSettingsView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Toggle("Auto-Advance After Archiving", isOn: $viewModel.autoAdvanceAfterArchive)
-                        .onChange(of: viewModel.autoAdvanceAfterArchive) {
-                            guard !viewModel.isLoading else { return }
-                            Task {
-                                await viewModel.saveGeneralSettings()
-                            }
+                    Picker("After Archiving", selection: $viewModel.archiveAdvanceMode) {
+                        ForEach(ArchiveAdvanceMode.allCases) { mode in
+                            Text(mode.localizedTitle).tag(mode)
                         }
+                    }
+                    .onChange(of: viewModel.archiveAdvanceMode) {
+                        guard !viewModel.isLoading else { return }
+                        Task {
+                            await viewModel.saveGeneralSettings()
+                        }
+                    }
 
-                    Text("Automatically opens the next article in your list after you archive the one you're reading.")
+                    Text("Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)

@@ -58,6 +58,7 @@
         <attribute name="src" optional="YES" attributeType="String"/>
     </entity>
     <entity name="SettingEntity" representedClassName="SettingEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="archiveAdvanceMode" optional="YES" attributeType="String"/>
         <attribute name="autoAdvanceAfterArchive" optional="YES" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="bookmarkSortDirection" optional="YES" attributeType="String"/>
         <attribute name="bookmarkSortField" optional="YES" attributeType="String"/>
