@@ -36,12 +36,17 @@ struct BookmarksView: View {
 
     /// Reacts to the currently-open article being archived or deleted, following
     /// the user's "After Archiving" preference:
-    /// `.stay` does nothing, `.nextArticle` advances the reader to the next item
-    /// in the list, `.returnToList` dismisses the reader.
-    private func handleReaderMutation(of mutatedId: String) {
+    /// `.stay` keeps the article open, `.nextArticle` advances the reader to the
+    /// next item in the list, `.returnToList` dismisses the reader.
+    ///
+    /// When the article was *deleted* it no longer exists, so `.stay` and the
+    /// "unknown position" case fall back to closing the reader instead of sitting
+    /// on a gone article. For `.nextArticle` deletions the reader defers its own
+    /// dismissal to us, so this is the sole driver of the post-delete navigation.
+    private func handleReaderMutation(of mutatedId: String, wasDeleted: Bool) {
         switch appSettings.archiveAdvanceMode {
         case .stay:
-            return
+            if wasDeleted { clearReaderSelection() }
         case .returnToList:
             clearReaderSelection()
         case .nextArticle:
@@ -57,7 +62,8 @@ struct BookmarksView: View {
                 // Last article — dismiss the reader / clear the detail column.
                 clearReaderSelection()
             case .noop:
-                break
+                // Position unknown (e.g. not in the current list): only close on delete.
+                if wasDeleted { clearReaderSelection() }
             }
         }
     }
@@ -127,12 +133,12 @@ struct BookmarksView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .bookmarkArchived)) { notification in
             if let id = notification.userInfo?["id"] as? String {
-                handleReaderMutation(of: id)
+                handleReaderMutation(of: id, wasDeleted: false)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .bookmarkDeleted)) { notification in
             if let id = notification.userInfo?["id"] as? String {
-                handleReaderMutation(of: id)
+                handleReaderMutation(of: id, wasDeleted: true)
             }
         }
         .onChange(of: viewModel.showTagsBookmark) { oldValue, newValue in

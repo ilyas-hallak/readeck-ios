@@ -72,7 +72,11 @@ struct ArticleReaderView: View {
                     Task {
                         let success = await viewModel.deleteBookmark(id: bookmarkId)
                         if success {
-                            dismiss()
+                            // In "next article" mode the bookmarks list drives navigation
+                            // to the following item; dismissing here would pop to the list.
+                            if appSettings.archiveAdvanceMode != .nextArticle {
+                                dismiss()
+                            }
                         }
                     }
                 }
