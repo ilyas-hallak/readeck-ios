@@ -4,9 +4,39 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
-## Unreleased
+## Version 3.1.0
 
-- Added a Delete option to the article reading view's menu, so you can remove the current article without going back to the list.
+### Unread Count Badge
+
+- **Optional app-icon badge** showing your number of unread articles
+- Mirrors the Unread tab and refreshes when you open the app or archive/delete an article
+- Turn it on in Settings → Reading Settings ("Show Unread Count on App Icon"); off by default
+
+### "After Archiving" Options
+
+- **Choose what happens when you archive or delete the article you're reading:** stay on it, open the next one in your list, or return to the list
+- New picker in Settings → Reading Settings
+
+### Open Saved Articles from the Share Sheet
+
+- After saving a link via the **Share Extension**, tap **"Open in Readeck"** to jump straight into the article
+- The reader waits for the server to finish preparing a freshly saved article instead of showing a blank page
+
+### Reader
+
+- Added a **Delete** option to the article reading view's menu, so you can remove the current article without going back to the list
+
+### Hall of Fame
+
+- New **Settings → Hall of Fame** screen crediting the Readeck project founder, the app maintainer, and everyone who has contributed
+- Tap a person to open their GitHub or Codeberg profile
+
+### Bug Fixes & Stability
+
+- More robust OAuth login (clearer retries, guards against double taps)
+- More defensive handling of the server info/version response
+- Automatic recovery from transient gateway errors (502/503/504 and Cloudflare 52x) when loading large articles
+- The bookmark type filter (Articles/Videos/Pictures) is now preserved when the list reloads
 
 ## Version 3.0.0
 
