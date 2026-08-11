@@ -65,7 +65,7 @@ struct LegalPrivacySettingsView: View {
                     showingContributors = true
                 }) {
                     HStack {
-                        Text("Contributors")
+                        Text("Hall of Fame")
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)

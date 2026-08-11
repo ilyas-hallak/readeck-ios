@@ -76,7 +76,7 @@ struct ContributorsView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
             }
-            .navigationTitle("Contributors")
+            .navigationTitle("Hall of Fame")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

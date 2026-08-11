@@ -282,7 +282,8 @@
 "Return to List" = "Return to List";
 "Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list." = "Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list.";
 
-// Contributors screen
+// Contributors / Hall of Fame screen
+"Hall of Fame" = "Hall of Fame";
 "Contributors" = "Contributors";
 "Maintainer" = "Maintainer";
 "Thanks to everyone who has contributed to the app." = "Thanks to everyone who has contributed to the app.";
