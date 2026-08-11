@@ -2,44 +2,69 @@
 //  ContributorsView.swift
 //  readeck
 //
-//  A small thank-you / credits screen listing everyone who has contributed
+//  A small thank-you / credits screen ("Hall of Fame") listing the Readeck
+//  project founder, this client's maintainer, and everyone who has contributed
 //  to the app across both remotes (GitHub + Codeberg).
 //
 //  The list is a curated static array (single source of truth): both remotes
 //  have separate histories with duplicate/no-reply identities that need manual
 //  dedup, and the git history isn't available in the app bundle at runtime.
 //
-//  Avatars are loaded from GitHub via Kingfisher (cached after first load, so
-//  they keep working offline). A round person placeholder is shown while
-//  loading or when offline without a cached avatar.
+//  Avatars are loaded via Kingfisher from each person's platform
+//  (github.com/<login>.png or codeberg.org/<login>.png), cached after first
+//  load so the screen keeps working offline; a round person placeholder is
+//  shown while loading or when offline without a cached avatar.
 //
 
 import SwiftUI
 import Kingfisher
 
 struct Contributor: Identifiable {
-    /// GitHub username — used to derive both the profile and avatar URLs.
-    let login: String
     let name: String
+    let handle: String
+    let profileURL: URL?
+    let avatarURL: URL?
+    /// Optional role line (e.g. "Creator of Readeck").
+    let note: String?
 
-    var id: String { login }
-    var handle: String { "@\(login)" }
-    var profileURL: URL? { URL(string: "https://github.com/\(login)") }
-    var avatarURL: URL? { URL(string: "https://github.com/\(login).png?size=200") }
+    var id: String { handle }
+
+    static func github(_ login: String, name: String, note: String? = nil) -> Contributor {
+        Contributor(
+            name: name,
+            handle: "@\(login)",
+            profileURL: URL(string: "https://github.com/\(login)"),
+            avatarURL: URL(string: "https://github.com/\(login).png?size=200"),
+            note: note
+        )
+    }
+
+    static func codeberg(_ login: String, name: String, note: String? = nil) -> Contributor {
+        Contributor(
+            name: name,
+            handle: "@\(login)",
+            profileURL: URL(string: "https://codeberg.org/\(login)"),
+            avatarURL: URL(string: "https://codeberg.org/\(login).png"),
+            note: note
+        )
+    }
 }
 
 enum Contributors {
-    static let maintainer = Contributor(login: "ilyas-hallak", name: "Ilyas Hallak")
+    /// Creator of the upstream Readeck project this client connects to.
+    static let founder = Contributor.codeberg("olivier", name: "Olivier Meunier", note: "Creator of Readeck")
+
+    static let maintainer = Contributor.github("ilyas-hallak", name: "Ilyas Hallak")
 
     // Alphabetical by name. Extend this as new contributions land.
     static let others: [Contributor] = [
-        Contributor(login: "bakerboy448", name: "bakerboy448"),
-        Contributor(login: "benrhughes", name: "Ben Hughes"),
-        Contributor(login: "christian-putzke", name: "Christian Putzke"),
-        Contributor(login: "ishansharma", name: "Ishan Sharma"),
-        Contributor(login: "grabowskil", name: "Lennart Grabowski"),
-        Contributor(login: "sibson", name: "Marc Sibson"),
-        Contributor(login: "astratto", name: "Stefano Tortarolo")
+        .github("bakerboy448", name: "bakerboy448"),
+        .github("benrhughes", name: "Ben Hughes"),
+        .github("christian-putzke", name: "Christian Putzke"),
+        .github("ishansharma", name: "Ishan Sharma"),
+        .github("grabowskil", name: "Lennart Grabowski"),
+        .github("sibson", name: "Marc Sibson"),
+        .github("astratto", name: "Stefano Tortarolo")
     ]
 }
 
@@ -58,6 +83,11 @@ struct ContributorsView: View {
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
+
+                    VStack(spacing: 12) {
+                        sectionTitle("The Readeck Project")
+                        ContributorCell(contributor: Contributors.founder, avatarSize: 96)
+                    }
 
                     VStack(spacing: 12) {
                         sectionTitle("Maintainer")
@@ -119,6 +149,12 @@ struct ContributorCell: View {
                         .font(.caption2)
                         .foregroundColor(.blue)
                         .lineLimit(1)
+                    if let note = contributor.note {
+                        Text(LocalizedStringKey(note))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
                 }
                 .multilineTextAlignment(.center)
             }
