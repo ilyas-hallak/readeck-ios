@@ -1,17 +1,22 @@
 import SwiftUI
 
 struct LegalPrivacySettingsView: View {
-    @State private var showingPrivacyPolicy = false
-    @State private var showingLegalNotice = false
-    @State private var showReleaseNotes = false
-    @State private var showingLicenses = false
-    @State private var showingContributors = false
+    // Single source of truth for the presented sheet. Using one `.sheet(item:)`
+    // instead of several `.sheet(isPresented:)` on the same view avoids a
+    // SwiftUI bug where all but the last sheet dismiss immediately on first tap.
+    private enum ActiveSheet: Identifiable {
+        case releaseNotes, privacy, legalNotice, licenses, contributors
+
+        var id: Int { hashValue }
+    }
+
+    @State private var activeSheet: ActiveSheet?
 
     var body: some View {
         Group {
             Section {
                 Button(action: {
-                    showReleaseNotes = true
+                    activeSheet = .releaseNotes
                 }) {
                     HStack {
                         Text("What's New")
@@ -26,7 +31,7 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingPrivacyPolicy = true
+                    activeSheet = .privacy
                 }) {
                     HStack {
                         Text(NSLocalizedString("Privacy Policy", comment: ""))
@@ -38,7 +43,7 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingLegalNotice = true
+                    activeSheet = .legalNotice
                 }) {
                     HStack {
                         Text(NSLocalizedString("Legal Notice", comment: ""))
@@ -50,7 +55,7 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingLicenses = true
+                    activeSheet = .licenses
                 }) {
                     HStack {
                         Text("Open Source Licenses")
@@ -62,7 +67,7 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingContributors = true
+                    activeSheet = .contributors
                 }) {
                     HStack {
                         Text("Hall of Fame")
@@ -104,20 +109,19 @@ struct LegalPrivacySettingsView: View {
                 Text("Legal, Privacy & Support")
             }
         }
-        .sheet(isPresented: $showingPrivacyPolicy) {
-            PrivacyPolicyView()
-        }
-        .sheet(isPresented: $showingLegalNotice) {
-            LegalNoticeView()
-        }
-        .sheet(isPresented: $showReleaseNotes) {
-            ReleaseNotesView()
-        }
-        .sheet(isPresented: $showingLicenses) {
-            OpenSourceLicensesView()
-        }
-        .sheet(isPresented: $showingContributors) {
-            ContributorsView()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .releaseNotes:
+                ReleaseNotesView()
+            case .privacy:
+                PrivacyPolicyView()
+            case .legalNotice:
+                LegalNoticeView()
+            case .licenses:
+                OpenSourceLicensesView()
+            case .contributors:
+                ContributorsView()
+            }
         }
     }
 }
