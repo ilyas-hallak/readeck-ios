@@ -245,7 +245,7 @@ final class MockSaveSettingsUseCase: PSaveSettingsUseCase {
 
 final class MockGetBookmarkUseCase: PGetBookmarkUseCase {
     func execute(id: String) async throws -> BookmarkDetail {
-        BookmarkDetail(id: "123", title: "Test", url: "https://www.google.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 100, hasArticle: true, isMarked: false, isArchived: false, labels: ["Test"], thumbnailUrl: "https://picsum.photos/30/30", imageUrl: "https://picsum.photos/400/400", lang: "en", readProgress: 0)
+        BookmarkDetail(id: "123", title: "Test", url: "https://www.google.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 100, hasArticle: true, loaded: true, isMarked: false, isArchived: false, labels: ["Test"], thumbnailUrl: "https://picsum.photos/30/30", imageUrl: "https://picsum.photos/400/400", lang: "en", readProgress: 0)
     }
 }
 

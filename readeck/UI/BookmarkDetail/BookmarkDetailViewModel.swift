@@ -98,6 +98,34 @@ final class BookmarkDetailViewModel {
         isLoading = false
     }
 
+    /// After a bookmark is created the server fetches and extracts the page
+    /// asynchronously, so its article isn't available immediately. Polls the bookmark
+    /// until the server reports it as `loaded` (or an article shows up) so a freshly
+    /// shared article isn't rendered as a blank page. Returns at once when already
+    /// ready, so normal navigation is unaffected.
+    @MainActor
+    func waitForArticleReady(id: String, maxAttempts: Int = 8, delay: TimeInterval = 1.5) async {
+        guard !bookmarkDetail.loaded, !bookmarkDetail.hasArticle else { return }
+
+        isLoadingArticle = true
+        for attempt in 1...maxAttempts {
+            if Task.isCancelled { return }
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            do {
+                let refreshed = try await getBookmarkUseCase.execute(id: id)
+                bookmarkDetail = refreshed
+                readProgress = max(readProgress, refreshed.readProgress ?? 0)
+                if refreshed.loaded || refreshed.hasArticle {
+                    Logger.viewModel.info("📦 Bookmark \(id) ready after \(attempt) poll(s)")
+                    return
+                }
+            } catch {
+                // Transient (e.g. offline) — keep polling until the attempts run out.
+            }
+        }
+        Logger.viewModel.info("⏳ Bookmark \(id) still not loaded after \(maxAttempts) polls; showing as-is")
+    }
+
     @MainActor
     func loadArticleContent(id: String, forceRefresh: Bool = false) async {
         isLoadingArticle = true

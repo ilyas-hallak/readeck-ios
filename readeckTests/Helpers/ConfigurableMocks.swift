@@ -61,7 +61,7 @@ class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase {
 
 class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase {
     var result: Result<BookmarkDetail, Error> = .success(
-        BookmarkDetail(id: "123", title: "Test", url: "https://example.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 2, hasArticle: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "", lang: "en", readProgress: 0)
+        BookmarkDetail(id: "123", title: "Test", url: "https://example.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 2, hasArticle: true, loaded: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "", lang: "en", readProgress: 0)
     )
 
     func execute(id: String) async throws -> BookmarkDetail {

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 import CoreData
 
@@ -21,6 +22,9 @@ final class ShareBookmarkViewModel: ObservableObject {
     @Published var savedBookmarkId: String?
     let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
+    /// A view from the hosting controller, used as the entry point into the responder
+    /// chain when opening the host app (see `openInApp`). Set by `ShareViewController`.
+    weak var hostResponder: UIResponder?
 
     private let logger = Logger.viewModel
     private let serverCheck = ShareExtensionServerCheck.shared
@@ -261,12 +265,43 @@ final class ShareBookmarkViewModel: ObservableObject {
         }
         autoCloseTask?.cancel()
         logger.info("Opening saved bookmark in app: \(url.absoluteString)")
+
+        // `extensionContext.open` is unreliable from a share extension, so we walk the
+        // responder chain to reach the host `UIApplication` and open the URL there. If
+        // no application is found, fall back to `extensionContext.open`.
+        if openViaResponderChain(url) {
+            logger.info("Opened host app via responder chain")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.completeExtensionRequest()
+            }
+            return
+        }
+
+        logger.info("Responder chain could not open the URL, falling back to extensionContext.open")
         extensionContext?.open(url) { [weak self] success in
             self?.logger.info("extensionContext.open returned success: \(success)")
             DispatchQueue.main.async {
                 self?.completeExtensionRequest()
             }
         }
+    }
+
+    /// Walks up the responder chain from the hosting view to the host `UIApplication`
+    /// and asks it to open the URL. The `as? UIApplication` cast matches only the real
+    /// application, so SwiftUI's hosting view (which also handles `openURL:` via the
+    /// OpenURLAction and would otherwise swallow the call) is skipped. We use the
+    /// non-deprecated `open(_:options:completionHandler:)` — on iOS 18 the old
+    /// `openURL:` is forced to no-op.
+    private func openViaResponderChain(_ url: URL) -> Bool {
+        var responder: UIResponder? = hostResponder
+        while let current = responder {
+            if let application = current as? UIApplication {
+                application.open(url, options: [:], completionHandler: nil)
+                return true
+            }
+            responder = current.next
+        }
+        return false
     }
 
     /// Auto-closes the extension after the given delay unless cancelled (e.g. the user

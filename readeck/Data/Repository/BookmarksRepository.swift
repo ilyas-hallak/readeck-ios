@@ -27,6 +27,7 @@ final class BookmarksRepository: PBookmarksRepository {
             wordCount: bookmarkDetailDto.wordCount,
             readingTime: bookmarkDetailDto.readingTime,
             hasArticle: bookmarkDetailDto.hasArticle,
+            loaded: bookmarkDetailDto.loaded,
             isMarked: bookmarkDetailDto.isMarked,
             isArchived: bookmarkDetailDto.isArchived,
             labels: bookmarkDetailDto.labels,

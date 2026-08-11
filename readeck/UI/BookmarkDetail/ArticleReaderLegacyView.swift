@@ -515,6 +515,7 @@ struct ArticleReaderLegacyView: View {
         }
         .task {
             await viewModel.loadBookmarkDetail(id: bookmarkId)
+            await viewModel.waitForArticleReady(id: bookmarkId)
             await viewModel.loadArticleContent(id: bookmarkId)
         }
     }

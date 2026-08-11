@@ -35,6 +35,9 @@ final class ShareViewController: UIViewController {
         hostingController.didMove(toParent: self)
         self.hostingController = hostingController
 
+        // Entry point into the responder chain so the view model can open the host app.
+        viewModel.hostResponder = hostingController.view
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(dismissKeyboard),

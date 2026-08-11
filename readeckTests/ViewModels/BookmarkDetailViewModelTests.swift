@@ -29,6 +29,7 @@ struct BookmarkDetailViewModelTests {
             wordCount: 500,
             readingTime: 5,
             hasArticle: true,
+            loaded: true,
             isMarked: false,
             isArchived: false,
             labels: [],
