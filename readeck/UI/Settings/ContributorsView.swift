@@ -85,13 +85,13 @@ struct ContributorsView: View {
                         .padding(.top, 8)
 
                     VStack(spacing: 12) {
-                        sectionTitle("The Readeck Project")
-                        ContributorCell(contributor: Contributors.founder, avatarSize: 96)
+                        sectionTitle("Maintainer")
+                        ContributorCell(contributor: Contributors.maintainer, avatarSize: 96)
                     }
 
                     VStack(spacing: 12) {
-                        sectionTitle("Maintainer")
-                        ContributorCell(contributor: Contributors.maintainer, avatarSize: 96)
+                        sectionTitle("The Readeck Project")
+                        ContributorCell(contributor: Contributors.founder, avatarSize: 72)
                     }
 
                     VStack(spacing: 16) {
