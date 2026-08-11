@@ -12,6 +12,7 @@ import netfox
 struct readeckApp: App {
     @State private var appViewModel = AppViewModel()
     @StateObject private var appSettings = AppSettings()
+    @State private var deepLinkRouter = DeepLinkRouter()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDebugMenu = false
 
@@ -26,8 +27,12 @@ struct readeckApp: App {
                 }
             }
             .environmentObject(appSettings)
+            .environment(deepLinkRouter)
             .environment(\.managedObjectContext, CoreDataManager.shared.context)
             .preferredColorScheme(appSettings.theme.colorScheme)
+            .onOpenURL { url in
+                deepLinkRouter.handle(url: url)
+            }
             .onShake {
                 // Only show debug menu in non-production builds (DEBUG + TestFlight)
                 if !Bundle.main.isProduction {
