@@ -39,6 +39,7 @@ protocol UseCaseFactory {
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase
     func makeAuthRepository() -> PAuthRepository
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
+    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
@@ -56,6 +57,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private let offlineCacheRepository: POfflineCacheRepository = OfflineCacheRepository()
     private let networkMonitorRepository: PNetworkMonitorRepository = NetworkMonitorRepository()
     private lazy var summarizationRepository: PSummarizationRepository = SummarizationRepository()
+    private let appBadgeService: PAppBadgeService = AppBadgeService()
 
     static let shared = DefaultUseCaseFactory()
 
@@ -219,5 +221,13 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase {
         SummarizeArticleUseCase(repository: summarizationRepository)
+    }
+
+    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase {
+        UpdateUnreadBadgeUseCase(
+            settingsRepository: settingsRepository,
+            getBookmarksUseCase: makeGetBookmarksUseCase(),
+            badgeService: appBadgeService
+        )
     }
 }

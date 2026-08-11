@@ -67,6 +67,10 @@ final class SettingsRepository: PSettingsRepository {
                         existingSettings.autoAdvanceAfterArchive = autoAdvanceAfterArchive
                     }
 
+                    if let showUnreadBadge = settings.showUnreadBadge {
+                        existingSettings.showUnreadBadge = showUnreadBadge
+                    }
+
                     if let archiveAdvanceMode = settings.archiveAdvanceMode {
                         existingSettings.archiveAdvanceMode = archiveAdvanceMode.rawValue
                         // Keep the legacy boolean in sync so an older app version
@@ -202,6 +206,7 @@ final class SettingsRepository: PSettingsRepository {
                         bookmarkSortDirection: BookmarkSortDirection(rawValue: settingEntity?.bookmarkSortDirection ?? BookmarkSortDirection.descending.rawValue),
                         disableReaderBackSwipe: settingEntity?.disableReaderBackSwipe,
                         autoAdvanceAfterArchive: settingEntity?.autoAdvanceAfterArchive,
+                        showUnreadBadge: settingEntity?.showUnreadBadge,
                         archiveAdvanceMode: {
                             if let raw = settingEntity?.archiveAdvanceMode,
                                let mode = ArchiveAdvanceMode(rawValue: raw) {

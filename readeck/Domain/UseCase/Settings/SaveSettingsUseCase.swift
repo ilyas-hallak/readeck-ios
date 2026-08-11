@@ -13,6 +13,7 @@ protocol PSaveSettingsUseCase {
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws
     func execute(disableReaderBackSwipe: Bool) async throws
     func execute(archiveAdvanceMode: ArchiveAdvanceMode) async throws
+    func execute(showUnreadBadge: Bool) async throws
     func execute(swipeActionConfig: SwipeActionConfig) async throws
 }
 
@@ -113,6 +114,12 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(archiveAdvanceMode: ArchiveAdvanceMode) async throws {
         try await settingsRepository.saveSettings(
             .init(archiveAdvanceMode: archiveAdvanceMode)
+        )
+    }
+
+    func execute(showUnreadBadge: Bool) async throws {
+        try await settingsRepository.saveSettings(
+            .init(showUnreadBadge: showUnreadBadge)
         )
     }
 

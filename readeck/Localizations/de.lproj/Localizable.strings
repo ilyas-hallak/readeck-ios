@@ -279,6 +279,10 @@
 "Delete this bookmark?" = "Dieses Lesezeichen löschen?";
 "This action cannot be undone." = "Diese Aktion kann nicht rückgängig gemacht werden.";
 
+/* Unread Badge */
+"Show Unread Count on App Icon" = "Ungelesen-Anzahl auf App-Icon anzeigen";
+"Shows the number of unread articles as a badge on the app icon. Updates when you open the app or archive an article." = "Zeigt die Anzahl ungelesener Artikel als Badge auf dem App-Icon. Wird aktualisiert, wenn du die App öffnest oder einen Artikel archivierst.";
+
 // After-archiving behaviour (Reading Settings)
 "After Archiving" = "Nach dem Archivieren";
 "Stay on Article" = "Beim Artikel bleiben";

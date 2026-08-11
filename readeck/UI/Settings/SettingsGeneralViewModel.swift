@@ -6,6 +6,7 @@ import SwiftUI
 final class SettingsGeneralViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
+    private let updateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase
 
     // MARK: - UI Settings
     var selectedTheme: Theme = .system
@@ -17,6 +18,7 @@ final class SettingsGeneralViewModel {
     var enableTTS = false
     var disableReaderBackSwipe = false
     var archiveAdvanceMode: ArchiveAdvanceMode = .nextArticle
+    var showUnreadBadge = false
     var isLoading = false
     var autoMarkAsRead = false
     var urlOpener: UrlOpener = .inAppBrowser
@@ -35,6 +37,24 @@ final class SettingsGeneralViewModel {
     init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
         self.saveSettingsUseCase = factory.makeSaveSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
+        self.updateUnreadBadgeUseCase = factory.makeUpdateUnreadBadgeUseCase()
+    }
+
+    /// Handles a change to the unread-badge toggle: requests permission when
+    /// enabling, reverts the toggle if it was denied, then persists settings.
+    @MainActor
+    func updateUnreadBadge() async {
+        if showUnreadBadge {
+            let granted = await updateUnreadBadgeUseCase.setEnabled(true)
+            guard granted else {
+                // Permission denied — revert the toggle.
+                showUnreadBadge = false
+                return
+            }
+        } else {
+            await updateUnreadBadgeUseCase.setEnabled(false)
+        }
+        await saveGeneralSettings()
     }
 
     @MainActor
@@ -48,6 +68,7 @@ final class SettingsGeneralViewModel {
                 disableReaderBackSwipe = settings.disableReaderBackSwipe ?? false
                 archiveAdvanceMode = settings.archiveAdvanceMode
                     ?? (settings.autoAdvanceAfterArchive == false ? .stay : .nextArticle)
+                showUnreadBadge = settings.showUnreadBadge ?? false
                 selectedTheme = settings.theme ?? .system
                 urlOpener = settings.urlOpener ?? .inAppBrowser
                 bookmarkSortField = settings.bookmarkSortField ?? .created
@@ -65,6 +86,7 @@ final class SettingsGeneralViewModel {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
             try await saveSettingsUseCase.execute(disableReaderBackSwipe: disableReaderBackSwipe)
             try await saveSettingsUseCase.execute(archiveAdvanceMode: archiveAdvanceMode)
+            try await saveSettingsUseCase.execute(showUnreadBadge: showUnreadBadge)
             try await saveSettingsUseCase.execute(theme: selectedTheme)
             try await saveSettingsUseCase.execute(urlOpener: urlOpener)
 

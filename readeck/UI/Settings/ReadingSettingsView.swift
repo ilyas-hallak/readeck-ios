@@ -75,6 +75,21 @@ struct ReadingSettingsView: View {
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
                 }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("Show Unread Count on App Icon", isOn: $viewModel.showUnreadBadge)
+                        .onChange(of: viewModel.showUnreadBadge) {
+                            guard !viewModel.isLoading else { return }
+                            Task {
+                                await viewModel.updateUnreadBadge()
+                            }
+                        }
+
+                    Text("Shows the number of unread articles as a badge on the app icon. Updates when you open the app or archive an article.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                }
             } header: {
                 Text("Reading Settings")
             }

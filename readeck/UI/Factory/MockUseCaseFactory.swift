@@ -240,6 +240,7 @@ final class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
     func execute(disableReaderBackSwipe: Bool) async throws {}
     func execute(archiveAdvanceMode: ArchiveAdvanceMode) async throws {}
+    func execute(showUnreadBadge: Bool) async throws {}
     func execute(swipeActionConfig: SwipeActionConfig) async throws {}
 }
 
@@ -492,6 +493,16 @@ extension MockUseCaseFactory {
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase {
         MockSummarizeArticleUseCase()
     }
+
+    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase {
+        MockUpdateUnreadBadgeUseCase()
+    }
+}
+
+final class MockUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
+    func refresh() async {}
+    @discardableResult
+    func setEnabled(_ enabled: Bool) async -> Bool { true }
 }
 
 final class MockLoginWithOAuthUseCase: PLoginWithOAuthUseCase {

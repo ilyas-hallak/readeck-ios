@@ -65,6 +65,10 @@ struct readeckApp: App {
                     Task {
                         await appViewModel.onAppResume()
                     }
+                } else if newPhase == .background {
+                    Task {
+                        await appViewModel.refreshBadge()
+                    }
                 }
             }
         }
