@@ -121,24 +121,27 @@ final class SimpleAPI {
     }
 
     // MARK: - API Methods
+    // The `showStatus` closure reports (message, isError, savedBookmarkId). The id is
+    // read from the `Bookmark-Id` response header on success and is nil on failure —
+    // it lets the extension offer an "Open in Readeck" deep link.
     // swiftlint:disable:next discouraged_optional_collection
-    static func addBookmark(title: String, url: String, labels: [String]? = nil, html: String? = nil, showStatus: @escaping (String, Bool) -> Void) async {
+    static func addBookmark(title: String, url: String, labels: [String]? = nil, html: String? = nil, showStatus: @escaping (String, Bool, String?) -> Void) async {
         logger.info("Adding bookmark: \(url)")
         guard let token = await getValidToken() else {
-            showStatus("No token found. Please log in via the main app.", true)
+            showStatus("No token found. Please log in via the main app.", true, nil)
             return
         }
         guard let endpoint = KeychainHelper.shared.loadEndpoint(), !endpoint.isEmpty else {
-            showStatus("No server endpoint found.", true)
+            showStatus("No server endpoint found.", true, nil)
             return
         }
         let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: labels, html: html)
         guard let requestData = try? JSONEncoder().encode(requestDto) else {
-            showStatus("Failed to encode request.", true)
+            showStatus("Failed to encode request.", true, nil)
             return
         }
         guard let apiUrl = URL(string: endpoint + "/api/bookmarks") else {
-            showStatus("Invalid server endpoint.", true)
+            showStatus("Invalid server endpoint.", true, nil)
             return
         }
         var request = URLRequest(url: apiUrl)
@@ -151,7 +154,7 @@ final class SimpleAPI {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 logger.error("Invalid server response for bookmark creation")
-                showStatus("Invalid server response.", true)
+                showStatus("Invalid server response.", true, nil)
                 return
             }
 
@@ -163,26 +166,42 @@ final class SimpleAPI {
                         NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
                     logger.error("Authentication failed: 401 Unauthorized")
-                    showStatus("Session expired. Please log in via the Readeck app.", true)
+                    showStatus("Session expired. Please log in via the Readeck app.", true, nil)
                     return
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")
-                showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
+                showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true, nil)
                 return
             }
 
+            let bookmarkId = extractBookmarkId(from: httpResponse)
             if let resp = try? JSONDecoder().decode(CreateBookmarkResponseDto.self, from: data) {
-                logger.info("Bookmark created successfully: \(resp.message)")
-                showStatus("Saved: \(resp.message)", false)
+                logger.info("Bookmark created successfully: \(resp.message), id: \(bookmarkId ?? "unknown")")
+                showStatus("Saved: \(resp.message)", false, bookmarkId)
             } else {
-                logger.info("Bookmark created successfully")
-                showStatus("Bookmark saved!", false)
+                logger.info("Bookmark created successfully, id: \(bookmarkId ?? "unknown")")
+                showStatus("Bookmark saved!", false, bookmarkId)
             }
         } catch {
             logger.logNetworkError(method: "POST", url: "/api/bookmarks", error: error)
-            showStatus("Network error: \(error.localizedDescription)", true)
+            showStatus("Network error: \(error.localizedDescription)", true, nil)
         }
+    }
+
+    /// Reads the created bookmark's id from the response. Readeck returns it in the
+    /// `Bookmark-Id` header on `POST /bookmarks`; as a fallback we take the last path
+    /// component of the `Location` header (`/api/bookmarks/{id}`).
+    private static func extractBookmarkId(from response: HTTPURLResponse) -> String? {
+        if let id = response.value(forHTTPHeaderField: "Bookmark-Id"), !id.isEmpty {
+            return id
+        }
+        if let location = response.value(forHTTPHeaderField: "Location"),
+           let last = location.split(separator: "/").last.map(String.init),
+           !last.isEmpty {
+            return last
+        }
+        return nil
     }
 
     // swiftlint:disable:next discouraged_optional_collection

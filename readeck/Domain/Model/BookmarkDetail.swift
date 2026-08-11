@@ -12,6 +12,10 @@ struct BookmarkDetail {
     let wordCount: Int?
     let readingTime: Int?
     let hasArticle: Bool
+    /// Whether the server has finished processing the bookmark. False right after
+    /// creation while Readeck fetches and extracts the page; flips to true once done
+    /// (even for photo/video bookmarks that never produce an article).
+    let loaded: Bool
     var isMarked: Bool
     var isArchived: Bool
     let labels: [String]
@@ -35,6 +39,7 @@ extension BookmarkDetail {
         wordCount: 0,
         readingTime: 0,
         hasArticle: false,
+        loaded: false,
         isMarked: false,
         isArchived: false,
         labels: [],

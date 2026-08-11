@@ -6,6 +6,8 @@ struct MainTabView: View {
     @State private var selectedBookmark: Bookmark?
     @State private var showReleaseNotes = false
 
+    @Environment(DeepLinkRouter.self) private var deepLinkRouter
+
     // sizeClass
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
@@ -14,6 +16,8 @@ struct MainTabView: View {
     private var verticalSizeClass
 
     var body: some View {
+        @Bindable var router = deepLinkRouter
+
         Group {
             if UIDevice.isPhone {
                 PhoneTabView()
@@ -23,6 +27,9 @@ struct MainTabView: View {
         }
         .sheet(isPresented: $showReleaseNotes) {
             ReleaseNotesView()
+        }
+        .sheet(item: $router.openedBookmark) { bookmark in
+            DeepLinkReaderView(bookmarkId: bookmark.id)
         }
         .onAppear {
             checkForNewVersion()
@@ -39,4 +46,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environment(DeepLinkRouter())
 }

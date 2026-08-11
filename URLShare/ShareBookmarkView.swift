@@ -51,7 +51,11 @@ struct ShareBookmarkView: View {
                     }
                 }
 
-                saveButtonSection
+                if viewModel.savedBookmarkId != nil {
+                    openInAppButtonSection
+                } else {
+                    saveButtonSection
+                }
             }
         }
         .background(Color(.systemGroupedBackground))
@@ -256,6 +260,22 @@ struct ShareBookmarkView: View {
         .padding(.top, 16)
         .padding(.bottom, 32)
         .disabled(viewModel.isSaving)
+    }
+
+    @ViewBuilder
+    private var openInAppButtonSection: some View {
+        Button(action: { viewModel.openInApp() }) {
+            Label("Open in Readeck", systemImage: "arrow.up.forward.app")
+                .font(.system(size: 17, weight: .semibold))
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.accentColor)
+                .foregroundColor(.white)
+                .cornerRadius(16)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 32)
     }
 
     // MARK: - Helper Functions

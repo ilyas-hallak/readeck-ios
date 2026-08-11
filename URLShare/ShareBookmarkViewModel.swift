@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 import CoreData
 
@@ -15,13 +16,21 @@ final class ShareBookmarkViewModel: ObservableObject {
     @Published var sessionExpired = false
     @Published var pageHTML: String?
     @Published var includeHTML = false
+    /// Set once the bookmark is saved online and the server returned its id. Drives
+    /// the "Open in Readeck" button; nil after a local save or an older server that
+    /// doesn't return the id.
+    @Published var savedBookmarkId: String?
     let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
+    /// A view from the hosting controller, used as the entry point into the responder
+    /// chain when opening the host app (see `openInApp`). Set by `ShareViewController`.
+    weak var hostResponder: UIResponder?
 
     private let logger = Logger.viewModel
     private let serverCheck = ShareExtensionServerCheck.shared
     private let tagRepository = TagRepository()
     private var notificationObserver: Any?
+    private var autoCloseTask: Task<Void, Never>?
 
     init(extensionContext: NSExtensionContext?) {
         self.extensionContext = extensionContext
@@ -124,21 +133,23 @@ final class ShareBookmarkViewModel: ObservableObject {
                 if includeHTML && !serverInfo.supportsHTMLBookmarks {
                     logger.info("Server version \(serverInfo.version.canonical) does not support HTML bookmarks (requires >= 0.22), sending without HTML")
                 }
-                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels), html: htmlToSend) { [weak self] message, error in
-                    self?.logger.info("API save completed - Success: \(!error), Message: \(message)")
-                    if !error && self?.includeHTML == true {
-                        self?.statusMessage = ("Saved with page content", false, "✅")
+                await SimpleAPI.addBookmark(title: title, url: url, labels: Array(selectedLabels), html: htmlToSend) { [weak self] message, error, bookmarkId in
+                    guard let self else { return }
+                    self.logger.info("API save completed - Success: \(!error), Message: \(message), id: \(bookmarkId ?? "unknown")")
+                    if !error && self.includeHTML == true {
+                        self.statusMessage = ("Saved with page content", false, "✅")
                     } else {
-                        self?.statusMessage = (message, error, error ? "❌" : "✅")
+                        self.statusMessage = (message, error, error ? "❌" : "✅")
                     }
-                    self?.isSaving = false
+                    self.isSaving = false
                     if !error {
-                        self?.logger.debug("Bookmark saved successfully, completing extension request")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            self?.completeExtensionRequest()
-                        }
+                        self.savedBookmarkId = bookmarkId
+                        self.logger.debug("Bookmark saved successfully, id available: \(bookmarkId != nil)")
+                        // When we have an id we show an "Open in Readeck" button and give
+                        // the user time to tap it before auto-closing; otherwise close quickly.
+                        self.scheduleAutoClose(after: bookmarkId != nil ? 6.0 : 0.5)
                     } else {
-                        self?.logger.error("Failed to save bookmark via API: \(message)")
+                        self.logger.error("Failed to save bookmark via API: \(message)")
                     }
                 }
             } else {
@@ -244,6 +255,68 @@ final class ShareBookmarkViewModel: ObservableObject {
         }
     }
 
+    /// Opens the freshly saved bookmark in the main app via the `readeck://` deep link
+    /// and then closes the extension. Cancels the pending auto-close first.
+    func openInApp() {
+        guard let id = savedBookmarkId,
+              let url = URL(string: "readeck://bookmark/\(id)") else {
+            logger.warning("Open in app requested but no saved bookmark id available")
+            return
+        }
+        autoCloseTask?.cancel()
+        logger.info("Opening saved bookmark in app: \(url.absoluteString)")
+
+        // `extensionContext.open` is unreliable from a share extension, so we walk the
+        // responder chain to reach the host `UIApplication` and open the URL there. If
+        // no application is found, fall back to `extensionContext.open`.
+        if openViaResponderChain(url) {
+            logger.info("Opened host app via responder chain")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.completeExtensionRequest()
+            }
+            return
+        }
+
+        logger.info("Responder chain could not open the URL, falling back to extensionContext.open")
+        extensionContext?.open(url) { [weak self] success in
+            self?.logger.info("extensionContext.open returned success: \(success)")
+            DispatchQueue.main.async {
+                self?.completeExtensionRequest()
+            }
+        }
+    }
+
+    /// Walks up the responder chain from the hosting view to the host `UIApplication`
+    /// and asks it to open the URL. The `as? UIApplication` cast matches only the real
+    /// application, so SwiftUI's hosting view (which also handles `openURL:` via the
+    /// OpenURLAction and would otherwise swallow the call) is skipped. We use the
+    /// non-deprecated `open(_:options:completionHandler:)` — on iOS 18 the old
+    /// `openURL:` is forced to no-op.
+    private func openViaResponderChain(_ url: URL) -> Bool {
+        var responder: UIResponder? = hostResponder
+        while let current = responder {
+            if let application = current as? UIApplication {
+                application.open(url, options: [:], completionHandler: nil)
+                return true
+            }
+            responder = current.next
+        }
+        return false
+    }
+
+    /// Auto-closes the extension after the given delay unless cancelled (e.g. the user
+    /// tapped "Open in Readeck" first).
+    private func scheduleAutoClose(after seconds: Double) {
+        autoCloseTask?.cancel()
+        autoCloseTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                self?.completeExtensionRequest()
+            }
+        }
+    }
+
     private func completeExtensionRequest() {
         logger.debug("Completing extension request")
         guard let context = extensionContext else {
@@ -261,6 +334,7 @@ final class ShareBookmarkViewModel: ObservableObject {
     }
 
     deinit {
+        autoCloseTask?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
 
