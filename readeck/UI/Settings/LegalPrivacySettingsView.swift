@@ -1,16 +1,26 @@
 import SwiftUI
 
+/// Which modal is presented from the legal/about section.
+///
+/// Presentation is driven from a single `.sheet(item:)` attached to the
+/// top-level `List` in `SettingsContainerView` (a stable ancestor). Attaching
+/// the sheet here — inside a `List` section — makes the first presentation get
+/// cancelled because the section view is rebuilt as the sheet appears (the
+/// sheet opened and closed immediately, only working on the second tap).
+enum SettingsSheet: Identifiable {
+    case releaseNotes, privacy, legalNotice, licenses, contributors
+
+    var id: Int { hashValue }
+}
+
 struct LegalPrivacySettingsView: View {
-    @State private var showingPrivacyPolicy = false
-    @State private var showingLegalNotice = false
-    @State private var showReleaseNotes = false
-    @State private var showingLicenses = false
+    @Binding var activeSheet: SettingsSheet?
 
     var body: some View {
         Group {
             Section {
                 Button(action: {
-                    showReleaseNotes = true
+                    activeSheet = .releaseNotes
                 }) {
                     HStack {
                         Text("What's New")
@@ -25,7 +35,7 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingPrivacyPolicy = true
+                    activeSheet = .privacy
                 }) {
                     HStack {
                         Text(NSLocalizedString("Privacy Policy", comment: ""))
@@ -37,7 +47,7 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingLegalNotice = true
+                    activeSheet = .legalNotice
                 }) {
                     HStack {
                         Text(NSLocalizedString("Legal Notice", comment: ""))
@@ -49,10 +59,22 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
-                    showingLicenses = true
+                    activeSheet = .licenses
                 }) {
                     HStack {
                         Text("Open Source Licenses")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Button(action: {
+                    activeSheet = .contributors
+                }) {
+                    HStack {
+                        Text("Hall of Fame")
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -91,24 +113,12 @@ struct LegalPrivacySettingsView: View {
                 Text("Legal, Privacy & Support")
             }
         }
-        .sheet(isPresented: $showingPrivacyPolicy) {
-            PrivacyPolicyView()
-        }
-        .sheet(isPresented: $showingLegalNotice) {
-            LegalNoticeView()
-        }
-        .sheet(isPresented: $showReleaseNotes) {
-            ReleaseNotesView()
-        }
-        .sheet(isPresented: $showingLicenses) {
-            OpenSourceLicensesView()
-        }
     }
 }
 
 #Preview {
     List {
-        LegalPrivacySettingsView()
+        LegalPrivacySettingsView(activeSheet: .constant(nil))
     }
     .listStyle(.insetGrouped)
 }

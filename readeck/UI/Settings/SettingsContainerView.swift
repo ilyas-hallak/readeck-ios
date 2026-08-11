@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsContainerView: View {
     @State private var offlineViewModel = OfflineSettingsViewModel()
+    @State private var activeSheet: SettingsSheet?
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -86,7 +87,7 @@ struct SettingsContainerView: View {
 
             SettingsServerView()
 
-            LegalPrivacySettingsView()
+            LegalPrivacySettingsView(activeSheet: $activeSheet)
 
             // Debug-only Settings Section
             if !Bundle.main.isProduction {
@@ -101,6 +102,22 @@ struct SettingsContainerView: View {
         .navigationBarTitleDisplayMode(.large)
         .task {
             await offlineViewModel.loadSettings()
+        }
+        // Presented from a stable ancestor (this List) so the first
+        // presentation isn't cancelled by a section rebuild.
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .releaseNotes:
+                ReleaseNotesView()
+            case .privacy:
+                PrivacyPolicyView()
+            case .legalNotice:
+                LegalNoticeView()
+            case .licenses:
+                OpenSourceLicensesView()
+            case .contributors:
+                ContributorsView()
+            }
         }
     }
 
