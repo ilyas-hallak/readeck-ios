@@ -1,16 +1,20 @@
 import SwiftUI
 
+/// Which modal is presented from the legal/about section.
+///
+/// Presentation is driven from a single `.sheet(item:)` attached to the
+/// top-level `List` in `SettingsContainerView` (a stable ancestor). Attaching
+/// the sheet here — inside a `List` section — makes the first presentation get
+/// cancelled because the section view is rebuilt as the sheet appears (the
+/// sheet opened and closed immediately, only working on the second tap).
+enum SettingsSheet: Identifiable {
+    case releaseNotes, privacy, legalNotice, licenses, contributors
+
+    var id: Int { hashValue }
+}
+
 struct LegalPrivacySettingsView: View {
-    // Single source of truth for the presented sheet. Using one `.sheet(item:)`
-    // instead of several `.sheet(isPresented:)` on the same view avoids a
-    // SwiftUI bug where all but the last sheet dismiss immediately on first tap.
-    private enum ActiveSheet: Identifiable {
-        case releaseNotes, privacy, legalNotice, licenses, contributors
-
-        var id: Int { hashValue }
-    }
-
-    @State private var activeSheet: ActiveSheet?
+    @Binding var activeSheet: SettingsSheet?
 
     var body: some View {
         Group {
@@ -109,26 +113,12 @@ struct LegalPrivacySettingsView: View {
                 Text("Legal, Privacy & Support")
             }
         }
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .releaseNotes:
-                ReleaseNotesView()
-            case .privacy:
-                PrivacyPolicyView()
-            case .legalNotice:
-                LegalNoticeView()
-            case .licenses:
-                OpenSourceLicensesView()
-            case .contributors:
-                ContributorsView()
-            }
-        }
     }
 }
 
 #Preview {
     List {
-        LegalPrivacySettingsView()
+        LegalPrivacySettingsView(activeSheet: .constant(nil))
     }
     .listStyle(.insetGrouped)
 }
