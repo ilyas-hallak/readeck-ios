@@ -289,3 +289,8 @@
 "Open Next Article" = "Nächsten Artikel öffnen";
 "Return to List" = "Zurück zur Liste";
 "Choose what happens when you archive or delete the article you're reading: stay on it, open the next one in your list, or return to the list." = "Lege fest, was passiert, wenn du den gerade gelesenen Artikel archivierst oder löschst: beim Artikel bleiben, den nächsten in deiner Liste öffnen oder zur Liste zurückkehren.";
+
+// Contributors screen
+"Contributors" = "Mitwirkende";
+"Maintainer" = "Maintainer";
+"Thanks to everyone who has contributed to the app." = "Danke an alle, die zur App beigetragen haben.";

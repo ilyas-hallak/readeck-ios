@@ -5,6 +5,7 @@ struct LegalPrivacySettingsView: View {
     @State private var showingLegalNotice = false
     @State private var showReleaseNotes = false
     @State private var showingLicenses = false
+    @State private var showingContributors = false
 
     var body: some View {
         Group {
@@ -61,6 +62,18 @@ struct LegalPrivacySettingsView: View {
                 }
 
                 Button(action: {
+                    showingContributors = true
+                }) {
+                    HStack {
+                        Text("Contributors")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Button(action: {
                     if let url = URL(string: "https://github.com/ilyas-hallak/readeck-ios/issues") {
                         UIApplication.shared.open(url)
                     }
@@ -102,6 +115,9 @@ struct LegalPrivacySettingsView: View {
         }
         .sheet(isPresented: $showingLicenses) {
             OpenSourceLicensesView()
+        }
+        .sheet(isPresented: $showingContributors) {
+            ContributorsView()
         }
     }
 }
