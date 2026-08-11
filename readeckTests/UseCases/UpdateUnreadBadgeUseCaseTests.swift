@@ -22,7 +22,8 @@ struct UpdateUnreadBadgeUseCaseTests {
     private func makeSUT(
         settings: Settings?,
         totalCount: Int?,
-        authorization: Bool = true
+        authorization: Bool = true,
+        fetchFails: Bool = false
     ) -> (UpdateUnreadBadgeUseCase, FakeBadgeService) {
         let badge = FakeBadgeService()
         badge.authorizationGranted = authorization
@@ -31,9 +32,11 @@ struct UpdateUnreadBadgeUseCaseTests {
         settingsRepo.stubbedSettings = settings
 
         let getBookmarks = ConfigurableGetBookmarksUseCase()
-        getBookmarks.result = .success(
-            BookmarksPage(bookmarks: [], currentPage: 1, totalCount: totalCount, totalPages: 1, links: nil)
-        )
+        getBookmarks.result = fetchFails
+            ? .failure(TestError.networkError)
+            : .success(
+                BookmarksPage(bookmarks: [], currentPage: 1, totalCount: totalCount, totalPages: 1, links: nil)
+            )
 
         let sut = UpdateUnreadBadgeUseCase(
             settingsRepository: settingsRepo,
@@ -65,11 +68,12 @@ struct UpdateUnreadBadgeUseCaseTests {
         #expect(badge.lastBadgeCount == 0)
     }
 
-    @Test("Enabled but logged out leaves the badge untouched")
-    func refreshNoopWhenLoggedOut() async {
+    @Test("Fetch error leaves the badge untouched")
+    func refreshLeavesBadgeUntouchedOnError() async {
         let (sut, badge) = makeSUT(
-            settings: Settings(token: nil, showUnreadBadge: true),
-            totalCount: 7
+            settings: Settings(token: "abc", showUnreadBadge: true),
+            totalCount: 7,
+            fetchFails: true
         )
         await sut.refresh()
         #expect(badge.lastBadgeCount == nil)

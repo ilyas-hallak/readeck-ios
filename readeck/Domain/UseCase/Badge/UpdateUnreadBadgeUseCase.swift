@@ -13,7 +13,7 @@
 import Foundation
 
 protocol PUpdateUnreadBadgeUseCase {
-    /// Recomputes the unread badge from current settings and the server unread
+    /// Recomputes the unread badge from the current setting and the server unread
     /// count and applies it. Clears the badge when the feature is off; leaves it
     /// untouched on fetch errors (e.g. offline).
     func refresh() async
@@ -64,20 +64,15 @@ final class UpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
             await badgeService.setBadgeCount(0)
             return
         }
-        await applyUnreadCount(settings: settings)
+        await applyUnreadCount()
     }
 
-    /// Fetches the current unread count and applies it to the badge. Requires the
-    /// user to be logged in; leaves the badge untouched on fetch errors (e.g. offline).
-    private func applyUnreadCount(settings: Settings? = nil) async {
-        let resolvedSettings: Settings?
-        if let settings {
-            resolvedSettings = settings
-        } else {
-            resolvedSettings = try? await settingsRepository.loadSettings()
-        }
-        guard resolvedSettings?.isLoggedIn == true else { return }
-
+    /// Fetches the current unread count and applies it to the badge. Leaves the
+    /// badge untouched on fetch errors (offline or logged out — the request fails
+    /// and we keep the previous value rather than resetting it). Login state is
+    /// deliberately not pre-checked here: it is derived from the request result,
+    /// which is the single source of truth for whether the server is reachable.
+    private func applyUnreadCount() async {
         do {
             let page = try await getBookmarksUseCase.execute(
                 state: .unread,
