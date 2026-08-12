@@ -145,6 +145,10 @@ final class MockUseCaseFactory: UseCaseFactory {
         MockUpdateMaxCacheSizeUseCase()
     }
 
+    func makeApplyCacheSizeLimitUseCase() -> PApplyCacheSizeLimitUseCase {
+        MockApplyCacheSizeLimitUseCase()
+    }
+
     func makeClearCacheUseCase() -> PClearCacheUseCase {
         MockClearCacheUseCase()
     }
@@ -478,6 +482,10 @@ final class MockUpdateMaxCacheSizeUseCase: PUpdateMaxCacheSizeUseCase {
 }
 
 final class MockClearCacheUseCase: PClearCacheUseCase {
+    func execute() async throws {}
+}
+
+final class MockApplyCacheSizeLimitUseCase: PApplyCacheSizeLimitUseCase {
     func execute() async throws {}
 }
 

@@ -36,6 +36,7 @@ protocol UseCaseFactory {
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase
     func makeClearCacheUseCase() -> PClearCacheUseCase
+    func makeApplyCacheSizeLimitUseCase() -> PApplyCacheSizeLimitUseCase
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase
     func makeAuthRepository() -> PAuthRepository
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
@@ -201,6 +202,10 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase {
         UpdateMaxCacheSizeUseCase(settingsRepository: settingsRepository)
+    }
+
+    func makeApplyCacheSizeLimitUseCase() -> PApplyCacheSizeLimitUseCase {
+        ApplyCacheSizeLimitUseCase(settingsRepository: settingsRepository)
     }
 
     func makeClearCacheUseCase() -> PClearCacheUseCase {

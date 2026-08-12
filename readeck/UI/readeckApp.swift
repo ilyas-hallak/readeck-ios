@@ -56,7 +56,7 @@ struct readeckApp: App {
                 Task {
                     // Enforce the configured image-cache size limit at launch so the
                     // cache doesn't grow past the maximum across app restarts (Codeberg #44).
-                    try? await DefaultUseCaseFactory.shared.makeSettingsRepository().applyCacheSizeLimit()
+                    try? await DefaultUseCaseFactory.shared.makeApplyCacheSizeLimitUseCase().execute()
                 }
                 appViewModel.bindNetworkStatus(to: appSettings)
             }
