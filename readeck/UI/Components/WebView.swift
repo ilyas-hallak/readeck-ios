@@ -497,7 +497,7 @@ struct WebView: UIViewRepresentable {
             const label = document.createElement('span');
             label.textContent = '\(highlightLabel)';
             label.style.cssText = `
-                color: black;
+                color: var(--text-color);
                 font-size: 16px;
                 font-weight: 500;
                 margin-right: 4px;
