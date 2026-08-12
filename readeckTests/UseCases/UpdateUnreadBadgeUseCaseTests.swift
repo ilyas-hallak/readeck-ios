@@ -144,4 +144,5 @@ private final class StubSettingsRepository: PSettingsRepository {
     func getMaxCacheSize() async throws -> UInt { 0 }
     func updateMaxCacheSize(_ sizeInBytes: UInt) async throws {}
     func clearCache() async throws {}
+    func applyCacheSizeLimit() async throws {}
 }

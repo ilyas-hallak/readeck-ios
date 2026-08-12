@@ -7,7 +7,7 @@ struct CacheSettingsView: View {
         Section {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Current Cache Size")
+                    Text("Image Cache")
                     Text("\(viewModel.cacheSize) / \(Int(viewModel.maxCacheSize)) MB max")
                         .font(.caption)
                         .foregroundColor(.secondary)

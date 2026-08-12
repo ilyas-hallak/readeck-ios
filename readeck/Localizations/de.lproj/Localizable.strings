@@ -43,6 +43,8 @@
 "Font Settings" = "Schriftart";
 "Appearance" = "Darstellung";
 "Cache Settings" = "Cache";
+"Image Cache" = "Bild-Cache";
+"Article Content" = "Artikelinhalt";
 "General Settings" = "Allgemein";
 "Server Settings" = "Server";
 "Server Connection" = "Server-Verbindung";

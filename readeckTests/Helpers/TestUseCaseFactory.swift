@@ -53,6 +53,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase { MockGetMaxCacheSizeUseCase() }
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase { MockUpdateMaxCacheSizeUseCase() }
     func makeClearCacheUseCase() -> PClearCacheUseCase { MockClearCacheUseCase() }
+    func makeApplyCacheSizeLimitUseCase() -> PApplyCacheSizeLimitUseCase { MockApplyCacheSizeLimitUseCase() }
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase { MockLoginWithOAuthUseCase() }
     func makeAuthRepository() -> PAuthRepository { MockAuthRepository() }
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase { mockSummarizeArticle }

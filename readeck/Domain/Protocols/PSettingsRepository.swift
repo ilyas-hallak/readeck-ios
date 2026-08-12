@@ -32,4 +32,7 @@ protocol PSettingsRepository {
     func getMaxCacheSize() async throws -> UInt
     func updateMaxCacheSize(_ sizeInBytes: UInt) async throws
     func clearCache() async throws
+    /// Applies the persisted max image-cache size to Kingfisher and evicts
+    /// least-recently-used images until the cache is within the limit.
+    func applyCacheSizeLimit() async throws
 }

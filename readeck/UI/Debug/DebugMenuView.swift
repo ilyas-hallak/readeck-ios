@@ -261,7 +261,7 @@ struct DebugMenuView: View {
             }
 
             HStack {
-                Text("Cache Size")
+                Text("Article Content")
                 Spacer()
                 Text(viewModel.cacheSize)
                     .foregroundColor(.secondary)
