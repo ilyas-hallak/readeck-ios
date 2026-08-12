@@ -162,6 +162,10 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
             // Cleanup old articles (FIFO)
             try await offlineCacheRepository.cleanupOldestCachedArticles(keepCount: settings.maxUnreadArticlesInt)
 
+            // Enforce the configured image-cache size limit after prefetching
+            // article images, so the image cache stays within the maximum (#44).
+            try? await settingsRepository.applyCacheSizeLimit()
+
             // Update last sync date in settings
             var updatedSettings = settings
             updatedSettings.lastSyncDate = Date()

@@ -370,6 +370,7 @@ final class MockSettingsRepository: PSettingsRepository {
     func getMaxCacheSize() async throws -> UInt { 200 * 1024 * 1024 }
     func updateMaxCacheSize(_ sizeInBytes: UInt) async throws {}
     func clearCache() async throws {}
+    func applyCacheSizeLimit() async throws {}
 }
 
 final class MockOfflineCacheSyncUseCase: POfflineCacheSyncUseCase {

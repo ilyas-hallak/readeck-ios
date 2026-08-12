@@ -53,6 +53,11 @@ struct readeckApp: App {
                 Task {
                     await loadAppSettings()
                 }
+                Task {
+                    // Enforce the configured image-cache size limit at launch so the
+                    // cache doesn't grow past the maximum across app restarts (Codeberg #44).
+                    try? await DefaultUseCaseFactory.shared.makeSettingsRepository().applyCacheSizeLimit()
+                }
                 appViewModel.bindNetworkStatus(to: appSettings)
             }
             .onReceive(NotificationCenter.default.publisher(for: .settingsChanged)) { _ in

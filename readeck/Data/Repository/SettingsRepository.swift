@@ -491,6 +491,21 @@ final class SettingsRepository: PSettingsRepository {
         KingfisherManager.shared.cache.diskStorage.config.sizeLimit = sizeInBytes
         userDefault.set(sizeInBytes, forKey: maxCacheSizeKey)
         logger.info("Updated max cache size to \(sizeInBytes) bytes")
+        // Trim right away so lowering the limit takes effect immediately.
+        await KingfisherManager.shared.cache.cleanExpiredDiskCache()
+    }
+
+    /// Applies the persisted max image-cache size to Kingfisher's disk cache and
+    /// evicts least-recently-used images until the cache is within the limit.
+    ///
+    /// Kingfisher only enforces `sizeLimit` during a cleanup pass, and the limit
+    /// was previously set only when the user moved the slider — so across app
+    /// launches the cap was never applied and the image cache could grow far
+    /// beyond the configured maximum (Codeberg #44).
+    func applyCacheSizeLimit() async throws {
+        let sizeLimit = try await getMaxCacheSize()
+        KingfisherManager.shared.cache.diskStorage.config.sizeLimit = sizeLimit
+        await KingfisherManager.shared.cache.cleanExpiredDiskCache()
     }
 
     func clearCache() async throws {
