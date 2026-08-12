@@ -428,7 +428,7 @@ struct NativeWebView: View {
                 \(generateScrollToAnnotationJS())
 
                 // Text Selection and Annotation Overlay
-                \(generateAnnotationOverlayJS(isDarkMode: isDarkMode))
+                \(generateAnnotationOverlayJS(isDarkMode: isDarkMode, textColor: resolvedTextColor))
             </script>
         </body>
         </html>
@@ -453,7 +453,7 @@ struct NativeWebView: View {
         }
     }
 
-    private func generateAnnotationOverlayJS(isDarkMode: Bool) -> String {
+    private func generateAnnotationOverlayJS(isDarkMode: Bool, textColor: String) -> String {
         let highlightLabel = NSLocalizedString("Highlight", comment: "")
 
         return """
@@ -514,7 +514,7 @@ struct NativeWebView: View {
             const label = document.createElement('span');
             label.textContent = '\(highlightLabel)';
             label.style.cssText = `
-                color: black;
+                color: \(textColor);
                 font-size: 16px;
                 font-weight: 500;
                 margin-right: 4px;
