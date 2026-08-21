@@ -51,15 +51,29 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
         let maxRetries = 2
 
         for bookmark in offlineBookmarks {
-            guard let url = bookmark.url else {
-                logger.error("Skipping offline bookmark without URL (id: \(bookmark.id))")
+            // Read managed-object properties on the context's queue, never from this
+            // nonisolated async context (viewContext entities are not thread-safe).
+            var snapshot: (url: String, title: String, tags: [String], html: String?)?
+            bookmark.managedObjectContext?.performAndWait {
+                guard let url = bookmark.url else { return }
+                let tags = bookmark.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
+                snapshot = (url, bookmark.title ?? "", tags, bookmark.html)
+            }
+
+            guard let snapshot else {
+                // objectID is thread-safe; the String `id` attribute is not.
+                logger.error("Skipping offline bookmark without URL (id: \(bookmark.objectID))")
                 failedCount += 1
                 continue
             }
 
-            let tags = bookmark.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
-            let title = bookmark.title ?? ""
-            let dto = CreateBookmarkRequestDto(url: url, title: title, labels: tags.isEmpty ? nil : tags, html: bookmark.html)
+            let url = snapshot.url
+            let dto = CreateBookmarkRequestDto(
+                url: snapshot.url,
+                title: snapshot.title,
+                labels: snapshot.tags.isEmpty ? nil : snapshot.tags,
+                html: snapshot.html
+            )
 
             var lastError: Error?
             for attempt in 0...maxRetries {
