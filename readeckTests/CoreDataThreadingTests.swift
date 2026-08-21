@@ -4,16 +4,8 @@
 //
 //  Created by Ilyas Hallak on 21.08.26.
 //
-//  Verifies the CoreData threading patterns hardened in issue #81:
-//  - Concurrent writes from multiple background contexts plus concurrent
-//    reads on the main context must not crash and must stay consistent.
-//  - A performAndWait-wrapped save on the main context persists and is
-//    visible via a subsequent fetch.
-//
-//  These tests exercise the threading *patterns* on an isolated in-memory
-//  stack (same approach as the existing OfflineCacheRepository tests),
-//  because CoreDataManager.shared is a singleton bound to the App Group
-//  store and is not cleanly isolatable in the test target.
+//  Verifies the issue #81 CoreData threading patterns on an isolated in-memory
+//  stack (CoreDataManager.shared is a singleton bound to the App Group store).
 //
 
 import Testing
@@ -26,9 +18,7 @@ struct CoreDataThreadingTests {
 
     // MARK: - Test Setup
 
-    /// Builds an in-memory persistent container that mirrors CoreDataManager's
-    /// configuration (automatic parent merging + property-object-trump policy),
-    /// so background contexts and the view context share one coordinator.
+    /// In-memory container mirroring CoreDataManager's merge configuration.
     private func makeContainer() -> NSPersistentContainer {
         let model = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
         let container = NSPersistentContainer(name: "readeck", managedObjectModel: model)
@@ -153,9 +143,7 @@ struct CoreDataThreadingTests {
         let container = makeContainer()
         let viewContext = container.viewContext
 
-        // performAndWait is documented as reentrant; nesting it on the same
-        // queue must not deadlock. This mirrors calling save() from within a
-        // block that already runs on the context queue.
+        // performAndWait is reentrant; nesting on the same queue must not deadlock.
         var count = -1
         viewContext.performAndWait {
             makeBookmarkEntity(in: viewContext, id: "nested-1")

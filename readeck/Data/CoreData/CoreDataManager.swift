@@ -65,9 +65,7 @@ final class CoreDataManager {
     }
 
     func save() {
-        // Wrap the whole body in performAndWait so the viewContext is never
-        // touched without its queue. performAndWait is safe from any thread
-        // (it dispatches onto the main queue and is reentrant).
+        // performAndWait keeps the viewContext on its queue; safe from any thread.
         context.performAndWait {
             guard context.hasChanges else { return }
             do {

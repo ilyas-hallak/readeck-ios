@@ -62,9 +62,7 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         fetchRequest.predicate = NSPredicate(format: "id == %@ AND htmlContent != nil", id)
         fetchRequest.fetchLimit = 1
 
-        // Fetch, update last access date and save inside a single performAndWait
-        // block so the viewContext is only touched on its queue. Only the value
-        // type (String?) escapes the block, never the managed object.
+        // Keep viewContext access on its queue; only the String? escapes.
         let context = coreDataManager.context
         var html: String?
         context.performAndWait {
@@ -143,8 +141,7 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
 
-        // Fetch and reduce on the context's queue; only value types escape the
-        // block, never the managed objects themselves.
+        // Fetch and reduce on the context's queue; only value types escape.
         let context = coreDataManager.context
         var totalBytes: Int64 = 0
         var failed = false
