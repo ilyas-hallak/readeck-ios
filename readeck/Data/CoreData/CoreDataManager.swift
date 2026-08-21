@@ -60,6 +60,8 @@ final class CoreDataManager {
     func newBackgroundContext() -> NSManagedObjectContext {
         let context = persistentContainer.newBackgroundContext()
         context.automaticallyMergesChangesFromParent = true
+        // Match the viewContext's policy so conflicts resolve consistently;
+        // the default (NSErrorMergePolicy) would fail the save on a conflict.
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return context
     }
