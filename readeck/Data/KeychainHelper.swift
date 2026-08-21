@@ -48,20 +48,34 @@ final class KeychainHelper {
 
     @discardableResult
     func saveOAuthToken(_ token: OAuthToken) -> Bool {
-        guard let data = try? JSONEncoder().encode(token),
-              let jsonString = String(data: data, encoding: .utf8) else {
+        let data: Data
+        do {
+            data = try JSONEncoder().encode(token)
+        } catch {
+            Logger.auth.error("Failed to encode OAuth token for keychain: \(error.localizedDescription)")
+            return false
+        }
+        guard let jsonString = String(data: data, encoding: .utf8) else {
+            Logger.auth.error("Failed to convert encoded OAuth token to UTF-8 string")
             return false
         }
         return saveString(jsonString, forKey: "readeck_oauth_token")
     }
 
     func loadOAuthToken() -> OAuthToken? {
+        // Empty string is the sentinel written by clearCredentials() on logout,
+        // so treat it as "no token" without attempting (and logging) a decode.
         guard let jsonString = loadString(forKey: "readeck_oauth_token"),
-              let data = jsonString.data(using: .utf8),
-              let token = try? JSONDecoder().decode(OAuthToken.self, from: data) else {
+              !jsonString.isEmpty,
+              let data = jsonString.data(using: .utf8) else {
             return nil
         }
-        return token
+        do {
+            return try JSONDecoder().decode(OAuthToken.self, from: data)
+        } catch {
+            Logger.auth.error("Failed to decode stored OAuth token, user may be signed out unexpectedly: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     @discardableResult
@@ -87,8 +101,15 @@ final class KeychainHelper {
 
     @discardableResult
     func saveCustomHeaders(_ headers: [String: String]) -> Bool {
-        guard let jsonData = try? JSONEncoder().encode(headers),
-              let jsonString = String(data: jsonData, encoding: .utf8) else {
+        let jsonData: Data
+        do {
+            jsonData = try JSONEncoder().encode(headers)
+        } catch {
+            Logger.auth.error("Failed to encode custom headers for keychain: \(error.localizedDescription)")
+            return false
+        }
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            Logger.auth.error("Failed to convert encoded custom headers to UTF-8 string")
             return false
         }
         return saveString(jsonString, forKey: "readeck_custom_headers")
@@ -98,11 +119,15 @@ final class KeychainHelper {
     func loadCustomHeaders() -> [String: String]? {
         guard let jsonString = loadString(forKey: "readeck_custom_headers"),
               !jsonString.isEmpty,
-              let jsonData = jsonString.data(using: .utf8),
-              let headers = try? JSONDecoder().decode([String: String].self, from: jsonData) else {
+              let jsonData = jsonString.data(using: .utf8) else {
             return nil
         }
-        return headers
+        do {
+            return try JSONDecoder().decode([String: String].self, from: jsonData)
+        } catch {
+            Logger.auth.error("Failed to decode stored custom headers: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     @discardableResult

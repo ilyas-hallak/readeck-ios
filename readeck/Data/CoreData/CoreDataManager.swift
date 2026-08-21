@@ -95,12 +95,18 @@ final class CoreDataManager {
         // Delete the store files
         try FileManager.default.removeItem(at: storeURL)
 
-        // Also delete related files (-wal, -shm)
+        // Also delete related files (-wal, -shm). These may legitimately not
+        // exist (e.g. checkpointed WAL), so only log unexpected removal failures.
         let walURL = storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal")
         let shmURL = storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm")
 
-        try? FileManager.default.removeItem(at: walURL)
-        try? FileManager.default.removeItem(at: shmURL)
+        for auxURL in [walURL, shmURL] where FileManager.default.fileExists(atPath: auxURL.path) {
+            do {
+                try FileManager.default.removeItem(at: auxURL)
+            } catch {
+                logger.warning("Failed to remove Core Data auxiliary file \(auxURL.lastPathComponent): \(error.localizedDescription)")
+            }
+        }
 
         logger.info("Core Data database files deleted successfully")
     }

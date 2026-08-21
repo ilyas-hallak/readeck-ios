@@ -16,7 +16,12 @@ final class AppBadgeService: PAppBadgeService {
     }
 
     func requestAuthorization() async -> Bool {
-        (try? await notificationCenter.requestAuthorization(options: [.badge])) ?? false
+        do {
+            return try await notificationCenter.requestAuthorization(options: [.badge])
+        } catch {
+            Logger.data.error("Failed to request badge authorization: \(error.localizedDescription)")
+            return false
+        }
     }
 
     func setBadgeCount(_ count: Int) async {
