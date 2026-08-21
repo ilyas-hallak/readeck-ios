@@ -65,7 +65,9 @@ final class KeychainTokenProvider: TokenProvider {
     }
 
     private func refreshOAuthTokenIfNeeded() async -> OAuthToken? {
-        // If already refreshing, wait for that task to complete
+        // If already refreshing, wait for that task to complete.
+        // The task body catches all errors and returns nil itself, so try? here
+        // only absorbs cancellation, where a nil token is the correct outcome.
         if let existingTask = refreshTask {
             return try? await existingTask.value
         }
@@ -136,6 +138,7 @@ final class KeychainTokenProvider: TokenProvider {
 
         refreshTask = task
         isRefreshing = true
+        // See note above: the task never throws by design; try? only handles cancellation.
         return try? await task.value
     }
 

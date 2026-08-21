@@ -19,9 +19,11 @@ final class LabelsRepository: PLabelsRepository, @unchecked Sendable {
             guard let self else { return }
             do {
                 let dtos = try await self.api.getBookmarkLabels()
-                try? await self.saveLabels(dtos)
+                try await self.saveLabels(dtos)
             } catch {
-                // Silent fail - we already have cached data
+                // We already returned cached data, so this only degrades the
+                // background refresh. Log it so a failing labels sync is visible.
+                Logger.data.error("Background labels sync failed: \(error.localizedDescription)")
             }
         }
 

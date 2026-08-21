@@ -103,10 +103,17 @@ final class SettingsRepository: PSettingsRepository {
                     }
 
                     if let swipeActionConfig = settings.swipeActionConfig {
-                        let encoder = JSONEncoder()
-                        if let jsonData = try? encoder.encode(swipeActionConfig),
-                           let configText = String(data: jsonData, encoding: .utf8) {
-                            existingSettings.swipeActionConfig = configText
+                        do {
+                            let jsonData = try JSONEncoder().encode(swipeActionConfig)
+                            if let configText = String(data: jsonData, encoding: .utf8) {
+                                existingSettings.swipeActionConfig = configText
+                            } else {
+                                Logger.data.error("Failed to convert encoded swipe action config to string")
+                            }
+                        } catch {
+                            // Don't fail the whole settings save just because the
+                            // swipe config couldn't be encoded, but make it visible.
+                            Logger.data.error("Failed to encode swipe action config: \(error.localizedDescription)")
                         }
                     }
                     if let fontSizeNumeric = settings.fontSizeNumeric {
@@ -174,8 +181,13 @@ final class SettingsRepository: PSettingsRepository {
                     // Load swipe action config from JSON
                     var swipeActionConfig: SwipeActionConfig?
                     if let jsonString = settingEntity?.swipeActionConfig,
+                       !jsonString.isEmpty,
                        let jsonData = jsonString.data(using: .utf8) {
-                        swipeActionConfig = try? JSONDecoder().decode(SwipeActionConfig.self, from: jsonData)
+                        do {
+                            swipeActionConfig = try JSONDecoder().decode(SwipeActionConfig.self, from: jsonData)
+                        } catch {
+                            Logger.data.error("Failed to decode stored swipe action config, falling back to default: \(error.localizedDescription)")
+                        }
                     }
 
                     // Load UI preferences from Core Data

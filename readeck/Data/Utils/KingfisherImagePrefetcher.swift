@@ -70,8 +70,12 @@ final class KingfisherImagePrefetcher {
         let image = await downloadImage(from: url)
 
         if let image {
-            try? await ImageCache.default.store(image, forKey: key)
-            Logger.sync.info("✅ Cached image with custom key: \(key)")
+            do {
+                try await ImageCache.default.store(image, forKey: key)
+                Logger.sync.info("✅ Cached image with custom key: \(key)")
+            } catch {
+                Logger.sync.error("Failed to cache image with key \(key): \(error.localizedDescription)")
+            }
         } else {
             Logger.sync.warning("❌ Failed to cache image with key: \(key)")
         }
@@ -87,7 +91,11 @@ final class KingfisherImagePrefetcher {
         await withTaskGroup(of: Void.self) { group in
             for url in urls {
                 group.addTask {
-                    try? await KingfisherManager.shared.cache.removeImage(forKey: url.cacheKey)
+                    do {
+                        try await KingfisherManager.shared.cache.removeImage(forKey: url.cacheKey)
+                    } catch {
+                        Logger.sync.warning("Failed to remove cached image \(url.cacheKey): \(error.localizedDescription)")
+                    }
                 }
             }
         }

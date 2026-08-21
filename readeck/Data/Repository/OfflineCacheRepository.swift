@@ -89,7 +89,8 @@ final class OfflineCacheRepository: POfflineCacheRepository {
 
         let context = coreDataManager.context
         return try await context.perform {
-            // First check total bookmarks
+            // First check total bookmarks. This count is purely diagnostic; if it
+            // fails the real fetch below throws, so try? is the right choice here.
             let allRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
             let totalCount = try? context.count(for: allRequest)
             self.logger.info("📊 Total bookmarks in Core Data: \(totalCount ?? 0)")
@@ -182,7 +183,11 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         await withTaskGroup(of: Void.self) { group in
             for url in imageURLsToDelete {
                 group.addTask {
-                    try? await KingfisherManager.shared.cache.removeImage(forKey: url.cacheKey)
+                    do {
+                        try await KingfisherManager.shared.cache.removeImage(forKey: url.cacheKey)
+                    } catch {
+                        Logger.sync.warning("Failed to remove cached image \(url.cacheKey): \(error.localizedDescription)")
+                    }
                 }
             }
         }
@@ -241,7 +246,11 @@ final class OfflineCacheRepository: POfflineCacheRepository {
             await withTaskGroup(of: Void.self) { group in
                 for url in imageURLsToDelete {
                     group.addTask {
-                        try? await KingfisherManager.shared.cache.removeImage(forKey: url.cacheKey)
+                        do {
+                            try await KingfisherManager.shared.cache.removeImage(forKey: url.cacheKey)
+                        } catch {
+                            Logger.sync.warning("Failed to remove cached image \(url.cacheKey): \(error.localizedDescription)")
+                        }
                     }
                 }
             }
@@ -263,7 +272,8 @@ final class OfflineCacheRepository: POfflineCacheRepository {
             try context.save()
             self.logger.info("💾 Saved bookmark \(bookmark.id) to Core Data with HTML (\(html.utf8.count) bytes)")
 
-            // Verify it was saved
+            // Verify it was saved. The save above already succeeded (or threw), so
+            // this count is only a diagnostic log; try? keeps it non-fatal.
             let verifyRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
             verifyRequest.predicate = NSPredicate(format: "id == %@ AND htmlContent != nil", bookmark.id)
             if let count = try? context.count(for: verifyRequest) {
@@ -549,8 +559,12 @@ final class OfflineCacheRepository: POfflineCacheRepository {
 
         if let image = result {
             // Store with custom key for offline access
-            try? await ImageCache.default.store(image, forKey: cacheKey)
-            logger.info("✅ Cached hero image with key: \(cacheKey)")
+            do {
+                try await ImageCache.default.store(image, forKey: cacheKey)
+                logger.info("✅ Cached hero image with key: \(cacheKey)")
+            } catch {
+                logger.error("Failed to cache hero image with key \(cacheKey): \(error.localizedDescription)")
+            }
         } else {
             logger.warning("❌ Failed to cache hero image for bookmark: \(bookmarkId)")
         }
