@@ -17,9 +17,11 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     private let coreDataManager = CoreDataManager.shared
     private let api: PAPI
     private let logger = Logger.sync
+    private let retryBackoffBaseSeconds: Double
 
-    init(api: PAPI = API()) {
+    init(api: PAPI = API(), retryBackoffBaseSeconds: Double = 2.0) {
         self.api = api
+        self.retryBackoffBaseSeconds = retryBackoffBaseSeconds
     }
 
     // MARK: - Sync Methods
@@ -45,54 +47,70 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
 
         var successCount = 0
         var failedCount = 0
+        var aborted = false
+        let maxRetries = 2
 
         for bookmark in offlineBookmarks {
             guard let url = bookmark.url else {
+                logger.error("Skipping offline bookmark without URL (id: \(bookmark.id))")
                 failedCount += 1
                 continue
             }
 
             let tags = bookmark.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
             let title = bookmark.title ?? ""
+            let dto = CreateBookmarkRequestDto(url: url, title: title, labels: tags.isEmpty ? nil : tags, html: bookmark.html)
 
-            do {
-                let dto = CreateBookmarkRequestDto(url: url, title: title, labels: tags.isEmpty ? nil : tags, html: bookmark.html)
-                _ = try await api.createBookmark(createRequest: dto)
-
-                deleteOfflineBookmark(bookmark)
-                successCount += 1
-
-                await MainActor.run {
-                    syncStatus = "Synced \(successCount) bookmarks..."
+            var lastError: Error?
+            for attempt in 0...maxRetries {
+                do {
+                    if attempt > 0 {
+                        let delay = Double(attempt) * retryBackoffBaseSeconds // linear backoff, mirrors OfflineCacheSyncUseCase
+                        if delay > 0 {
+                            logger.info("⏳ Retry \(attempt)/\(maxRetries) for \(url) after \(delay)s")
+                            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                        }
+                    }
+                    _ = try await api.createBookmark(createRequest: dto)
+                    deleteOfflineBookmark(bookmark)
+                    successCount += 1
+                    lastError = nil
+                    await MainActor.run { syncStatus = "Synced \(successCount) bookmarks..." }
+                    break
+                } catch {
+                    lastError = error
+                    if !isRetryableError(error) || attempt == maxRetries {
+                        break
+                    }
+                    logger.warning("Temporary error syncing \(url), will retry: \(error.localizedDescription)")
                 }
-            } catch {
-                logger.error("Failed to sync bookmark: \(url) - \(error)")
+            }
+
+            if let lastError {
+                // Keep the entry in the queue (do NOT delete) so it is retried on the next sync.
+                logger.error("Failed to sync bookmark after retries, keeping for later retry: \(url) - \(lastError)")
                 failedCount += 1
 
-                // If first sync attempt fails, server is likely unreachable - abort
-                if successCount == 0 && failedCount == 1 {
-                    await MainActor.run {
-                        isSyncing = false
-                        syncStatus = "Server not reachable. Cannot sync."
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        self.syncStatus = nil
-                    }
-                    return
+                // If the server/network is completely unreachable and nothing has synced yet,
+                // stop early instead of burning backoff delays on every remaining item.
+                // The queue stays intact, so everything is retried on the next sync.
+                if successCount == 0 && isConnectivityError(lastError) {
+                    aborted = true
+                    break
                 }
             }
         }
 
         await MainActor.run {
             isSyncing = false
-            if successCount > 0 {
-                if failedCount == 0 {
-                    syncStatus = "✅ Successfully synced \(successCount) bookmarks"
-                } else {
-                    syncStatus = "⚠️ Synced \(successCount), failed \(failedCount) bookmarks"
-                }
+            if aborted {
+                syncStatus = "Server not reachable. \(failedCount) bookmark(s) kept for later."
+            } else if successCount > 0 {
+                syncStatus = failedCount == 0
+                    ? "✅ Successfully synced \(successCount) bookmarks"
+                    : "⚠️ Synced \(successCount), \(failedCount) kept for retry"
             } else if failedCount > 0 {
-                syncStatus = "❌ Sync failed - check your connection"
+                syncStatus = "❌ Sync failed - \(failedCount) bookmark(s) kept for retry"
             }
         }
 
@@ -125,6 +143,46 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             }
         } catch {
             logger.error("Failed to delete offline bookmark: \(error)")
+        }
+    }
+
+    // MARK: - Retry Helpers
+
+    // Mirrors OfflineCacheSyncUseCase.isRetryableError, but does NOT treat HTTP 400
+    // as retryable (400 is a permanent client error; the mirrored version has that bug).
+    private func isRetryableError(_ error: Error) -> Bool {
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .serverError(let statusCode):
+                return statusCode == 502 || statusCode == 503 || statusCode == 504
+            case .serverErrorWithMessage(let statusCode, _):
+                return statusCode == 502 || statusCode == 503 || statusCode == 504
+            case .invalidURL, .invalidResponse:
+                return false
+            }
+        }
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .timedOut, .networkConnectionLost, .cannotConnectToHost,
+                 .notConnectedToInternet, .cannotFindHost, .dnsLookupFailed:
+                return true
+            default:
+                return false
+            }
+        }
+        return false
+    }
+
+    // True only for "server/network completely unreachable" conditions, used to stop
+    // the whole run early when nothing has synced yet (vs. a single bad item).
+    private func isConnectivityError(_ error: Error) -> Bool {
+        guard let urlError = error as? URLError else { return false }
+        switch urlError.code {
+        case .notConnectedToInternet, .cannotConnectToHost, .cannotFindHost,
+             .networkConnectionLost, .dnsLookupFailed, .dataNotAllowed:
+            return true
+        default:
+            return false
         }
     }
 }
