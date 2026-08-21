@@ -62,20 +62,29 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         fetchRequest.predicate = NSPredicate(format: "id == %@ AND htmlContent != nil", id)
         fetchRequest.fetchLimit = 1
 
-        do {
-            let results = try coreDataManager.context.fetch(fetchRequest)
-            if let entity = results.first {
-                // Update last access date
-                entity.lastAccessDate = Date()
-                coreDataManager.save()
-                logger.debug("Retrieved cached article for bookmark \(id)")
-                return entity.htmlContent
+        // Fetch, update last access date and save inside a single performAndWait
+        // block so the viewContext is only touched on its queue. Only the value
+        // type (String?) escapes the block, never the managed object.
+        let context = coreDataManager.context
+        var html: String?
+        context.performAndWait {
+            do {
+                let results = try context.fetch(fetchRequest)
+                if let entity = results.first {
+                    // Update last access date
+                    entity.lastAccessDate = Date()
+                    if context.hasChanges {
+                        try context.save()
+                    }
+                    logger.debug("Retrieved cached article for bookmark \(id)")
+                    html = entity.htmlContent
+                }
+            } catch {
+                logger.error("Error fetching cached article: \(error.localizedDescription)")
             }
-        } catch {
-            logger.error("Error fetching cached article: \(error.localizedDescription)")
         }
 
-        return nil
+        return html
     }
 
     func hasCachedArticle(id: String) -> Bool {
@@ -117,26 +126,41 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
 
-        do {
-            return try coreDataManager.context.count(for: fetchRequest)
-        } catch {
-            logger.error("Error counting cached articles: \(error.localizedDescription)")
-            return 0
+        // Count on the context's queue; only the Int result escapes the block.
+        let context = coreDataManager.context
+        var count = 0
+        context.performAndWait {
+            do {
+                count = try context.count(for: fetchRequest)
+            } catch {
+                logger.error("Error counting cached articles: \(error.localizedDescription)")
+            }
         }
+        return count
     }
 
     func getCacheSize() -> String {
         let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
 
-        do {
-            let entities = try coreDataManager.context.fetch(fetchRequest)
-            let totalBytes = entities.reduce(0) { $0 + $1.cacheSize }
-            return ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
-        } catch {
-            logger.error("Error calculating cache size: \(error.localizedDescription)")
+        // Fetch and reduce on the context's queue; only value types escape the
+        // block, never the managed objects themselves.
+        let context = coreDataManager.context
+        var totalBytes: Int64 = 0
+        var failed = false
+        context.performAndWait {
+            do {
+                let entities = try context.fetch(fetchRequest)
+                totalBytes = entities.reduce(0) { $0 + $1.cacheSize }
+            } catch {
+                logger.error("Error calculating cache size: \(error.localizedDescription)")
+                failed = true
+            }
+        }
+        if failed {
             return "0 KB"
         }
+        return ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
     }
 
     // MARK: - Cache Management
