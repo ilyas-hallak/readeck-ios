@@ -14,19 +14,106 @@
 # update_fastlane
 
 default_platform(:ios)
-xcversion(version: "16.4.0")
+# No xcversion pin: use the Xcode selected via `xcode-select` (pinning broke on an uninstalled version).
 
-platform :ios do
-  #desc "Generate new localized screenshots"
-  #lane :screenshots do
-  #  capture_screenshots(scheme: "readeck")
- # end
+ENV['LC_ALL'] = 'en_US.UTF-8'
+ENV['LANG'] = 'en_US.UTF-8'
 
-  desc "Build and upload to TestFlight"
-  lane :beta do
-    build_app(scheme: "readeck")
-    upload_to_testflight
+PROJECT_PATH = 'readeck.xcodeproj'
+DEFAULT_SCHEME = 'readeck'
+DEFAULT_TARGET = 'readeck'
+
+# Build an App Store Connect API key from the readeck .env variables.
+# Returns nil (falling back to the Xcode/Apple ID session) when no key is configured.
+private_lane :resolve_optional_app_store_api_key do
+  key_id = ENV['APP_STORE_CONNECT_API_KEY_ID'].to_s.strip
+  issuer_id = ENV['APP_STORE_CONNECT_API_ISSUER_ID'].to_s.strip
+  key_filepath = ENV['APP_STORE_CONNECT_API_KEY_PATH'].to_s.strip
+
+  if key_id.empty? || issuer_id.empty? || key_filepath.empty?
+    UI.message('No App Store Connect API key configured - using Apple ID session from Xcode/App Store Connect account.')
+    nil
+  else
+    app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_filepath: key_filepath,
+      duration: 1200,
+      in_house: false
+    )
   end
 end
 
+private_lane :release_changelog do
+  changelog_from_git_commits(
+    pretty: '- %s',
+    commits_count: 15,
+    merge_commit_filtering: 'exclude_merges'
+  )
+end
 
+platform :ios do
+  desc 'Increment build number, archive and upload to TestFlight, then tag the release'
+  lane :deploy_testflight do
+    # ensure_git_status_clean
+
+    scheme = ENV['IOS_SCHEME'].to_s.strip
+    scheme = DEFAULT_SCHEME if scheme.empty?
+
+    target = ENV['IOS_APP_TARGET'].to_s.strip
+    target = DEFAULT_TARGET if target.empty?
+
+    api_key = resolve_optional_app_store_api_key
+
+    build_number = increment_build_number(xcodeproj: PROJECT_PATH)
+    version_number = get_version_number(xcodeproj: PROJECT_PATH, target: target)
+    changelog = release_changelog
+
+    commit_message = "chore(release): bump iOS build to #{build_number}"
+    git_commit(
+      path: ['readeck.xcodeproj/project.pbxproj'],
+      message: commit_message
+    )
+
+    build_app(
+      project: PROJECT_PATH,
+      scheme: scheme,
+      configuration: 'Release',
+      clean: true,
+      export_method: 'app-store',
+      output_directory: 'build',
+      output_name: 'readeck.ipa'
+    )
+
+    upload_options = {
+      changelog: changelog,
+      skip_waiting_for_build_processing: false,
+      distribute_external: false,
+      notify_external_testers: false
+    }
+    upload_options[:api_key] = api_key unless api_key.nil?
+    upload_to_testflight(**upload_options)
+
+    tag_name = "ios/v#{version_number}-b#{build_number}"
+    add_git_tag(
+      tag: tag_name,
+      message: "TestFlight upload #{tag_name}"
+    )
+
+    if ENV['FASTLANE_PUSH_AFTER_DEPLOY'].to_s.downcase == 'true'
+      push_to_git_remote(tags: true)
+    end
+
+    UI.success("Upload complete. Created commit and tag #{tag_name}")
+  end
+
+  desc 'Convenience alias for deploy_testflight'
+  lane :deploy do
+    deploy_testflight
+  end
+
+  desc 'Convenience alias for deploy_testflight (kept for existing muscle memory)'
+  lane :beta do
+    deploy_testflight
+  end
+end
