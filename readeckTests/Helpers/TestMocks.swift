@@ -166,9 +166,9 @@ class TestCoreDataManager {
 class TestableOfflineSyncManager: OfflineSyncManager {
     let mockCoreDataManager: TestCoreDataManager
 
-    init(api: PAPI, coreDataManager: TestCoreDataManager) {
+    init(api: PAPI, coreDataManager: TestCoreDataManager, retryBackoffBaseSeconds: Double = 0) {
         self.mockCoreDataManager = coreDataManager
-        super.init(api: api)
+        super.init(api: api, retryBackoffBaseSeconds: retryBackoffBaseSeconds)
     }
 
     override func getOfflineBookmarks() -> [ArticleURLEntity] {

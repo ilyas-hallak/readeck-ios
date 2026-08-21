@@ -47,51 +47,118 @@ struct OfflineSyncManagerTests {
         #expect(mockCoreData.fetchAllBookmarks().isEmpty)
     }
 
-    // MARK: - Test: Server Unreachable
+    // MARK: - Test: One Bad Item Does Not Block The Rest
 
-    @Test("Should abort on first failure (server unreachable)")
-    func testServerUnreachable() async throws {
+    @Test("A single permanently failing item does not abort the rest")
+    func testOneBadItemDoesNotBlockRest() async throws {
         let (syncManager, mockAPI, mockCoreData) = createTestEnvironment()
 
-        _ = mockCoreData.createTestBookmark(url: "https://example.com/1", title: "Article 1")
-        _ = mockCoreData.createTestBookmark(url: "https://example.com/2", title: "Article 2")
-        _ = mockCoreData.createTestBookmark(url: "https://example.com/3", title: "Article 3")
-
-        mockAPI.createBookmarkResults = [.failure(APIError.serverError(503))]
-
-        await syncManager.syncOfflineBookmarks()
-        try await Task.sleep(for: .milliseconds(100))
-
-        #expect(syncManager.isSyncing == false)
-        #expect(syncManager.syncStatus == "Server not reachable. Cannot sync.")
-        #expect(mockAPI.createBookmarkCalls.count == 1)
-        #expect(mockCoreData.fetchAllBookmarks().count == 3)
-    }
-
-    // MARK: - Test: Partial Success
-
-    @Test("Should handle partial sync success")
-    func testPartialSuccess() async throws {
-        let (syncManager, mockAPI, mockCoreData) = createTestEnvironment()
-
-        for i in 1...4 {
+        for i in 1...3 {
             _ = mockCoreData.createTestBookmark(url: "https://example.com/\(i)", title: "Article \(i)")
         }
 
+        // First call is a permanent (non-retryable) 400, the rest succeed.
+        // fetchAllBookmarks is unsorted, so exactly one item fails regardless of order.
         mockAPI.createBookmarkResults = [
-            .success(mockSuccessResponse()),
             .failure(APIError.serverError(400)),
             .success(mockSuccessResponse()),
-            .failure(APIError.serverError(400))
+            .success(mockSuccessResponse())
         ]
 
         await syncManager.syncOfflineBookmarks()
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(syncManager.isSyncing == false)
-        #expect(syncManager.syncStatus?.contains("Synced 2, failed 2") == true)
-        #expect(mockAPI.createBookmarkCalls.count == 4)
-        #expect(mockCoreData.fetchAllBookmarks().count == 2)
+        // All 3 items attempted (no retry on the 400), 2 succeeded, 1 kept.
+        #expect(mockAPI.createBookmarkCalls.count == 3)
+        #expect(mockCoreData.fetchAllBookmarks().count == 1)
+        #expect(syncManager.syncStatus?.contains("Synced 2, 1 kept for retry") == true)
+    }
+
+    // MARK: - Test: Retry On Transient Error Then Success
+
+    @Test("Retries a transient error and then succeeds")
+    func testRetryTransientThenSuccess() async throws {
+        let (syncManager, mockAPI, mockCoreData) = createTestEnvironment()
+
+        _ = mockCoreData.createTestBookmark(url: "https://example.com/1", title: "Article 1")
+
+        mockAPI.createBookmarkResults = [
+            .failure(APIError.serverError(503)),
+            .success(mockSuccessResponse())
+        ]
+
+        await syncManager.syncOfflineBookmarks()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(syncManager.isSyncing == false)
+        #expect(mockAPI.createBookmarkCalls.count == 2)
+        #expect(mockCoreData.fetchAllBookmarks().isEmpty)
+        #expect(syncManager.syncStatus?.contains("Successfully synced 1") == true)
+    }
+
+    // MARK: - Test: Permanent Error Is Not Retried
+
+    @Test("A permanent error is not retried and the item is kept")
+    func testPermanentErrorNotRetried() async throws {
+        let (syncManager, mockAPI, mockCoreData) = createTestEnvironment()
+
+        _ = mockCoreData.createTestBookmark(url: "https://example.com/1", title: "Article 1")
+
+        mockAPI.createBookmarkResults = [.failure(APIError.serverError(400))]
+
+        await syncManager.syncOfflineBookmarks()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(syncManager.isSyncing == false)
+        #expect(mockAPI.createBookmarkCalls.count == 1)
+        #expect(mockCoreData.fetchAllBookmarks().count == 1)
+    }
+
+    // MARK: - Test: Exhausted Retries Keep Item In Queue
+
+    @Test("Exhausted retries keep the item in the queue")
+    func testExhaustedRetriesKeepItem() async throws {
+        let (syncManager, mockAPI, mockCoreData) = createTestEnvironment()
+
+        _ = mockCoreData.createTestBookmark(url: "https://example.com/1", title: "Article 1")
+
+        mockAPI.createBookmarkResults = Array(repeating: .failure(APIError.serverError(503)), count: 3)
+
+        await syncManager.syncOfflineBookmarks()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(syncManager.isSyncing == false)
+        // 1 initial attempt + 2 retries.
+        #expect(mockAPI.createBookmarkCalls.count == 3)
+        #expect(mockCoreData.fetchAllBookmarks().count == 1)
+    }
+
+    // MARK: - Test: Connectivity Error Stops Early, Queue Intact
+
+    @Test("Connectivity error on the first item stops early and keeps the whole queue")
+    func testConnectivityErrorStopsEarly() async throws {
+        let (syncManager, mockAPI, mockCoreData) = createTestEnvironment()
+
+        for i in 1...3 {
+            _ = mockCoreData.createTestBookmark(url: "https://example.com/\(i)", title: "Article \(i)")
+        }
+
+        // notConnectedToInternet is retryable AND a connectivity error, so the first
+        // item is attempted 3 times (1 + 2 retries), then the whole run aborts.
+        mockAPI.createBookmarkResults = Array(
+            repeating: .failure(URLError(.notConnectedToInternet)),
+            count: 3
+        )
+
+        await syncManager.syncOfflineBookmarks()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(syncManager.isSyncing == false)
+        // Only the first item was touched (with retries); the other 2 were not attempted.
+        #expect(mockAPI.createBookmarkCalls.count == 3)
+        #expect(mockCoreData.fetchAllBookmarks().count == 3)
+        #expect(syncManager.syncStatus?.hasPrefix("Server not reachable") == true)
     }
 
     // MARK: - Test: Bookmark Without URL
@@ -155,7 +222,7 @@ struct OfflineSyncManagerTests {
     private func createTestEnvironment() -> (TestableOfflineSyncManager, TestMockAPI, TestCoreDataManager) {
         let mockAPI = TestMockAPI()
         let mockCoreData = TestCoreDataManager()
-        let syncManager = TestableOfflineSyncManager(api: mockAPI, coreDataManager: mockCoreData)
+        let syncManager = TestableOfflineSyncManager(api: mockAPI, coreDataManager: mockCoreData, retryBackoffBaseSeconds: 0)
         return (syncManager, mockAPI, mockCoreData)
     }
 
