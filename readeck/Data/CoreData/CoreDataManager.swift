@@ -57,18 +57,19 @@ final class CoreDataManager {
         persistentContainer.viewContext
     }
 
-    var mainContext: NSManagedObjectContext {
-        persistentContainer.viewContext
-    }
-
     func newBackgroundContext() -> NSManagedObjectContext {
         let context = persistentContainer.newBackgroundContext()
         context.automaticallyMergesChangesFromParent = true
+        // Match the viewContext's policy so conflicts resolve consistently;
+        // the default (NSErrorMergePolicy) would fail the save on a conflict.
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return context
     }
 
     func save() {
-        if context.hasChanges {
+        // performAndWait keeps the viewContext on its queue; safe from any thread.
+        context.performAndWait {
+            guard context.hasChanges else { return }
             do {
                 try context.save()
                 logger.debug("Core Data context saved successfully")
