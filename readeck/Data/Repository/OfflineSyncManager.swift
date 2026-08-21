@@ -51,8 +51,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
         let maxRetries = 2
 
         for bookmark in offlineBookmarks {
-            // Read managed-object properties on the context's queue, never from this
-            // nonisolated async context (viewContext entities are not thread-safe).
+            // Read entity properties on the context queue (not thread-safe otherwise).
             var snapshot: (url: String, title: String, tags: [String], html: String?)?
             bookmark.managedObjectContext?.performAndWait {
                 guard let url = bookmark.url else { return }
@@ -105,9 +104,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                 logger.error("Failed to sync bookmark after retries, keeping for later retry: \(url) - \(lastError)")
                 failedCount += 1
 
-                // If the server/network is completely unreachable and nothing has synced yet,
-                // stop early instead of burning backoff delays on every remaining item.
-                // The queue stays intact, so everything is retried on the next sync.
+                // Fully offline and nothing synced yet: stop early, queue stays intact.
                 if successCount == 0 && isConnectivityError(lastError) {
                     aborted = true
                     break
@@ -162,8 +159,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
 
     // MARK: - Retry Helpers
 
-    // Mirrors OfflineCacheSyncUseCase.isRetryableError, but does NOT treat HTTP 400
-    // as retryable (400 is a permanent client error; the mirrored version has that bug).
+    // Retry only transient server/network errors (400 stays permanent, unlike OfflineCacheSyncUseCase).
     private func isRetryableError(_ error: Error) -> Bool {
         if let apiError = error as? APIError {
             switch apiError {
@@ -187,8 +183,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
         return false
     }
 
-    // True only for "server/network completely unreachable" conditions, used to stop
-    // the whole run early when nothing has synced yet (vs. a single bad item).
+    // True only when the server/network is completely unreachable (vs. a single bad item).
     private func isConnectivityError(_ error: Error) -> Bool {
         guard let urlError = error as? URLError else { return false }
         switch urlError.code {
