@@ -6,10 +6,23 @@ final class CoreDataManager {
 
     private var isInMemoryStore = false
     private let logger = Logger.data
+    private let injectedContainer: NSPersistentContainer?
 
-    private init() {}
+    private init() {
+        self.injectedContainer = nil
+    }
+
+    /// Erlaubt einen vorkonfigurierten Container, etwa einen In-Memory-Store in Tests.
+    /// Der reguläre App-Pfad läuft weiter über `shared`.
+    init(container: NSPersistentContainer) {
+        self.injectedContainer = container
+    }
 
     lazy var persistentContainer: NSPersistentContainer = {
+        if let injectedContainer {
+            return injectedContainer
+        }
+
         // Try to find the model in the main bundle first, then in extension bundle
         guard let modelURL = Bundle.main.url(forResource: "readeck", withExtension: "momd") ??
                              Bundle(for: CoreDataManager.self).url(forResource: "readeck", withExtension: "momd") else {
