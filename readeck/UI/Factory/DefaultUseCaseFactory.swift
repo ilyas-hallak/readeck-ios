@@ -44,14 +44,16 @@ protocol UseCaseFactory {
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
-    private let tokenProvider = KeychainTokenProvider()
-    private lazy var api: PAPI = API(tokenProvider: tokenProvider)
-    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider)
+    // Eine geteilte, mit Timeouts konfigurierte Session für die ganze App.
+    private let httpSession: HTTPSession = HTTPSessionFactory.makeDefault()
+    private lazy var tokenProvider = KeychainTokenProvider(session: httpSession)
+    private lazy var api: PAPI = API(tokenProvider: tokenProvider, session: httpSession)
+    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider, session: httpSession)
     private lazy var getUserProfileUseCase: PGetUserProfileUseCase = GetUserProfileUseCase(profileApiClient: profileApiClient)
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     private lazy var settingsRepository: PSettingsRepository = SettingsRepository(tokenProvider: tokenProvider)
-    private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider)
+    private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider, session: httpSession)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
     private lazy var labelsRepository: PLabelsRepository = LabelsRepository(api: api)

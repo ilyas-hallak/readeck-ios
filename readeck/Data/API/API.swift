@@ -30,10 +30,15 @@ protocol PAPI {
 
 final class API: PAPI {
     let tokenProvider: TokenProvider
+    private let session: HTTPSession
     private let logger = Logger.network
 
-    init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
+    init(
+        tokenProvider: TokenProvider = KeychainTokenProvider(),
+        session: HTTPSession = HTTPSessionFactory.makeDefault()
+    ) {
         self.tokenProvider = tokenProvider
+        self.session = session
     }
 
     private var baseURL: String {
@@ -113,7 +118,7 @@ final class API: PAPI {
             useBaseURL: true
         )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
@@ -142,7 +147,7 @@ final class API: PAPI {
             useBaseURL: true
         )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
@@ -182,7 +187,7 @@ final class API: PAPI {
             request.timeoutInterval = timeoutInterval
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for \(endpoint)")
@@ -226,7 +231,7 @@ final class API: PAPI {
 
         logger.logNetworkRequest(method: "POST", url: loginEndpoint)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for login request")
@@ -441,7 +446,7 @@ final class API: PAPI {
         )
         request.timeoutInterval = timeout
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for \(endpoint)")
@@ -483,7 +488,7 @@ final class API: PAPI {
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "POST", url: fullURL)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for sync article fallback")
@@ -542,7 +547,7 @@ final class API: PAPI {
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "PATCH", url: fullURL)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for PATCH \(fullURL)")
@@ -575,7 +580,7 @@ final class API: PAPI {
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "DELETE", url: fullURL)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for DELETE \(fullURL)")
@@ -690,7 +695,7 @@ final class API: PAPI {
         let fullURL = "\(baseURL)\(endpoint)"
         logger.logNetworkRequest(method: "DELETE", url: fullURL)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for DELETE \(fullURL)")
@@ -728,7 +733,7 @@ final class API: PAPI {
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString)
 
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for OAuth client registration")
@@ -792,7 +797,7 @@ final class API: PAPI {
 
         logger.logNetworkRequest(method: "POST", url: url.absoluteString)
 
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for OAuth token \(isRefresh ? "refresh" : "exchange")")
@@ -819,7 +824,7 @@ enum HTTPMethod: String {
     case DELETE
 }
 
-enum APIError: Error {
+enum APIError: Error, Equatable {
     case invalidURL
     case invalidResponse
     case serverError(Int)
