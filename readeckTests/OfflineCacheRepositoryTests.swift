@@ -16,8 +16,7 @@ struct OfflineCacheRepositoryTests {
     // MARK: - Test Setup
 
     private func createInMemoryCoreDataStack() -> NSManagedObjectContext {
-        let managedObjectModel = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
-        let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
+        let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: TestCoreDataModel.shared)
 
         try! persistentStoreCoordinator.addPersistentStore(
             ofType: NSInMemoryStoreType,

@@ -20,8 +20,7 @@ struct CoreDataThreadingTests {
 
     /// In-memory container mirroring CoreDataManager's merge configuration.
     private func makeContainer() -> NSPersistentContainer {
-        let model = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
-        let container = NSPersistentContainer(name: "readeck", managedObjectModel: model)
+        let container = NSPersistentContainer(name: "readeck", managedObjectModel: TestCoreDataModel.shared)
 
         let description = NSPersistentStoreDescription()
         description.type = NSInMemoryStoreType
