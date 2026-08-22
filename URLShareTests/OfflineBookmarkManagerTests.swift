@@ -16,18 +16,18 @@ struct OfflineBookmarkManagerTests {
         return (OfflineBookmarkManager(coreDataManager: coreData), coreData)
     }
 
-    private func fetchBookmarks(_ coreData: CoreDataManager) throws -> [ArticleURLEntity] {
+    private func fetchBookmarks(_ coreData: CoreDataManager) async throws -> [ArticleURLEntity] {
         let context = coreData.context
-        return try context.performAndWait {
+        return try await context.perform {
             let request: NSFetchRequest<ArticleURLEntity> = ArticleURLEntity.fetchRequest()
             request.sortDescriptors = [NSSortDescriptor(key: "url", ascending: true)]
             return try context.fetch(request)
         }
     }
 
-    private func fetchTags(_ coreData: CoreDataManager) throws -> [TagEntity] {
+    private func fetchTags(_ coreData: CoreDataManager) async throws -> [TagEntity] {
         let context = coreData.context
-        return try context.performAndWait {
+        return try await context.perform {
             let request: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
             request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
             return try context.fetch(request)
@@ -37,7 +37,7 @@ struct OfflineBookmarkManagerTests {
     // MARK: - Offline Store
 
     @Test("saveOfflineBookmark queues a bookmark with its tags and HTML")
-    func saveCreatesEntry() throws {
+    func saveCreatesEntry() async throws {
         let (manager, coreData) = makeManager()
 
         let saved = manager.saveOfflineBookmark(
@@ -48,7 +48,7 @@ struct OfflineBookmarkManagerTests {
         )
 
         #expect(saved == true)
-        let entities = try fetchBookmarks(coreData)
+        let entities = try await fetchBookmarks(coreData)
         #expect(entities.count == 1)
         #expect(entities[0].url == "https://example.com/a")
         #expect(entities[0].title == "Article A")
@@ -59,13 +59,13 @@ struct OfflineBookmarkManagerTests {
     }
 
     @Test("saveOfflineBookmark updates the existing entry for a known URL instead of duplicating")
-    func saveDeduplicatesByURL() throws {
+    func saveDeduplicatesByURL() async throws {
         let (manager, coreData) = makeManager()
 
         _ = manager.saveOfflineBookmark(url: "https://example.com/a", title: "Old", tags: ["old"], html: "<p>old</p>")
         _ = manager.saveOfflineBookmark(url: "https://example.com/a", title: "New", tags: ["new"], html: "<p>new</p>")
 
-        let entities = try fetchBookmarks(coreData)
+        let entities = try await fetchBookmarks(coreData)
         #expect(entities.count == 1)
         #expect(entities[0].title == "New")
         #expect(entities[0].tags == "new")
@@ -73,24 +73,24 @@ struct OfflineBookmarkManagerTests {
     }
 
     @Test("saveOfflineBookmark keeps separate entries for different URLs")
-    func saveKeepsDistinctURLs() throws {
+    func saveKeepsDistinctURLs() async throws {
         let (manager, coreData) = makeManager()
 
         _ = manager.saveOfflineBookmark(url: "https://example.com/a", title: "A")
         _ = manager.saveOfflineBookmark(url: "https://example.com/b", title: "B")
 
-        let entities = try fetchBookmarks(coreData)
+        let entities = try await fetchBookmarks(coreData)
         #expect(entities.count == 2)
         #expect(entities.map(\.url) == ["https://example.com/a", "https://example.com/b"])
     }
 
     @Test("saveOfflineBookmark stores empty tags as an empty string")
-    func saveWithoutTags() throws {
+    func saveWithoutTags() async throws {
         let (manager, coreData) = makeManager()
 
         _ = manager.saveOfflineBookmark(url: "https://example.com/a", title: "A")
 
-        let entities = try fetchBookmarks(coreData)
+        let entities = try await fetchBookmarks(coreData)
         #expect(entities[0].tags?.isEmpty == true)
         #expect(entities[0].html == nil)
     }
@@ -98,14 +98,14 @@ struct OfflineBookmarkManagerTests {
     // MARK: - Sync Handoff
 
     @Test("a queued bookmark carries everything the sync needs")
-    func queuedEntryIsSyncReady() throws {
+    func queuedEntryIsSyncReady() async throws {
         let (manager, coreData) = makeManager()
 
         _ = manager.saveOfflineBookmark(
             url: "https://example.com/a", title: "A", tags: ["x", "y"], html: "<p>h</p>"
         )
 
-        let entity = try #require(try fetchBookmarks(coreData).first)
+        let entity = try #require(try await fetchBookmarks(coreData).first)
         // Genau diese Felder liest OfflineSyncManager in der Haupt-App aus.
         let tags = entity.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
         #expect(entity.url == "https://example.com/a")
@@ -138,7 +138,7 @@ struct OfflineBookmarkManagerTests {
         await manager.saveTags(["swift", "ios"])
         await manager.saveTags(["swift", "kotlin"])
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.map(\.name) == ["ios", "kotlin", "swift"])
     }
 
@@ -151,7 +151,7 @@ struct OfflineBookmarkManagerTests {
             BookmarkLabelDto(name: "ios", count: 2, href: "/ios")
         ])
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.count == 2)
         #expect(tags.first { $0.name == "swift" }?.count == 5)
         #expect(tags.first { $0.name == "ios" }?.count == 2)
@@ -164,7 +164,7 @@ struct OfflineBookmarkManagerTests {
         await manager.saveTagsWithCount([BookmarkLabelDto(name: "swift", count: 5, href: "/swift")])
         await manager.saveTagsWithCount([BookmarkLabelDto(name: "swift", count: 11, href: "/swift")])
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.count == 1)
         #expect(tags[0].count == 11)
     }

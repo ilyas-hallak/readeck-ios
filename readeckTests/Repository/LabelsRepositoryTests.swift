@@ -19,9 +19,12 @@ struct LabelsRepositoryTests {
         return (LabelsRepository(api: api, coreDataManager: coreData), api, coreData)
     }
 
-    private func fetchTags(_ coreData: CoreDataManager) throws -> [TagEntity] {
+    /// Bewusst die async-Variante von `perform`: `performAndWait` würde den
+    /// aufrufenden Thread blockieren, in einem async-Test also einen Thread des
+    /// Swift-Concurrency-Pools.
+    private func fetchTags(_ coreData: CoreDataManager) async throws -> [TagEntity] {
         let context = coreData.context
-        return try context.performAndWait {
+        return try await context.perform {
             let request: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
             request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
             return try context.fetch(request)
@@ -39,7 +42,7 @@ struct LabelsRepositoryTests {
             BookmarkLabelDto(name: "ios", count: 1, href: "/ios")
         ])
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.count == 2)
         #expect(tags.map(\.name) == ["ios", "swift"])
         #expect(tags.first { $0.name == "swift" }?.count == 3)
@@ -52,7 +55,7 @@ struct LabelsRepositoryTests {
         try await repository.saveLabels([BookmarkLabelDto(name: "swift", count: 3, href: "/swift")])
         try await repository.saveLabels([BookmarkLabelDto(name: "swift", count: 7, href: "/swift")])
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.count == 1)
         #expect(tags.first?.count == 7)
     }
@@ -65,7 +68,7 @@ struct LabelsRepositoryTests {
 
         try await repository.saveNewLabel(name: "kotlin")
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.count == 1)
         #expect(tags.first?.name == "kotlin")
         #expect(tags.first?.count == 1)
@@ -78,7 +81,7 @@ struct LabelsRepositoryTests {
         try await repository.saveNewLabel(name: "  spaced  ")
         try await repository.saveNewLabel(name: "   ")
 
-        let tags = try fetchTags(coreData)
+        let tags = try await fetchTags(coreData)
         #expect(tags.count == 1)
         #expect(tags.first?.name == "spaced")
     }
@@ -90,7 +93,7 @@ struct LabelsRepositoryTests {
         try await repository.saveNewLabel(name: "swift")
         try await repository.saveNewLabel(name: "swift")
 
-        #expect(try fetchTags(coreData).count == 1)
+        #expect(try await fetchTags(coreData).count == 1)
     }
 
     // MARK: - getLabels
