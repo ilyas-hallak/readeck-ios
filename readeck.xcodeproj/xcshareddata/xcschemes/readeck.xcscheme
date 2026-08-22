@@ -52,6 +52,17 @@
                ReferencedContainer = "container:readeck.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CBCF65D6F1178F453B97EB43"
+               BuildableName = "URLShareTests.xctest"
+               BlueprintName = "URLShareTests"
+               ReferencedContainer = "container:readeck.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
