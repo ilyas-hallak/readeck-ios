@@ -18,7 +18,12 @@ protocol TokenProvider {
 
 final class KeychainTokenProvider: TokenProvider {
     private let keychainHelper = KeychainHelper.shared
+    private let session: HTTPSession
     private let logger = Logger.network
+
+    init(session: HTTPSession = HTTPSessionFactory.makeDefault()) {
+        self.session = session
+    }
 
     // Cache to avoid repeated keychain access
     private var cachedToken: String?
@@ -115,7 +120,7 @@ final class KeychainTokenProvider: TokenProvider {
                 urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
                 urlRequest.httpBody = formBody.data(using: .utf8)
 
-                let (data, response) = try await URLSession.shared.data(for: urlRequest)
+                let (data, response) = try await session.data(for: urlRequest)
 
                 guard let httpResponse = response as? HTTPURLResponse,
                       200...299 ~= httpResponse.statusCode else {

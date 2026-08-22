@@ -12,10 +12,15 @@ protocol PInfoApiClient {
 
 final class InfoApiClient: PInfoApiClient {
     private let tokenProvider: TokenProvider
+    private let session: HTTPSession
     private let logger = Logger.network
 
-    init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
+    init(
+        tokenProvider: TokenProvider = KeychainTokenProvider(),
+        session: HTTPSession = HTTPSessionFactory.makeDefault()
+    ) {
         self.tokenProvider = tokenProvider
+        self.session = session
     }
 
     func getServerInfo(endpoint: String? = nil) async throws -> ServerInfoDto {
@@ -27,7 +32,7 @@ final class InfoApiClient: PInfoApiClient {
 
         logger.logNetworkRequest(method: "GET", url: url.absoluteString)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for server info")
