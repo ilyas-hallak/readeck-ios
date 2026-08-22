@@ -3,13 +3,19 @@ import CoreData
 import Kingfisher
 
 final class SettingsRepository: PSettingsRepository {
-    private let coreDataManager = CoreDataManager.shared
-    private let userDefault = UserDefaults.standard
+    private let coreDataManager: CoreDataManager
+    private let userDefault: UserDefaults
     private let keychainHelper = KeychainHelper.shared
     private let tokenProvider: TokenProvider
 
-    init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
+    init(
+        tokenProvider: TokenProvider = KeychainTokenProvider(),
+        coreDataManager: CoreDataManager = .shared,
+        userDefaults: UserDefaults = .standard
+    ) {
         self.tokenProvider = tokenProvider
+        self.coreDataManager = coreDataManager
+        self.userDefault = userDefaults
     }
 
     var hasFinishedSetup: Bool {

@@ -4,10 +4,11 @@ import CoreData
 final class LabelsRepository: PLabelsRepository, @unchecked Sendable {
     private let api: PAPI
 
-    private let coreDataManager = CoreDataManager.shared
+    private let coreDataManager: CoreDataManager
 
-    init(api: PAPI) {
+    init(api: PAPI, coreDataManager: CoreDataManager = .shared) {
         self.api = api
+        self.coreDataManager = coreDataManager
     }
 
     func getLabels() async throws -> [BookmarkLabel] {
