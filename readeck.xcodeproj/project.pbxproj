@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		103C17BBCFB084472615B905 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0C0D569DFD3B5483557CD50 /* Foundation.framework */; };
 		5D2B7FB92DFA27A400EBDB2B /* URLShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D348CC32E0C9F4F00D0AF21 /* netfox in Frameworks */ = {isa = PBXBuildFile; productRef = 5D348CC22E0C9F4F00D0AF21 /* netfox */; };
 		5D48E6022EB402F50043F90F /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5D48E6012EB402F50043F90F /* MarkdownUI */; };
@@ -69,9 +70,22 @@
 		5D45F9C82DF858680048D5B8 /* readeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = readeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B6D21C83CCC049BB1E7E1CA7 /* URLShareTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = URLShareTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0C0D569DFD3B5483557CD50 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		004F78962C51C3A61A09A657 /* Exceptions for "URLShare" folder in "URLShareTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				OfflineBookmarkManager.swift,
+				ShareExtensionServerCheck.swift,
+				SimpleAPI.swift,
+				SimpleAPIDTOs.swift,
+				TagRepository.swift,
+			);
+			target = CBCF65D6F1178F453B97EB43 /* URLShareTests */;
+		};
 		5D2B7FBA2DFA27A400EBDB2B /* Exceptions for "URLShare" folder in "URLShare" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -84,6 +98,7 @@
 			membershipExceptions = (
 				Assets.xcassets,
 				Data/API/DTOs/OAuthTokenResponseDto.swift,
+				Data/API/HTTPSession.swift,
 				Data/CoreData/CoreDataManager.swift,
 				"Data/Extensions/NSManagedObjectContext+SafeFetch.swift",
 				"Data/Extensions/String+Localization.swift",
@@ -128,6 +143,49 @@
 			);
 			target = 5D45F9C72DF858680048D5B8 /* readeck */;
 		};
+		9000F8C7CACD096CE2F73779 /* Exceptions for "readeck" folder in "URLShareTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				Data/API/DTOs/OAuthTokenResponseDto.swift,
+				Data/API/HTTPSession.swift,
+				Data/CoreData/CoreDataManager.swift,
+				"Data/Extensions/NSManagedObjectContext+SafeFetch.swift",
+				"Data/Extensions/String+Localization.swift",
+				Data/KeychainHelper.swift,
+				Data/Utils/HTTPHeadersHelper.swift,
+				Data/Utils/LabelUtils.swift,
+				Domain/Model/ArchiveAdvanceMode.swift,
+				Domain/Model/Bookmark.swift,
+				Domain/Model/BookmarkLabel.swift,
+				Domain/Model/BookmarkSortSettings.swift,
+				Domain/Model/CardLayoutStyle.swift,
+				Domain/Model/FontFamily.swift,
+				Domain/Model/FontSize.swift,
+				Domain/Model/ReaderColorTheme.swift,
+				Domain/Model/Settings.swift,
+				Domain/Model/SwipeAction.swift,
+				Domain/Model/TagSortOrder.swift,
+				Domain/Model/Theme.swift,
+				Domain/Model/UrlOpener.swift,
+				Domain/Models/AuthenticationMethod.swift,
+				Domain/Models/OAuthToken.swift,
+				readeck.xcdatamodeld,
+				Splash.storyboard,
+				UI/Components/Constants.swift,
+				UI/Components/CoreDataTagManagementView.swift,
+				UI/Components/CustomTextFieldStyle.swift,
+				UI/Components/LegacyTagManagementView.swift,
+				UI/Components/UnifiedLabelChip.swift,
+				UI/Extension/FontSizeExtension.swift,
+				UI/Models/AppSettings.swift,
+				UI/Utils/BuildEnvironment.swift,
+				UI/Utils/Logger.swift,
+				UI/Utils/LogStore.swift,
+				UI/Utils/NotificationNames.swift,
+			);
+			target = CBCF65D6F1178F453B97EB43 /* URLShareTests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -135,6 +193,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				5D2B7FBA2DFA27A400EBDB2B /* Exceptions for "URLShare" folder in "URLShare" target */,
+				004F78962C51C3A61A09A657 /* Exceptions for "URLShare" folder in "URLShareTests" target */,
 			);
 			path = URLShare;
 			sourceTree = "<group>";
@@ -144,6 +203,7 @@
 			exceptions = (
 				5DCD48BE2DFB47A800AC7FB6 /* Exceptions for "readeck" folder in "readeck" target */,
 				5DCD48B72DFB44D600AC7FB6 /* Exceptions for "readeck" folder in "URLShare" target */,
+				9000F8C7CACD096CE2F73779 /* Exceptions for "readeck" folder in "URLShareTests" target */,
 			);
 			path = readeck;
 			sourceTree = "<group>";
@@ -156,6 +216,11 @@
 		5D45F9EB2DF8586A0048D5B8 /* readeckUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = readeckUITests;
+			sourceTree = "<group>";
+		};
+		C8442F1795FF22F013BE0B9B /* URLShareTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = URLShareTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -195,9 +260,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DE655A2EFB36EA440CAB383C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				103C17BBCFB084472615B905 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2820DCFB2849BA9228F3891D /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				D0C0D569DFD3B5483557CD50 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		377752A5ABDC44A73B21F1B9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2820DCFB2849BA9228F3891D /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		5D45F9BF2DF858680048D5B8 = {
 			isa = PBXGroup;
 			children = (
@@ -206,6 +295,8 @@
 				5D45F9EB2DF8586A0048D5B8 /* readeckUITests */,
 				5D2B7FB02DFA27A400EBDB2B /* URLShare */,
 				5D45F9C92DF858680048D5B8 /* Products */,
+				377752A5ABDC44A73B21F1B9 /* Frameworks */,
+				C8442F1795FF22F013BE0B9B /* URLShareTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -216,6 +307,7 @@
 				5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */,
 				5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */,
 				5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */,
+				B6D21C83CCC049BB1E7E1CA7 /* URLShareTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -239,8 +331,6 @@
 				5D2B7FB02DFA27A400EBDB2B /* URLShare */,
 			);
 			name = URLShare;
-			packageProductDependencies = (
-			);
 			productName = URLShare;
 			productReference = 5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -295,8 +385,6 @@
 				5D45F9E12DF8586A0048D5B8 /* readeckTests */,
 			);
 			name = readeckTests;
-			packageProductDependencies = (
-			);
 			productName = readeckTests;
 			productReference = 5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -318,11 +406,29 @@
 				5D45F9EB2DF8586A0048D5B8 /* readeckUITests */,
 			);
 			name = readeckUITests;
-			packageProductDependencies = (
-			);
 			productName = readeckUITests;
 			productReference = 5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		CBCF65D6F1178F453B97EB43 /* URLShareTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67AE5D586EE73295D4B99E70 /* Build configuration list for PBXNativeTarget "URLShareTests" */;
+			buildPhases = (
+				112A90A2B4FDC6FCEFF59622 /* Sources */,
+				DE655A2EFB36EA440CAB383C /* Frameworks */,
+				7E8893E00576BF44CD4C50D1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C8442F1795FF22F013BE0B9B /* URLShareTests */,
+			);
+			name = URLShareTests;
+			productName = URLShareTests;
+			productReference = B6D21C83CCC049BB1E7E1CA7 /* URLShareTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -376,6 +482,7 @@
 				5D45F9DD2DF8586A0048D5B8 /* readeckTests */,
 				5D45F9E72DF8586A0048D5B8 /* readeckUITests */,
 				5D2B7FAE2DFA27A400EBDB2B /* URLShare */,
+				CBCF65D6F1178F453B97EB43 /* URLShareTests */,
 			);
 		};
 /* End PBXProject section */
@@ -409,6 +516,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7E8893E00576BF44CD4C50D1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -434,6 +548,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		112A90A2B4FDC6FCEFF59622 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5D2B7FAB2DFA27A400EBDB2B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -854,6 +975,39 @@
 			};
 			name = Release;
 		};
+		923BC3116D37E441E48DFFB5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8J69P655GN;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.URLShareTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+			};
+			name = Debug;
+		};
+		B9B64A5EAD53EB2E0EE9FE9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8J69P655GN;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.URLShareTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -898,6 +1052,15 @@
 			buildConfigurations = (
 				5D45F9F92DF8586A0048D5B8 /* Debug */,
 				5D45F9FA2DF8586A0048D5B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		67AE5D586EE73295D4B99E70 /* Build configuration list for PBXNativeTarget "URLShareTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B9B64A5EAD53EB2E0EE9FE9F /* Release */,
+				923BC3116D37E441E48DFFB5 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

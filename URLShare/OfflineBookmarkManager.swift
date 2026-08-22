@@ -4,12 +4,16 @@ import CoreData
 final class OfflineBookmarkManager: @unchecked Sendable {
     static let shared = OfflineBookmarkManager()
 
-    private init() {}
+    private let coreDataManager: CoreDataManager
+
+    init(coreDataManager: CoreDataManager = .shared) {
+        self.coreDataManager = coreDataManager
+    }
 
     // MARK: - Core Data Stack for Share Extension
 
     var context: NSManagedObjectContext {
-        CoreDataManager.shared.context
+        coreDataManager.context
     }
 
     // MARK: - Offline Storage Methods
@@ -52,7 +56,7 @@ final class OfflineBookmarkManager: @unchecked Sendable {
     }
 
     func getTags() async -> [String] {
-        let backgroundContext = CoreDataManager.shared.newBackgroundContext()
+        let backgroundContext = coreDataManager.newBackgroundContext()
 
         do {
             return try await backgroundContext.perform {
@@ -69,7 +73,7 @@ final class OfflineBookmarkManager: @unchecked Sendable {
     }
 
     func saveTags(_ tags: [String]) async {
-        let backgroundContext = CoreDataManager.shared.newBackgroundContext()
+        let backgroundContext = coreDataManager.newBackgroundContext()
 
         do {
             try await backgroundContext.perform {
@@ -101,7 +105,7 @@ final class OfflineBookmarkManager: @unchecked Sendable {
     }
 
     func saveTagsWithCount(_ tags: [BookmarkLabelDto]) async {
-        let backgroundContext = CoreDataManager.shared.newBackgroundContext()
+        let backgroundContext = coreDataManager.newBackgroundContext()
 
         do {
             try await backgroundContext.perform {
