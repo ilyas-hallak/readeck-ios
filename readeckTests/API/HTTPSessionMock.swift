@@ -8,16 +8,15 @@
 import Foundation
 @testable import readeck
 
-/// Einfacher HTTPSession-Mock: liefert vorgegebene Antworten nacheinander und
-/// zeichnet die gesendeten Requests auf. Reicht die Stub-Liste nicht aus, wird
-/// der letzte Stub wiederholt.
+/// Simple HTTPSession mock: returns the given responses in order and records the
+/// requests it was handed. Once the stub list runs out, the last stub repeats.
 final class MockHTTPSession: HTTPSession {
     enum Stub {
-        /// Erfolgreiche HTTP-Antwort mit Statuscode, Body und optionalen Headern.
+        /// Successful HTTP response with status code, body and optional headers.
         case http(status: Int, data: Data, headers: [String: String] = [:])
-        /// Beliebige (Data, URLResponse) - z. B. eine Nicht-HTTP-Antwort zum Testen von invalidResponse.
+        /// Any (Data, URLResponse) pair, e.g. a non-HTTP response to exercise invalidResponse.
         case raw(Data, URLResponse)
-        /// Wirft einen Fehler, etwa einen URLError für Server-nicht-erreichbar.
+        /// Throws an error, e.g. a URLError standing in for an unreachable server.
         case failure(Error)
     }
 
@@ -61,7 +60,7 @@ final class MockHTTPSession: HTTPSession {
 }
 
 extension MockHTTPSession.Stub {
-    /// Bequemer Erfolg mit JSON-String-Body.
+    /// Convenience success with a JSON string body.
     static func json(_ json: String, status: Int = 200) -> MockHTTPSession.Stub {
         .http(status: status, data: Data(json.utf8))
     }

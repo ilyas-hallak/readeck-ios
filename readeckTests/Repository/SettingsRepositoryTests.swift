@@ -9,10 +9,10 @@ import Testing
 import Foundation
 @testable import readeck
 
-/// Deckt die CoreData- und UserDefaults-gestützten Pfade ab.
-/// Die Keychain-Felder (endpoint/username/password/token) bleiben ausgespart:
-/// `SettingsRepository` greift dafür fest auf `KeychainHelper.shared` zu, ein Test
-/// würde den echten Keychain des Geräts anfassen.
+/// Covers the CoreData- and UserDefaults-backed paths.
+/// The keychain fields (endpoint/username/password/token) are left out on purpose:
+/// `SettingsRepository` reaches for `KeychainHelper.shared` directly there, so a test
+/// would touch the real device keychain.
 @Suite("SettingsRepository Tests")
 struct SettingsRepositoryTests {
 
@@ -105,12 +105,12 @@ struct SettingsRepositoryTests {
         #expect(loaded.lineHeight == nil)
     }
 
-    // Dokumentiert das Ist-Verhalten, nicht das gewünschte:
-    // loadSettings behandelt einen negativen horizontalMargin als "nicht gesetzt",
-    // der CoreData-Default des Attributs ist aber 0. Sobald irgendeine Einstellung
-    // gespeichert wurde, existiert die SettingEntity und der Margin kommt als 0
-    // zurück statt als nil - der Reader nutzt dann 0 statt der gewollten 16
-    // (siehe FontSettingsViewModel: `settings.horizontalMargin ?? 16`).
+    // Documents the current behaviour, not the desired one:
+    // loadSettings treats a negative horizontalMargin as "not set", but the CoreData
+    // default for the attribute is 0. As soon as any setting has been saved the
+    // SettingEntity exists and the margin comes back as 0 instead of nil - the reader
+    // then uses 0 rather than the intended 16
+    // (see FontSettingsViewModel: `settings.horizontalMargin ?? 16`).
     @Test("known quirk: an untouched horizontalMargin reads back as 0, not nil")
     func untouchedHorizontalMarginReadsAsZero() async throws {
         let (repository, _) = makeRepository()
@@ -198,7 +198,7 @@ struct SettingsRepositoryTests {
         let size = try await repository.getMaxCacheSize()
 
         #expect(size == UInt(200 * 1024 * 1024))
-        // Zweiter Aufruf liest den nun persistierten Wert.
+        // The second call reads the value that has now been persisted.
         #expect(try await repository.getMaxCacheSize() == size)
     }
 }

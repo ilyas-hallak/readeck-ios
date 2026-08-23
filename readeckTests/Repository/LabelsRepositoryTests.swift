@@ -101,7 +101,7 @@ struct LabelsRepositoryTests {
     @Test("getLabels returns the cached labels sorted by count, then name")
     func getLabelsReturnsCacheSorted() async throws {
         let (repository, api, _) = makeRepository()
-        // Der Hintergrund-Refresh darf den Test nicht beeinflussen.
+        // The background refresh must not interfere with the test.
         api.getBookmarkLabelsHandler = { [] }
 
         try await repository.saveLabels([
@@ -112,7 +112,7 @@ struct LabelsRepositoryTests {
 
         let labels = try await repository.getLabels()
 
-        // count absteigend, bei Gleichstand name aufsteigend
+        // count descending, name ascending on ties
         #expect(labels.map(\.name) == ["alpha", "common", "rare"])
         #expect(labels.first?.count == 9)
     }

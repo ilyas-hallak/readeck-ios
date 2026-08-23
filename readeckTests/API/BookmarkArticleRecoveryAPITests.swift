@@ -65,9 +65,9 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
         super.tearDown()
     }
 
-    /// API mit einer Session, deren Requests über das Stub-URLProtocol laufen.
-    /// `protocolClasses` in der Konfiguration greift auch bei einer injizierten
-    /// Session - im Gegensatz zu global registrierten Klassen, die nur `URLSession.shared` treffen.
+    /// API backed by a session whose requests go through the stub URLProtocol.
+    /// `protocolClasses` on the configuration also applies to an injected session,
+    /// unlike globally registered classes, which only ever affect `URLSession.shared`.
     private func makeStubbedAPI() -> API {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [ArticleRecoveryURLProtocol.self]
