@@ -6,6 +6,11 @@ import Foundation
 private enum Config {
     static let token = "PASTE_TOKEN_HERE"
     static let endpoint = "PASTE_ENDPOINT_HERE"
+
+    /// Ohne echte Zugangsdaten wird der Test übersprungen statt fehlzuschlagen.
+    static var isConfigured: Bool {
+        !token.hasPrefix("PASTE_") && !endpoint.hasPrefix("PASTE_")
+    }
 }
 
 private struct CreateRequest: Encodable {
@@ -36,7 +41,8 @@ private struct ArticleResource: Decodable {
 
 struct HTMLEncodingIntegrationTests {
 
-    @Test func createAndReadBookmarkWithUTF8HTML() async throws {
+    @Test(.enabled(if: Config.isConfigured, "Requires a real Readeck server: fill in TOKEN and ENDPOINT"))
+    func createAndReadBookmarkWithUTF8HTML() async throws {
         let html = """
         <html><head><meta charset="utf-8"></head><body>
         <h1>UTF-8 Test: Ä ö ü ß café 日本語 🎉</h1>

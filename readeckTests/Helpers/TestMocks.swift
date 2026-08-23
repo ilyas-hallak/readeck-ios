@@ -115,14 +115,25 @@ class TestMockTokenProvider: TokenProvider {
     func getOAuthClientId() async -> String? { return nil }
 }
 
+// MARK: - Shared Test CoreData Model
+
+/// Ein einziges Modell für alle In-Memory-Stores der Tests.
+///
+/// `NSManagedObjectModel.mergedModel(from:)` pro Instanz aufzurufen erzeugt mehrere
+/// Modelle, die dieselbe NSManagedObject-Subklasse beanspruchen. CoreData kann `+entity`
+/// dann nicht mehr auflösen ("Failed to find a unique match for an NSEntityDescription")
+/// und stürzt beim Speichern ab, sobald mehrere CoreData-Suiten im selben Prozess laufen.
+enum TestCoreDataModel {
+    static let shared: NSManagedObjectModel = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
+}
+
 // MARK: - Test CoreData Manager
 
 class TestCoreDataManager {
     let context: NSManagedObjectContext
 
     init() {
-        let managedObjectModel = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
-        let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
+        let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: TestCoreDataModel.shared)
 
         try! persistentStoreCoordinator.addPersistentStore(
             ofType: NSInMemoryStoreType,

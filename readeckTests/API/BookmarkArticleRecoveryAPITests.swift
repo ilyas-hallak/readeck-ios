@@ -60,15 +60,19 @@ private final class ArticleRecoveryURLProtocol: URLProtocol {
 
 final class BookmarkArticleRecoveryAPITests: XCTestCase {
 
-    override func setUp() {
-        super.setUp()
-        URLProtocol.registerClass(ArticleRecoveryURLProtocol.self)
-    }
-
     override func tearDown() {
-        URLProtocol.unregisterClass(ArticleRecoveryURLProtocol.self)
         ArticleRecoveryURLProtocol.requestHandler = nil
         super.tearDown()
+    }
+
+    /// API mit einer Session, deren Requests über das Stub-URLProtocol laufen.
+    /// `protocolClasses` in der Konfiguration greift auch bei einer injizierten
+    /// Session - im Gegensatz zu global registrierten Klassen, die nur `URLSession.shared` treffen.
+    private func makeStubbedAPI() -> API {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [ArticleRecoveryURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        return API(tokenProvider: TestMockTokenProvider(), session: session)
     }
 
     func testGetBookmarkArticle_502_thenGzipRetryReturns200() async throws {
@@ -94,7 +98,7 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
             return (response, "<p>ok</p>".data(using: .utf8)!)
         }
 
-        let api = API(tokenProvider: TestMockTokenProvider())
+        let api = makeStubbedAPI()
         let html = try await api.getBookmarkArticle(id: "bm1")
         XCTAssertEqual(html, "<p>ok</p>")
     }
@@ -141,7 +145,7 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
             throw URLError(.badURL)
         }
 
-        let api = API(tokenProvider: TestMockTokenProvider())
+        let api = makeStubbedAPI()
         let html = try await api.getBookmarkArticle(id: "bm1")
         XCTAssertEqual(html, "<article>x</article>")
     }
@@ -185,7 +189,7 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
             throw URLError(.badURL)
         }
 
-        let api = API(tokenProvider: TestMockTokenProvider())
+        let api = makeStubbedAPI()
         let html = try await api.getBookmarkArticle(id: "bm1")
         XCTAssertEqual(html, "<article>long</article>")
     }
@@ -226,7 +230,7 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
             throw URLError(.badURL)
         }
 
-        let api = API(tokenProvider: TestMockTokenProvider())
+        let api = makeStubbedAPI()
         let html = try await api.getBookmarkArticle(id: "bm1")
         XCTAssertEqual(html, "<article>y</article>")
     }
@@ -242,7 +246,7 @@ final class BookmarkArticleRecoveryAPITests: XCTestCase {
             return (response, Data())
         }
 
-        let api = API(tokenProvider: TestMockTokenProvider())
+        let api = makeStubbedAPI()
         do {
             _ = try await api.getBookmarkArticle(id: "bm1")
             XCTFail("Expected error")

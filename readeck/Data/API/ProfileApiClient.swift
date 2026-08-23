@@ -13,10 +13,15 @@ protocol PProfileApiClient {
 
 final class ProfileApiClient: PProfileApiClient {
     private let tokenProvider: TokenProvider
+    private let session: HTTPSession
     private let logger = Logger.network
 
-    init(tokenProvider: TokenProvider = KeychainTokenProvider()) {
+    init(
+        tokenProvider: TokenProvider = KeychainTokenProvider(),
+        session: HTTPSession = HTTPSessionFactory.makeDefault()
+    ) {
         self.tokenProvider = tokenProvider
+        self.session = session
     }
 
     func getProfile() async throws -> UserProfileDto {
@@ -26,7 +31,7 @@ final class ProfileApiClient: PProfileApiClient {
 
         logger.logNetworkRequest(method: "GET", url: url.absoluteString)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("Invalid HTTP response for user profile")
