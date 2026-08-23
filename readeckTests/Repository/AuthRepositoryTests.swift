@@ -127,7 +127,7 @@ struct AuthRepositoryTests {
             endpoint: "https://readeck.example.com", token: .fixture(), clientId: "client-1"
         )
 
-        // Der Token-Teil muss trotzdem persistiert sein.
+        // The token side of the flow must still be persisted.
         #expect(tokenProvider.authMethod == .oauth)
         #expect(settings.savedSettings.isEmpty)
     }

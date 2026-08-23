@@ -11,9 +11,9 @@ import CoreData
 
 // MARK: - Stub API
 
-/// PAPI-Stub mit Closure-Handlern statt `fatalError`-Platzhaltern.
-/// Nicht gesetzte Handler werfen `notStubbed`, damit ein Test sofort zeigt,
-/// welchen Aufruf er nicht erwartet hat.
+/// PAPI stub with closure handlers instead of `fatalError` placeholders.
+/// Unset handlers throw `notStubbed`, so a test immediately shows which call
+/// it did not expect.
 final class StubAPI: PAPI, @unchecked Sendable {
     enum StubError: Error, Equatable {
         case notStubbed(String)
@@ -32,7 +32,7 @@ final class StubAPI: PAPI, @unchecked Sendable {
     var getBookmarkLabelsHandler: (() async throws -> [BookmarkLabelDto])?
     var loginHandler: ((String, String, String) async throws -> UserDto)?
 
-    // Aufzeichnungen für Assertions
+    // Recorded calls for assertions
     private(set) var updateBookmarkCalls: [(String, UpdateBookmarkRequestDto)] = []
     private(set) var deleteBookmarkCalls: [String] = []
     private(set) var createBookmarkCalls: [CreateBookmarkRequestDto] = []
@@ -107,7 +107,7 @@ final class StubAPI: PAPI, @unchecked Sendable {
 
 // MARK: - Recording Token Provider
 
-/// TokenProvider, der Schreibzugriffe im Speicher hält und mitschreibt.
+/// TokenProvider that keeps writes in memory and records them.
 final class RecordingTokenProvider: TokenProvider, @unchecked Sendable {
     private(set) var token: String?
     private(set) var endpoint: String?
@@ -141,8 +141,8 @@ final class RecordingTokenProvider: TokenProvider, @unchecked Sendable {
 
 // MARK: - Recording Settings Repository
 
-/// PSettingsRepository-Double, das gespeicherte Settings festhält.
-/// `MockSettingsRepository` aus dem App-Target hat feste Rückgaben und zeichnet nichts auf.
+/// PSettingsRepository double that records what was saved.
+/// `MockSettingsRepository` from the app target has fixed return values and records nothing.
 final class RecordingSettingsRepository: PSettingsRepository, @unchecked Sendable {
     var storedSettings: Settings?
     var loadSettingsError: Error?
@@ -219,7 +219,7 @@ extension OAuthToken {
 // MARK: - In-Memory CoreDataManager
 
 extension CoreDataManager {
-    /// CoreDataManager auf einem In-Memory-Store, für Repositories die den Manager injiziert bekommen.
+    /// CoreDataManager backed by an in-memory store, for repositories that take the manager injected.
     static func inMemory() -> CoreDataManager {
         let container = NSPersistentContainer(name: "readeck", managedObjectModel: TestCoreDataModel.shared)
         let description = NSPersistentStoreDescription()
@@ -239,8 +239,8 @@ extension CoreDataManager {
 
 // MARK: - Isolated UserDefaults
 
-/// UserDefaults in einer eigenen Suite, damit Tests sich nicht gegenseitig
-/// und nicht die echten App-Einstellungen beeinflussen.
+/// UserDefaults in a dedicated suite, so tests neither affect each other
+/// nor the real app settings.
 func makeIsolatedUserDefaults(suiteName: String = UUID().uuidString) -> UserDefaults {
     guard let defaults = UserDefaults(suiteName: suiteName) else {
         preconditionFailure("Could not create UserDefaults suite \(suiteName)")

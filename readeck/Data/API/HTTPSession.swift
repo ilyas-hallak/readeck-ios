@@ -7,9 +7,9 @@
 
 import Foundation
 
-/// Schmale Abstraktion über die eine URLSession-Methode, die die App tatsächlich nutzt.
-/// `URLSession` erfüllt die Signatur bereits nativ, dadurch bleibt die Extension leer.
-/// In Tests lässt sich ein einfacher Mock injizieren, ohne URLProtocol-Setup.
+/// Slim abstraction over the one URLSession method the app actually uses.
+/// `URLSession` already satisfies the signature natively, so the extension stays empty.
+/// Tests can inject a simple mock without any URLProtocol setup.
 protocol HTTPSession {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
 }
@@ -17,13 +17,13 @@ protocol HTTPSession {
 extension URLSession: HTTPSession {}
 
 enum HTTPSessionFactory {
-    /// Default-Session mit konfigurierten Timeouts für self-hosted / langsame Server.
-    /// Der 60s-Default fühlt sich sonst wie ein Freeze an.
+    /// Default session with timeouts tuned for self-hosted / slow servers.
+    /// The 60s default otherwise feels like a freeze.
     ///
-    /// `waitsForConnectivity` bleibt bewusst aus: OfflineSyncManager erkennt einen
-    /// nicht erreichbaren Server an URLError-Codes wie `.notConnectedToInternet` und
-    /// bricht den Sync dann früh ab. Mit Warten käme stattdessen erst nach
-    /// `timeoutIntervalForResource` ein `.timedOut`, und die Offline-Erkennung liefe ins Leere.
+    /// `waitsForConnectivity` is deliberately left off: OfflineSyncManager detects an
+    /// unreachable server through URLError codes such as `.notConnectedToInternet` and
+    /// aborts the sync early. Waiting would surface a `.timedOut` only after
+    /// `timeoutIntervalForResource`, and that offline detection would silently stop working.
     static func makeDefault() -> HTTPSession {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30

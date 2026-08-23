@@ -12,8 +12,8 @@ final class CoreDataManager {
         self.injectedContainer = nil
     }
 
-    /// Erlaubt einen vorkonfigurierten Container, etwa einen In-Memory-Store in Tests.
-    /// Der reguläre App-Pfad läuft weiter über `shared`.
+    /// Accepts a preconfigured container, e.g. an in-memory store in tests.
+    /// The regular app path keeps going through `shared`.
     init(container: NSPersistentContainer) {
         self.injectedContainer = container
     }
