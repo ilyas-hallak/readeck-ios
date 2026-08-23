@@ -8,8 +8,8 @@
 import Testing
 import Foundation
 
-/// `SimpleAPI` ist bewusst statisch, daher wird die Umgebung pro Test gesetzt
-/// und danach wieder auf `live()` zurückgestellt.
+/// `SimpleAPI` is static by design, so the environment is set per test and
+/// restored to `live()` afterwards.
 @Suite("SimpleAPI Tests", .serialized)
 struct SimpleAPITests {
     private func withEnvironment(

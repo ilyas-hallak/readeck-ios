@@ -1,7 +1,7 @@
 import Foundation
 
-/// Bündelt die äußeren Abhängigkeiten von `SimpleAPI`, damit die statischen
-/// Methoden testbar bleiben, ohne alle Aufrufer in der Extension anzufassen.
+/// Bundles the outside dependencies of `SimpleAPI` so the static methods stay
+/// testable without having to touch every caller in the extension.
 struct SimpleAPIEnvironment {
     var session: HTTPSession
     var loadToken: () -> String?
@@ -19,7 +19,7 @@ struct SimpleAPIEnvironment {
 final class SimpleAPI {
     private static let logger = Logger.network
 
-    /// In Tests überschreibbar; im App-Betrieb bleibt es bei `live()`.
+    /// Overridable in tests; at runtime this stays on `live()`.
     static var environment = SimpleAPIEnvironment.live()
 
     // MARK: - Token Management

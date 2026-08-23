@@ -8,8 +8,8 @@
 import Foundation
 import CoreData
 
-/// HTTPSession-Mock für die Share-Extension-Tests.
-/// Eigene Kopie, weil `readeckTests` ein anderes Modul ist.
+/// HTTPSession mock for the share extension tests.
+/// A separate copy, because `readeckTests` is a different module.
 final class MockHTTPSession: HTTPSession, @unchecked Sendable {
     enum Stub {
         case http(status: Int, data: Data, headers: [String: String] = [:])
@@ -62,12 +62,12 @@ extension MockHTTPSession.Stub {
 // MARK: - In-Memory CoreData
 
 enum TestCoreData {
-    /// Ein gemeinsames Modell für alle Stores: mehrere `mergedModel`-Instanzen
-    /// beanspruchen sonst dieselbe NSManagedObject-Subklasse und CoreData
-    /// kann `+entity` nicht mehr auflösen.
+    /// One model shared by every store: several `mergedModel` instances would each
+    /// claim the same NSManagedObject subclass, and CoreData could no longer resolve
+    /// `+entity`.
     ///
-    /// Das Modell wird aus dem Test-Bundle geladen, nicht aus `Bundle.main`:
-    /// URLShareTests läuft ohne Host-App, `Bundle.main` ist dort das xctest-Tool.
+    /// The model is loaded from the test bundle rather than `Bundle.main`:
+    /// URLShareTests runs without a host app, where `Bundle.main` is the xctest tool.
     static let model: NSManagedObjectModel = {
         let bundle = Bundle(for: MockHTTPSession.self)
         guard let model = NSManagedObjectModel.mergedModel(from: [bundle]) else {

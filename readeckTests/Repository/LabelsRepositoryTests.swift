@@ -19,9 +19,8 @@ struct LabelsRepositoryTests {
         return (LabelsRepository(api: api, coreDataManager: coreData), api, coreData)
     }
 
-    /// Bewusst die async-Variante von `perform`: `performAndWait` würde den
-    /// aufrufenden Thread blockieren, in einem async-Test also einen Thread des
-    /// Swift-Concurrency-Pools.
+    /// Deliberately the async variant of `perform`: `performAndWait` would block the
+    /// calling thread, which inside an async test is a thread of the Swift concurrency pool.
     private func fetchTags(_ coreData: CoreDataManager) async throws -> [TagEntity] {
         let context = coreData.context
         return try await context.perform {

@@ -52,7 +52,7 @@ struct OfflineBookmarkManagerTests {
         #expect(entities.count == 1)
         #expect(entities[0].url == "https://example.com/a")
         #expect(entities[0].title == "Article A")
-        // Tags werden als kommaseparierter String abgelegt - so liest sie OfflineSyncManager wieder ein.
+        // Tags are stored as a comma-separated string, which is how OfflineSyncManager reads them back.
         #expect(entities[0].tags == "swift,ios")
         #expect(entities[0].html == "<p>content</p>")
         #expect(entities[0].id != nil)
@@ -106,7 +106,7 @@ struct OfflineBookmarkManagerTests {
         )
 
         let entity = try #require(try await fetchBookmarks(coreData).first)
-        // Genau diese Felder liest OfflineSyncManager in der Haupt-App aus.
+        // These are exactly the fields OfflineSyncManager reads in the main app.
         let tags = entity.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
         #expect(entity.url == "https://example.com/a")
         #expect(tags == ["x", "y"])
