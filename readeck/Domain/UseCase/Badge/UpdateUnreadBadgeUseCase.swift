@@ -4,7 +4,7 @@
 //
 //  Business logic for the unread app-icon badge (opt-in, off by default).
 //
-//  The count mirrors the app's "Unread" tab (not archived, not favorited) and is
+//  The count mirrors the app's "Unread" tab (not archived; favorites count too) and is
 //  read cheaply from the `Total-Count` header via a `limit: 1` bookmarks request —
 //  no dedicated endpoint or full fetch. Applying the value goes through the
 //  `PAppBadgeService` output port, keeping the platform API out of the domain.

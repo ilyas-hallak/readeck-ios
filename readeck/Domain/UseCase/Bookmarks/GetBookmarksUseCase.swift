@@ -22,7 +22,7 @@ final class GetBookmarksUseCase: PGetBookmarksUseCase {
                 case .all:
                     return true
                 case .unread:
-                    return !bookmark.isArchived && !bookmark.isMarked
+                    return !bookmark.isArchived
                 case .favorite:
                     return bookmark.isMarked
                 case .archived:

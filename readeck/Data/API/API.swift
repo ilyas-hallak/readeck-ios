@@ -259,8 +259,9 @@ final class API: PAPI {
         if let state {
             switch state {
             case .unread:
+                // Unread means "not archived" only. A favorite can be unread too,
+                // matching the web app, so it is not filtered out here.
                 queryItems.append(URLQueryItem(name: "is_archived", value: "false"))
-                queryItems.append(URLQueryItem(name: "is_marked", value: "false"))
             case .favorite:
                 queryItems.append(URLQueryItem(name: "is_marked", value: "true"))
             case .archived:
