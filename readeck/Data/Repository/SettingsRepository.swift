@@ -3,11 +3,6 @@ import CoreData
 import Kingfisher
 
 final class SettingsRepository: PSettingsRepository {
-    /// Marks "the user never picked a margin". 0 cannot serve as that marker because it is
-    /// a valid choice (no margin at all), so the CoreData default matches this value.
-    private static let unsetHorizontalMargin: Double = -1
-    private static let didResetAccidentalHorizontalMarginKey = "didResetAccidentalHorizontalMargin"
-
     private let coreDataManager: CoreDataManager
     private let userDefault: UserDefaults
     private let keychainHelper = KeychainHelper.shared
@@ -171,44 +166,7 @@ final class SettingsRepository: PSettingsRepository {
         return
     }
 
-    /// One-time repair for #103: the CoreData default for `horizontalMargin` used to be 0,
-    /// which `loadSettings` cannot tell apart from a deliberate zero margin. Every stored 0
-    /// therefore almost certainly comes from that bug, so it is reset to the "unset" sentinel
-    /// once. From then on a deliberate 0 is preserved.
-    private func repairAccidentalHorizontalMarginIfNeeded() async {
-        guard !userDefault.bool(forKey: Self.didResetAccidentalHorizontalMarginKey) else { return }
-
-        let context = coreDataManager.context
-
-        await withCheckedContinuation { continuation in
-            context.perform {
-                do {
-                    let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
-                    fetchRequest.predicate = NSPredicate(format: "horizontalMargin == 0")
-
-                    let affected = try context.fetch(fetchRequest)
-                    if !affected.isEmpty {
-                        for entity in affected {
-                            entity.horizontalMargin = Self.unsetHorizontalMargin
-                        }
-                        try context.save()
-                        self.logger.info("Reset \(affected.count) accidental horizontal margin(s) to unset")
-                    }
-                } catch {
-                    // A failed repair must not block loading settings. It stays marked as done
-                    // either way, a retry on every load would risk repeating this indefinitely.
-                    self.logger.error("Failed to repair accidental horizontal margin: \(error.localizedDescription)")
-                }
-                continuation.resume()
-            }
-        }
-
-        userDefault.set(true, forKey: Self.didResetAccidentalHorizontalMarginKey)
-    }
-
     func loadSettings() async throws -> Settings? {
-        await repairAccidentalHorizontalMarginIfNeeded()
-
         let context = coreDataManager.context
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -244,8 +202,8 @@ final class SettingsRepository: PSettingsRepository {
                     let fontSizeNumeric: Double? = storedFontSizeNumeric > 0 ? storedFontSizeNumeric : nil
 
                     // horizontalMargin: 0 is a valid user value (no margin), so "not set" needs its
-                    // own sentinel. The CoreData default is -1 to match, see #103.
-                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? Self.unsetHorizontalMargin
+                    // own sentinel, see `SettingEntity.unsetHorizontalMargin` and #103.
+                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? SettingEntity.unsetHorizontalMargin
                     let horizontalMargin: Double? = storedHorizontalMargin >= 0 ? storedHorizontalMargin : nil
 
                     // lineHeight: 0 is not valid, so > 0 check is correct
