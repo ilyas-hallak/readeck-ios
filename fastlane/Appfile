@@ -1,5 +1,5 @@
-app_identifier("de.ilyashallak.readeck2") # The bundle identifier of your app
-# apple_id("[[APPLE_ID]]") # Your Apple Developer Portal username
+app_identifier("de.ilyashallak.readeck") # The bundle identifier of your app
+apple_id("hi@ilyashallak.de") # Your Apple Developer Portal username
 
 
 # For more information about the Appfile, see:
