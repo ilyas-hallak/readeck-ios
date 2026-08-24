@@ -76,6 +76,7 @@ struct SwipeActionsDetailView: View {
                 ForEach(config.leadingActions) { action in
                     HStack {
                         Image(systemName: action.iconName)
+                            .environment(\.symbolVariants, .none)
                             .foregroundColor(.accentColor)
                             .frame(width: 24)
                         Text(action.displayName)
@@ -114,6 +115,7 @@ struct SwipeActionsDetailView: View {
                 ForEach(config.trailingActions) { action in
                     HStack {
                         Image(systemName: action.iconName)
+                            .environment(\.symbolVariants, .none)
                             .foregroundColor(.accentColor)
                             .frame(width: 24)
                         Text(action.displayName)
@@ -189,6 +191,7 @@ struct SwipeActionsDetailView: View {
                     } label: {
                         HStack {
                             Image(systemName: action.iconName)
+                                .environment(\.symbolVariants, .none)
                                 .foregroundColor(.accentColor)
                                 .frame(width: 24)
                             Text(action.displayName)
