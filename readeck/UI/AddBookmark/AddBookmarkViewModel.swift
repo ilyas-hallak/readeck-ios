@@ -5,10 +5,17 @@ import UIKit
 final class AddBookmarkViewModel {
     // MARK: - Dependencies
 
-    private let createBookmarkUseCase = DefaultUseCaseFactory.shared.makeCreateBookmarkUseCase()
-    private let getLabelsUseCase = DefaultUseCaseFactory.shared.makeGetLabelsUseCase()
-    private let createLabelUseCase = DefaultUseCaseFactory.shared.makeCreateLabelUseCase()
-    private let syncTagsUseCase = DefaultUseCaseFactory.shared.makeSyncTagsUseCase()
+    private let createBookmarkUseCase: PCreateBookmarkUseCase
+    private let getLabelsUseCase: PGetLabelsUseCase
+    private let createLabelUseCase: PCreateLabelUseCase
+    private let syncTagsUseCase: PSyncTagsUseCase
+
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+        self.createBookmarkUseCase = factory.makeCreateBookmarkUseCase()
+        self.getLabelsUseCase = factory.makeGetLabelsUseCase()
+        self.createLabelUseCase = factory.makeCreateLabelUseCase()
+        self.syncTagsUseCase = factory.makeSyncTagsUseCase()
+    }
 
     // MARK: - Form Data
     var url = ""
