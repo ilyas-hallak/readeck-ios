@@ -1,7 +1,26 @@
 import Foundation
 
+/// Bundles the outside dependencies of `SimpleAPI` so the static methods stay
+/// testable without having to touch every caller in the extension.
+struct SimpleAPIEnvironment {
+    var session: HTTPSession
+    var loadToken: () -> String?
+    var loadEndpoint: () -> String?
+
+    static func live() -> Self {
+        Self(
+            session: HTTPSessionFactory.makeDefault(),
+            loadToken: { KeychainHelper.shared.loadToken() },
+            loadEndpoint: { KeychainHelper.shared.loadEndpoint() }
+        )
+    }
+}
+
 final class SimpleAPI {
     private static let logger = Logger.network
+
+    /// Overridable in tests; at runtime this stays on `live()`.
+    static var environment = SimpleAPIEnvironment.live()
 
     // MARK: - Token Management
 
@@ -27,7 +46,7 @@ final class SimpleAPI {
             return oauthToken.accessToken
         }
         // Classic API token authentication
-        return KeychainHelper.shared.loadToken()
+        return environment.loadToken()
     }
 
     private static func willExpireSoon(_ token: OAuthToken) -> Bool {
@@ -40,7 +59,7 @@ final class SimpleAPI {
     private static func refreshOAuthToken() async -> OAuthToken? {
         guard let oauthToken = KeychainHelper.shared.loadOAuthToken(),
               let refreshToken = oauthToken.refreshToken,
-              let endpoint = KeychainHelper.shared.loadEndpoint(),
+              let endpoint = environment.loadEndpoint(),
               let clientId = KeychainHelper.shared.loadOAuthClientId() else {
             logger.error("Missing required data for OAuth token refresh")
             return nil
@@ -65,7 +84,7 @@ final class SimpleAPI {
             urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
             urlRequest.httpBody = formBody.data(using: .utf8)
 
-            let (data, response) = try await URLSession.shared.data(for: urlRequest)
+            let (data, response) = try await environment.session.data(for: urlRequest)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   200...299 ~= httpResponse.statusCode else {
@@ -89,7 +108,7 @@ final class SimpleAPI {
     // MARK: - Server Info
 
     static func checkServerReachability() async -> ServerInfoDto? {
-        guard let endpoint = KeychainHelper.shared.loadEndpoint(),
+        guard let endpoint = environment.loadEndpoint(),
               !endpoint.isEmpty,
               let url = URL(string: "\(endpoint)/api/info") else {
             return nil
@@ -107,7 +126,7 @@ final class SimpleAPI {
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await environment.session.data(for: request)
             if let httpResponse = response as? HTTPURLResponse,
                200...299 ~= httpResponse.statusCode {
                 logger.info("Server is reachable")
@@ -131,7 +150,7 @@ final class SimpleAPI {
             showStatus("No token found. Please log in via the main app.", true, nil)
             return
         }
-        guard let endpoint = KeychainHelper.shared.loadEndpoint(), !endpoint.isEmpty else {
+        guard let endpoint = environment.loadEndpoint(), !endpoint.isEmpty else {
             showStatus("No server endpoint found.", true, nil)
             return
         }
@@ -151,7 +170,7 @@ final class SimpleAPI {
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
         request.httpBody = requestData
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await environment.session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 logger.error("Invalid server response for bookmark creation")
                 showStatus("Invalid server response.", true, nil)
@@ -211,7 +230,7 @@ final class SimpleAPI {
             showStatus("No token found. Please log in via the main app.", true)
             return nil
         }
-        guard let endpoint = KeychainHelper.shared.loadEndpoint(), !endpoint.isEmpty else {
+        guard let endpoint = environment.loadEndpoint(), !endpoint.isEmpty else {
             showStatus("No server endpoint found.", true)
             return nil
         }
@@ -225,7 +244,7 @@ final class SimpleAPI {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         HTTPHeadersHelper.shared.applyCustomHeaders(to: &request)
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await environment.session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 logger.error("Invalid server response for labels request")
                 showStatus("Invalid server response.", true)

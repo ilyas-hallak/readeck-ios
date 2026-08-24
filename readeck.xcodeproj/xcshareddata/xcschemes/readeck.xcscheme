@@ -32,7 +32,7 @@
       <Testables>
          <TestableReference
             skipped = "NO"
-            parallelizable = "YES">
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5D45F9DD2DF8586A0048D5B8"
@@ -42,13 +42,23 @@
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
+            skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5D45F9E72DF8586A0048D5B8"
                BuildableName = "readeckUITests.xctest"
                BlueprintName = "readeckUITests"
+               ReferencedContainer = "container:readeck.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CBCF65D6F1178F453B97EB43"
+               BuildableName = "URLShareTests.xctest"
+               BlueprintName = "URLShareTests"
                ReferencedContainer = "container:readeck.xcodeproj">
             </BuildableReference>
          </TestableReference>
