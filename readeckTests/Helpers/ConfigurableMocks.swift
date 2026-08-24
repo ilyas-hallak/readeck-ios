@@ -110,6 +110,63 @@ class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase {
     func createFromClipboard() async throws -> String? { try result.get() }
 }
 
+class ConfigurableGetCachedArticleUseCase: PGetCachedArticleUseCase {
+    /// `nil` by default so tests exercise the server path instead of the bundled sample article.
+    var result: String?
+
+    func execute(id: String) -> String? { result }
+}
+
+class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
+    var result: Result<[Bookmark], Error> = .success([.mock])
+    var executeCalled = false
+
+    func execute() async throws -> [Bookmark] {
+        executeCalled = true
+        return try result.get()
+    }
+}
+
+class ConfigurableGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
+    var result: Result<[Annotation], Error> = .success([])
+
+    func execute(bookmarkId: String) async throws -> [Annotation] { try result.get() }
+}
+
+class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
+    var result: Result<Annotation, Error> = .success(
+        Annotation(id: "annotation-1", text: "highlighted", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
+    )
+
+    func execute(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> Annotation {
+        try result.get()
+    }
+
+    func execute(bookmarkId: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws {
+        _ = try result.get()
+    }
+}
+
+class ConfigurableLogoutUseCase: PLogoutUseCase {
+    var result: Result<Void, Error> = .success(())
+    var executeCount = 0
+    var executeCalled: Bool { executeCount > 0 }
+
+    func execute() async throws {
+        executeCount += 1
+        try result.get()
+    }
+}
+
+class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
+    var refreshCount = 0
+
+    func refresh() async { refreshCount += 1 }
+
+    @discardableResult
+    func setEnabled(_ enabled: Bool) async -> Bool { true }
+}
+
 class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
     static var isAvailable: Bool { true }
     var result: Result<String, Error> = .success("Test summary")

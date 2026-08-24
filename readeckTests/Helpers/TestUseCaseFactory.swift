@@ -14,6 +14,12 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockCreateBookmark = ConfigurableCreateBookmarkUseCase()
     let mockSettingsRepository = MockSettingsRepository()
     let mockSummarizeArticle = ConfigurableSummarizeArticleUseCase()
+    let mockGetCachedArticle = ConfigurableGetCachedArticleUseCase()
+    let mockGetCachedBookmarks = ConfigurableGetCachedBookmarksUseCase()
+    let mockGetAnnotations = ConfigurableGetBookmarkAnnotationsUseCase()
+    let mockCreateAnnotation = ConfigurableCreateAnnotationUseCase()
+    let mockLogout = ConfigurableLogoutUseCase()
+    let mockUpdateUnreadBadge = ConfigurableUpdateUnreadBadgeUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -25,11 +31,16 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeCreateBookmarkUseCase() -> PCreateBookmarkUseCase { mockCreateBookmark }
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase { mockCheckReachability }
     func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { MockGetServerInfoUseCase() }
+    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase { mockGetCachedArticle }
+    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase { mockGetCachedBookmarks }
+    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase { mockGetAnnotations }
+    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase { mockCreateAnnotation }
+    func makeLogoutUseCase() -> PLogoutUseCase { mockLogout }
+    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase { mockUpdateUnreadBadge }
 
     // Non-configurable — use existing mocks from MockUseCaseFactory pattern
     func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { MockSaveSettingsUseCase() }
     func makeLoadSettingsUseCase() -> PLoadSettingsUseCase { MockLoadSettingsUseCase() }
-    func makeLogoutUseCase() -> PLogoutUseCase { MockLogoutUseCase() }
     func makeSearchBookmarksUseCase() -> PSearchBookmarksUseCase { MockSearchBookmarksUseCase() }
     func makeSaveServerSettingsUseCase() -> PSaveServerSettingsUseCase { MockSaveServerSettingsUseCase() }
     func makeAddLabelsToBookmarkUseCase() -> PAddLabelsToBookmarkUseCase { MockAddLabelsToBookmarkUseCase() }
@@ -41,14 +52,10 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase { MockOfflineBookmarkSyncUseCase() }
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase { MockLoadCardLayoutUseCase() }
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase { MockSaveCardLayoutUseCase() }
-    func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase { MockGetBookmarkAnnotationsUseCase() }
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase { MockDeleteAnnotationUseCase() }
     func makeSettingsRepository() -> PSettingsRepository { mockSettingsRepository }
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase { MockOfflineCacheSyncUseCase() }
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase { MockNetworkMonitorUseCase() }
-    func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase { MockGetCachedBookmarksUseCase() }
-    func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase { MockGetCachedArticleUseCase() }
-    func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase { MockCreateAnnotationUseCase() }
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase { MockGetCacheSizeUseCase() }
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase { MockGetMaxCacheSizeUseCase() }
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase { MockUpdateMaxCacheSizeUseCase() }
@@ -57,5 +64,4 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase { MockLoginWithOAuthUseCase() }
     func makeAuthRepository() -> PAuthRepository { MockAuthRepository() }
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase { mockSummarizeArticle }
-    func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase { MockUpdateUnreadBadgeUseCase() }
 }
