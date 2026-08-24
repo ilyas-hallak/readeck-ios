@@ -201,8 +201,9 @@ final class SettingsRepository: PSettingsRepository {
                     let storedFontSizeNumeric = settingEntity?.fontSizeNumeric ?? 0
                     let fontSizeNumeric: Double? = storedFontSizeNumeric > 0 ? storedFontSizeNumeric : nil
 
-                    // horizontalMargin: 0 is a valid user value (no margin), negative means not set
-                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? -1
+                    // horizontalMargin: 0 is a valid user value (no margin), so "not set" needs its
+                    // own sentinel, see `SettingEntity.unsetHorizontalMargin` and #103.
+                    let storedHorizontalMargin = settingEntity?.horizontalMargin ?? SettingEntity.unsetHorizontalMargin
                     let horizontalMargin: Double? = storedHorizontalMargin >= 0 ? storedHorizontalMargin : nil
 
                     // lineHeight: 0 is not valid, so > 0 check is correct

@@ -51,6 +51,8 @@ struct readeckApp: App {
                     NFX.sharedInstance().start()
                 }
                 Task {
+                    // Repair stored values before anything reads settings.
+                    await DataMigrator().runPending()
                     await loadAppSettings()
                 }
                 Task {

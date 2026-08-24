@@ -105,20 +105,18 @@ struct SettingsRepositoryTests {
         #expect(loaded.lineHeight == nil)
     }
 
-    // Documents the current behaviour, not the desired one:
-    // loadSettings treats a negative horizontalMargin as "not set", but the CoreData
-    // default for the attribute is 0. As soon as any setting has been saved the
-    // SettingEntity exists and the margin comes back as 0 instead of nil - the reader
-    // then uses 0 rather than the intended 16
-    // (see FontSettingsViewModel: `settings.horizontalMargin ?? 16`).
-    @Test("known quirk: an untouched horizontalMargin reads back as 0, not nil")
-    func untouchedHorizontalMarginReadsAsZero() async throws {
+    // Regression test for #103: saving any setting must not silently pin the margin to 0,
+    // otherwise the reader uses 0 instead of the intended 16
+    // (see FontSettingsViewModel: `settings.horizontalMargin ?? 16`). Guards the CoreData
+    // model default, which is what a freshly written entity starts out with.
+    @Test("a freshly written entity comes back with the margin unset, not 0")
+    func modelDefaultMarksMarginUnset() async throws {
         let (repository, _) = makeRepository()
 
         try await repository.saveSettings(Settings())
 
         let loaded = try #require(try await repository.loadSettings())
-        #expect(loaded.horizontalMargin == 0)
+        #expect(loaded.horizontalMargin == nil)
     }
 
     // MARK: - Card Layout / Tag Sort
