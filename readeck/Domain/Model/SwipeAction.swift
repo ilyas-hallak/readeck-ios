@@ -24,7 +24,6 @@ enum SwipeAction: String, Codable, CaseIterable, Identifiable {
     var iconName: String {
         switch self {
         case .archive: return "archivebox"
-        // Outline, not filled: a filled heart reads as "already a favorite"
         case .favorite: return "heart"
         case .delete: return "trash"
         case .showTags: return "tag"

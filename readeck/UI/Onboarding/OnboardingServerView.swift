@@ -72,7 +72,6 @@ struct OnboardingServerView: View {
         return !viewModel.endpoint.isEmpty
     }
 
-    // LocalizedStringKey, not String: Text(String) skips the localization lookup
     private var buttonTitle: LocalizedStringKey {
         if viewModel.isLoading {
             if showLoginFields { return "Logging in..." }

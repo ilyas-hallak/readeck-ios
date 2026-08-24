@@ -155,9 +155,6 @@ struct BookmarkCardView: View {
             Button {
                 onSwipeAction(.favorite, bookmark)
             } label: {
-                // The icon mirrors the current state, not the action, to match the web app.
-                // symbolVariants is pinned because containers such as lists otherwise
-                // force the fill variant, which would make both states look identical.
                 Label("Favorite", systemImage: bookmark.isMarked ? "heart.fill" : "heart")
                     .environment(\.symbolVariants, .none)
             }
@@ -415,7 +412,6 @@ struct BookmarkCardView: View {
 
     // MARK: - Computed Properties
 
-    /// Marks a favorite on the bookmark image, styled like the read progress badge
     @ViewBuilder
     private func favoriteBadge(diameter: Double = 28, padding: Double = 8) -> some View {
         if bookmark.isMarked {
