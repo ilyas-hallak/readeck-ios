@@ -24,7 +24,7 @@ enum SwipeAction: String, Codable, CaseIterable, Identifiable {
     var iconName: String {
         switch self {
         case .archive: return "archivebox"
-        case .favorite: return "heart.fill"
+        case .favorite: return "heart"
         case .delete: return "trash"
         case .showTags: return "tag"
         case .openInBrowser: return "safari"

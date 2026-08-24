@@ -148,8 +148,8 @@ struct ArticleReaderView: View {
                         await viewModel.toggleFavorite(id: bookmarkId)
                     }
                 }) {
-                    Image(systemName: viewModel.bookmarkDetail.isMarked ? "star.fill" : "star")
-                        .foregroundStyle(viewModel.bookmarkDetail.isMarked ? .yellow : .primary)
+                    Image(systemName: viewModel.bookmarkDetail.isMarked ? "heart.fill" : "heart")
+                        .foregroundStyle(viewModel.bookmarkDetail.isMarked ? .pink : .primary)
                         .frame(width: 52.0, height: 52.0)
                         .font(.system(size: 31))
                 }

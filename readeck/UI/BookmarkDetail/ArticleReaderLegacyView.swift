@@ -803,8 +803,8 @@ struct ArticleReaderLegacyView: View {
                     }
                 }) {
                     HStack {
-                        Image(systemName: viewModel.bookmarkDetail.isMarked ? "star.fill" : "star")
-                            .foregroundColor(viewModel.bookmarkDetail.isMarked ? .yellow : .gray)
+                        Image(systemName: viewModel.bookmarkDetail.isMarked ? "heart.fill" : "heart")
+                            .foregroundColor(viewModel.bookmarkDetail.isMarked ? .pink : .gray)
                         Text(viewModel.bookmarkDetail.isMarked ? "Favorite" : "Mark as favorite")
                     }
                     .font(.title3.bold())

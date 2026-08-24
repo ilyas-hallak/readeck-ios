@@ -155,13 +155,10 @@ struct BookmarkCardView: View {
             Button {
                 onSwipeAction(.favorite, bookmark)
             } label: {
-                if bookmark.isMarked {
-                    Image(systemName: "heart.slash")
-                } else {
-                    Image(systemName: "heart.fill")
-                }
+                Label("Favorite", systemImage: bookmark.isMarked ? "heart.fill" : "heart")
+                    .environment(\.symbolVariants, .none)
             }
-            .tint(bookmark.isMarked ? .gray : .pink)
+            .tint(.pink)
 
         case .delete:
             Button(role: .destructive) {
@@ -198,6 +195,7 @@ struct BookmarkCardView: View {
                 .scaledToFill()
                 .frame(width: 80, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(alignment: .topTrailing) { favoriteBadge(diameter: 22, padding: 4) }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(bookmark.title)
@@ -252,8 +250,9 @@ struct BookmarkCardView: View {
                     .scaledToFill()
                     .frame(height: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(alignment: .topTrailing) { favoriteBadge() }
 
-                if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {
+                if bookmark.readProgress > 0 && bookmark.isArchived == false {
                     ZStack {
                         Circle()
                             .fill(Color(.systemBackground))
@@ -337,8 +336,9 @@ struct BookmarkCardView: View {
                     .frame(width: UIScreen.main.bounds.width - 32)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(alignment: .topTrailing) { favoriteBadge() }
 
-                if bookmark.readProgress > 0 && bookmark.isArchived == false && bookmark.isMarked == false {
+                if bookmark.readProgress > 0 && bookmark.isArchived == false {
                     ZStack {
                         Circle()
                             .fill(Color(.systemBackground))
@@ -412,6 +412,22 @@ struct BookmarkCardView: View {
 
     // MARK: - Computed Properties
 
+    @ViewBuilder
+    private func favoriteBadge(diameter: Double = 28, padding: Double = 8) -> some View {
+        if bookmark.isMarked {
+            ZStack {
+                Circle()
+                    .fill(Color(.systemBackground))
+                    .frame(width: diameter, height: diameter)
+                Image(systemName: "heart.fill")
+                    .font(.system(size: diameter / 2))
+                    .foregroundStyle(.pink)
+            }
+            .padding(padding)
+            .accessibilityLabel("Favorite")
+        }
+    }
+
     private var formattedPublishedDate: String? {
         guard let published = bookmark.published, !published.isEmpty else {
             return nil
@@ -479,18 +495,5 @@ struct BookmarkCardView: View {
             return URL(string: imageUrl)
         }
         return nil
-    }
-}
-
-struct IconBadge: View {
-    let systemName: String
-    let color: Color
-
-    var body: some View {
-        Image(systemName: systemName)
-            .frame(width: 20, height: 20)
-            .background(color)
-            .foregroundColor(.white)
-            .clipShape(Circle())
     }
 }

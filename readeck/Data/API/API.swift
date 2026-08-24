@@ -260,7 +260,6 @@ final class API: PAPI {
             switch state {
             case .unread:
                 queryItems.append(URLQueryItem(name: "is_archived", value: "false"))
-                queryItems.append(URLQueryItem(name: "is_marked", value: "false"))
             case .favorite:
                 queryItems.append(URLQueryItem(name: "is_marked", value: "true"))
             case .archived:

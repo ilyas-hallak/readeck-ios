@@ -72,7 +72,7 @@ struct OnboardingServerView: View {
         return !viewModel.endpoint.isEmpty
     }
 
-    private var buttonTitle: String {
+    private var buttonTitle: LocalizedStringKey {
         if viewModel.isLoading {
             if showLoginFields { return "Logging in..." }
             return oauthFailed ? "Retrying..." : "Checking..."
