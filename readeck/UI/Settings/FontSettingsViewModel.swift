@@ -232,6 +232,7 @@ final class FontSettingsViewModel {
         do {
             try await saveSettingsUseCase.execute(
                 selectedFontFamily: selectedFontFamily,
+                selectedFontSize: selectedFontSize,
                 fontSizeNumeric: fontSizeNumeric
             )
         } catch {

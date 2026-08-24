@@ -232,8 +232,7 @@ final class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(endpoint: String, username: String, password: String) async throws {}
     func execute(endpoint: String, username: String, password: String, hasFinishedSetup: Bool) async throws {}
     func execute(token: String) async throws {}
-    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {}
-    func execute(selectedFontFamily: FontFamily, fontSizeNumeric: Double) async throws {}
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize, fontSizeNumeric: Double) async throws {}
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws {}
     func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws {}
     func execute(customCSS: String) async throws {}

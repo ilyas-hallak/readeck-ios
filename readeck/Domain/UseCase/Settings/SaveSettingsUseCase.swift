@@ -1,8 +1,7 @@
 import Foundation
 
 protocol PSaveSettingsUseCase {
-    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws
-    func execute(selectedFontFamily: FontFamily, fontSizeNumeric: Double) async throws
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize, fontSizeNumeric: Double) async throws
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws
     func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws
     func execute(customCSS: String) async throws
@@ -24,19 +23,11 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
         self.settingsRepository = settingsRepository
     }
 
-    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize) async throws {
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize, fontSizeNumeric: Double) async throws {
         try await settingsRepository.saveSettings(
             .init(
                 fontFamily: selectedFontFamily,
-                fontSize: selectedFontSize
-            )
-        )
-    }
-
-    func execute(selectedFontFamily: FontFamily, fontSizeNumeric: Double) async throws {
-        try await settingsRepository.saveSettings(
-            .init(
-                fontFamily: selectedFontFamily,
+                fontSize: selectedFontSize,
                 fontSizeNumeric: fontSizeNumeric
             )
         )
