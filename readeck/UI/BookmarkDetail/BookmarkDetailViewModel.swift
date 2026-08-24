@@ -225,7 +225,7 @@ final class BookmarkDetailViewModel {
         errorMessage = nil
         do {
             try await updateBookmarkUseCase.toggleArchive(bookmarkId: id, isArchived: isArchive)
-            bookmarkDetail.isArchived = true
+            bookmarkDetail.isArchived = isArchive
             if isArchive {
                 NotificationCenter.default.post(
                     name: .bookmarkArchived,
