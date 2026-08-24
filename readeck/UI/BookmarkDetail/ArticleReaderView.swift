@@ -10,7 +10,6 @@ struct ArticleReaderView: View {
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: Double = 300
-    @State private var contentEndPosition: Double = 0
     @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
@@ -219,8 +218,6 @@ struct ArticleReaderView: View {
             .scrollPosition($scrollPosition)
             .disableScrollBounce()
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
-                contentEndPosition = endPosition
-
                 let result = scrollTracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
 
                 if let progress = result.readingProgress {

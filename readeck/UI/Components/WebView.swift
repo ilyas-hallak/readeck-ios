@@ -54,6 +54,20 @@ struct WebView: UIViewRepresentable {
         let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
 
+        var renderHasher = Hasher()
+        renderHasher.combine(htmlContent)
+        renderHasher.combine(settings.webViewIdentifier)
+        renderHasher.combine(fontSize)
+        renderHasher.combine(horizontalMargin)
+        renderHasher.combine(lineHeightValue)
+        renderHasher.combine(selectedFontFamily.rawValue)
+        renderHasher.combine(isDarkMode)
+        renderHasher.combine(selectedAnnotationId)
+        let renderKey = renderHasher.finalize()
+
+        guard context.coordinator.lastRenderKey != renderKey else { return }
+        context.coordinator.lastRenderKey = renderKey
+
         // Resolve color theme
         let colorTheme = settings.readerColorTheme ?? .system
         let resolvedBgColor: String
@@ -736,6 +750,9 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
 
     // WebView reference
     weak var webView: WKWebView?
+
+    // Identifies the currently rendered document, so unrelated view updates don't reload it
+    var lastRenderKey: Int?
 
     // Height management
     var lastHeight: Double = 0

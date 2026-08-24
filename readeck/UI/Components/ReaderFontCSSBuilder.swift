@@ -7,7 +7,27 @@ struct ReaderFontCSSBuildResult {
 }
 
 enum ReaderFontCSSBuilder {
+    private static let cacheLock = NSLock()
+    private static var cache: [FontFamily: ReaderFontCSSBuildResult] = [:]
+
     static func build(fontFamily: FontFamily) -> ReaderFontCSSBuildResult {
+        cacheLock.lock()
+        let cached = cache[fontFamily]
+        cacheLock.unlock()
+        if let cached {
+            return cached
+        }
+
+        let result = makeResult(fontFamily: fontFamily)
+
+        cacheLock.lock()
+        cache[fontFamily] = result
+        cacheLock.unlock()
+
+        return result
+    }
+
+    private static func makeResult(fontFamily: FontFamily) -> ReaderFontCSSBuildResult {
         let fallbackStack = fallbackFontStack(for: fontFamily)
 
         guard let fileNames = fontFamily.fontFileNames,
