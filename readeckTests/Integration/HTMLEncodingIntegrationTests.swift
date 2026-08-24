@@ -7,7 +7,7 @@ private enum Config {
     static let token = "PASTE_TOKEN_HERE"
     static let endpoint = "PASTE_ENDPOINT_HERE"
 
-    /// Ohne echte Zugangsdaten wird der Test übersprungen statt fehlzuschlagen.
+    /// Without real credentials the test is skipped instead of failing.
     static var isConfigured: Bool {
         !token.hasPrefix("PASTE_") && !endpoint.hasPrefix("PASTE_")
     }

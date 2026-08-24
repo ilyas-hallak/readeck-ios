@@ -117,12 +117,12 @@ class TestMockTokenProvider: TokenProvider {
 
 // MARK: - Shared Test CoreData Model
 
-/// Ein einziges Modell für alle In-Memory-Stores der Tests.
+/// A single model shared by every in-memory store in the tests.
 ///
-/// `NSManagedObjectModel.mergedModel(from:)` pro Instanz aufzurufen erzeugt mehrere
-/// Modelle, die dieselbe NSManagedObject-Subklasse beanspruchen. CoreData kann `+entity`
-/// dann nicht mehr auflösen ("Failed to find a unique match for an NSEntityDescription")
-/// und stürzt beim Speichern ab, sobald mehrere CoreData-Suiten im selben Prozess laufen.
+/// Calling `NSManagedObjectModel.mergedModel(from:)` per instance creates several models
+/// that all claim the same NSManagedObject subclass. CoreData can then no longer resolve
+/// `+entity` ("Failed to find a unique match for an NSEntityDescription") and crashes on
+/// save as soon as multiple CoreData suites run in the same process.
 enum TestCoreDataModel {
     static let shared: NSManagedObjectModel = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
 }
