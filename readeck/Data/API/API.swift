@@ -133,7 +133,7 @@ final class API: PAPI {
         return (decoded, httpResponse)
     }
 
-    // Separate Methode für JSON-Requests
+    // Separate method for JSON requests
     private func makeJSONRequest<T: Codable>(
         endpoint: String,
         method: HTTPMethod = .GET,
@@ -170,7 +170,7 @@ final class API: PAPI {
         let message: String
     }
 
-    // Separate Methode für String-Requests (HTML/Text)
+    // Separate method for string requests (HTML/text)
     private func makeStringRequest(
         endpoint: String,
         method: HTTPMethod = .GET,
@@ -255,7 +255,7 @@ final class API: PAPI {
         var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
 
-        // Query-Parameter basierend auf State hinzufügen
+        // Add query parameters based on the state
         if let state {
             switch state {
             case .unread:

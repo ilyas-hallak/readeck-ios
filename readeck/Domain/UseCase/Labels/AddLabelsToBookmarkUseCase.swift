@@ -29,13 +29,13 @@ final class AddLabelsToBookmarkUseCase: PAddLabelsToBookmarkUseCase {
         try await repository.updateBookmark(id: bookmarkId, updateRequest: request)
     }
 
-    // Convenience method für einzelne Labels
+    // Convenience method for a single label
     func execute(bookmarkId: String, label: String) async throws {
         try await execute(bookmarkId: bookmarkId, labels: [label])
     }
 }
 
-// Custom error für Label-Operationen
+// Custom error for label operations
 enum BookmarkUpdateError: LocalizedError {
     case emptyLabels
 

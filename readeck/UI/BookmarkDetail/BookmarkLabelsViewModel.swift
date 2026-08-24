@@ -115,7 +115,7 @@ final class BookmarkLabelsViewModel {
         await removeLabels(from: bookmarkId, labels: [label])
     }
 
-    // Convenience method für das Umschalten eines Labels (hinzufügen wenn nicht vorhanden, entfernen wenn vorhanden)
+    // Convenience method for toggling a label (add when missing, remove when present)
     @MainActor
     func toggleLabel(for bookmarkId: String, label: String) async {
         if currentLabels.contains(label) {

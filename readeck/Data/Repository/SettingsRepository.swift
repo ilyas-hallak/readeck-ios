@@ -289,10 +289,10 @@ final class SettingsRepository: PSettingsRepository {
         // Use TokenProvider to ensure cache is updated
         await tokenProvider.setToken(token)
 
-        // Wenn ein Token gespeichert wird, Setup als abgeschlossen markieren
+        // Storing a token marks the setup as finished
         if !token.isEmpty {
             self.hasFinishedSetup = true
-            // Notification senden, dass sich der Setup-Status geändert hat
+            // Notify that the setup status has changed
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
             }
@@ -327,7 +327,7 @@ final class SettingsRepository: PSettingsRepository {
     func saveHasFinishedSetup(_ hasFinishedSetup: Bool) async throws {
         try await withCheckedThrowingContinuation { continuation in
             self.hasFinishedSetup = hasFinishedSetup
-            // Notification senden, dass sich der Setup-Status geändert hat
+            // Notify that the setup status has changed
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
             }

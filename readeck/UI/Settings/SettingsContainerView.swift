@@ -194,7 +194,7 @@ struct SettingsContainerView: View {
     }
 }
 
-// Card Modifier für einheitlichen Look (kept for backwards compatibility with other views)
+// Card modifier for a consistent look (kept for backwards compatibility with other views)
 extension View {
     func cardStyle() -> some View {
         self

@@ -28,7 +28,7 @@ struct URLUtil {
             safariViewController.preferredBarTintColor = UIColor.systemBackground
             safariViewController.preferredControlTintColor = UIColor.tintColor
 
-            // Finde den präsentierenden View Controller
+            // Find the presenting view controller
             var presentingViewController = rootViewController
             while let presented = presentingViewController.presentedViewController {
                 presentingViewController = presented

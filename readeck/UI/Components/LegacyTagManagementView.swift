@@ -250,7 +250,7 @@ struct LegacyTagManagementView: View {
     }
 
     private func calculateMaxHeight() -> Double {
-        // Berechne Höhe für maximal 3 Reihen
+        // Calculate the height for at most 3 rows
         let rowHeight: Double = 32 // Höhe eines Labels
         let spacing: Double = 8
         let maxRows: Double = 3
