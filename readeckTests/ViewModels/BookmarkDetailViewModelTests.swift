@@ -148,4 +148,165 @@ struct BookmarkDetailViewModelTests {
 
         #expect(receivedId == "789")
     }
+
+    // MARK: - Article Content Error Paths
+
+    @Test("Article load failure sets error and stops the loading indicator")
+    func loadArticleContentFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = nil
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+
+        await vm.loadArticleContent(id: "456")
+
+        #expect(vm.errorMessage == "Error loading article")
+        #expect(vm.articleContent.isEmpty)
+        #expect(vm.isLoadingArticle == false)
+    }
+
+    @Test("A cached article is served even when the server is unreachable")
+    func loadArticleContentFallsBackToCache() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+
+        await vm.loadArticleContent(id: "456")
+
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoadingArticle == false)
+    }
+
+    // MARK: - Bookmark Detail Error Paths
+
+    @Test("Failing annotations do not break loading the bookmark itself")
+    func loadBookmarkDetailToleratesAnnotationFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetAnnotations.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "456")
+
+        // Annotations are supplementary — the article must still open.
+        #expect(vm.bookmarkDetail.id == "123")
+        #expect(vm.annotations.isEmpty)
+        #expect(vm.errorMessage == nil)
+    }
+
+    // MARK: - Archive
+
+    @Test("Un-archiving clears the archived flag instead of setting it")
+    func unarchiveClearsArchivedFlag() async {
+        let (vm, _) = createSUT()
+        await vm.archiveBookmark(id: "456", isArchive: true)
+        #expect(vm.bookmarkDetail.isArchived == true)
+
+        await vm.archiveBookmark(id: "456", isArchive: false)
+
+        // The flag used to be hardcoded to true, so the reader's toggle stayed
+        // on "archived" after un-archiving.
+        #expect(vm.bookmarkDetail.isArchived == false)
+    }
+
+    @Test("Archive failure sets an error and leaves the flag untouched")
+    func archiveBookmarkFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockUpdateBookmark.result = .failure(TestError.networkError)
+
+        await vm.archiveBookmark(id: "456")
+
+        #expect(vm.errorMessage == "Error archiving bookmark")
+        #expect(vm.bookmarkDetail.isArchived == false)
+        #expect(vm.isLoading == false)
+    }
+
+    // MARK: - Favorite
+
+    @Test("Toggle favorite flips the flag")
+    func toggleFavoriteSuccess() async {
+        let (vm, factory) = createSUT()
+
+        await vm.toggleFavorite(id: "456")
+
+        #expect(factory.mockUpdateBookmark.toggleFavoriteCalled == true)
+        #expect(vm.bookmarkDetail.isMarked == true)
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("Favorite failure sets an error and leaves the flag untouched")
+    func toggleFavoriteFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockUpdateBookmark.result = .failure(TestError.networkError)
+
+        await vm.toggleFavorite(id: "456")
+
+        #expect(vm.errorMessage == "Error updating favorite status")
+        #expect(vm.bookmarkDetail.isMarked == false)
+        #expect(vm.isLoading == false)
+    }
+
+    // MARK: - Read Progress
+
+    @Test("Read progress is not pushed backwards")
+    func updateReadProgressIgnoresLowerValue() async {
+        let (vm, factory) = createSUT()
+        vm.readProgress = 80
+
+        await vm.updateReadProgress(id: "456", progress: 20, anchor: nil)
+
+        #expect(factory.mockUpdateBookmark.updateProgressCalled == false)
+    }
+
+    // MARK: - Annotations
+
+    @Test("Creating an annotation appends it and pulls the annotated HTML")
+    func createAnnotationSuccess() async {
+        let (vm, factory) = createSUT()
+        // The server re-renders the article with the highlight markup afterwards.
+        factory.mockGetBookmarkArticle.result = .success("<p><rd-annotation>highlighted</rd-annotation></p>")
+
+        await vm.createAnnotation(bookmarkId: "456", color: "yellow", text: "highlighted", startOffset: 0, endOffset: 5, startSelector: "p", endSelector: "p")
+
+        #expect(vm.annotations.count == 1)
+        #expect(vm.hasAnnotations == true)
+        #expect(vm.articleContent.contains("rd-annotation"))
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("Annotation failure sets a generic error message")
+    func createAnnotationFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateAnnotation.result = .failure(TestError.networkError)
+
+        await vm.createAnnotation(bookmarkId: "456", color: "yellow", text: "highlighted", startOffset: 0, endOffset: 5, startSelector: "p", endSelector: "p")
+
+        #expect(vm.errorMessage == "Error creating highlight")
+        #expect(vm.annotations.isEmpty)
+    }
+
+    @Test("Overlapping annotations get their own error message")
+    func createAnnotationOverlapError() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateAnnotation.result = .failure(
+            APIError.serverErrorWithMessage(statusCode: 422, message: "annotation is overlapping an existing one")
+        )
+
+        await vm.createAnnotation(bookmarkId: "456", color: "yellow", text: "highlighted", startOffset: 0, endOffset: 5, startSelector: "p", endSelector: "p")
+
+        #expect(vm.errorMessage == "This text overlaps with an existing highlight")
+    }
+
+    // MARK: - Share Content
+
+    @Test("Share text combines title, URL and annotations")
+    func shareContentIncludesAnnotations() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetAnnotations.result = .success([
+            Annotation(id: "1", text: "first note", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
+        ])
+
+        await vm.loadBookmarkDetail(id: "456")
+
+        #expect(vm.shareContent.contains("https://example.com"))
+        #expect(vm.shareContent.contains("first note"))
+    }
 }

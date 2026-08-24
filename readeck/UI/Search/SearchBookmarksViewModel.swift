@@ -4,7 +4,7 @@ import SwiftUI
 
 @Observable
 final class SearchBookmarksViewModel {
-    private let searchBookmarksUseCase = DefaultUseCaseFactory.shared.makeSearchBookmarksUseCase()
+    private let searchBookmarksUseCase: PSearchBookmarksUseCase
 
     var searchQuery = "" {
         didSet {
@@ -16,6 +16,10 @@ final class SearchBookmarksViewModel {
     var errorMessage: String?
 
     private var searchWorkItem: DispatchWorkItem?
+
+    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+        self.searchBookmarksUseCase = factory.makeSearchBookmarksUseCase()
+    }
 
     private func throttleSearch() {
         searchWorkItem?.cancel()

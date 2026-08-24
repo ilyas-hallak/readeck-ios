@@ -465,6 +465,7 @@ final class BookmarksViewModel {
                 errorMessage = formatServerErrorMessage(statusCode: statusCode)
                 logger.error("Server error with status code: \(statusCode)")
             case .serverErrorWithMessage(statusCode: let statusCode, message: let message):
+                errorMessage = message.isEmpty ? formatServerErrorMessage(statusCode: statusCode) : message
                 logger.error("Server error with status code: \(statusCode), and message: \(message)")
             }
             isNetworkError = false
