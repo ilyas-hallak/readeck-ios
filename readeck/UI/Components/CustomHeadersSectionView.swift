@@ -115,7 +115,7 @@ struct CustomHeadersSectionView: View {
                         }
                     }
 
-                    // Add new header - nur wenn nicht im Edit-Modus
+                    // Add new header - only when not in edit mode
                     if editingHeaderKey == nil {
                         InlineHeaderFormView(
                             headerKey: $newHeaderKey,

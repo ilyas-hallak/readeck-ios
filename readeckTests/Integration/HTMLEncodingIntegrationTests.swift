@@ -53,7 +53,7 @@ struct HTMLEncodingIntegrationTests {
 
         let uniqueURL = "https://example.com/utf8-test-\(Int(Date().timeIntervalSince1970))"
 
-        // 1. Bookmark erstellen
+        // 1. Create the bookmark
         let body = try JSONEncoder().encode(CreateRequest(url: uniqueURL, title: "UTF-8 Test", html: html))
 
         var createRequest = URLRequest(url: try #require(URL(string: "\(Config.endpoint)/api/bookmarks")))
@@ -81,7 +81,7 @@ struct HTMLEncodingIntegrationTests {
         let readHttp = try #require(readResponse as? HTTPURLResponse)
         #expect(readHttp.statusCode == 200, "Lesen fehlgeschlagen: \(readHttp.statusCode)")
 
-        // 4. Antwort ausgeben zur Überprüfung
+        // 4. Print the response for inspection
         let responseString = try #require(String(data: data, encoding: .utf8))
         print("📋 Bookmark Response:\n\(responseString)")
 
@@ -89,7 +89,7 @@ struct HTMLEncodingIntegrationTests {
         print("📌 Titel: \(bookmark.title)")
         print("📝 Beschreibung: \(bookmark.description)")
 
-        // 5. Artikel-Content abrufen und UTF-8 prüfen
+        // 5. Fetch the article content and verify UTF-8
         let articleSrc = try #require(bookmark.resources.article?.src, "Kein Artikel-Resource")
         let articleURL = try #require(URL(string: articleSrc))
 

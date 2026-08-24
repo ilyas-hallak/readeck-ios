@@ -24,7 +24,7 @@ final class CreateBookmarkUseCase: PCreateBookmarkUseCase {
         return try await repository.createBookmark(createRequest: createRequest)
     }
 
-    // Convenience methods für häufige Use Cases
+    // Convenience methods for common use cases
     func createFromURL(_ url: String) async throws -> String {
         let request = CreateBookmarkRequest.fromURL(url)
         return try await execute(createRequest: request)
@@ -42,7 +42,7 @@ final class CreateBookmarkUseCase: PCreateBookmarkUseCase {
 
     func createFromClipboard() async throws -> String? {
         nil
-        // URL aus Zwischenablage holen (falls verfügbar)
+        // Read the URL from the pasteboard (if available)
         /*#if canImport(UIKit)
         import UIKit
         guard let clipboardString = UIPasteboard.general.string,

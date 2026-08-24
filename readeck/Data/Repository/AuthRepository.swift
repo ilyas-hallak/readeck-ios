@@ -13,7 +13,7 @@ final class AuthRepository: PAuthRepository {
 
     func login(endpoint: String, username: String, password: String) async throws -> User {
         let userDto = try await api.login(endpoint: endpoint, username: username, password: password)
-        // Token wird automatisch von der API gespeichert
+        // The token is stored by the API automatically
         await api.tokenProvider.setAuthMethod(.apiToken)
         return User(id: userDto.id, token: userDto.token)
     }

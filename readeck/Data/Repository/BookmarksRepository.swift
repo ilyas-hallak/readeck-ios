@@ -51,7 +51,7 @@ final class BookmarksRepository: PBookmarksRepository {
 
         let response = try await api.createBookmark(createRequest: dto)
 
-        // Prüfe ob die Erstellung erfolgreich war
+        // Check whether creation succeeded
         guard response.status == 0 || response.status == 202 else {
             throw CreateBookmarkError.serverError(response.message)
         }

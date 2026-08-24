@@ -23,7 +23,7 @@ final class UpdateBookmarkUseCase: PUpdateBookmarkUseCase {
         try await repository.updateBookmark(id: bookmarkId, updateRequest: updateRequest)
     }
 
-    // Convenience methods für häufige Aktionen
+    // Convenience methods for common actions
     func toggleArchive(bookmarkId: String, isArchived: Bool) async throws {
         let request = BookmarkUpdateRequest.archive(isArchived)
         try await execute(bookmarkId: bookmarkId, updateRequest: request)

@@ -44,7 +44,7 @@ protocol UseCaseFactory {
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
-    // Eine geteilte, mit Timeouts konfigurierte Session für die ganze App.
+    // One shared session, configured with timeouts, for the whole app.
     private let httpSession: HTTPSession = HTTPSessionFactory.makeDefault()
     private lazy var tokenProvider = KeychainTokenProvider(session: httpSession)
     private lazy var api: PAPI = API(tokenProvider: tokenProvider, session: httpSession)

@@ -29,7 +29,7 @@ final class RemoveLabelsFromBookmarkUseCase: PRemoveLabelsFromBookmarkUseCase {
         try await repository.updateBookmark(id: bookmarkId, updateRequest: request)
     }
 
-    // Convenience method für einzelne Labels
+    // Convenience method for a single label
     func execute(bookmarkId: String, label: String) async throws {
         try await execute(bookmarkId: bookmarkId, labels: [label])
     }
