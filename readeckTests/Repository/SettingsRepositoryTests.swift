@@ -84,7 +84,10 @@ struct SettingsRepositoryTests {
 
     @Test("horizontalMargin 0 survives the round-trip, since 0 is a valid value")
     func horizontalMarginZeroIsPreserved() async throws {
-        let (repository, _) = makeRepository()
+        let (repository, defaults) = makeRepository()
+        // Simulates an install where the one-time #103 repair already ran, so a deliberate
+        // 0 is not mistaken for the old accidental default.
+        defaults.set(true, forKey: "didResetAccidentalHorizontalMargin")
 
         var settings = Settings()
         settings.horizontalMargin = 0
@@ -105,20 +108,72 @@ struct SettingsRepositoryTests {
         #expect(loaded.lineHeight == nil)
     }
 
-    // Documents the current behaviour, not the desired one:
-    // loadSettings treats a negative horizontalMargin as "not set", but the CoreData
-    // default for the attribute is 0. As soon as any setting has been saved the
-    // SettingEntity exists and the margin comes back as 0 instead of nil - the reader
-    // then uses 0 rather than the intended 16
+    // Regression test for #103: saving any setting must not silently pin the margin to 0,
+    // otherwise the reader uses 0 instead of the intended 16
     // (see FontSettingsViewModel: `settings.horizontalMargin ?? 16`).
-    @Test("known quirk: an untouched horizontalMargin reads back as 0, not nil")
-    func untouchedHorizontalMarginReadsAsZero() async throws {
+    @Test("an untouched horizontalMargin comes back as nil, not 0")
+    func untouchedHorizontalMarginIsNil() async throws {
         let (repository, _) = makeRepository()
 
         try await repository.saveSettings(Settings())
 
         let loaded = try #require(try await repository.loadSettings())
+        #expect(loaded.horizontalMargin == nil)
+    }
+
+    // MARK: - One-Time Repair (#103)
+
+    @Test("a margin left at the old 0 default is repaired to unset on load")
+    func repairResetsAccidentalZeroMargin() async throws {
+        let (repository, _) = makeRepository()
+
+        // Reproduces the old state: an entity that was written while the CoreData
+        // default was still 0 and the slider was never touched.
+        var settings = Settings()
+        settings.horizontalMargin = 0
+        try await repository.saveSettings(settings)
+
+        let loaded = try #require(try await repository.loadSettings())
+        #expect(loaded.horizontalMargin == nil)
+    }
+
+    @Test("the repair runs only once, so a deliberate 0 set afterwards is kept")
+    func repairRunsOnlyOnce() async throws {
+        let (repository, _) = makeRepository()
+
+        try await repository.saveSettings(Settings())
+        _ = try await repository.loadSettings()
+
+        var settings = Settings()
+        settings.horizontalMargin = 0
+        try await repository.saveSettings(settings)
+
+        let loaded = try #require(try await repository.loadSettings())
         #expect(loaded.horizontalMargin == 0)
+    }
+
+    // Guards the CoreData default itself. The tests above would also pass with the old
+    // default of 0, because the repair would clean that up, so this one skips the repair.
+    @Test("a freshly written entity starts out with the margin unset, without the repair")
+    func modelDefaultMarksMarginUnset() async throws {
+        let (repository, defaults) = makeRepository()
+        defaults.set(true, forKey: "didResetAccidentalHorizontalMargin")
+
+        try await repository.saveSettings(Settings())
+
+        let loaded = try #require(try await repository.loadSettings())
+        #expect(loaded.horizontalMargin == nil)
+    }
+
+    @Test("the repair records that it ran in the injected UserDefaults")
+    func repairSetsItsFlag() async throws {
+        let (repository, defaults) = makeRepository()
+
+        #expect(defaults.bool(forKey: "didResetAccidentalHorizontalMargin") == false)
+
+        _ = try await repository.loadSettings()
+
+        #expect(defaults.bool(forKey: "didResetAccidentalHorizontalMargin") == true)
     }
 
     // MARK: - Card Layout / Tag Sort
