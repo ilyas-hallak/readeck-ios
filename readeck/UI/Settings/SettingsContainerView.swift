@@ -131,7 +131,7 @@ struct SettingsContainerView: View {
                 subtitle: "Network simulation, logging & more"
             ) {
                 DebugMenuView()
-                    .environmentObject(AppSettings())
+                    .environment(AppSettings())
             }
         } header: {
             HStack {

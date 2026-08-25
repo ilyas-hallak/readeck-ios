@@ -8,7 +8,7 @@ struct SearchBookmarksView: View {
     @Namespace private var namespace
     @State private var isFirstAppearance = true
     @State private var cardLayoutStyle: CardLayoutStyle = .magazine
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     var body: some View {
         VStack(spacing: 0) {

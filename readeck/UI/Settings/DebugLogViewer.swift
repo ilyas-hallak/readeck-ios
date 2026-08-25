@@ -16,7 +16,7 @@ struct DebugLogViewer: View {
     @State private var exportURL: URL?
     @State private var autoScroll = true
     @State private var showFilters = false
-    @StateObject private var logConfig = LogConfiguration.shared
+    @State private var logConfig = LogConfiguration.shared
 
     private let logger = Logger.ui
 

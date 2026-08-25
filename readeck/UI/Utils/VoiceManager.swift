@@ -1,7 +1,8 @@
 import Foundation
 import AVFoundation
 
-final class VoiceManager: ObservableObject {
+@Observable
+final class VoiceManager {
     private let logger = Logger.general
     static let shared = VoiceManager()
 
@@ -12,8 +13,8 @@ final class VoiceManager: ObservableObject {
     private(set) var perLanguageVoices: [String: String] = [:] // languageCode -> voiceIdentifier
     private var previewSynthesizer = AVSpeechSynthesizer()
 
-    @Published var selectedVoice: AVSpeechSynthesisVoice?
-    @Published var availableVoices: [AVSpeechSynthesisVoice] = []
+    var selectedVoice: AVSpeechSynthesisVoice?
+    var availableVoices: [AVSpeechSynthesisVoice] = []
 
     private init() {
         loadAvailableVoices()

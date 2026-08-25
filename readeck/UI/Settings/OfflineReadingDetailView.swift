@@ -9,7 +9,7 @@ import SwiftUI
 
 struct OfflineReadingDetailView: View {
     @State private var viewModel = OfflineSettingsViewModel()
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     var body: some View {
         List {

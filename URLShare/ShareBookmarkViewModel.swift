@@ -4,22 +4,23 @@ import UIKit
 import UniformTypeIdentifiers
 import CoreData
 
-final class ShareBookmarkViewModel: ObservableObject {
-    @Published var url: String?
-    @Published var title = ""
-    @Published var selectedLabels: Set<String> = []
-    @Published var statusMessage: (text: String, isError: Bool, emoji: String)?
-    @Published var isSaving = false
-    @Published var searchText = ""
-    @Published var isServerReachable = true
-    @Published var isConfigured = true
-    @Published var sessionExpired = false
-    @Published var pageHTML: String?
-    @Published var includeHTML = false
+@Observable
+final class ShareBookmarkViewModel {
+    var url: String?
+    var title = ""
+    var selectedLabels: Set<String> = []
+    var statusMessage: (text: String, isError: Bool, emoji: String)?
+    var isSaving = false
+    var searchText = ""
+    var isServerReachable = true
+    var isConfigured = true
+    var sessionExpired = false
+    var pageHTML: String?
+    var includeHTML = false
     /// Set once the bookmark is saved online and the server returned its id. Drives
     /// the "Open in Readeck" button; nil after a local save or an older server that
     /// doesn't return the id.
-    @Published var savedBookmarkId: String?
+    var savedBookmarkId: String?
     let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
     /// A view from the hosting controller, used as the entry point into the responder

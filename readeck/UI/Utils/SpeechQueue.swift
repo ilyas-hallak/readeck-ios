@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let id: String
@@ -48,7 +47,8 @@ extension BookmarkDetail {
     }
 }
 
-final class SpeechQueue: ObservableObject {
+@Observable
+final class SpeechQueue {
     private let logger = Logger.general
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
@@ -86,9 +86,9 @@ final class SpeechQueue: ObservableObject {
         return mapping[isoCode.lowercased()] ?? "\(isoCode)-\(isoCode.uppercased())"
     }
 
-    @Published var queueItems: [SpeechQueueItem] = []
-    @Published var currentText = ""
-    @Published var hasItems = false
+    var queueItems: [SpeechQueueItem] = []
+    var currentText = ""
+    var hasItems = false
 
     var queueCount: Int {
         queueItems.count

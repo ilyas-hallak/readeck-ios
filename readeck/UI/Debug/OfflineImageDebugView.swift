@@ -12,7 +12,7 @@ struct OfflineImageDebugView: View {
     let bookmarkId: String
 
     @State private var debugInfo = DebugInfo()
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     var body: some View {
         ScrollView {
@@ -195,5 +195,5 @@ struct DebugSection<Content: View>: View {
 
 #Preview {
     OfflineImageDebugView(bookmarkId: "123")
-        .environmentObject(AppSettings())
+        .environment(AppSettings())
 }

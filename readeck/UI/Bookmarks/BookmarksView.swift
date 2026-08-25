@@ -15,7 +15,7 @@ struct BookmarksView: View {
     let state: BookmarkState
     let type: [BookmarkType]
     @Binding var selectedBookmark: Bookmark?
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     let tag: String?
 
     // MARK: Environments

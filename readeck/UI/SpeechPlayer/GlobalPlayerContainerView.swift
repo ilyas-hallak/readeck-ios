@@ -2,8 +2,8 @@ import SwiftUI
 
 struct GlobalPlayerContainerView<Content: View>: View {
     let content: Content
-    @ObservedObject var viewModel: SpeechPlayerViewModel
-    @EnvironmentObject private var appSettings: AppSettings
+    var viewModel: SpeechPlayerViewModel
+    @Environment(AppSettings.self) private var appSettings
     @State private var isPlayerSheetPresented = false
     @Binding var isPlayerDismissed: Bool
 
@@ -48,5 +48,5 @@ struct GlobalPlayerContainerView<Content: View>: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
     }
-    .environmentObject(AppSettings())
+    .environment(AppSettings())
 }

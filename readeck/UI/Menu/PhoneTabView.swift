@@ -14,7 +14,7 @@ struct PhoneTabView: View {
     @State private var selectedTab: SidebarTab = .unread
     @State private var offlineBookmarksViewModel = OfflineBookmarksViewModel()
     @State private var isPlayerDismissed = false
-    @StateObject private var speechPlayerViewModel = SpeechPlayerViewModel()
+    @State private var speechPlayerViewModel = SpeechPlayerViewModel()
     @State private var isPlayerSheetPresented = false
 
     // Navigation paths for each tab
@@ -28,7 +28,7 @@ struct PhoneTabView: View {
     @State private var searchViewModel = SearchBookmarksViewModel()
     @FocusState private var searchFieldIsFocused: Bool
 
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     private var cardLayoutStyle: CardLayoutStyle {
         appSettings.settings?.cardLayoutStyle ?? .compact

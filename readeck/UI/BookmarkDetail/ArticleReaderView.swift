@@ -24,7 +24,7 @@ struct ArticleReaderView: View {
 
     // MARK: - Envs
 
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
 
     private let headerHeight: Double = 360

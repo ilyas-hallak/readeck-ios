@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct SwipeActionsSettingsView: View {
-    @EnvironmentObject var appSettings: AppSettings
+    @Environment(AppSettings.self) var appSettings
     @State private var config: SwipeActionConfig = .default
     @State private var isLoaded = false
 

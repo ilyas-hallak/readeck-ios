@@ -3,7 +3,7 @@ import CoreData
 
 struct ShareBookmarkView: View {
     // swiftlint:disable:next swiftui_state_private
-    @ObservedObject var viewModel: ShareBookmarkViewModel
+    @Bindable var viewModel: ShareBookmarkViewModel
     @State private var keyboardHeight: Double = 0
     @FocusState private var focusedField: AddBookmarkFieldFocus?
 

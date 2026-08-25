@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MiniPlayerView: View {
-    @ObservedObject var viewModel: SpeechPlayerViewModel
+    var viewModel: SpeechPlayerViewModel
     var onTap: () -> Void
     var onClose: (() -> Void)? = nil
 

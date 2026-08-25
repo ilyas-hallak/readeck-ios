@@ -1,108 +1,33 @@
 import Foundation
-import Combine
 
 @MainActor
-final class SpeechPlayerViewModel: ObservableObject {
+@Observable
+final class SpeechPlayerViewModel {
     private var ttsManager: TTSManager?
     private var speechQueue: SpeechQueue?
-    private let loadSettingsUseCase: PLoadSettingsUseCase
-    private var cancellables = Set<AnyCancellable>()
 
-    @Published var isSpeaking = false
-    @Published var currentText = ""
-    @Published var queueCount = 0
-    @Published var queueItems: [SpeechQueueItem] = []
-    @Published var hasItems = false
-    @Published var progress = 0.0
-    @Published var currentUtteranceIndex = 0
-    @Published var totalUtterances = 0
-    @Published var articleProgress = 0.0
-    @Published var volume: Float = 1.0
-    @Published var rate: Float = 0.5
-    @Published var currentCharacterIndex: Int = 0
-    @Published var totalCharacterCount: Int = 0
+    // Read straight from the two sources instead of mirroring 13 properties
+    // through Combine — observation tracks the reads through these accessors.
+    var isSpeaking: Bool { ttsManager?.isSpeaking ?? false }
+    var currentText: String { ttsManager?.currentUtterance ?? "" }
+    var progress: Double { ttsManager?.progress ?? 0 }
+    var currentUtteranceIndex: Int { ttsManager?.currentUtteranceIndex ?? 0 }
+    var totalUtterances: Int { ttsManager?.totalUtterances ?? 0 }
+    var articleProgress: Double { ttsManager?.articleProgress ?? 0 }
+    var volume: Float { ttsManager?.volume ?? 1.0 }
+    var rate: Float { ttsManager?.rate ?? 0.5 }
+    var currentCharacterIndex: Int { ttsManager?.currentCharacterIndex ?? 0 }
+    var totalCharacterCount: Int { ttsManager?.totalCharacterCount ?? 0 }
+
+    var queueItems: [SpeechQueueItem] { speechQueue?.queueItems ?? [] }
+    var queueCount: Int { queueItems.count }
+    var hasItems: Bool { speechQueue?.hasItems ?? false }
 
     var currentItem: SpeechQueueItem? { queueItems.first }
-
-    init(_ factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
-        loadSettingsUseCase = factory.makeLoadSettingsUseCase()
-    }
 
     func setup() async {
         self.ttsManager = .shared
         self.speechQueue = .shared
-        setupBindings()
-    }
-
-    private func setupBindings() {
-        // TTSManager bindings
-        ttsManager?.$isSpeaking
-            .receive(on: RunLoop.main)
-            .assign(to: \.isSpeaking, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$currentUtterance
-            .receive(on: RunLoop.main)
-            .assign(to: \.currentText, on: self)
-            .store(in: &cancellables)
-
-        // SpeechQueue bindings
-        speechQueue?.$queueItems
-            .receive(on: RunLoop.main)
-            .assign(to: \.queueItems, on: self)
-            .store(in: &cancellables)
-
-        speechQueue?.$queueItems
-            .receive(on: RunLoop.main)
-            .map(\.count)
-            .assign(to: \.queueCount, on: self)
-            .store(in: &cancellables)
-
-        speechQueue?.$hasItems
-            .receive(on: RunLoop.main)
-            .assign(to: \.hasItems, on: self)
-            .store(in: &cancellables)
-
-        // TTS Progress bindings
-        ttsManager?.$progress
-            .receive(on: RunLoop.main)
-            .assign(to: \.progress, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$currentUtteranceIndex
-            .receive(on: RunLoop.main)
-            .assign(to: \.currentUtteranceIndex, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$totalUtterances
-            .receive(on: RunLoop.main)
-            .assign(to: \.totalUtterances, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$articleProgress
-            .receive(on: RunLoop.main)
-            .assign(to: \.articleProgress, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$volume
-            .receive(on: RunLoop.main)
-            .assign(to: \.volume, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$rate
-            .receive(on: RunLoop.main)
-            .assign(to: \.rate, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$currentCharacterIndex
-            .receive(on: RunLoop.main)
-            .assign(to: \.currentCharacterIndex, on: self)
-            .store(in: &cancellables)
-
-        ttsManager?.$totalCharacterCount
-            .receive(on: RunLoop.main)
-            .assign(to: \.totalCharacterCount, on: self)
-            .store(in: &cancellables)
     }
 
     func setVolume(_ newVolume: Float) {

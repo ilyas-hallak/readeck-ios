@@ -5,7 +5,7 @@ struct AddBookmarkView: View {
     @State private var viewModel = AddBookmarkViewModel()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     @FocusState private var focusedField: AddBookmarkFieldFocus?
     @State private var keyboardHeight: Double = 0
 

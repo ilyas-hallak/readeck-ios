@@ -4,7 +4,7 @@ import Kingfisher
 struct CachedAsyncImage: View {
     let url: URL?
     let cacheKey: String?
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     @State private var isImageCached = false
     @State private var hasCheckedCache = false
     @State private var cachedImage: UIImage?

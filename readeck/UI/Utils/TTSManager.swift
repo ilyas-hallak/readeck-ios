@@ -1,32 +1,32 @@
 import Foundation
 import UIKit
 import AVFoundation
-import Combine
 
-final class TTSManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+@Observable
+final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     private let logger = Logger.general
     static let shared = TTSManager()
     private var synthesizer = AVSpeechSynthesizer()
     private let voiceManager = VoiceManager.shared
 
-    @Published var isSpeaking = false
-    @Published var currentUtterance = ""
-    @Published var progress = 0.0
-    @Published var totalUtterances = 0
-    @Published var currentUtteranceIndex = 0
-    @Published var articleProgress = 0.0
-    @Published var volume: Float = 1.0
-    @Published var rate: Float = 0.5
+    var isSpeaking = false
+    var currentUtterance = ""
+    var progress = 0.0
+    var totalUtterances = 0
+    var currentUtteranceIndex = 0
+    var articleProgress = 0.0
+    var volume: Float = 1.0
+    var rate: Float = 0.5
 
-    @Published var currentCharacterIndex: Int = 0
-    @Published var totalCharacterCount: Int = 0
+    var currentCharacterIndex: Int = 0
+    var totalCharacterCount: Int = 0
     var onPositionUpdate: ((Int) -> Void)?
 
     private var currentFullText: String = ""
     private var currentLanguage: String = "en-US"
     private var currentStartOffset: Int = 0
 
-    private lazy var nowPlayingManager = NowPlayingManager.shared
+    @ObservationIgnored private lazy var nowPlayingManager = NowPlayingManager.shared
 
     var onUtteranceFinished: (() -> Void)?
     var onUtteranceCancelled: (() -> Void)?

@@ -42,15 +42,16 @@ enum LogCategory: String, CaseIterable, Codable {
     case sync = "Sync"
 }
 
-final class LogConfiguration: ObservableObject {
+@Observable
+final class LogConfiguration {
     static let shared = LogConfiguration()
 
-    @Published private var categoryLevels: [LogCategory: LogLevel] = [:]
-    @Published var globalMinLevel: LogLevel = .debug
-    @Published var showPerformanceLogs = true
-    @Published var showTimestamps = true
-    @Published var includeSourceLocation = true
-    @Published var isLoggingEnabled = false
+    private var categoryLevels: [LogCategory: LogLevel] = [:]
+    var globalMinLevel: LogLevel = .debug
+    var showPerformanceLogs = true
+    var showTimestamps = true
+    var includeSourceLocation = true
+    var isLoggingEnabled = false
 
     private init() {
         // First time setup: Enable logging in DEBUG builds with sensible defaults

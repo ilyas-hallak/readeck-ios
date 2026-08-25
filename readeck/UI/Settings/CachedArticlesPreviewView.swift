@@ -12,7 +12,7 @@ struct CachedArticlesPreviewView: View {
 
     @State private var viewModel = CachedArticlesPreviewViewModel()
     @State private var selectedBookmarkId: String?
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     // MARK: - Body
 
@@ -192,6 +192,6 @@ struct CachedArticlesPreviewView: View {
 #Preview {
     NavigationStack {
         CachedArticlesPreviewView()
-            .environmentObject(AppSettings())
+            .environment(AppSettings())
     }
 }
