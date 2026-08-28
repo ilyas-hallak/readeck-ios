@@ -32,6 +32,7 @@ struct ArticleReaderLegacyView: View {
 
     @EnvironmentObject private var appSettings: AppSettings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     private let headerHeight: Double = 360
 
@@ -44,7 +45,7 @@ struct ArticleReaderLegacyView: View {
     var body: some View {
         mainContent
             .frame(maxWidth: .infinity)
-            .background(nativeBackgroundColor)
+            .background(readerTheme.backgroundColor.ignoresSafeArea())
     }
 
     private var mainContent: some View {
@@ -204,7 +205,17 @@ struct ArticleReaderLegacyView: View {
                 }
             }
         }
+        // Everything inside the reader adopts the theme's brightness so system-tinted
+        // elements stay legible on a light theme while the app runs in dark mode, and
+        // vice versa. Applied here so the presented sheets keep the app appearance.
+        .environment(\.colorScheme, readerTheme.colorScheme)
         .navigationBarTitleDisplayMode(.inline)
+        // Local to this screen on purpose: OLEDTheme.swift owns the global
+        // UINavigationBar appearance proxy, and a second writer would leave the
+        // bookmark list tinted after leaving the reader.
+        .toolbarBackground(readerTheme.backgroundColor, for: .navigationBar)
+        .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+        .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
@@ -388,22 +399,10 @@ struct ArticleReaderLegacyView: View {
         .padding(.horizontal)
     }
 
+    // The page background now carries the theme, so the card needs its own tint to
+    // stay visible instead of a translucent copy of the same color.
     private var summaryCardBackgroundColor: Color {
-        let theme = viewModel.settings?.readerColorTheme ?? .system
-        switch theme {
-        case .system:
-            return Color(.secondarySystemBackground)
-        case .custom:
-            if let hex = viewModel.settings?.customBackgroundColor {
-                return Color(hex: hex).opacity(0.85)
-            }
-            return Color(.secondarySystemBackground)
-        default:
-            if let bg = theme.backgroundColor {
-                return bg.opacity(0.85)
-            }
-            return Color(.secondarySystemBackground)
-        }
+        readerTheme.surfaceColor
     }
 
     @ViewBuilder
@@ -521,36 +520,17 @@ struct ArticleReaderLegacyView: View {
 
     // MARK: - Color Theme Helpers
 
-    private var nativeBackgroundColor: Color {
-        let theme = viewModel.settings?.readerColorTheme ?? .system
-        switch theme {
-        case .system: return Color(.systemBackground)
-        case .custom:
-            if let hex = viewModel.settings?.customBackgroundColor {
-                return Color(hex: hex)
-            }
-            return Color(.systemBackground)
-        default:
-            return theme.backgroundColor ?? Color(.systemBackground)
-        }
+    /// Single source of truth for the reader's colors, shared with the web view.
+    private var readerTheme: ReaderTheme {
+        ReaderTheme.resolve(settings: viewModel.settings, isDarkMode: colorScheme == .dark)
     }
 
     private var nativeTextColor: Color {
-        let theme = viewModel.settings?.readerColorTheme ?? .system
-        switch theme {
-        case .system: return .primary
-        case .custom:
-            if let hex = viewModel.settings?.customTextColor {
-                return Color(hex: hex)
-            }
-            return .primary
-        default:
-            return theme.textColor ?? .primary
-        }
+        readerTheme.textColor
     }
 
     private var nativeSecondaryTextColor: Color {
-        nativeTextColor.opacity(0.6)
+        readerTheme.secondaryTextColor
     }
 
     @ViewBuilder

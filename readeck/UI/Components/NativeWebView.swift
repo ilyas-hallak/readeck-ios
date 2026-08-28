@@ -20,9 +20,17 @@ struct NativeWebView: View {
     @State private var scrollPollingTask: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
 
+    /// Effective reader colors, shared with the surrounding SwiftUI chrome.
+    private var theme: ReaderTheme {
+        ReaderTheme.resolve(settings: settings, isDarkMode: colorScheme == .dark)
+    }
+
     var body: some View {
         WebKit.WebView(webPage)
             .scrollDisabled(true) // Disable internal scrolling
+            // Keeps the themed color behind the page while it is still loading, so
+            // no white or gray sliver flashes before the CSS applies.
+            .background(theme.backgroundColor)
             .onAppear {
                 loadStyledContent()
                 setupAnnotationMessageHandler()
@@ -196,29 +204,12 @@ struct NativeWebView: View {
         let lineHeightValue = settings.lineHeight ?? 1.4
         let selectedFontFamily = settings.fontFamily ?? .serif
 
-        // Resolve color theme
-        let colorTheme = settings.readerColorTheme ?? .system
-        let resolvedBgColor: String
-        let resolvedTextColor: String
-        let resolvedHeadingColor: String
-        let themeIsDark: Bool
-        switch colorTheme {
-        case .system:
-            resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
-            resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
-            resolvedHeadingColor = isDarkMode ? "#ffffff" : "#000000"
-            themeIsDark = isDarkMode
-        case .custom:
-            resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
-            resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
-            resolvedHeadingColor = resolvedTextColor
-            themeIsDark = isDarkMode
-        default:
-            resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
-            resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
-            resolvedHeadingColor = resolvedTextColor
-            themeIsDark = colorTheme.isDark
-        }
+        // Resolve color theme (same source the SwiftUI chrome uses)
+        let readerTheme = theme
+        let resolvedBgColor = readerTheme.backgroundHex
+        let resolvedTextColor = readerTheme.textHex
+        let resolvedHeadingColor = readerTheme.headingHex
+        let themeIsDark = readerTheme.isDark
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
             ? "var(--font-family)"
@@ -242,6 +233,7 @@ struct NativeWebView: View {
                 html {
                     overflow-x: hidden;
                     width: 100%;
+                    background-color: \(resolvedBgColor);
                 }
 
                 body {
