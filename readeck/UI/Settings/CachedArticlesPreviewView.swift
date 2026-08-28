@@ -14,6 +14,11 @@ struct CachedArticlesPreviewView: View {
     @State private var selectedBookmarkId: String?
     @EnvironmentObject private var appSettings: AppSettings
 
+    /// List surface color; pure black while the OLED theme is active.
+    private var listBackground: Color {
+        Color(R.color.bookmark_list_bg).oledBlack(appSettings.theme.isOLED)
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -69,7 +74,7 @@ struct CachedArticlesPreviewView: View {
                         trailing: 16
                     ))
                     .listRowSeparator(.hidden)
-                    .listRowBackground(Color(R.color.bookmark_list_bg))
+                    .listRowBackground(listBackground)
                 }
             } header: {
                 HStack {
@@ -89,7 +94,7 @@ struct CachedArticlesPreviewView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .scrollContentBackground(.hidden)
         .refreshable {
             await viewModel.refreshList()
@@ -114,7 +119,7 @@ struct CachedArticlesPreviewView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
     }
 
     @ViewBuilder
@@ -145,7 +150,7 @@ struct CachedArticlesPreviewView: View {
         }
         .padding(.horizontal, 40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
     }
 
     @ViewBuilder
@@ -185,7 +190,7 @@ struct CachedArticlesPreviewView: View {
             .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
     }
 }
 

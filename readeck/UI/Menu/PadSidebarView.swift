@@ -19,6 +19,11 @@ struct PadSidebarView: View {
 
     private let sidebarTabs: [SidebarTab] = [.search, .all, .unread, .favorite, .archived, .article, .videos, .pictures, .tags]
 
+    /// Sidebar surface color; pure black while the OLED theme is active.
+    private var sidebarBackground: Color {
+        Color(R.color.menu_sidebar_bg).oledBlack(appSettings.theme.isOLED)
+    }
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             List {
@@ -33,11 +38,11 @@ struct PadSidebarView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                     }
-                    .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
+                    .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.15) : sidebarBackground)
 
                     if tab == .archived {
                         Spacer()
-                            .listRowBackground(Color(R.color.menu_sidebar_bg))
+                            .listRowBackground(sidebarBackground)
                     }
                 }
 
@@ -55,8 +60,8 @@ struct PadSidebarView: View {
                     }
                 }
             }
-            .listRowBackground(Color(R.color.menu_sidebar_bg))
-            .background(Color(R.color.menu_sidebar_bg))
+            .listRowBackground(sidebarBackground)
+            .background(sidebarBackground)
             .listStyle(.sidebar)
             .scrollContentBackground(.hidden)
             .safeAreaInset(edge: .bottom, alignment: .center) {
@@ -80,10 +85,10 @@ struct PadSidebarView: View {
                             .padding(.vertical, 12)
                             .contentShape(Rectangle())
                     }
-                    .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : Color(R.color.menu_sidebar_bg))
+                    .listRowBackground(selectedTab == .settings ? Color.accentColor.opacity(0.15) : sidebarBackground)
                 }
                 .padding(.horizontal, 12)
-                .background(Color(R.color.menu_sidebar_bg))
+                .background(sidebarBackground)
             }
         } content: {
             GlobalPlayerContainerView(viewModel: speechPlayerViewModel, isPlayerDismissed: $isPlayerDismissed) {
@@ -140,7 +145,7 @@ struct PadSidebarView: View {
                 Text("").foregroundColor(.gray)
             }
         }
-        .background(Color(R.color.menu_sidebar_bg))
+        .background(sidebarBackground)
         .task {
             await speechPlayerViewModel.setup()
         }

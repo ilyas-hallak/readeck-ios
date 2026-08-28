@@ -9,6 +9,7 @@ import SwiftUI
 
 struct OpenSourceLicensesView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var appSettings: AppSettings
 
     var body: some View {
         NavigationStack {
@@ -97,6 +98,7 @@ struct OpenSourceLicensesView: View {
                     Text("Apple Fonts")
                 }
             }
+            .oledScrollBackground(appSettings.theme.isOLED)
             .navigationTitle("Open Source Licenses")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -132,4 +134,5 @@ struct FontLicenseRow: View {
 
 #Preview {
     OpenSourceLicensesView()
+        .environmentObject(AppSettings())
 }

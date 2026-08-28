@@ -10,6 +10,11 @@ struct SearchBookmarksView: View {
     @State private var cardLayoutStyle: CardLayoutStyle = .magazine
     @EnvironmentObject private var appSettings: AppSettings
 
+    /// List surface color; pure black while the OLED theme is active.
+    private var listBackground: Color {
+        Color(R.color.bookmark_list_bg).oledBlack(appSettings.theme.isOLED)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -81,10 +86,10 @@ struct SearchBookmarksView: View {
                         trailing: 16
                     ))
                     .listRowSeparator(.hidden)
-                    .listRowBackground(Color(R.color.bookmark_list_bg))
+                    .listRowBackground(listBackground)
                 }
                 .listStyle(.plain)
-                .background(Color(R.color.bookmark_list_bg))
+                .background(listBackground)
                 .scrollContentBackground(.hidden)
                 .simultaneousGesture(
                     DragGesture()
@@ -98,7 +103,7 @@ struct SearchBookmarksView: View {
             }
             Spacer()
         }
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .navigationTitle("Search")
         .navigationDestination(
             item: Binding<String?>(

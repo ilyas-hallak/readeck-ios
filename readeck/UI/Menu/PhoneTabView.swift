@@ -38,6 +38,11 @@ struct PhoneTabView: View {
         offlineBookmarksViewModel.state.localBookmarkCount > 0 ? offlineBookmarksViewModel.state.localBookmarkCount : 0
     }
 
+    /// List surface color; pure black while the OLED theme is active.
+    private var listBackground: Color {
+        Color(R.color.bookmark_list_bg).oledBlack(appSettings.theme.isOLED)
+    }
+
     var body: some View {
         Group {
             if #available(iOS 26.1, *) {
@@ -214,10 +219,10 @@ struct PhoneTabView: View {
                     trailing: 16
                 ))
                 .listRowSeparator(.hidden)
-                .listRowBackground(Color(R.color.bookmark_list_bg))
+                .listRowBackground(listBackground)
             }
             .scrollContentBackground(.hidden)
-            .background(Color(R.color.bookmark_list_bg))
+            .background(listBackground)
             .listStyle(.plain)
         } else if searchViewModel.searchQuery.isEmpty == false {
             ContentUnavailableView("No results", systemImage: "magnifyingglass", description: Text("No bookmarks found."))
@@ -236,7 +241,7 @@ struct PhoneTabView: View {
                 } label: {
                     Label(tab.label, systemImage: tab.systemImage)
                 }
-                .listRowBackground(Color(R.color.bookmark_list_bg))
+                .listRowBackground(listBackground)
             }
 
             if case .idle = offlineBookmarksViewModel.state {
@@ -255,7 +260,7 @@ struct PhoneTabView: View {
         }
         .navigationTitle("More")
         .scrollContentBackground(.hidden)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
     }
 
     @ViewBuilder

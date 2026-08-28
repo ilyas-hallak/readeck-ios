@@ -6,6 +6,7 @@ struct VoiceListView: View {
     let languageName: String
     @ObservedObject private var voiceManager = VoiceManager.shared
     @State private var previewingVoiceId: String? = nil
+    @EnvironmentObject private var appSettings: AppSettings
 
     private var voicesByQuality: [(quality: String, voices: [AVSpeechSynthesisVoice])] {
         let voices = voiceManager.getAvailableVoices(for: languageCode)
@@ -85,6 +86,7 @@ struct VoiceListView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle(languageName)
         .onDisappear {
             voiceManager.stopPreview()
