@@ -36,6 +36,7 @@ struct ShareBookmarkView: View {
                             titleSection
                                 .id(AddBookmarkFieldFocus.title)
                             sendPageContentSection
+                            openAfterSaveSection
                             statusSection
                             Spacer(minLength: 100) // Space for button
                         }
@@ -51,11 +52,7 @@ struct ShareBookmarkView: View {
                     }
                 }
 
-                if viewModel.savedBookmarkId != nil {
-                    openInAppButtonSection
-                } else {
-                    saveButtonSection
-                }
+                saveButtonSection
             }
         }
         .background(Color(.systemGroupedBackground))
@@ -199,6 +196,25 @@ struct ShareBookmarkView: View {
     }
 
     @ViewBuilder
+    private var openAfterSaveSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Open after save")
+                    .font(.system(size: 15, weight: .medium))
+                Text("Jump straight into the article in Readeck")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Toggle("", isOn: $viewModel.openAfterSave)
+                .toggleStyle(.switch)
+                .labelsHidden()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 20)
+    }
+
+    @ViewBuilder
     private var tagManagementSection: some View {
         CoreDataTagManagementView(
             selectedLabels: viewModel.selectedLabels,
@@ -260,22 +276,6 @@ struct ShareBookmarkView: View {
         .padding(.top, 16)
         .padding(.bottom, 32)
         .disabled(viewModel.isSaving)
-    }
-
-    @ViewBuilder
-    private var openInAppButtonSection: some View {
-        Button(action: { viewModel.openInApp() }) {
-            Label("Open in Readeck", systemImage: "arrow.up.forward.app")
-                .font(.system(size: 17, weight: .semibold))
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(16)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        .padding(.bottom, 32)
     }
 
     // MARK: - Helper Functions
