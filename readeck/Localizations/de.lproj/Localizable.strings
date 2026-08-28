@@ -159,6 +159,7 @@
 "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog." = "So werden Lesezeichen-Beschreibungen und Artikeltexte in der App angezeigt. Franz jagt im komplett verwahrlosten Taxi quer durch Bayern.";
 "Try Again" = "Erneut versuchen";
 "Unable to load bookmarks" = "Lesezeichen können nicht geladen werden";
+"Unarchive" = "Aus Archiv entfernen";
 "Unarchive Bookmark" = "Lesezeichen aus Archiv entfernen";
 "URL in clipboard:" = "URL in Zwischenablage:";
 "Username" = "Benutzername";
@@ -280,6 +281,8 @@
 "No article content to summarize." = "Kein Artikelinhalt zum Zusammenfassen vorhanden.";
 "Delete this bookmark?" = "Dieses Lesezeichen löschen?";
 "This action cannot be undone." = "Diese Aktion kann nicht rückgängig gemacht werden.";
+"Archive this bookmark?" = "Dieses Lesezeichen archivieren?";
+"Unarchive this bookmark?" = "Dieses Lesezeichen aus dem Archiv entfernen?";
 
 /* Unread Badge */
 "Show Unread Count on App Icon" = "Ungelesen-Anzahl auf App-Icon anzeigen";
