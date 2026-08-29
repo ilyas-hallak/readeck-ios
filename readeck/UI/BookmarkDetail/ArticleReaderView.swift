@@ -19,6 +19,7 @@ struct ArticleReaderView: View {
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingArchiveConfirmation = false
     @State private var isToolbarVisible: Bool = true
     @State private var scrollTracker = ScrollTracker()
 
@@ -81,6 +82,19 @@ struct ArticleReaderView: View {
                 }
             } message: {
                 Text("This action cannot be undone.".localized)
+            }
+            .alert(
+                viewModel.bookmarkDetail.isArchived ? "Unarchive this bookmark?".localized : "Archive this bookmark?".localized,
+                isPresented: $showingArchiveConfirmation
+            ) {
+                Button("Cancel".localized, role: .cancel) {}
+                // Capture the target state up front so it cannot flip while the request runs.
+                let shouldArchive = !viewModel.bookmarkDetail.isArchived
+                Button(shouldArchive ? "Archive".localized : "Unarchive".localized) {
+                    Task {
+                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: shouldArchive)
+                    }
+                }
             }
             .onChange(of: showingFontSettings) { _, isShowing in
                 if !isShowing {
@@ -262,6 +276,17 @@ struct ArticleReaderView: View {
                 } label: {
                     Label("Font Settings".localized, systemImage: "textformat")
                 }
+
+                Button {
+                    showingArchiveConfirmation = true
+                } label: {
+                    if viewModel.bookmarkDetail.isArchived {
+                        Label("Unarchive".localized, systemImage: "tray.and.arrow.up")
+                    } else {
+                        Label("Archive".localized, systemImage: "archivebox")
+                    }
+                }
+                .disabled(!appSettings.isNetworkConnected || viewModel.isLoading)
 
                 Divider()
 
