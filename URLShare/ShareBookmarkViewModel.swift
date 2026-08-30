@@ -16,10 +16,14 @@ final class ShareBookmarkViewModel: ObservableObject {
     @Published var sessionExpired = false
     @Published var pageHTML: String?
     @Published var includeHTML = false
-    /// Set once the bookmark is saved online and the server returned its id. Drives
-    /// the "Open in Readeck" button; nil after a local save or an older server that
-    /// doesn't return the id.
+    /// Set once the bookmark is saved online and the server returned its id. Needed to
+    /// deep-link into the app; nil after a local save or an older server that doesn't
+    /// return the id.
     @Published var savedBookmarkId: String?
+    /// When on, a successful online save deep-links into the app instead of just
+    /// closing the sheet. Deliberately not remembered: saving and moving on is the
+    /// common case, so opening the app stays an explicit per-share choice.
+    @Published var openAfterSave = false
     let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
     /// A view from the hosting controller, used as the entry point into the responder
@@ -145,9 +149,13 @@ final class ShareBookmarkViewModel: ObservableObject {
                     if !error {
                         self.savedBookmarkId = bookmarkId
                         self.logger.debug("Bookmark saved successfully, id available: \(bookmarkId != nil)")
-                        // When we have an id we show an "Open in Readeck" button and give
-                        // the user time to tap it before auto-closing; otherwise close quickly.
-                        self.scheduleAutoClose(after: bookmarkId != nil ? 6.0 : 0.5)
+                        if self.openAfterSave, bookmarkId != nil {
+                            self.openInApp()
+                        } else {
+                            // Saving and getting out of the way is the common case, so
+                            // close as soon as the success state has been shown.
+                            self.scheduleAutoClose(after: 0.5)
+                        }
                     } else {
                         self.logger.error("Failed to save bookmark via API: \(message)")
                     }
