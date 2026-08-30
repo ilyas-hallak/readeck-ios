@@ -4,6 +4,7 @@ struct AnnotationsListView: View {
     let bookmarkId: String
     @State private var viewModel = AnnotationsListViewModel()
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var appSettings: AppSettings
     var onAnnotationTap: ((String) -> Void)?
 
     enum ViewState {
@@ -81,6 +82,7 @@ struct AnnotationsListView: View {
                     EmptyView()
                 }
             }
+            .oledScrollBackground(appSettings.theme.isOLED)
             .navigationTitle("Annotations")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -129,4 +131,5 @@ struct AnnotationsListView: View {
     NavigationStack {
         AnnotationsListView(bookmarkId: "123")
     }
+    .environmentObject(AppSettings())
 }

@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct SwipeActionsSettingsView: View {
-    @EnvironmentObject var appSettings: AppSettings
+    @EnvironmentObject private var appSettings: AppSettings
     @State private var config: SwipeActionConfig = .default
     @State private var isLoaded = false
 
@@ -65,6 +65,7 @@ struct SwipeActionsSettingsView: View {
 }
 
 struct SwipeActionsDetailView: View {
+    @EnvironmentObject private var appSettings: AppSettings
     @Binding var config: SwipeActionConfig
     let onSave: () -> Void
     @State private var showAddLeading = false
@@ -158,6 +159,7 @@ struct SwipeActionsDetailView: View {
                 .foregroundColor(.red)
             }
         }
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle("Swipe Actions")
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, .constant(.active))
@@ -199,6 +201,7 @@ struct SwipeActionsDetailView: View {
                     }
                 }
             }
+            .oledScrollBackground(appSettings.theme.isOLED)
             .navigationTitle("Add Action")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

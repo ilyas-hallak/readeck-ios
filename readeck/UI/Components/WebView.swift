@@ -22,8 +22,11 @@ struct WebView: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.scrollView.isScrollEnabled = false
+        // Transparent so the themed SwiftUI background shows through while the
+        // article is still loading, instead of a white or gray flash.
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
+        webView.scrollView.backgroundColor = UIColor.clear
 
         // Allow text selection and copying
         webView.allowsBackForwardNavigationGestures = false
@@ -68,29 +71,13 @@ struct WebView: UIViewRepresentable {
         guard context.coordinator.lastRenderKey != renderKey else { return }
         context.coordinator.lastRenderKey = renderKey
 
-        // Resolve color theme
+        // Resolve color theme (same source the SwiftUI chrome uses)
         let colorTheme = settings.readerColorTheme ?? .system
-        let resolvedBgColor: String
-        let resolvedTextColor: String
-        let resolvedHeadingColor: String
-        let themeIsDark: Bool
-        switch colorTheme {
-        case .system:
-            resolvedBgColor = isDarkMode ? "#000000" : "#ffffff"
-            resolvedTextColor = isDarkMode ? "#ffffff" : "#1a1a1a"
-            resolvedHeadingColor = isDarkMode ? "#ffffff" : "#000000"
-            themeIsDark = isDarkMode
-        case .custom:
-            resolvedBgColor = settings.customBackgroundColor ?? (isDarkMode ? "#000000" : "#ffffff")
-            resolvedTextColor = settings.customTextColor ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
-            resolvedHeadingColor = resolvedTextColor
-            themeIsDark = isDarkMode
-        default:
-            resolvedBgColor = colorTheme.backgroundHex ?? (isDarkMode ? "#000000" : "#ffffff")
-            resolvedTextColor = colorTheme.textHex ?? (isDarkMode ? "#ffffff" : "#1a1a1a")
-            resolvedHeadingColor = resolvedTextColor
-            themeIsDark = colorTheme.isDark
-        }
+        let readerTheme = ReaderTheme.resolve(settings: settings, isDarkMode: isDarkMode)
+        let resolvedBgColor = readerTheme.backgroundHex
+        let resolvedTextColor = readerTheme.textHex
+        let resolvedHeadingColor = readerTheme.headingHex
+        let themeIsDark = readerTheme.isDark
         let fontCSS = ReaderFontCSSBuilder.build(fontFamily: selectedFontFamily)
         let codeFontFamily = selectedFontFamily == .monospace
             ? "var(--font-family)"
@@ -136,6 +123,10 @@ struct WebView: UIViewRepresentable {
                     /* Font Settings from Settings */
                     --base-font-size: \(fontSize)px;
                     --font-family: \(fontCSS.fontStackCSS);
+                }
+
+                html {
+                    background-color: var(--background-color);
                 }
 
                 body {

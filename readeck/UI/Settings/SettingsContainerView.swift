@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsContainerView: View {
     @State private var offlineViewModel = OfflineSettingsViewModel()
     @State private var activeSheet: SettingsSheet?
+    @EnvironmentObject private var appSettings: AppSettings
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -98,6 +99,7 @@ struct SettingsContainerView: View {
             appInfoSection
         }
         .listStyle(.insetGrouped)
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
         .task {
@@ -209,4 +211,5 @@ extension View {
     NavigationStack {
         SettingsContainerView()
     }
+    .environmentObject(AppSettings())
 }
