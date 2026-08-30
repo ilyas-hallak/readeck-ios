@@ -23,6 +23,9 @@ struct GlobalPlayerContainerView<Content: View>: View {
                     MiniPlayerView(viewModel: viewModel, onTap: {
                         isPlayerSheetPresented = true
                     }, onClose: {
+                        // Closing the player ends playback; hiding it while the
+                        // voice keeps reading leaves no way to stop it.
+                        viewModel.stop()
                         isPlayerDismissed = true
                     })
                     .transition(.move(edge: .bottom).combined(with: .opacity))

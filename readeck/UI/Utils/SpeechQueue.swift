@@ -52,6 +52,9 @@ final class SpeechQueue {
     private let logger = Logger.general
     private var queue: [SpeechQueueItem] = []
     private var isProcessing = false
+    /// Set when the item at index 0 has been read to the end but is kept around
+    /// for replay. See `dropCompletedItem()`.
+    private var didFinishCurrentItem = false
     private let ttsManager: TTSManager
     private let queueKey = "tts_queue"
     private var lastSaveTime: Date = .distantPast
@@ -116,6 +119,7 @@ final class SpeechQueue {
 
     func enqueue(_ item: SpeechQueueItem) {
         dispatchPrecondition(condition: .onQueue(.main))
+        dropCompletedItem()
         queue.append(item)
         updatePublishedProperties()
         saveQueue()
@@ -124,10 +128,21 @@ final class SpeechQueue {
 
     func enqueue(contentsOf items: [SpeechQueueItem]) {
         dispatchPrecondition(condition: .onQueue(.main))
+        dropCompletedItem()
         queue.append(contentsOf: items)
         updatePublishedProperties()
         saveQueue()
         processQueue()
+    }
+
+    /// The article that just finished stays in the queue so the player keeps
+    /// showing it and it can be replayed. As soon as something new is queued it
+    /// has to go, otherwise `processQueue()` replays it instead of playing the
+    /// article the user just added.
+    private func dropCompletedItem() {
+        guard didFinishCurrentItem, !queue.isEmpty else { return }
+        queue.removeFirst()
+        didFinishCurrentItem = false
     }
 
     func stop() {
@@ -160,6 +175,7 @@ final class SpeechQueue {
         dispatchPrecondition(condition: .onQueue(.main))
         logger.debug("SpeechQueue clear() called")
         queue.removeAll()
+        didFinishCurrentItem = false
         updatePublishedProperties()
         saveQueue()
         ttsManager.stop()
@@ -175,6 +191,7 @@ final class SpeechQueue {
     private func processQueue() {
         guard !isProcessing, !queue.isEmpty else { return }
         isProcessing = true
+        didFinishCurrentItem = false
         let next = queue[0]
         updatePublishedProperties()
         saveQueue()
@@ -209,6 +226,7 @@ final class SpeechQueue {
             // Last item — keep it visible, reset position for replay
             if !queue.isEmpty {
                 queue[0].lastCharacterIndex = 0
+                didFinishCurrentItem = true
             }
             updatePublishedProperties()
             saveQueue()
@@ -219,6 +237,7 @@ final class SpeechQueue {
 
     func insertAfterCurrent(_ item: SpeechQueueItem) {
         dispatchPrecondition(condition: .onQueue(.main))
+        dropCompletedItem()
         if queue.isEmpty {
             enqueue(item)
         } else {
@@ -249,6 +268,7 @@ final class SpeechQueue {
         if removingCurrent {
             ttsManager.stop()
             isProcessing = false
+            didFinishCurrentItem = false
             processQueue()
         }
     }
@@ -259,6 +279,7 @@ final class SpeechQueue {
         queue.insert(item, at: 0)
         ttsManager.stop()
         isProcessing = false
+        didFinishCurrentItem = false
         updatePublishedProperties()
         saveQueue()
         processQueue()
@@ -269,6 +290,7 @@ final class SpeechQueue {
         ttsManager.stop()
         queue.removeFirst()
         isProcessing = false
+        didFinishCurrentItem = false
         updatePublishedProperties()
         saveQueue()
         processQueue()

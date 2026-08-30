@@ -51,6 +51,9 @@ struct PhoneTabView: View {
                         MiniPlayerView(viewModel: speechPlayerViewModel, onTap: {
                             isPlayerSheetPresented = true
                         }, onClose: {
+                            // Closing the player ends playback; hiding it while the
+                            // voice keeps reading leaves no way to stop it.
+                            speechPlayerViewModel.stop()
                             isPlayerDismissed = true
                         })
                     }
