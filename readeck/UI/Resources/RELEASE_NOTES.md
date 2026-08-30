@@ -6,6 +6,30 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ## Version 3.1.0
 
+This release is mostly about making what's already there work reliably. There are new features below, but the bulk of the work went into offline sync, reader performance, and error handling.
+
+### Reader
+
+- **New OLED theme** rendering true black instead of the system's dark gray, for OLED displays. Settings → Appearance → Theme
+- **Reader color themes now cover the entire reader.** Sepia, Night Blue, Mint and the Solarized themes color the navigation bar and the safe areas too, so the article no longer sits in a gray frame
+- **Archive from the reader menu**, without scrolling to the end of the article to reach the floating button
+- **Delete from the reader menu**, so you can remove the current article without going back to the list
+- **Long articles render noticeably faster.** The article used to be rebuilt from scratch on every view update
+- Rubber-band scrolling is gone, which makes it easier to select text near the top and bottom edges
+- Highlight labels now use the theme's text color and stay readable on dark backgrounds
+
+### Favorites
+
+- **Favorite status is now visible in the list**, as a heart on the bookmark image in all three card layouts
+- The swipe menu's heart shows whether an article *is* a favorite, instead of only offering the action
+- **Favorites stay in your Unread list.** Marking an article as a favorite used to remove it from Unread; it now behaves like the web app
+
+### Share Extension
+
+- **New "Open after save" toggle.** Turn it on before saving and the app opens the article right after it's stored
+- It's off by default and deliberately not remembered, so saving a link and moving on stays the fast path
+- The reader waits for the server to finish preparing a freshly saved article instead of showing a blank page
+
 ### Unread Count Badge
 
 - **Optional app-icon badge** showing your number of unread articles
@@ -17,26 +41,41 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - **Choose what happens when you archive or delete the article you're reading:** stay on it, open the next one in your list, or return to the list
 - New picker in Settings → Reading Settings
 
-### Open Saved Articles from the Share Sheet
+### Reading Aloud
 
-- After saving a link via the **Share Extension**, tap **"Open in Readeck"** to jump straight into the article
-- The reader waits for the server to finish preparing a freshly saved article instead of showing a blank page
+- **Queueing a new article while one has just finished now plays the new article.** The finished one used to stay at the front of the queue and get replayed instead
+- The mini player's close button now actually stops playback, rather than hiding the player while the voice kept reading
 
-### Reader
+### Swedish
 
-- Added a **Delete** option to the article reading view's menu, so you can remove the current article without going back to the list
+- **The app is now available in Swedish**, alongside English and German
+- Completed the German onboarding texts, which were falling back to English
 
 ### Hall of Fame
 
 - New **Settings → Hall of Fame** screen crediting the Readeck project founder, the app maintainer, and everyone who has contributed
 - Tap a person to open their GitHub or Codeberg profile
 
-### Bug Fixes & Stability
+### Bug Fixes
 
-- More robust OAuth login (clearer retries, guards against double taps)
-- More defensive handling of the server info/version response
-- Automatic recovery from transient gateway errors (502/503/504 and Cloudflare 52x) when loading large articles
-- The bookmark type filter (Articles/Videos/Pictures) is now preserved when the list reloads
+- The reader's horizontal margin no longer collapses to 0 and pushes the text against the screen edge
+- The reader font size is kept when you reopen the settings sheet
+- The archive button in the reader stays in sync when you un-archive an article
+- Server error messages are shown instead of failing silently
+- The bookmark type filter (Articles/Videos/Pictures) is preserved when the list reloads
+- Server URLs typed with smart punctuation (curly dashes, invisible characters) are cleaned up instead of failing with a format error
+- More robust OAuth login, with clearer retries and a guard against double taps
+- More defensive handling of the server info/version response, for older Readeck servers
+
+### Stability & Performance
+
+- **Offline sync no longer stops at the first failure.** Each item is retried on its own with a backoff, and items that fail stay queued for the next run
+- **The image cache now honors its size limit** across app launches, instead of only when you moved the slider
+- Large articles recover automatically from gateway errors (502/503/504 and Cloudflare 52x)
+- Hardened Core Data threading, which removes a class of rare crashes and data races
+- Errors in the storage layer are no longer swallowed, so problems surface instead of looking like missing data
+- Network requests have proper timeouts
+- Considerably more test coverage across the app, the repositories, and the share extension
 
 ## Version 3.0.0
 
