@@ -10,7 +10,7 @@ import SwiftUI
 struct SettingsContainerView: View {
     @State private var offlineViewModel = OfflineSettingsViewModel()
     @State private var activeSheet: SettingsSheet?
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -133,7 +133,7 @@ struct SettingsContainerView: View {
                 subtitle: "Network simulation, logging & more"
             ) {
                 DebugMenuView()
-                    .environmentObject(AppSettings())
+                    .environment(AppSettings())
             }
         } header: {
             HStack {
@@ -211,5 +211,5 @@ extension View {
     NavigationStack {
         SettingsContainerView()
     }
-    .environmentObject(AppSettings())
+    .environment(AppSettings())
 }

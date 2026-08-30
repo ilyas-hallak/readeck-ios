@@ -9,7 +9,7 @@ import SwiftUI
 import os
 
 struct LoggingConfigurationView: View {
-    @StateObject private var logConfig = LogConfiguration.shared
+    @State private var logConfig = LogConfiguration.shared
     private let logger = Logger.ui
 
     var body: some View {
@@ -114,7 +114,7 @@ struct LoggingConfigurationView: View {
 
 struct GlobalLogLevelView: View {
     // swiftlint:disable:next swiftui_state_private
-    @ObservedObject var logConfig: LogConfiguration
+    var logConfig: LogConfiguration
 
     var body: some View {
         List {
@@ -173,7 +173,7 @@ struct GlobalLogLevelView: View {
 struct CategoryLogLevelView: View {
     let category: LogCategory
     // swiftlint:disable:next swiftui_state_private
-    @ObservedObject var logConfig: LogConfiguration
+    var logConfig: LogConfiguration
 
     var body: some View {
         List {

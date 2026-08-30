@@ -10,7 +10,7 @@ import SwiftUI
 struct CardLayoutSelectionView: View {
     @Binding var selectedCardLayout: CardLayoutStyle
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     let onSave: () -> Void
 
@@ -171,5 +171,5 @@ struct CardLayoutPreview: View {
             selectedCardLayout: .constant(.magazine)
         )            {}
     }
-    .environmentObject(AppSettings())
+    .environment(AppSettings())
 }

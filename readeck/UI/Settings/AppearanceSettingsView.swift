@@ -7,7 +7,7 @@ struct AppearanceSettingsView: View {
     @State private var fontViewModel: FontSettingsViewModel
     @State private var generalViewModel: SettingsGeneralViewModel
 
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let saveCardLayoutUseCase: PSaveCardLayoutUseCase

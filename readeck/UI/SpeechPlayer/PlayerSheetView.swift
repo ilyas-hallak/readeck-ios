@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PlayerSheetView: View {
-    @ObservedObject var viewModel: SpeechPlayerViewModel
+    var viewModel: SpeechPlayerViewModel
     @State private var seekPosition: Double? = nil
     @State private var isSeeking = false
 

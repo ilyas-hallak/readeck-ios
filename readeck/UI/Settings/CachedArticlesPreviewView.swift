@@ -12,7 +12,7 @@ struct CachedArticlesPreviewView: View {
 
     @State private var viewModel = CachedArticlesPreviewViewModel()
     @State private var selectedBookmarkId: String?
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     /// List surface color; pure black while the OLED theme is active.
     private var listBackground: Color {
@@ -197,6 +197,6 @@ struct CachedArticlesPreviewView: View {
 #Preview {
     NavigationStack {
         CachedArticlesPreviewView()
-            .environmentObject(AppSettings())
+            .environment(AppSettings())
     }
 }

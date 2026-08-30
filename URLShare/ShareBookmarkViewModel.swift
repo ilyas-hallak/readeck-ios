@@ -4,26 +4,27 @@ import UIKit
 import UniformTypeIdentifiers
 import CoreData
 
-final class ShareBookmarkViewModel: ObservableObject {
-    @Published var url: String?
-    @Published var title = ""
-    @Published var selectedLabels: Set<String> = []
-    @Published var statusMessage: (text: String, isError: Bool, emoji: String)?
-    @Published var isSaving = false
-    @Published var searchText = ""
-    @Published var isServerReachable = true
-    @Published var isConfigured = true
-    @Published var sessionExpired = false
-    @Published var pageHTML: String?
-    @Published var includeHTML = false
+@Observable
+final class ShareBookmarkViewModel {
+    var url: String?
+    var title = ""
+    var selectedLabels: Set<String> = []
+    var statusMessage: (text: String, isError: Bool, emoji: String)?
+    var isSaving = false
+    var searchText = ""
+    var isServerReachable = true
+    var isConfigured = true
+    var sessionExpired = false
+    var pageHTML: String?
+    var includeHTML = false
     /// Set once the bookmark is saved online and the server returned its id. Needed to
     /// deep-link into the app; nil after a local save or an older server that doesn't
     /// return the id.
-    @Published var savedBookmarkId: String?
+    var savedBookmarkId: String?
     /// When on, a successful online save deep-links into the app instead of just
     /// closing the sheet. Deliberately not remembered: saving and moving on is the
     /// common case, so opening the app stays an explicit per-share choice.
-    @Published var openAfterSave = false
+    var openAfterSave = false
     let tagSortOrder: TagSortOrder
     let extensionContext: NSExtensionContext?
     /// A view from the hosting controller, used as the entry point into the responder

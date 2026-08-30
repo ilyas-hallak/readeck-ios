@@ -3,7 +3,7 @@ import SwiftUI
 struct SkeletonLoadingView: View {
     let layout: CardLayoutStyle
     @State private var animateGradient = false
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     /// List surface color; pure black while the OLED theme is active.
     private var listBackground: Color {
@@ -179,5 +179,5 @@ struct SkeletonLoadingView: View {
         SkeletonLoadingView(layout: .magazine)
             .padding()
     }
-    .environmentObject(AppSettings())
+    .environment(AppSettings())
 }

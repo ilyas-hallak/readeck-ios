@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct SwipeActionsSettingsView: View {
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) var appSettings
     @State private var config: SwipeActionConfig = .default
     @State private var isLoaded = false
 
@@ -65,7 +65,7 @@ struct SwipeActionsSettingsView: View {
 }
 
 struct SwipeActionsDetailView: View {
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     @Binding var config: SwipeActionConfig
     let onSave: () -> Void
     @State private var showAddLeading = false

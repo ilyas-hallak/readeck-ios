@@ -5,7 +5,7 @@ struct BookmarkLabelsView: View {
     @State private var viewModel: BookmarkLabelsViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     init(bookmarkId: String, initialLabels: [String], viewModel: BookmarkLabelsViewModel? = nil) {
         self.bookmarkId = bookmarkId

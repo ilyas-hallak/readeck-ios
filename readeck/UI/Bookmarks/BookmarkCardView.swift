@@ -14,7 +14,7 @@ extension View {
 
 struct BookmarkCardView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     let bookmark: Bookmark
     let currentState: BookmarkState

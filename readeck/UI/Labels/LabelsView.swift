@@ -2,7 +2,7 @@ import SwiftUI
 
 struct LabelsView: View {
     @State private var viewModel = LabelsViewModel()
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     @Binding var selectedTag: BookmarkLabel?
 
     init(viewModel: LabelsViewModel = LabelsViewModel(), selectedTag: Binding<BookmarkLabel?>) {

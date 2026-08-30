@@ -11,7 +11,7 @@ struct FontSelectionView: View {
     @State private var viewModel: FontSettingsViewModel
     @State private var showCSSHelp = false
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
         self.viewModel = viewModel
@@ -383,5 +383,5 @@ struct FontSelectionView: View {
             factory: MockUseCaseFactory()
         ))
     }
-    .environmentObject(AppSettings())
+    .environment(AppSettings())
 }

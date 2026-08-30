@@ -3,8 +3,8 @@ import AVFoundation
 
 struct TTSLanguageSettingsView: View {
     @AppStorage("tts_preferred_language") private var preferredLanguage = "en-US"
-    @ObservedObject private var voiceManager = VoiceManager.shared
-    @EnvironmentObject private var appSettings: AppSettings
+    @State private var voiceManager = VoiceManager.shared
+    @Environment(AppSettings.self) private var appSettings
 
     private let supportedLanguages: [(code: String, name: String)] = [
         ("de-DE", "Deutsch"),
@@ -82,5 +82,5 @@ struct TTSLanguageSettingsView: View {
     NavigationStack {
         TTSLanguageSettingsView()
     }
-    .environmentObject(AppSettings())
+    .environment(AppSettings())
 }

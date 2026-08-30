@@ -8,7 +8,7 @@ struct SearchBookmarksView: View {
     @Namespace private var namespace
     @State private var isFirstAppearance = true
     @State private var cardLayoutStyle: CardLayoutStyle = .magazine
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     /// List surface color; pure black while the OLED theme is active.
     private var listBackground: Color {

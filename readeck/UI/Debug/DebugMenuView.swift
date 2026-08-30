@@ -10,8 +10,8 @@ import netfox
 
 struct DebugMenuView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appSettings: AppSettings
-    @StateObject private var viewModel = DebugMenuViewModel()
+    @Environment(AppSettings.self) private var appSettings
+    @State private var viewModel = DebugMenuViewModel()
     @AppStorage("useNativeWebView") private var useNativeWebView = true
 
     var body: some View {
@@ -274,15 +274,16 @@ struct DebugMenuView: View {
 }
 
 @MainActor
-final class DebugMenuViewModel: ObservableObject {
-    @Published var showResetCacheAlert = false
-    @Published var showResetDatabaseAlert = false
-    @Published var cachedArticlesCount = 0
-    @Published var cacheSize = "0 KB"
-    @Published var selectedBookmarkId: String?
-    @Published var cachedBookmarks: [Bookmark] = []
-    @Published var isLoggingEnabled = false
-    @Published var isNetFoxRunning = false
+@Observable
+final class DebugMenuViewModel {
+    var showResetCacheAlert = false
+    var showResetDatabaseAlert = false
+    var cachedArticlesCount = 0
+    var cacheSize = "0 KB"
+    var selectedBookmarkId: String?
+    var cachedBookmarks: [Bookmark] = []
+    var isLoggingEnabled = false
+    var isNetFoxRunning = false
 
     private let offlineCacheRepository = OfflineCacheRepository()
     private let coreDataManager = CoreDataManager.shared
@@ -411,5 +412,5 @@ extension View {
 
 #Preview {
     DebugMenuView()
-        .environmentObject(AppSettings())
+        .environment(AppSettings())
 }

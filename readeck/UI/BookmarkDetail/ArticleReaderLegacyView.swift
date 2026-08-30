@@ -30,7 +30,7 @@ struct ArticleReaderLegacyView: View {
 
     // MARK: - Envs
 
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 

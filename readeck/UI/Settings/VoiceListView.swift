@@ -4,9 +4,9 @@ import AVFoundation
 struct VoiceListView: View {
     let languageCode: String
     let languageName: String
-    @ObservedObject private var voiceManager = VoiceManager.shared
+    @State private var voiceManager = VoiceManager.shared
     @State private var previewingVoiceId: String? = nil
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     private var voicesByQuality: [(quality: String, voices: [AVSpeechSynthesisVoice])] {
         let voices = voiceManager.getAvailableVoices(for: languageCode)

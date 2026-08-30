@@ -11,7 +11,7 @@ import netfox
 @main
 struct readeckApp: App {
     @State private var appViewModel = AppViewModel()
-    @StateObject private var appSettings = AppSettings()
+    @State private var appSettings = AppSettings()
     @State private var deepLinkRouter = DeepLinkRouter()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDebugMenu = false
@@ -26,7 +26,7 @@ struct readeckApp: App {
                         .padding()
                 }
             }
-            .environmentObject(appSettings)
+            .environment(appSettings)
             .environment(deepLinkRouter)
             .environment(\.managedObjectContext, CoreDataManager.shared.context)
             .preferredColorScheme(appSettings.theme.colorScheme)
@@ -42,7 +42,7 @@ struct readeckApp: App {
             }
             .sheet(isPresented: $showDebugMenu) {
                 DebugMenuView()
-                    .environmentObject(appSettings)
+                    .environment(appSettings)
             }
             .onAppear {
                 // Start NetFox in non-production builds

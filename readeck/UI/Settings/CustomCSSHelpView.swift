@@ -8,7 +8,7 @@ import SwiftUI
 struct CustomCSSHelpView: View {
     @Binding var customCSS: String
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     var body: some View {
         NavigationStack {

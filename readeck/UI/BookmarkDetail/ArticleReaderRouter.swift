@@ -7,7 +7,7 @@ struct ArticleReaderRouter: View {
 
     @AppStorage("useNativeWebView") private var useNativeWebView = true
 
-    @EnvironmentObject private var appSettings: AppSettings
+    @Environment(AppSettings.self) private var appSettings
 
     var body: some View {
         Group {
