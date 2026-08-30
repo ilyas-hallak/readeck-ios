@@ -8,6 +8,7 @@ import SwiftUI
 struct CustomCSSHelpView: View {
     @Binding var customCSS: String
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppSettings.self) private var appSettings
 
     var body: some View {
         NavigationStack {
@@ -23,6 +24,7 @@ struct CustomCSSHelpView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .oledScrollBackground(appSettings.theme.isOLED)
             .navigationTitle("css.help.title".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

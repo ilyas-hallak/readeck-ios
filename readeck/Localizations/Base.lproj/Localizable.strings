@@ -145,6 +145,7 @@
 "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog." = "This is how your bookmark descriptions and article text will appear in the app. The quick brown fox jumps over the lazy dog.";
 "Try Again" = "Try Again";
 "Unable to load bookmarks" = "Unable to load bookmarks";
+"Unarchive" = "Unarchive";
 "Unarchive Bookmark" = "Unarchive Bookmark";
 "URL in clipboard:" = "URL in clipboard:";
 "Username" = "Username";
@@ -186,3 +187,5 @@
 "No article content to summarize." = "No article content to summarize.";
 "Delete this bookmark?" = "Delete this bookmark?";
 "This action cannot be undone." = "This action cannot be undone.";
+"Archive this bookmark?" = "Archive this bookmark?";
+"Unarchive this bookmark?" = "Unarchive this bookmark?";

@@ -19,6 +19,7 @@ struct ArticleReaderView: View {
     @State private var showingImageViewer = false
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingArchiveConfirmation = false
     @State private var isToolbarVisible: Bool = true
     @State private var scrollTracker = ScrollTracker()
 
@@ -26,6 +27,7 @@ struct ArticleReaderView: View {
 
     @Environment(AppSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     private let headerHeight: Double = 360
 
@@ -37,7 +39,7 @@ struct ArticleReaderView: View {
 
     var body: some View {
         mainView
-            .background(nativeBackgroundColor)
+            .background(readerTheme.backgroundColor.ignoresSafeArea())
     }
 
     private var mainView: some View {
@@ -47,6 +49,12 @@ struct ArticleReaderView: View {
                 toolbarContent
             }
             .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
+            // Local to this screen on purpose: OLEDTheme.swift owns the global
+            // UINavigationBar appearance proxy, and a second writer would leave the
+            // bookmark list tinted after leaving the reader.
+            .toolbarBackground(readerTheme.backgroundColor, for: .navigationBar)
+            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+            .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
             .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
             .sheet(isPresented: $showingFontSettings) {
                 fontSettingsSheet
@@ -81,6 +89,19 @@ struct ArticleReaderView: View {
                 }
             } message: {
                 Text("This action cannot be undone.".localized)
+            }
+            .alert(
+                viewModel.bookmarkDetail.isArchived ? "Unarchive this bookmark?".localized : "Archive this bookmark?".localized,
+                isPresented: $showingArchiveConfirmation
+            ) {
+                Button("Cancel".localized, role: .cancel) {}
+                // Capture the target state up front so it cannot flip while the request runs.
+                let shouldArchive = !viewModel.bookmarkDetail.isArchived
+                Button(shouldArchive ? "Archive".localized : "Unarchive".localized) {
+                    Task {
+                        await viewModel.archiveBookmark(id: bookmarkId, isArchive: shouldArchive)
+                    }
+                }
             }
             .onChange(of: showingFontSettings) { _, isShowing in
                 if !isShowing {
@@ -137,6 +158,11 @@ struct ArticleReaderView: View {
                 }
                 .animation(.spring(response: 0.6, dampingFraction: 0.8), value: readingProgress >= 0.9)
         }
+        // Everything inside the reader adopts the theme's brightness so system-tinted
+        // elements (progress bar, dividers, glass buttons, loading labels) stay legible
+        // on a light theme while the app runs in dark mode, and vice versa. Applied
+        // here and not on `mainView` so the presented sheets keep the app appearance.
+        .environment(\.colorScheme, readerTheme.colorScheme)
     }
 
     private var floatingActionButtons: some View {
@@ -263,6 +289,17 @@ struct ArticleReaderView: View {
                     Label("Font Settings".localized, systemImage: "textformat")
                 }
 
+                Button {
+                    showingArchiveConfirmation = true
+                } label: {
+                    if viewModel.bookmarkDetail.isArchived {
+                        Label("Unarchive".localized, systemImage: "tray.and.arrow.up")
+                    } else {
+                        Label("Archive".localized, systemImage: "archivebox")
+                    }
+                }
+                .disabled(!appSettings.isNetworkConnected || viewModel.isLoading)
+
                 Divider()
 
                 Button(role: .destructive) {
@@ -368,22 +405,10 @@ struct ArticleReaderView: View {
         .padding(.horizontal)
     }
 
+    // The page background now carries the theme, so the card needs its own tint to
+    // stay visible instead of a translucent copy of the same color.
     private var summaryCardBackgroundColor: Color {
-        let theme = viewModel.settings?.readerColorTheme ?? .system
-        switch theme {
-        case .system:
-            return Color(.secondarySystemBackground)
-        case .custom:
-            if let hex = viewModel.settings?.customBackgroundColor {
-                return Color(hex: hex).opacity(0.85)
-            }
-            return Color(.secondarySystemBackground)
-        default:
-            if let bg = theme.backgroundColor {
-                return bg.opacity(0.85)
-            }
-            return Color(.secondarySystemBackground)
-        }
+        readerTheme.surfaceColor
     }
 
     private var metaInfoSection: some View {
@@ -465,36 +490,17 @@ struct ArticleReaderView: View {
 
     // MARK: - Color Theme Helpers
 
-    private var nativeBackgroundColor: Color {
-        let theme = viewModel.settings?.readerColorTheme ?? .system
-        switch theme {
-        case .system: return Color(.systemBackground)
-        case .custom:
-            if let hex = viewModel.settings?.customBackgroundColor {
-                return Color(hex: hex)
-            }
-            return Color(.systemBackground)
-        default:
-            return theme.backgroundColor ?? Color(.systemBackground)
-        }
+    /// Single source of truth for the reader's colors, shared with the web view.
+    private var readerTheme: ReaderTheme {
+        ReaderTheme.resolve(settings: viewModel.settings, isDarkMode: colorScheme == .dark)
     }
 
     private var nativeTextColor: Color {
-        let theme = viewModel.settings?.readerColorTheme ?? .system
-        switch theme {
-        case .system: return .primary
-        case .custom:
-            if let hex = viewModel.settings?.customTextColor {
-                return Color(hex: hex)
-            }
-            return .primary
-        default:
-            return theme.textColor ?? .primary
-        }
+        readerTheme.textColor
     }
 
     private var nativeSecondaryTextColor: Color {
-        nativeTextColor.opacity(0.6)
+        readerTheme.secondaryTextColor
     }
 
     @ViewBuilder

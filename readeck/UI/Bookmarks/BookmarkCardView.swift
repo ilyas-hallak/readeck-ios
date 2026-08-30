@@ -45,6 +45,11 @@ struct BookmarkCardView: View {
         self.onPlayNext = onPlayNext
     }
 
+    /// List surface color; pure black while the OLED theme is active.
+    private var listBackground: Color {
+        Color(R.color.bookmark_list_bg).oledBlack(appSettings.theme.isOLED)
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -236,7 +241,7 @@ struct BookmarkCardView: View {
             }
         }
         .padding(12)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -319,7 +324,7 @@ struct BookmarkCardView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
@@ -405,7 +410,7 @@ struct BookmarkCardView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }

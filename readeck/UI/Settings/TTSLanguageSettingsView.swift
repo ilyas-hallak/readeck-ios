@@ -4,6 +4,7 @@ import AVFoundation
 struct TTSLanguageSettingsView: View {
     @AppStorage("tts_preferred_language") private var preferredLanguage = "en-US"
     @State private var voiceManager = VoiceManager.shared
+    @Environment(AppSettings.self) private var appSettings
 
     private let supportedLanguages: [(code: String, name: String)] = [
         ("de-DE", "Deutsch"),
@@ -60,6 +61,7 @@ struct TTSLanguageSettingsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle("Language & Voices")
         .onAppear {
             voiceManager.refreshVoices()
@@ -80,4 +82,5 @@ struct TTSLanguageSettingsView: View {
     NavigationStack {
         TTSLanguageSettingsView()
     }
+    .environment(AppSettings())
 }

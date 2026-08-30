@@ -76,6 +76,11 @@ struct BookmarksView: View {
         }
     }
 
+    /// List surface color; pure black while the OLED theme is active.
+    private var listBackground: Color {
+        Color(R.color.bookmark_list_bg).oledBlack(appSettings.theme.isOLED)
+    }
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -207,7 +212,7 @@ struct BookmarksView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
     }
 
     @ViewBuilder
@@ -377,7 +382,7 @@ struct BookmarksView: View {
                     trailing: 16
                 ))
                 .listRowSeparator(.hidden)
-                .listRowBackground(Color(R.color.bookmark_list_bg))
+                .listRowBackground(listBackground)
             }
 
             // Show loading indicator for pagination
@@ -388,12 +393,12 @@ struct BookmarksView: View {
                         .scaleEffect(0.8)
                     Spacer()
                 }
-                .listRowBackground(Color(R.color.bookmark_list_bg))
+                .listRowBackground(listBackground)
                 .listRowSeparator(.hidden)
             }
         }
         .listStyle(.plain)
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .scrollContentBackground(.hidden)
         .refreshable {
             await viewModel.refreshBookmarks()
@@ -424,7 +429,7 @@ struct BookmarksView: View {
                     )
                 )
         }
-        .background(Color(R.color.bookmark_list_bg))
+        .background(listBackground)
         .refreshable {
             await viewModel.refreshBookmarks()
         }

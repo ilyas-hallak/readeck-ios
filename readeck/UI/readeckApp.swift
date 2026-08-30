@@ -30,6 +30,7 @@ struct readeckApp: App {
             .environment(deepLinkRouter)
             .environment(\.managedObjectContext, CoreDataManager.shared.context)
             .preferredColorScheme(appSettings.theme.colorScheme)
+            .oledTheme(appSettings.theme.isOLED)
             .onOpenURL { url in
                 deepLinkRouter.handle(url: url)
             }

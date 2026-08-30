@@ -10,6 +10,7 @@ import SwiftUI
 struct CardLayoutSelectionView: View {
     @Binding var selectedCardLayout: CardLayoutStyle
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppSettings.self) private var appSettings
 
     let onSave: () -> Void
 
@@ -29,6 +30,7 @@ struct CardLayoutSelectionView: View {
             }
         }
         .listStyle(.plain)
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle("Card Layout")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -169,4 +171,5 @@ struct CardLayoutPreview: View {
             selectedCardLayout: .constant(.magazine)
         )            {}
     }
+    .environment(AppSettings())
 }

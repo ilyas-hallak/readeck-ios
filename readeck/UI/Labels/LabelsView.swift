@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LabelsView: View {
     @State private var viewModel = LabelsViewModel()
+    @Environment(AppSettings.self) private var appSettings
     @Binding var selectedTag: BookmarkLabel?
 
     init(viewModel: LabelsViewModel = LabelsViewModel(), selectedTag: Binding<BookmarkLabel?>) {
@@ -38,6 +39,7 @@ struct LabelsView: View {
                         }
                     }
                 }
+                .oledScrollBackground(appSettings.theme.isOLED)
             }
         }
         .onAppear {

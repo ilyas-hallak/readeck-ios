@@ -11,6 +11,7 @@ struct FontSelectionView: View {
     @State private var viewModel: FontSettingsViewModel
     @State private var showCSSHelp = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppSettings.self) private var appSettings
 
     init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
         self.viewModel = viewModel
@@ -35,6 +36,7 @@ struct FontSelectionView: View {
                 customCSSSection
             }
             .listStyle(.insetGrouped)
+            .oledScrollBackground(appSettings.theme.isOLED)
         }
         .navigationTitle("Reader Settings")
         .navigationBarTitleDisplayMode(.inline)
@@ -381,4 +383,5 @@ struct FontSelectionView: View {
             factory: MockUseCaseFactory()
         ))
     }
+    .environment(AppSettings())
 }

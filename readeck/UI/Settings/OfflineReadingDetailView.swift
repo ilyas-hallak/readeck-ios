@@ -171,6 +171,7 @@ struct OfflineReadingDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle("Offline Reading".localized)
         .navigationBarTitleDisplayMode(.inline)
         .task {
