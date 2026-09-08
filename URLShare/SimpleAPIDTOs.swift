@@ -27,11 +27,11 @@ public struct ServerInfoDto: Codable {
         }
     }
 
-    // HTML bookmark submission requires Readeck >= 0.22
+    /// HTML bookmark submission requires Readeck >= 0.22. The version gate
+    /// lives in `ServerCapabilities`, which is shared with the main app.
     public var supportsHTMLBookmarks: Bool {
-        let parts = version.canonical.split(separator: ".").compactMap { Int($0) }
-        guard parts.count >= 2 else { return false }
-        return parts[0] > 0 || parts[1] >= 22
+        ServerCapabilities(versionString: version.canonical, features: features)
+            .supportsHTMLBookmarkUpload
     }
 }
 
