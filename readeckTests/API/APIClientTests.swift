@@ -107,6 +107,30 @@ struct APIClientTests {
         #expect(session.lastRequest?.url?.absoluteString == "https://mock.example.com/api/bookmarks/labels")
     }
 
+    @Test("getBookmarks percent-encodes a label filter containing spaces")
+    func apiBookmarksLabelFilterEncoding() async throws {
+        let session = MockHTTPSession(.json("[]"))
+        let api = API(tokenProvider: TestMockTokenProvider(), session: session)
+
+        _ = try await api.getBookmarks(tag: "read later")
+
+        #expect(
+            session.lastRequest?.url?.absoluteString
+                == "https://mock.example.com/api/bookmarks?labels=%22read%20later%22"
+        )
+    }
+
+    @Test("getBookmarks keeps repeated type parameters")
+    func apiBookmarksRepeatedTypeParameters() async throws {
+        let session = MockHTTPSession(.json("[]"))
+        let api = API(tokenProvider: TestMockTokenProvider(), session: session)
+
+        _ = try await api.getBookmarks(type: [.article, .video])
+
+        let query = session.lastRequest?.url?.query
+        #expect(query == "type=article&type=video")
+    }
+
     @Test("API surfaces serverError from the injected session")
     func apiServerError() async throws {
         let session = MockHTTPSession(.http(status: 503, data: Data()))

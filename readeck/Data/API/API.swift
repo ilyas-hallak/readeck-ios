@@ -59,6 +59,19 @@ final class API: PAPI {
         }
     }
 
+    /// Builds an endpoint string from a path and query items, letting Foundation apply the
+    /// percent-encoding. URLComponents leaves "+" untouched, which a server reads as a space,
+    /// so it is escaped explicitly.
+    private func makeEndpoint(path: String, queryItems: [URLQueryItem]) -> String {
+        guard !queryItems.isEmpty else { return path }
+
+        var components = URLComponents()
+        components.queryItems = queryItems
+
+        guard let query = components.percentEncodedQuery else { return path }
+        return "\(path)?\(query.replacingOccurrences(of: "+", with: "%2B"))"
+    }
+
     /// Unified request builder that ensures all headers are applied consistently
     private func buildRequest(
         url: String,
@@ -252,7 +265,6 @@ final class API: PAPI {
     // swiftlint:disable:next discouraged_optional_collection
     func getBookmarks(state: BookmarkState? = nil, limit: Int? = nil, offset: Int? = nil, search: String? = nil, type: [BookmarkType]? = nil, tag: String? = nil, sort: String? = nil) async throws -> BookmarksPageDto {
         logger.debug("Fetching bookmarks with state: \(state?.rawValue ?? "all"), limit: \(limit ?? 0), offset: \(offset ?? 0)")
-        var endpoint = "/api/bookmarks"
         var queryItems: [URLQueryItem] = []
 
         // Add query parameters based on the state
@@ -297,10 +309,7 @@ final class API: PAPI {
             queryItems.append(URLQueryItem(name: "sort", value: sort))
         }
 
-        if !queryItems.isEmpty {
-            let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
-            endpoint += "?\(queryString)"
-        }
+        let endpoint = makeEndpoint(path: "/api/bookmarks", queryItems: queryItems)
 
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + (endpoint.hasPrefix("/api") ? endpoint : "/api\(endpoint)"))
 
@@ -598,7 +607,7 @@ final class API: PAPI {
 
     func searchBookmarks(search: String) async throws -> BookmarksPageDto {
         logger.debug("Searching bookmarks with query: \(search)")
-        let endpoint = "/api/bookmarks?search=\(search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        let endpoint = makeEndpoint(path: "/api/bookmarks", queryItems: [URLQueryItem(name: "search", value: search)])
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
 
         let (bookmarks, response) = try await makeJSONRequestWithHeaders(
