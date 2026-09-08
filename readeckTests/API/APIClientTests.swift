@@ -131,6 +131,40 @@ struct APIClientTests {
         #expect(query == "type=article&type=video")
     }
 
+    @Test("getBookmarks decodes image resources without width and height")
+    func apiBookmarksImageResourceWithoutSize() async throws {
+        let json = """
+        [
+          {
+            "id": "bm-1", "title": "No image size", "url": "https://example.com/a",
+            "href": "/api/bookmarks/bm-1", "description": "", "authors": [],
+            "created": "2025-06-15T10:30:00Z", "published": null,
+            "updated": "2025-06-15T10:30:00Z", "site_name": "Example", "site": "example.com",
+            "reading_time": null, "word_count": null, "has_article": true,
+            "is_archived": false, "is_deleted": false, "is_marked": false, "labels": [],
+            "lang": null, "loaded": true, "read_progress": 0, "document_type": "article",
+            "state": 0, "text_direction": "ltr", "type": "bookmark",
+            "resources": {
+              "icon": { "src": "/api/bookmarks/bm-1/icon" },
+              "image": { "src": "/api/bookmarks/bm-1/image" },
+              "thumbnail": { "src": "/api/bookmarks/bm-1/thumb" }
+            }
+          }
+        ]
+        """
+        let session = MockHTTPSession(.json(json))
+        let api = API(tokenProvider: TestMockTokenProvider(), session: session)
+
+        let page = try await api.getBookmarks()
+
+        #expect(page.bookmarks.count == 1)
+        #expect(page.bookmarks.first?.resources.image?.src == "/api/bookmarks/bm-1/image")
+        #expect(page.bookmarks.first?.resources.image?.width == nil)
+        #expect(page.bookmarks.first?.resources.image?.height == nil)
+        #expect(page.bookmarks.first?.resources.icon?.height == nil)
+        #expect(page.bookmarks.first?.resources.thumbnail?.height == nil)
+    }
+
     @Test("API surfaces serverError from the injected session")
     func apiServerError() async throws {
         let session = MockHTTPSession(.http(status: 503, data: Data()))
