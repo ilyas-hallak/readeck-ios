@@ -764,14 +764,23 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if navigationAction.navigationType == .linkActivated {
-            if let url = navigationAction.request.url {
-                UIApplication.shared.open(url)
-                decisionHandler(.cancel)
-                return
-            }
+        let decision = ReaderLinkPolicy.decide(
+            for: navigationAction.request.url,
+            navigationType: navigationAction.navigationType,
+            documentURL: webView.url
+        )
+
+        switch decision {
+        case .allowInPage:
+            // Includes in-document anchors, which used to be handed to the system
+            // as "about:blank#fragment" and therefore did nothing at all.
+            decisionHandler(.allow)
+        case .openExternally(let url):
+            UIApplication.shared.open(url)
+            decisionHandler(.cancel)
+        case .cancel:
+            decisionHandler(.cancel)
         }
-        decisionHandler(.allow)
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
