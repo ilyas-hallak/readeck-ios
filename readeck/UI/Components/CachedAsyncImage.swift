@@ -2,7 +2,6 @@ import SwiftUI
 import Kingfisher
 
 struct CachedAsyncImage: View {
-
     /// Describes how the caller lays the image out, so it can be decoded at the size
     /// it is actually drawn at instead of at the source resolution.
     ///
