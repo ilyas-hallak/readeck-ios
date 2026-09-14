@@ -5,26 +5,28 @@ import SwiftUI
 struct ArticleReaderRouter: View {
     let bookmarkId: String
 
-    @AppStorage("useNativeWebView") private var useNativeWebView = true
+    @AppStorage("useNativeWebView") private var useNativeWebView = false
 
     @Environment(AppSettings.self) private var appSettings
 
+    private var selectedReader: ArticleReaderKind {
+        ArticleReaderAvailability.reader(
+            isNativeReaderSupported: ArticleReaderAvailability.isNativeReaderSupported,
+            prefersNativeReader: useNativeWebView
+        )
+    }
+
     var body: some View {
         Group {
-            if #available(iOS 26.0, *) {
-                if Bundle.main.isProduction {
-                    // Temporary production stopper: use legacy renderer until native font loading is proven stable.
-                    ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
-                } else if useNativeWebView {
-                    // Use modern SwiftUI-native implementation on iOS 26+
-                    ArticleReaderView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
-                } else {
-                    // Use legacy WKWebView-based implementation
-                    ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
-                }
+            // The availability check is repeated here because ArticleReaderView is
+            // annotated @available(iOS 26.0, *); ArticleReaderAvailability also
+            // excludes the iPad app running on macOS, where NativeWebView crashes.
+            if #available(iOS 26.0, *), selectedReader == .native {
+                // Modern SwiftUI-native implementation
+                ArticleReaderView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
             } else {
-                // iOS < 26: always use Legacy
-                ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: .constant(false))
+                // Legacy WKWebView-based implementation
+                ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
             }
         }
         // Forces a fresh view (and @State) per article. Without this, navigating

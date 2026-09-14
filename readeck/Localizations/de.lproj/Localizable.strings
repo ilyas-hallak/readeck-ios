@@ -108,6 +108,7 @@
 "Logs below this level will be filtered out globally" = "Logs unter diesem Level werden global herausgefiltert";
 "Manage Labels" = "Labels verwalten";
 "Mark as favorite" = "Als Favorit markieren";
+"Modern Reader" = "Moderner Reader";
 "More" = "Mehr";
 "New Bookmark" = "Neues Lesezeichen";
 "No articles in the queue" = "Keine Artikel in der Warteschlange";
@@ -131,6 +132,7 @@
 "Listening Queue" = "Wiedergabeliste";
 "readeck Bookmark Title" = "readeck Lesezeichen-Titel";
 "Reading %lld/%lld: " = "Lese %1$lld/%2$lld: ";
+"Reader" = "Reader";
 "Remove" = "Entfernen";
 "Reset" = "Zurücksetzen";
 "Reset to Defaults" = "Auf Standardwerte zurücksetzen";
@@ -163,6 +165,7 @@
 "Unarchive Bookmark" = "Lesezeichen aus Archiv entfernen";
 "URL in clipboard:" = "URL in Zwischenablage:";
 "Username" = "Benutzername";
+"Uses the new reader built for iOS 26. Faster and better integrated. Switch it off if you run into display problems." = "Nutzt den neuen Reader für iOS 26. Schneller und besser integriert. Schalte ihn aus, falls es Darstellungsprobleme gibt.";
 "Version %@" = "Version %@";
 "Warning" = "Warnung";
 "Your current server connection and login credentials." = "Aktuelle Serververbindung und Anmeldedaten.";
