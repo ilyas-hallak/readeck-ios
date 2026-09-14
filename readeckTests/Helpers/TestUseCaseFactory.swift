@@ -20,6 +20,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockCreateAnnotation = ConfigurableCreateAnnotationUseCase()
     let mockLogout = ConfigurableLogoutUseCase()
     let mockUpdateUnreadBadge = ConfigurableUpdateUnreadBadgeUseCase()
+    let mockExportArticlePDF = ConfigurableExportArticlePDFUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -37,6 +38,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase { mockCreateAnnotation }
     func makeLogoutUseCase() -> PLogoutUseCase { mockLogout }
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase { mockUpdateUnreadBadge }
+    func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase { mockExportArticlePDF }
 
     // Non-configurable — use existing mocks from MockUseCaseFactory pattern
     func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { MockSaveSettingsUseCase() }
