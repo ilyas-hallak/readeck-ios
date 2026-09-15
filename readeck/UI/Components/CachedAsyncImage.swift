@@ -2,22 +2,68 @@ import SwiftUI
 import Kingfisher
 
 struct CachedAsyncImage: View {
+    /// Describes how the caller lays the image out, so it can be decoded at the size
+    /// it is actually drawn at instead of at the source resolution.
+    ///
+    /// Article images are routinely 2000-3000px wide, which is a 20-40 MB bitmap in
+    /// memory once decoded. Feeding that into an 80pt thumbnail or a 360pt header
+    /// costs the decode, the backing store and every GPU upload for nothing.
+    enum Sizing: Equatable {
+        /// Decode at the source resolution. For views that zoom into the image.
+        case original
+        /// The image is drawn with `scaledToFit` inside this box.
+        case fit(CGSize)
+        /// The image is drawn with `scaledToFill` inside this box, so the shorter
+        /// edge has to be covered as well.
+        case fill(CGSize)
+        /// The image is drawn at a fixed width with its natural height.
+        case width(CGFloat)
+
+        /// Longest edge, in points, that the drawn image can occupy.
+        var maxDimension: CGFloat? {
+            switch self {
+            case .original:
+                return nil
+            case .fit(let box):
+                // Fitting never scales beyond the larger edge of the box.
+                return max(box.width, box.height)
+            case .fill(let box):
+                // Filling scales until the shorter edge is covered, so a landscape
+                // image overflows the longer edge. Budget for 2:1, which covers every
+                // aspect ratio that shows up in practice; anything wider is only
+                // slightly soft instead of pin sharp.
+                return max(max(box.width, box.height), min(box.width, box.height) * 2)
+            case .width(let width):
+                // Height is free, so a portrait image is taller than it is wide.
+                // 3:2 portrait is the realistic worst case.
+                return width * 1.5
+            }
+        }
+    }
+
     let url: URL?
     let cacheKey: String?
+    let sizing: Sizing
     @Environment(AppSettings.self) private var appSettings
+    @Environment(\.displayScale) private var displayScale
     @State private var isImageCached = false
     @State private var hasCheckedCache = false
     @State private var cachedImage: UIImage?
 
-    init(url: URL?, cacheKey: String? = nil) {
+    init(url: URL?, cacheKey: String? = nil, sizing: Sizing = .original) {
         self.url = url
         self.cacheKey = cacheKey
+        self.sizing = sizing
     }
 
     var body: some View {
         if let url {
             imageView(for: url)
-                .task {
+                // Only the offline branch reads the cache probe below. Running it while
+                // online decoded a second, full-resolution copy of every image that was
+                // then never drawn.
+                .task(id: appSettings.isNetworkConnected) {
+                    guard !appSettings.isNetworkConnected else { return }
                     await checkCache(for: url)
                 }
         } else {
@@ -34,6 +80,15 @@ struct CachedAsyncImage: View {
         }
     }
 
+    // MARK: - Downsampling
+
+    /// Target size handed to Kingfisher, in points. Kingfisher multiplies it by the
+    /// scale factor, so the result is sized in device pixels.
+    private var downsampleSize: CGSize? {
+        guard let maxDimension = sizing.maxDimension, maxDimension > 0 else { return nil }
+        return CGSize(width: maxDimension, height: maxDimension)
+    }
+
     // MARK: - Online Mode
 
     private func onlineImageView(url: URL) -> some View {
@@ -41,6 +96,7 @@ struct CachedAsyncImage: View {
             .requestModifier(AuthenticatedImageRequestModifier())
             .cacheOriginalImage()
             .diskCacheExpiration(.never)
+            .downsampled(to: downsampleSize, scale: displayScale)
             .placeholder { Color.gray.opacity(0.3) }
             .fade(duration: 0.25)
             .resizable()
@@ -72,6 +128,7 @@ struct CachedAsyncImage: View {
             .diskCacheExpiration(.never)
             .loadDiskFileSynchronously()
             .onlyFromCache(true)
+            .downsampled(to: downsampleSize, scale: displayScale)
             .placeholder { Color.gray.opacity(0.3) }
             .onSuccess { _ in
                 Logger.ui.debug("✅ Loaded image from cache: \(url.absoluteString)")
@@ -122,10 +179,11 @@ struct CachedAsyncImage: View {
 
     private func tryLoadFromCustomKey(_ key: String) async -> Bool {
         let image = await retrieveImageFromCache(key: key)
+        let prepared = await downsampleIfNeeded(image)
 
         await MainActor.run {
-            if let image {
-                cachedImage = image
+            if let prepared {
+                cachedImage = prepared
                 isImageCached = true
                 Logger.ui.debug("✅ Loaded image from cache using key: \(key)")
             } else {
@@ -134,7 +192,21 @@ struct CachedAsyncImage: View {
             hasCheckedCache = true
         }
 
-        return image != nil
+        return prepared != nil
+    }
+
+    /// The offline hero cache stores the original image, so shrink it here too instead
+    /// of handing a full-resolution bitmap to `Image(uiImage:)`.
+    private func downsampleIfNeeded(_ image: UIImage?) async -> UIImage? {
+        guard let image else { return nil }
+        guard let size = downsampleSize else { return image }
+        let scale = displayScale
+
+        return await Task.detached(priority: .userInitiated) {
+            let processor = DownsamplingImageProcessor(size: size)
+            let options = KingfisherParsedOptionsInfo([.scaleFactor(scale)])
+            return processor.process(item: .image(image), options: options) ?? image
+        }.value
     }
 
     private func checkStandardCache(for url: URL) async {
@@ -176,6 +248,21 @@ struct CachedAsyncImage: View {
                 }
             }
         }
+    }
+}
+
+private extension KFImage {
+    /// Decodes the image straight to `size` instead of decoding it in full and letting
+    /// the GPU scale it down.
+    ///
+    /// The processor identifier carries the size, so every target size gets its own
+    /// cache entry and no size can be served in place of another. `cacheOriginalImage`
+    /// stays in effect, so the untouched original is still on disk: a second target
+    /// size, and the offline path, are served from it without another download.
+    func downsampled(to size: CGSize?, scale: CGFloat) -> KFImage {
+        guard let size else { return self }
+        return setProcessor(DownsamplingImageProcessor(size: size))
+            .scaleFactor(scale)
     }
 }
 
