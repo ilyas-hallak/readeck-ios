@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import TipKit
 import netfox
 
 struct DebugMenuView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var appSettings
     @State private var viewModel = DebugMenuViewModel()
+    @State private var forceReaderTip = false
 
     var body: some View {
         NavigationView {
@@ -115,6 +117,22 @@ struct DebugMenuView: View {
                     Text("Data Management")
                 } footer: {
                     Text("⚠️ Reset Core Data will delete all local bookmarks and cache")
+                }
+
+                // MARK: - Reader Section
+                Section {
+                    Toggle("Force reader tip", isOn: $forceReaderTip)
+                        .onChange(of: forceReaderTip) { _, isOn in
+                            if isOn {
+                                Tips.showAllTipsForTesting()
+                            } else {
+                                Tips.hideAllTipsForTesting()
+                            }
+                        }
+                } header: {
+                    Text("Reader")
+                } footer: {
+                    Text("Shows the Modern Reader tip on the next article, ignoring the upgrade rule and the once-only limit. Open an article and tap the menu button.")
                 }
 
                 // MARK: - Advanced Section
