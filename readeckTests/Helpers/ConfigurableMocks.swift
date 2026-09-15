@@ -167,6 +167,18 @@ class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
     func setEnabled(_ enabled: Bool) async -> Bool { true }
 }
 
+class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
+    var result: Result<URL, Error> = .success(URL(fileURLWithPath: "/tmp/article.pdf"))
+    var executeCount = 0
+    var lastArticleHTML: String?
+
+    func execute(bookmark: BookmarkDetail, articleHTML: String, settings: Settings?) async throws -> URL {
+        executeCount += 1
+        lastArticleHTML = articleHTML
+        return try result.get()
+    }
+}
+
 class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
     static var isAvailable: Bool { true }
     var result: Result<String, Error> = .success("Test summary")

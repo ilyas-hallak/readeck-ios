@@ -21,6 +21,8 @@ struct ArticleReaderView: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingArchiveConfirmation = false
+    @State private var showingPDFShareSheet = false
+    @State private var showingExportError = false
     @State private var isToolbarVisible: Bool = true
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
@@ -41,6 +43,11 @@ struct ArticleReaderView: View {
     var body: some View {
         mainView
             .background(readerTheme.backgroundColor.ignoresSafeArea())
+            .overlay {
+                if viewModel.isExportingPDF {
+                    PDFExportProgressOverlay()
+                }
+            }
     }
 
     private var mainView: some View {
@@ -70,6 +77,16 @@ struct ArticleReaderView: View {
             }
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
+            }
+            .sheet(isPresented: $showingPDFShareSheet) {
+                if let url = viewModel.exportedPDFURL {
+                    ActivityView(activityItems: [url])
+                }
+            }
+            .alert("Error".localized, isPresented: $showingExportError) {
+                Button("OK".localized, role: .cancel) {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
             }
             .alert(
                 "Delete this bookmark?".localized,
@@ -290,6 +307,13 @@ struct ArticleReaderView: View {
                 }
 
                 Button {
+                    exportAsPDF()
+                } label: {
+                    Label("Export as PDF".localized, systemImage: "doc.richtext")
+                }
+                .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
+
+                Button {
                     showingFontSettings = true
                 } label: {
                     Label("Font Settings".localized, systemImage: "textformat")
@@ -316,6 +340,18 @@ struct ArticleReaderView: View {
                 .disabled(!appSettings.isNetworkConnected)
             } label: {
                 Image(systemName: "ellipsis.circle")
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func exportAsPDF() {
+        Task {
+            if await viewModel.exportArticleAsPDF() {
+                showingPDFShareSheet = true
+            } else {
+                showingExportError = true
             }
         }
     }
