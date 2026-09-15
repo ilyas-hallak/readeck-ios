@@ -318,3 +318,7 @@
 "Please provide your username and password." = "Bitte gib Benutzername und Passwort ein.";
 "Logging in..." = "Anmeldung läuft...";
 "Use username & password instead" = "Stattdessen Benutzername & Passwort verwenden";
+
+/* Reader Switch Tip */
+"New reader" = "Neuer Reader";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artikel öffnen jetzt im modernen Reader. Falls etwas nicht stimmt, kannst du unter Schrift zurückschalten.";

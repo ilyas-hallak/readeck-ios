@@ -192,3 +192,7 @@
 "This action cannot be undone." = "Denna åtgärd kan inte ångras.";
 "Archive this bookmark?" = "Arkivera detta bokmärke?";
 "Unarchive this bookmark?" = "Avarkivera detta bokmärke?";
+
+/* Reader Switch Tip */
+"New reader" = "Ny läsare";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artiklar öppnas nu i den moderna läsaren. Om något ser fel ut kan du växla tillbaka under Teckensnitt.";

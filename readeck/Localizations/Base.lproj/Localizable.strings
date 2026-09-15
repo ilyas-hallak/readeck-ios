@@ -192,3 +192,7 @@
 "This action cannot be undone." = "This action cannot be undone.";
 "Archive this bookmark?" = "Archive this bookmark?";
 "Unarchive this bookmark?" = "Unarchive this bookmark?";
+
+/* Reader Switch Tip */
+"New reader" = "New reader";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";

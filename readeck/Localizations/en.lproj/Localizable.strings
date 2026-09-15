@@ -297,3 +297,7 @@
 "The Readeck Project" = "The Readeck Project";
 "Creator of Readeck" = "Creator of Readeck";
 "Thanks to everyone who has contributed to the app." = "Thanks to everyone who has contributed to the app.";
+
+/* Reader Switch Tip */
+"New reader" = "New reader";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";

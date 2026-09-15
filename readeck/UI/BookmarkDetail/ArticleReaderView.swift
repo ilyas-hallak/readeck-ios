@@ -1,5 +1,6 @@
 import SwiftUI
 import SafariServices
+import TipKit
 
 @available(iOS 26.0, *)
 struct ArticleReaderView: View {
@@ -20,7 +21,7 @@ struct ArticleReaderView: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingArchiveConfirmation = false
-    @State private var isToolbarVisible: Bool = true
+    @State private var isToolbarVisible = true
     @State private var scrollTracker = ScrollTracker()
 
     // MARK: - Envs
@@ -30,6 +31,7 @@ struct ArticleReaderView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private let headerHeight: Double = 360
+    private let readerSwitchTip = ReaderSwitchTip()
 
     init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
@@ -284,6 +286,7 @@ struct ArticleReaderView: View {
                 }
 
                 Button {
+                    readerSwitchTip.invalidate(reason: .actionPerformed)
                     showingFontSettings = true
                 } label: {
                     Label("Font Settings".localized, systemImage: "textformat")
@@ -311,6 +314,7 @@ struct ArticleReaderView: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
+            .popoverTip(readerSwitchTip)
         }
     }
 
@@ -320,10 +324,10 @@ struct ArticleReaderView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Done") {
-                        showingFontSettings = false
+                            showingFontSettings = false
+                        }
                     }
                 }
-            }
         }
     }
 
