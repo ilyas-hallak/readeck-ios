@@ -39,7 +39,6 @@
 "Tags" = "Tags";
 
 /* Settings Sections */
-"Font Settings" = "Font Settings";
 "Appearance" = "Appearance";
 "Cache Settings" = "Cache Settings";
 "General Settings" = "General Settings";
@@ -192,6 +191,9 @@
 "This action cannot be undone." = "This action cannot be undone.";
 "Archive this bookmark?" = "Archive this bookmark?";
 "Unarchive this bookmark?" = "Unarchive this bookmark?";
+
+/* Reader Settings */
+"Reader Settings" = "Reader Settings";
 
 /* Reader Switch Tip */
 "New reader" = "New reader";

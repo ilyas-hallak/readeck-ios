@@ -40,7 +40,6 @@
 "Tags" = "Labels";
 
 /* Settings Sections */
-"Font Settings" = "Schriftart";
 "Appearance" = "Darstellung";
 "Cache Settings" = "Cache";
 "Image Cache" = "Bild-Cache";
@@ -318,6 +317,9 @@
 "Please provide your username and password." = "Bitte gib Benutzername und Passwort ein.";
 "Logging in..." = "Anmeldung läuft...";
 "Use username & password instead" = "Stattdessen Benutzername & Passwort verwenden";
+
+/* Reader Settings */
+"Reader Settings" = "Reader-Einstellungen";
 
 /* Reader Switch Tip */
 "New reader" = "Neuer Reader";
