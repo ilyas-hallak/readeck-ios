@@ -13,7 +13,7 @@ struct FontSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var appSettings
 
-    @AppStorage("useNativeWebView") private var useNativeWebView = false
+    @AppStorage("useNativeWebView") private var useNativeWebView = true
 
     init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
         self.viewModel = viewModel
