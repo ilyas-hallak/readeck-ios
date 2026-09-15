@@ -48,12 +48,18 @@ struct ScrollTracker {
 
         let totalScrollableDistance = initialContentEndPosition - containerHeight
 
-        // Don't collapse toolbar for short articles (less than 1.5x screen height of scrollable content)
-        let minScrollDistance = containerHeight * 1.5
-        guard totalScrollableDistance > minScrollDistance else {
+        // Content fits into the container: there is nothing left to scroll, so it is fully read
+        guard totalScrollableDistance > 0 else {
             toolbarVisible = true
-            return Result(readingProgress: 0, shouldUpdateProgress: false, isToolbarVisible: true)
+            previousEndPosition = endPosition
+            let reachedEnd = lastSentProgress < 1.0
+            lastSentProgress = 1.0
+            return Result(readingProgress: 1.0, shouldUpdateProgress: reachedEnd, isToolbarVisible: true)
         }
+
+        // Keep the toolbar pinned for short articles (less than 1.5x screen height of scrollable
+        // content), but still track their reading progress
+        let keepsToolbarPinned = totalScrollableDistance <= containerHeight * 1.5
 
         // Calculate progress
         let scrolled = initialContentEndPosition - endPosition
@@ -73,7 +79,16 @@ struct ScrollTracker {
         }
 
         // Toolbar visibility
-        let toolbarChange = updateToolbar(endPosition: endPosition, progress: progress, containerHeight: containerHeight)
+        let toolbarChange: Bool?
+        if keepsToolbarPinned {
+            previousEndPosition = endPosition
+            accumulatedScrollUp = 0
+            accumulatedScrollDown = 0
+            toolbarVisible = true
+            toolbarChange = true
+        } else {
+            toolbarChange = updateToolbar(endPosition: endPosition, progress: progress, containerHeight: containerHeight)
+        }
 
         return Result(readingProgress: progress, shouldUpdateProgress: shouldUpdate, isToolbarVisible: toolbarChange)
     }
