@@ -233,6 +233,9 @@ struct NativeWebView: View {
             : "'SF Mono', Menlo, Monaco, Consolas, monospace"
         Logger.ui.debug("NativeWebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
 
+        // Clean up problematic HTML that kills performance
+        let cleanedHTML = ArticleHTMLSanitizer.sanitize(htmlContent)
+
         let styledHTML = """
         <html>
         <head>
@@ -390,7 +393,7 @@ struct NativeWebView: View {
             </style>
         </head>
         <body>
-            \(htmlContent)
+            \(cleanedHTML)
             <script>
                 function measureHeight() {
                     return Math.max(

@@ -85,20 +85,7 @@ struct WebView: UIViewRepresentable {
         Logger.ui.debug("WebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
 
         // Clean up problematic HTML that kills performance
-        let cleanedHTML = htmlContent
-            // Remove Google attributes that cause navigation events
-            .replacingOccurrences(of: #"\s*jsaction="[^"]*""#, with: "", options: .regularExpression)
-            .replacingOccurrences(of: #"\s*jscontroller="[^"]*""#, with: "", options: .regularExpression)
-            .replacingOccurrences(of: #"\s*jsname="[^"]*""#, with: "", options: .regularExpression)
-            // Remove unnecessary IDs that bloat the DOM
-            .replacingOccurrences(of: #"\s*id="[^"]*""#, with: "", options: .regularExpression)
-            // Remove tabindex from non-interactive elements
-            .replacingOccurrences(of: #"\s*tabindex="[^"]*""#, with: "", options: .regularExpression)
-            // Remove role=button from figures (causes false click targets)
-            .replacingOccurrences(of: #"\s*role="button""#, with: "", options: .regularExpression)
-            // Fix invalid nested <p> tags inside <pre><span>
-            .replacingOccurrences(of: #"<pre><span[^>]*>([^<]*)<p>"#, with: "<pre><span>$1\n", options: .regularExpression)
-            .replacingOccurrences(of: #"</p>([^<]*)</span></pre>"#, with: "\n$1</span></pre>", options: .regularExpression)
+        let cleanedHTML = ArticleHTMLSanitizer.sanitize(htmlContent)
 
         let styledHTML = """
         <html>
