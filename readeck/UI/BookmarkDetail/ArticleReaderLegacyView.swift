@@ -11,7 +11,6 @@ struct ContentHeightPreferenceKey: PreferenceKey {
 
 struct ArticleReaderLegacyView: View {
     let bookmarkId: String
-    @Binding var useNativeWebView: Bool
 
     // MARK: - States
 
@@ -36,9 +35,8 @@ struct ArticleReaderLegacyView: View {
 
     private let headerHeight: Double = 360
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(bookmarkId: String, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
-        self._useNativeWebView = useNativeWebView
         self.viewModel = viewModel
     }
 
@@ -649,7 +647,6 @@ struct ArticleReaderLegacyView: View {
     NavigationView {
         ArticleReaderLegacyView(
             bookmarkId: "123",
-            useNativeWebView: .constant(false),
             viewModel: .init(MockUseCaseFactory())
         )
     }

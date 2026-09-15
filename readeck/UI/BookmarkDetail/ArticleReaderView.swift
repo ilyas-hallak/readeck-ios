@@ -5,7 +5,6 @@ import TipKit
 @available(iOS 26.0, *)
 struct ArticleReaderView: View {
     let bookmarkId: String
-    @Binding var useNativeWebView: Bool
 
     // MARK: - States
 
@@ -33,9 +32,8 @@ struct ArticleReaderView: View {
     private let headerHeight: Double = 360
     private let readerSwitchTip = ReaderSwitchTip()
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(bookmarkId: String, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
         self.bookmarkId = bookmarkId
-        self._useNativeWebView = useNativeWebView
         self.viewModel = viewModel
     }
 
@@ -636,7 +634,6 @@ struct ArticleReaderView: View {
         NavigationView {
             ArticleReaderView(
                 bookmarkId: "123",
-                useNativeWebView: .constant(true),
                 viewModel: .init(MockUseCaseFactory())
             )
         }

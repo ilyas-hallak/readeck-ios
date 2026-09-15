@@ -5,7 +5,8 @@ import SwiftUI
 struct ArticleReaderRouter: View {
     let bookmarkId: String
 
-    @AppStorage("useNativeWebView") private var useNativeWebView = true
+    @AppStorage(ArticleReaderAvailability.preferenceKey)
+    private var useNativeWebView = ArticleReaderAvailability.prefersNativeReaderByDefault
 
     @Environment(AppSettings.self) private var appSettings
 
@@ -23,10 +24,10 @@ struct ArticleReaderRouter: View {
             // excludes the iPad app running on macOS, where NativeWebView crashes.
             if #available(iOS 26.0, *), selectedReader == .native {
                 // Modern SwiftUI-native implementation
-                ArticleReaderView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
+                ArticleReaderView(bookmarkId: bookmarkId)
             } else {
                 // Legacy WKWebView-based implementation
-                ArticleReaderLegacyView(bookmarkId: bookmarkId, useNativeWebView: $useNativeWebView)
+                ArticleReaderLegacyView(bookmarkId: bookmarkId)
             }
         }
         // Forces a fresh view (and @State) per article. Without this, navigating

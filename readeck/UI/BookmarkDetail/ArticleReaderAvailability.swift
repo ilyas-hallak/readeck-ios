@@ -8,6 +8,13 @@ import Foundation
 /// Decides whether the native SwiftUI article reader can run on this device,
 /// and which reader implementation a given user preference resolves to.
 enum ArticleReaderAvailability {
+    /// `@AppStorage` key backing the user's reader preference. Kept here so the
+    /// reader and the settings screen cannot drift apart over a typo.
+    static let preferenceKey = "useNativeWebView"
+
+    /// Default for ``preferenceKey``: the modern reader wherever it is supported.
+    static let prefersNativeReaderByDefault = true
+
     /// True when the native reader may be used on the current device.
     ///
     /// The native reader requires iOS 26. It must additionally be excluded when the
