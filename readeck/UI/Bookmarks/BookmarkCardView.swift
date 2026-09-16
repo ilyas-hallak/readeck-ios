@@ -195,7 +195,8 @@ struct BookmarkCardView: View {
         HStack(alignment: .top, spacing: 12) {
             CachedAsyncImage(
                 url: imageURL,
-                cacheKey: "bookmark-\(bookmark.id)-hero"
+                cacheKey: "bookmark-\(bookmark.id)-hero",
+                sizing: .fill(CGSize(width: 80, height: 80))
             )
                 .scaledToFill()
                 .frame(width: 80, height: 80)
@@ -250,7 +251,8 @@ struct BookmarkCardView: View {
             ZStack(alignment: .bottomTrailing) {
                 CachedAsyncImage(
                     url: imageURL,
-                    cacheKey: "bookmark-\(bookmark.id)-hero"
+                    cacheKey: "bookmark-\(bookmark.id)-hero",
+                    sizing: .fill(CGSize(width: UIScreen.main.bounds.width, height: 140))
                 )
                     .scaledToFill()
                     .frame(height: 140)
@@ -335,7 +337,8 @@ struct BookmarkCardView: View {
             ZStack(alignment: .bottomTrailing) {
                 CachedAsyncImage(
                     url: imageURL,
-                    cacheKey: "bookmark-\(bookmark.id)-hero"
+                    cacheKey: "bookmark-\(bookmark.id)-hero",
+                    sizing: .width(UIScreen.main.bounds.width - 32)
                 )
                     .scaledToFill()
                     .frame(width: UIScreen.main.bounds.width - 32)

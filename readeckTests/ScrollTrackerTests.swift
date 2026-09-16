@@ -77,6 +77,77 @@ final class ScrollTrackerTests: XCTestCase {
         XCTAssertNil(result.readingProgress)
     }
 
+    // MARK: - Short Content Progress
+
+    func testShortScrollableContentReportsProgress() {
+        var tracker = ScrollTracker()
+
+        // Content end at 900, container 700 -> scrollable distance 200,
+        // far below the 1050pt threshold that keeps the toolbar pinned
+        _ = tracker.update(endPosition: 900, containerHeight: 700)
+
+        let result = tracker.update(endPosition: 800, containerHeight: 700)
+        XCTAssertEqual(result.readingProgress ?? -1, 0.5, accuracy: 0.01,
+                       "Short articles must report real progress, not 0")
+        XCTAssertTrue(result.shouldUpdateProgress)
+    }
+
+    func testShortScrollableContentReaches100Percent() {
+        var tracker = ScrollTracker()
+
+        _ = tracker.update(endPosition: 900, containerHeight: 700)
+
+        // Scroll to the very bottom
+        let result = tracker.update(endPosition: 700, containerHeight: 700)
+        XCTAssertEqual(result.readingProgress ?? -1, 1.0, accuracy: 0.01)
+        XCTAssertTrue(result.shouldUpdateProgress, "Reaching the end must be persisted")
+    }
+
+    func testFullyVisibleContentReportsFullProgress() {
+        var tracker = ScrollTracker()
+
+        // Content was measured while it was taller than the container
+        _ = tracker.update(endPosition: 1000, containerHeight: 700)
+        // Container grows past the content - the first call after a container change is skipped
+        _ = tracker.update(endPosition: 1000, containerHeight: 1100)
+
+        let result = tracker.update(endPosition: 1000, containerHeight: 1100)
+        XCTAssertEqual(result.readingProgress ?? -1, 1.0, accuracy: 0.01,
+                       "Content that fits on screen is fully read")
+        XCTAssertTrue(result.shouldUpdateProgress)
+        XCTAssertEqual(result.isToolbarVisible, true)
+    }
+
+    func testFullyVisibleContentUpdatesProgressOnlyOnce() {
+        var tracker = ScrollTracker()
+
+        _ = tracker.update(endPosition: 1000, containerHeight: 700)
+        _ = tracker.update(endPosition: 1000, containerHeight: 1100)
+
+        let first = tracker.update(endPosition: 1000, containerHeight: 1100)
+        XCTAssertTrue(first.shouldUpdateProgress)
+
+        let second = tracker.update(endPosition: 1000, containerHeight: 1100)
+        XCTAssertEqual(second.readingProgress ?? -1, 1.0, accuracy: 0.01)
+        XCTAssertFalse(second.shouldUpdateProgress, "100% should only be sent once")
+    }
+
+    func testShortContentKeepsToolbarPinned() {
+        var tracker = ScrollTracker()
+
+        _ = tracker.update(endPosition: 900, containerHeight: 700)
+
+        // Scroll down 150pt - far beyond the 42pt hide threshold, but the toolbar stays
+        let result = tracker.update(endPosition: 750, containerHeight: 700)
+        XCTAssertEqual(result.isToolbarVisible, true, "Short content keeps the toolbar pinned")
+        XCTAssertTrue(tracker.toolbarVisible)
+
+        // Still pinned at the very bottom
+        let atEnd = tracker.update(endPosition: 700, containerHeight: 700)
+        XCTAssertEqual(atEnd.isToolbarVisible, true)
+        XCTAssertTrue(tracker.toolbarVisible)
+    }
+
     // MARK: - Toolbar Visibility
 
     func testToolbarStartsVisible() {
