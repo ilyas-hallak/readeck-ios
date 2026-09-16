@@ -8,6 +8,8 @@ struct ArticleReaderRouter: View {
     @AppStorage(ArticleReaderAvailability.preferenceKey)
     private var useNativeWebView = ArticleReaderAvailability.prefersNativeReaderByDefault
 
+    @State private var showingFontSettings = false
+
     @Environment(AppSettings.self) private var appSettings
 
     private var selectedReader: ArticleReaderKind {
@@ -24,10 +26,10 @@ struct ArticleReaderRouter: View {
             // excludes the iPad app running on macOS, where NativeWebView crashes.
             if #available(iOS 26.0, *), selectedReader == .native {
                 // Modern SwiftUI-native implementation
-                ArticleReaderView(bookmarkId: bookmarkId)
+                ArticleReaderView(bookmarkId: bookmarkId, showingFontSettings: $showingFontSettings)
             } else {
                 // Legacy WKWebView-based implementation
-                ArticleReaderLegacyView(bookmarkId: bookmarkId)
+                ArticleReaderLegacyView(bookmarkId: bookmarkId, showingFontSettings: $showingFontSettings)
             }
         }
         // Forces a fresh view (and @State) per article. Without this, navigating
@@ -35,7 +37,26 @@ struct ArticleReaderRouter: View {
         // does) reuses the existing reader instance, so the content never reloads —
         // previously unreachable since navigation only ever went nil->id or id->nil.
         .id(bookmarkId)
+        // Owned by the router, not by the readers: the Modern Reader toggle lives in
+        // this sheet and swaps the reader underneath it. A sheet owned by the reader
+        // would be torn down together with it, while the user is still in it.
+        .sheet(isPresented: $showingFontSettings) {
+            fontSettingsSheet
+        }
         .modifier(DisableBackSwipeModifier(isDisabled: appSettings.disableReaderBackSwipe))
+    }
+
+    private var fontSettingsSheet: some View {
+        NavigationView {
+            FontSelectionView()
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
+                            showingFontSettings = false
+                        }
+                    }
+                }
+        }
     }
 }
 
