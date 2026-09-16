@@ -1,16 +1,16 @@
 import SwiftUI
 import SafariServices
+import TipKit
 
 @available(iOS 26.0, *)
 struct ArticleReaderView: View {
     let bookmarkId: String
-    @Binding var useNativeWebView: Bool
+    @Binding var showingFontSettings: Bool
 
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: Double = 300
-    @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
     @State private var progressModel = ReadingProgressModel()
@@ -21,7 +21,7 @@ struct ArticleReaderView: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingArchiveConfirmation = false
-    @State private var isToolbarVisible: Bool = true
+    @State private var isToolbarVisible = true
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
@@ -31,10 +31,15 @@ struct ArticleReaderView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private let headerHeight: Double = 360
+    private let readerSwitchTip = ReaderSwitchTip()
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(
+        bookmarkId: String,
+        showingFontSettings: Binding<Bool>,
+        viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()
+    ) {
         self.bookmarkId = bookmarkId
-        self._useNativeWebView = useNativeWebView
+        self._showingFontSettings = showingFontSettings
         self.viewModel = viewModel
     }
 
@@ -57,9 +62,6 @@ struct ArticleReaderView: View {
             .toolbarBackgroundVisibility(.visible, for: .navigationBar)
             .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
             .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
-            .sheet(isPresented: $showingFontSettings) {
-                fontSettingsSheet
-            }
             .sheet(isPresented: $showingLabelsSheet) {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
@@ -290,6 +292,7 @@ struct ArticleReaderView: View {
                 }
 
                 Button {
+                    readerSwitchTip.invalidate(reason: .actionPerformed)
                     showingFontSettings = true
                 } label: {
                     Label("Font Settings".localized, systemImage: "textformat")
@@ -317,19 +320,7 @@ struct ArticleReaderView: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
-        }
-    }
-
-    private var fontSettingsSheet: some View {
-        NavigationView {
-            FontSelectionView()
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                        showingFontSettings = false
-                    }
-                }
-            }
+            .popoverTip(readerSwitchTip)
         }
     }
 
@@ -673,7 +664,7 @@ struct HeroHeaderView: View, Equatable {
         NavigationView {
             ArticleReaderView(
                 bookmarkId: "123",
-                useNativeWebView: .constant(true),
+                showingFontSettings: .constant(false),
                 viewModel: .init(MockUseCaseFactory())
             )
         }

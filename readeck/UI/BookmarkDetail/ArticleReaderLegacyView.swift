@@ -47,13 +47,12 @@ struct ReadingProgressBar: View {
 
 struct ArticleReaderLegacyView: View {
     let bookmarkId: String
-    @Binding var useNativeWebView: Bool
+    @Binding var showingFontSettings: Bool
 
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: Double = 300
-    @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
     @State private var progressModel = ReadingProgressModel()
@@ -71,9 +70,13 @@ struct ArticleReaderLegacyView: View {
 
     private let headerHeight: Double = 360
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(
+        bookmarkId: String,
+        showingFontSettings: Binding<Bool>,
+        viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()
+    ) {
         self.bookmarkId = bookmarkId
-        self._useNativeWebView = useNativeWebView
+        self._showingFontSettings = showingFontSettings
         self.viewModel = viewModel
     }
 
@@ -283,18 +286,6 @@ struct ArticleReaderLegacyView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
-            }
-        }
-        .sheet(isPresented: $showingFontSettings) {
-            NavigationView {
-                FontSelectionView()
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                showingFontSettings = false
-                            }
-                        }
-                    }
             }
         }
         .sheet(isPresented: $showingLabelsSheet) {
@@ -683,7 +674,7 @@ struct ArticleReaderLegacyView: View {
     NavigationView {
         ArticleReaderLegacyView(
             bookmarkId: "123",
-            useNativeWebView: .constant(false),
+            showingFontSettings: .constant(false),
             viewModel: .init(MockUseCaseFactory())
         )
     }

@@ -39,7 +39,6 @@
 "Tags" = "Tags";
 
 /* Settings Sections */
-"Font Settings" = "Font Settings";
 "Appearance" = "Appearance";
 "Cache Settings" = "Cache Settings";
 "Image Cache" = "Image Cache";
@@ -104,6 +103,7 @@
 "Logs below this level will be filtered out globally" = "Logs below this level will be filtered out globally";
 "Manage Labels" = "Manage Labels";
 "Mark as favorite" = "Mark as favorite";
+"Modern Reader" = "Modern Reader";
 "More" = "More";
 "New Bookmark" = "New Bookmark";
 "No articles in the queue" = "No articles in the queue";
@@ -127,6 +127,7 @@
 "Listening Queue" = "Listening Queue";
 "readeck Bookmark Title" = "readeck Bookmark Title";
 "Reading %lld/%lld: " = "Reading %1$lld/%2$lld: ";
+"Reader" = "Reader";
 "Remove" = "Remove";
 "Reset" = "Reset";
 "Reset to Defaults" = "Reset to Defaults";
@@ -159,6 +160,7 @@
 "Unarchive Bookmark" = "Unarchive Bookmark";
 "URL in clipboard:" = "URL in clipboard:";
 "Username" = "Username";
+"Uses the new reader built for iOS 26. Faster and better integrated. Switch it off if you run into display problems." = "Uses the new reader built for iOS 26. Faster and better integrated. Switch it off if you run into display problems.";
 "Version %@" = "Version %@";
 "Warning" = "Warning";
 "Your current server connection and login credentials." = "Your current server connection and login credentials.";
@@ -294,3 +296,10 @@
 "The Readeck Project" = "The Readeck Project";
 "Creator of Readeck" = "Creator of Readeck";
 "Thanks to everyone who has contributed to the app." = "Thanks to everyone who has contributed to the app.";
+
+/* Reader Settings */
+"Reader Settings" = "Reader Settings";
+
+/* Reader Switch Tip */
+"New reader" = "New reader";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";

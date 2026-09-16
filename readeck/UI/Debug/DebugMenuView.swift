@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
+import TipKit
 import netfox
 
 struct DebugMenuView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var appSettings
     @State private var viewModel = DebugMenuViewModel()
-    @AppStorage("useNativeWebView") private var useNativeWebView = true
+    @State private var forceReaderTip = false
 
     var body: some View {
         NavigationView {
@@ -119,14 +120,19 @@ struct DebugMenuView: View {
                 }
 
                 // MARK: - Reader Section
-                if #available(iOS 26.0, *) {
-                    Section {
-                        Toggle("Use Native WebView", isOn: $useNativeWebView)
-                    } header: {
-                        Text("Reader")
-                    } footer: {
-                        Text("Switch between the native SwiftUI reader and the legacy WKWebView-based reader.")
-                    }
+                Section {
+                    Toggle("Force reader tip", isOn: $forceReaderTip)
+                        .onChange(of: forceReaderTip) { _, isOn in
+                            if isOn {
+                                Tips.showAllTipsForTesting()
+                            } else {
+                                Tips.hideAllTipsForTesting()
+                            }
+                        }
+                } header: {
+                    Text("Reader")
+                } footer: {
+                    Text("Shows the Modern Reader tip on the next article, ignoring the upgrade rule and the once-only limit. Open an article and tap the menu button.")
                 }
 
                 // MARK: - Advanced Section
