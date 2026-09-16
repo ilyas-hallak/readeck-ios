@@ -32,4 +32,11 @@ struct ReaderSwitchTip: Tip {
     var options: [any TipOption] {
         MaxDisplayCount(1)
     }
+
+    /// True when the app already ran on an older version. A fresh install has no
+    /// last seen version and must not be told about a reader it never used.
+    static func isUpgrade(lastSeenVersion: String?, currentVersion: String) -> Bool {
+        guard let lastSeenVersion else { return false }
+        return lastSeenVersion != currentVersion
+    }
 }

@@ -22,12 +22,16 @@ struct readeckApp: App {
         markUpgradingUserForReaderTip()
     }
 
-    /// Must run before `ReleaseNotesView` calls `markVersionAsSeen()`, after which an
+    /// Must run before `MainTabView` calls `markVersionAsSeen()`, after which an
     /// upgrade is indistinguishable from a fresh install. Only ever raised, so the tip
     /// survives until the user actually opens an article.
     private func markUpgradingUserForReaderTip() {
         let versionManager = VersionManager.shared
-        guard versionManager.lastSeenVersion != nil, versionManager.isNewVersion else { return }
+        let isUpgrade = ReaderSwitchTip.isUpgrade(
+            lastSeenVersion: versionManager.lastSeenVersion,
+            currentVersion: versionManager.currentVersion
+        )
+        guard isUpgrade else { return }
         ReaderSwitchTip.isUpgradingUser = true
     }
 
