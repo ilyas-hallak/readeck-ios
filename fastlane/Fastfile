@@ -67,11 +67,13 @@ end
 def newest_release_notes_section(path)
   return nil unless File.exist?(path)
 
-  lines = File.readlines(path, chomp: true)
+  # Explicit encoding: Encoding.default_external is fixed at process start, so the
+  # LC_ALL/LANG assignments above cannot rescue a runner with a non UTF-8 locale.
+  lines = File.readlines(path, chomp: true, encoding: 'UTF-8')
   start = lines.index { |line| line.start_with?('## Version ') }
   return nil if start.nil?
 
-  body = lines[(start + 1)..] || []
+  body = lines[(start + 1)..]
   finish = body.index { |line| line.start_with?('## ') }
   body = body[0...finish] if finish
 
