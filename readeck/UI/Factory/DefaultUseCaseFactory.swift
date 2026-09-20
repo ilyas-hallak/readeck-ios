@@ -41,6 +41,7 @@ protocol UseCaseFactory {
     func makeAuthRepository() -> PAuthRepository
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase
+    func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
@@ -236,5 +237,9 @@ final class DefaultUseCaseFactory: UseCaseFactory {
             getBookmarksUseCase: makeGetBookmarksUseCase(),
             badgeService: appBadgeService
         )
+    }
+
+    func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase {
+        ExportArticlePDFUseCase(renderingService: WebKitPDFRenderingService())
     }
 }

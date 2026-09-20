@@ -59,6 +59,7 @@
 "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." = "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages).";
 "Close" = "Close";
 "Configure log levels and categories" = "Configure log levels and categories";
+"Could not export this article as a PDF" = "Could not export this article as a PDF";
 "Critical" = "Critical";
 "Debug" = "Debug";
 "DEBUG BUILD" = "DEBUG BUILD";
@@ -71,6 +72,8 @@
 "Enter your Readeck server details to get started." = "Enter your Readeck server details to get started.";
 "Error" = "Error";
 "Error: %@" = "Error: %@";
+"Export as PDF" = "Export as PDF";
+"Exporting PDF..." = "Exporting PDF...";
 "Favorite" = "Favorite";
 "Finished reading?" = "Finished reading?";
 "Font" = "Font";

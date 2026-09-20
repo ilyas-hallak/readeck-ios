@@ -12,6 +12,7 @@ final class BookmarkDetailViewModel {
     private let createAnnotationUseCase: PCreateAnnotationUseCase
     private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
+    private let exportArticlePDFUseCase: PExportArticlePDFUseCase
 
     var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
     var articleContent: String = ""
@@ -25,6 +26,8 @@ final class BookmarkDetailViewModel {
     var readProgress = 0
     var selectedAnnotationId: String?
     var hasAnnotations = false
+    var isExportingPDF = false
+    var exportedPDFURL: URL?
 
     var shareContent: String {
         var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
@@ -33,6 +36,8 @@ final class BookmarkDetailViewModel {
         }
         return text
     }
+
+    var canExportPDF: Bool { !articleContent.isEmpty }
 
     var showProgressBar: Bool { settings?.hideProgressBar != true }
     var showHeroImage: Bool { settings?.hideHeroImage != true }
@@ -55,6 +60,7 @@ final class BookmarkDetailViewModel {
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
         self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
+        self.exportArticlePDFUseCase = factory.makeExportArticlePDFUseCase()
         self.factory = factory
         self.summaryViewModel = ArticleSummaryViewModel()
 
@@ -217,6 +223,33 @@ final class BookmarkDetailViewModel {
 
         // Check if article contains annotations
         hasAnnotations = articleContent.contains("<rd-annotation")
+    }
+
+    /// Renders the article as a PDF and publishes the file URL for the share sheet.
+    /// Returns whether the export succeeded, so the caller can present either the
+    /// share sheet or the error.
+    @MainActor
+    @discardableResult
+    func exportArticleAsPDF() async -> Bool {
+        guard !isExportingPDF else { return false }
+
+        isExportingPDF = true
+        errorMessage = nil
+        exportedPDFURL = nil
+        defer { isExportingPDF = false }
+
+        do {
+            exportedPDFURL = try await exportArticlePDFUseCase.execute(
+                bookmark: bookmarkDetail,
+                articleHTML: articleContent,
+                settings: settings
+            )
+            return true
+        } catch {
+            Logger.viewModel.error("❌ PDF export failed: \(error.localizedDescription)")
+            errorMessage = NSLocalizedString("Could not export this article as a PDF", comment: "PDF export error")
+            return false
+        }
     }
 
     @MainActor

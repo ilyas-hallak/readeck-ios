@@ -61,6 +61,8 @@ struct ArticleReaderLegacyView: View {
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingPDFShareSheet = false
+    @State private var showingExportError = false
 
     // MARK: - Envs
 
@@ -84,6 +86,11 @@ struct ArticleReaderLegacyView: View {
         mainContent
             .frame(maxWidth: .infinity)
             .background(readerTheme.backgroundColor.ignoresSafeArea())
+            .overlay {
+                if viewModel.isExportingPDF {
+                    PDFExportProgressOverlay()
+                }
+            }
     }
 
     private var mainContent: some View {
@@ -270,6 +277,13 @@ struct ArticleReaderLegacyView: View {
                     }
 
                     Button {
+                        exportAsPDF()
+                    } label: {
+                        Label("Export as PDF".localized, systemImage: "doc.richtext")
+                    }
+                    .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
+
+                    Button {
                         showingFontSettings = true
                     } label: {
                         Label("Font Settings".localized, systemImage: "textformat")
@@ -298,6 +312,16 @@ struct ArticleReaderLegacyView: View {
         }
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
+        }
+        .sheet(isPresented: $showingPDFShareSheet) {
+            if let url = viewModel.exportedPDFURL {
+                ActivityView(activityItems: [url])
+            }
+        }
+        .alert("Error".localized, isPresented: $showingExportError) {
+            Button("OK".localized, role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
         .alert(
             "Delete this bookmark?".localized,
@@ -353,6 +377,18 @@ struct ArticleReaderLegacyView: View {
             await viewModel.loadBookmarkDetail(id: bookmarkId)
             await viewModel.waitForArticleReady(id: bookmarkId)
             await viewModel.loadArticleContent(id: bookmarkId)
+        }
+    }
+
+    // MARK: - Actions
+
+    private func exportAsPDF() {
+        Task {
+            if await viewModel.exportArticleAsPDF() {
+                showingPDFShareSheet = true
+            } else {
+                showingExportError = true
+            }
         }
     }
 

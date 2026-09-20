@@ -505,6 +505,16 @@ extension MockUseCaseFactory {
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase {
         MockUpdateUnreadBadgeUseCase()
     }
+
+    func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase {
+        MockExportArticlePDFUseCase()
+    }
+}
+
+final class MockExportArticlePDFUseCase: PExportArticlePDFUseCase {
+    func execute(bookmark: BookmarkDetail, articleHTML: String, settings: Settings?) async throws -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("article.pdf")
+    }
 }
 
 final class MockUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {

@@ -64,6 +64,7 @@
 "Changes take effect immediately. Lower log levels include higher ones (Felsök includes all, Critical includes only critical messages)." = "Ändringar träder i kraft omedelbart. Lägre loggnivåer inkluderar högre (Felsök inkluderar alla, Kritisk inkluderar endast kritiska meddelanden).";
 "Close" = "Stäng";
 "Configure log levels and categories" = "Konfigurera loggnivåer och kategorier";
+"Could not export this article as a PDF" = "Det gick inte att exportera artikeln som PDF";
 "Critical" = "Kritisk";
 "Debug" = "Felsök";
 "DEBUG BUILD" = "FELSÖKNINGSBYGGE";
@@ -76,6 +77,8 @@
 "Enter your Readeck server details to get started." = "Ange dina Readeck-serveruppgifter för att komma igång.";
 "Error" = "Fel";
 "Error: %@" = "Fel: %@";
+"Export as PDF" = "Exportera som PDF";
+"Exporting PDF..." = "Exporterar PDF...";
 "Favorite" = "Favorit";
 "Finished reading?" = "Färdig med läsningen?";
 "Font" = "Typsnitt";
