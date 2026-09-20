@@ -9,7 +9,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 ### Export as PDF
 
 - **Save any article as a PDF** straight from the reader menu, in both readers
-- Font, line height and margins follow your reader settings, highlights stay visible, and the page is always white paper
+- Your reader font and line height carry over, your highlights stay visible, and the text size is tuned for paper
 - Share or store the file from the system share sheet
 
 ### Modern Reader
@@ -22,7 +22,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 - **Smoother scrolling:** hero images are decoded at the size they are actually drawn at, and scrolling no longer rebuilds the whole reader
 - **Footnote and table of contents links work again** and jump inside the article instead of opening an empty browser tab
-- Only real web links leave the app, anything else stays in the reader
+- A link only leaves the reader when its target makes sense, so a web page, an email address or a phone number, anything else is ignored
 - Both readers run the same HTML cleanup now, so an article looks the same in either one
 - **Short articles track reading progress again** and get marked as read when you reach the end
 
