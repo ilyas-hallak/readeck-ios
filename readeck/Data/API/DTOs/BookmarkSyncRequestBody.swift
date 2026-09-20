@@ -5,16 +5,25 @@
 
 struct BookmarkSyncRequestBody: Encodable {
     let id: [String]
-    let with_json: Bool
-    let with_html: Bool
-    let with_resources: Bool
-    let resource_prefix: String
+    let withJson: Bool
+    let withHtml: Bool
+    let withResources: Bool
+    let resourcePrefix: String
+
+    // The API expects snake_case, the encoder runs without a key strategy.
+    enum CodingKeys: String, CodingKey {
+        case id
+        case withJson = "with_json"
+        case withHtml = "with_html"
+        case withResources = "with_resources"
+        case resourcePrefix = "resource_prefix"
+    }
 
     init(bookmarkId: String) {
         id = [bookmarkId]
-        with_json = false
-        with_html = true
-        with_resources = false
-        resource_prefix = "."
+        withJson = false
+        withHtml = true
+        withResources = false
+        resourcePrefix = "."
     }
 }

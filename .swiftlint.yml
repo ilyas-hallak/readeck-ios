@@ -5,6 +5,7 @@ parent_config: https://raw.githubusercontent.com/sindresorhus/swiftlint-config/m
 
 excluded:
   - .build
+  - build
   - .claude
   - DerivedData
   - readeckTests
