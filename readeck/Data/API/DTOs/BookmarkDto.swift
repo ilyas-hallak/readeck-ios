@@ -59,6 +59,8 @@ struct ResourceDto: Codable {
 
 struct ImageResourceDto: Codable {
     let src: String
-    let height: Int
-    let width: Int
+    // The server serializes these with omitempty and omits them entirely when the image
+    // size could not be determined, so they must stay optional.
+    let height: Int?
+    let width: Int?
 }

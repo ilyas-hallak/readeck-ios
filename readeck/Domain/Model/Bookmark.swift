@@ -53,8 +53,9 @@ struct Resource {
 
 struct ImageResource {
     let src: String
-    let height: Int
-    let width: Int
+    // Unknown for images the server could not measure, see ImageResourceDto.
+    let height: Int?
+    let width: Int?
 }
 
 extension Bookmark: Hashable, Identifiable {

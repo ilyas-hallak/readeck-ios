@@ -59,8 +59,8 @@ extension ImageResourceDto {
     func toEntity(context: NSManagedObjectContext) -> ImageResourceEntity {
         let entity = ImageResourceEntity(context: context)
         entity.src = self.src
-        entity.width = Int64(self.width)
-        entity.height = Int64(self.height)
+        entity.width = Int64(self.width ?? 0)
+        entity.height = Int64(self.height ?? 0)
         return entity
     }
 }
@@ -89,9 +89,9 @@ extension BookmarkEntity {
             return nil
         }
 
-        // Reconstruct hero image from cached URL for offline access
+        // Reconstruct hero image from cached URL for offline access, the size is not cached
         let heroImage: ImageResource? = self.heroImageURL.flatMap { urlString in
-            ImageResource(src: urlString, height: 0, width: 0)
+            ImageResource(src: urlString, height: nil, width: nil)
         }
 
         let resources = BookmarkResources(
@@ -212,8 +212,8 @@ private extension BookmarkResourcesEntity {
 private extension ImageResourceEntity {
     func populateFrom(imageResource: ImageResource) {
         self.src = imageResource.src
-        self.height = Int64(imageResource.height)
-        self.width = Int64(imageResource.width)
+        self.height = Int64(imageResource.height ?? 0)
+        self.width = Int64(imageResource.width ?? 0)
     }
 }
 

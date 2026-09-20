@@ -12,6 +12,13 @@ import Testing
 @Suite("Server Info Tests")
 struct ServerInfoTests {
 
+    /// `ServerInfo.supportsOAuth` is a deprecated transition property. Reading it
+    /// through one helper keeps the deprecation warning to a single place while the
+    /// behaviour stays covered until the login flow moves to `ServerCapabilities`.
+    private func legacySupportsOAuth(_ serverInfo: ServerInfo) -> Bool {
+        serverInfo.supportsOAuth
+    }
+
     // MARK: - OAuth Feature Detection
 
     @Test("Supports OAuth with OAuth feature returns true")
@@ -22,7 +29,7 @@ struct ServerInfoTests {
             features: ["oauth", "email"]
         )
 
-        #expect(serverInfo.supportsOAuth)
+        #expect(legacySupportsOAuth(serverInfo))
     }
 
     @Test("Supports OAuth without OAuth feature returns false")
@@ -33,7 +40,7 @@ struct ServerInfoTests {
             features: ["email"]
         )
 
-        #expect(!serverInfo.supportsOAuth)
+        #expect(!legacySupportsOAuth(serverInfo))
     }
 
     @Test("Supports OAuth with nil features returns false")
@@ -44,7 +51,7 @@ struct ServerInfoTests {
             features: nil
         )
 
-        #expect(!serverInfo.supportsOAuth, "Should return false for old servers without features array")
+        #expect(!legacySupportsOAuth(serverInfo), "Should return false for old servers without features array")
     }
 
     @Test("Supports OAuth with empty features returns false")
@@ -55,7 +62,7 @@ struct ServerInfoTests {
             features: []
         )
 
-        #expect(!serverInfo.supportsOAuth)
+        #expect(!legacySupportsOAuth(serverInfo))
     }
 
     // MARK: - Email Feature Detection
@@ -107,7 +114,7 @@ struct ServerInfoTests {
         #expect(serverInfo.version == "1.2.3")
         #expect(serverInfo.isReachable)
         #expect(serverInfo.features == ["oauth", "email"])
-        #expect(serverInfo.supportsOAuth)
+        #expect(legacySupportsOAuth(serverInfo))
         #expect(serverInfo.supportsEmail)
     }
 
@@ -123,7 +130,7 @@ struct ServerInfoTests {
         #expect(serverInfo.version == "0.9.0")
         #expect(serverInfo.isReachable)
         #expect(serverInfo.features == nil)
-        #expect(!serverInfo.supportsOAuth, "Old server without features should not support OAuth")
+        #expect(!legacySupportsOAuth(serverInfo), "Old server without features should not support OAuth")
         #expect(!serverInfo.supportsEmail)
     }
 
@@ -134,7 +141,7 @@ struct ServerInfoTests {
         #expect(serverInfo.version == "")
         #expect(!serverInfo.isReachable)
         #expect(serverInfo.features == nil)
-        #expect(!serverInfo.supportsOAuth)
+        #expect(!legacySupportsOAuth(serverInfo))
         #expect(!serverInfo.supportsEmail)
     }
 
@@ -155,7 +162,7 @@ struct ServerInfoTests {
         #expect(serverInfo.version == "0.5.0")
 
         // OAuth detection should gracefully return false
-        #expect(!serverInfo.supportsOAuth, "Old servers should gracefully report no OAuth support")
+        #expect(!legacySupportsOAuth(serverInfo), "Old servers should gracefully report no OAuth support")
         #expect(!serverInfo.supportsEmail)
     }
 
@@ -170,7 +177,7 @@ struct ServerInfoTests {
         let serverInfo = ServerInfo(from: dto)
 
         #expect(serverInfo != nil)
-        #expect(serverInfo.supportsOAuth, "New servers with oauth feature should report OAuth support")
+        #expect(legacySupportsOAuth(serverInfo), "New servers with oauth feature should report OAuth support")
         #expect(serverInfo.supportsEmail)
     }
 
@@ -185,7 +192,7 @@ struct ServerInfoTests {
         let serverInfo = ServerInfo(from: dto)
 
         #expect(serverInfo != nil)
-        #expect(!serverInfo.supportsOAuth, "Server with features but no oauth should report no OAuth support")
+        #expect(!legacySupportsOAuth(serverInfo), "Server with features but no oauth should report no OAuth support")
         #expect(serverInfo.supportsEmail)
     }
 
