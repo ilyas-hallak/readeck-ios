@@ -4,6 +4,37 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 3.2.0
+
+### Export as PDF
+
+- **Save any article as a PDF** straight from the reader menu, in both readers
+- Font, line height and margins follow your reader settings, highlights stay visible, and the page is always white paper
+- Share or store the file from the system share sheet
+
+### Modern Reader
+
+- The reader switch moved out of the debug menu into Settings -> Reader Settings as a **"Modern Reader"** toggle
+- The modern reader is the default on iOS 26 now
+- A one time tip points the toggle out after updating, so the new look does not just happen to you
+
+### Reader Improvements
+
+- **Smoother scrolling:** hero images are decoded at the size they are actually drawn at, and scrolling no longer rebuilds the whole reader
+- **Footnote and table of contents links work again** and jump inside the article instead of opening an empty browser tab
+- Only real web links leave the app, anything else stays in the reader
+- Both readers run the same HTML cleanup now, so an article looks the same in either one
+- **Short articles track reading progress again** and get marked as read when you reach the end
+
+### Bug Fixes & Stability
+
+- Filtering by a label that contains a space works again
+- The bookmark list no longer stays empty when the server cannot determine the size of a single thumbnail
+
+### Translations
+
+- Updated **Swedish** translation, contributed by AntonPalmqvist
+
 ## Version 3.1.0
 
 ### Unread Count Badge
@@ -19,7 +50,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ### Open Saved Articles from the Share Sheet
 
-- After saving a link via the **Share Extension**, tap **"Open in Readeck"** to jump straight into the article
+- Turn on **"Open after save"** in the **Share Extension** and the article opens in Readeck as soon as it is saved
 - The reader waits for the server to finish preparing a freshly saved article instead of showing a blank page
 
 ### Reader
