@@ -22,6 +22,7 @@ ENV['LANG'] = 'en_US.UTF-8'
 PROJECT_PATH = 'readeck.xcodeproj'
 DEFAULT_SCHEME = 'readeck'
 DEFAULT_TARGET = 'readeck'
+RELEASE_NOTES_PATH = File.expand_path('../readeck/UI/Resources/RELEASE_NOTES.md', __dir__)
 
 # Build an App Store Connect API key from the readeck .env variables.
 # Returns nil (falling back to the Xcode/Apple ID session) when no key is configured.
@@ -44,12 +45,45 @@ private_lane :resolve_optional_app_store_api_key do
   end
 end
 
+# Feeds TestFlight from the in-app release notes, so testers and users read the same text.
+# Falls back to the commit log when the notes carry no version section, so a forgotten
+# notes update never blocks an upload.
 private_lane :release_changelog do
-  changelog_from_git_commits(
-    pretty: '- %s',
-    commits_count: 15,
-    merge_commit_filtering: 'exclude_merges'
-  )
+  notes = newest_release_notes_section(RELEASE_NOTES_PATH)
+
+  if notes.nil? || notes.empty?
+    UI.important("No version section in #{RELEASE_NOTES_PATH}, falling back to the commit log.")
+    changelog_from_git_commits(
+      pretty: '- %s',
+      commits_count: 15,
+      merge_commit_filtering: 'exclude_merges'
+    )
+  else
+    notes
+  end
+end
+
+# Returns the body of the first "## Version x.y.z" section as plain text.
+def newest_release_notes_section(path)
+  return nil unless File.exist?(path)
+
+  lines = File.readlines(path, chomp: true)
+  start = lines.index { |line| line.start_with?('## Version ') }
+  return nil if start.nil?
+
+  body = lines[(start + 1)..] || []
+  finish = body.index { |line| line.start_with?('## ') }
+  body = body[0...finish] if finish
+
+  body.map { |line| strip_markdown(line) }.join("\n").strip
+end
+
+# App Store Connect renders plain text, so headings, bold markers and link syntax go away.
+def strip_markdown(line)
+  line
+    .sub(/\A#+\s*/, '')
+    .gsub(/\*\*(.+?)\*\*/, '\1')
+    .gsub(/\[(.+?)\]\((.+?)\)/, '\1')
 end
 
 platform :ios do
