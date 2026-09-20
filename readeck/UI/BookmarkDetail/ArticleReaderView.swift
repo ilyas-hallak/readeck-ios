@@ -1,19 +1,20 @@
 import SwiftUI
 import SafariServices
+import TipKit
 
 @available(iOS 26.0, *)
 struct ArticleReaderView: View {
     let bookmarkId: String
-    @Binding var useNativeWebView: Bool
+    @Binding var showingFontSettings: Bool
 
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: Double = 300
-    @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
-    @State private var readingProgress = 0.0
+    @State private var progressModel = ReadingProgressModel()
+    @State private var showFloatingActions = false
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
@@ -22,8 +23,8 @@ struct ArticleReaderView: View {
     @State private var showingArchiveConfirmation = false
     @State private var showingPDFShareSheet = false
     @State private var showingExportError = false
-    @State private var isToolbarVisible: Bool = true
-    @State private var scrollTracker = ScrollTracker()
+    @State private var isToolbarVisible = true
+    @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
 
@@ -32,10 +33,15 @@ struct ArticleReaderView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private let headerHeight: Double = 360
+    private let readerSwitchTip = ReaderSwitchTip()
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(
+        bookmarkId: String,
+        showingFontSettings: Binding<Bool>,
+        viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()
+    ) {
         self.bookmarkId = bookmarkId
-        self._useNativeWebView = useNativeWebView
+        self._showingFontSettings = showingFontSettings
         self.viewModel = viewModel
     }
 
@@ -63,9 +69,6 @@ struct ArticleReaderView: View {
             .toolbarBackgroundVisibility(.visible, for: .navigationBar)
             .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
             .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
-            .sheet(isPresented: $showingFontSettings) {
-                fontSettingsSheet
-            }
             .sheet(isPresented: $showingLabelsSheet) {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
@@ -158,22 +161,20 @@ struct ArticleReaderView: View {
         VStack(spacing: 0) {
             // Progress bar at top
             if !(viewModel.settings?.hideProgressBar ?? false) {
-                ProgressView(value: readingProgress)
-                    .progressViewStyle(LinearProgressViewStyle())
-                    .frame(height: 3)
+                ReadingProgressBar(model: progressModel)
             }
 
             // Main scroll content
             scrollViewContent
                 .overlay(alignment: .bottomTrailing) {
                     if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                        if readingProgress >= 0.9 {
+                        if showFloatingActions {
                             floatingActionButtons
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
                     }
                 }
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: readingProgress >= 0.9)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
         }
         // Everything inside the reader adopts the theme's brightness so system-tinted
         // elements (progress bar, dividers, glass buttons, loading labels) stay legible
@@ -261,10 +262,17 @@ struct ArticleReaderView: View {
             .scrollPosition($scrollPosition)
             .disableScrollBounce()
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
-                let result = scrollTracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
+                // Runs on every rendered frame while scrolling, so nothing in here may
+                // write `@State` unconditionally — see ReadingProgressModel.
+                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
 
                 if let progress = result.readingProgress {
-                    readingProgress = progress
+                    progressModel.value = progress
+
+                    let shouldShowActions = progress >= 0.9
+                    if showFloatingActions != shouldShowActions {
+                        showFloatingActions = shouldShowActions
+                    }
 
                     if result.shouldUpdateProgress {
                         viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
@@ -308,6 +316,7 @@ struct ArticleReaderView: View {
                 .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
 
                 Button {
+                    readerSwitchTip.invalidate(reason: .actionPerformed)
                     showingFontSettings = true
                 } label: {
                     Label("Font Settings".localized, systemImage: "textformat")
@@ -335,6 +344,7 @@ struct ArticleReaderView: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
+            .popoverTip(readerSwitchTip)
         }
     }
 
@@ -350,69 +360,20 @@ struct ArticleReaderView: View {
         }
     }
 
-    private var fontSettingsSheet: some View {
-        NavigationView {
-            FontSelectionView()
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                        showingFontSettings = false
-                    }
-                }
-            }
-        }
-    }
-
     // MARK: - ViewBuilder
 
     @ViewBuilder
     private func headerView(width: Double) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
-            ZStack(alignment: .bottomTrailing) {
-                // Background blur for images that don't fill
-                CachedAsyncImage(
-                    url: URL(string: viewModel.bookmarkDetail.imageUrl),
-                    cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
-                )
-                    .scaledToFill()
-                    .frame(width: width, height: headerHeight)
-                    .blur(radius: 30)
-                    .clipped()
-
-                // Main image with fit
-                CachedAsyncImage(
-                    url: URL(string: viewModel.bookmarkDetail.imageUrl),
-                    cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero"
-                )
-                    .scaledToFit()
-                    .frame(width: width, height: headerHeight)
-
-                // Zoom icon
-                Button(action: {
-                    showingImageViewer = true
-                }) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.6))
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                }
-                .padding(.trailing, 16)
-                .padding(.bottom, 16)
-            }
-            .frame(width: width, height: headerHeight)
-            .ignoresSafeArea(edges: .top)
-            .onTapGesture {
+            HeroHeaderView(
+                imageUrl: viewModel.bookmarkDetail.imageUrl,
+                cacheKey: "bookmark-\(viewModel.bookmarkDetail.id)-hero",
+                width: width,
+                height: headerHeight
+            ) {
                 showingImageViewer = true
             }
-            .accessibilityAddTraits(.isButton)
+            .equatable()
         }
     }
 
@@ -663,12 +624,83 @@ struct ArticleReaderView: View {
     }
 }
 
+/// Hero image header with the blurred backdrop that fills the bars left by images
+/// which do not cover the header box.
+///
+/// Two things matter for scrolling here. First, the backdrop is fed from a thumbnail
+/// sized decode instead of a second full-resolution copy of the same picture: at a
+/// blur radius of 30pt the upscale is not visible, and the header no longer holds two
+/// multi-megabyte bitmaps. Second, the view is `Equatable`, so the header subtree —
+/// including the blur — is skipped whenever the reader rebuilds for an unrelated
+/// reason, instead of being re-created and re-rasterised.
+struct HeroHeaderView: View, Equatable {
+    let imageUrl: String
+    let cacheKey: String
+    let width: Double
+    let height: Double
+    let onTap: () -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.imageUrl == rhs.imageUrl
+            && lhs.cacheKey == rhs.cacheKey
+            && lhs.width == rhs.width
+            && lhs.height == rhs.height
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            // Background blur for images that don't fill
+            CachedAsyncImage(
+                url: URL(string: imageUrl),
+                cacheKey: cacheKey,
+                sizing: .fill(CGSize(width: 24, height: 24))
+            )
+                .scaledToFill()
+                .frame(width: width, height: height)
+                .blur(radius: 30)
+                .clipped()
+                .accessibilityHidden(true)
+
+            // Main image with fit
+            CachedAsyncImage(
+                url: URL(string: imageUrl),
+                cacheKey: cacheKey,
+                sizing: .fit(CGSize(width: width, height: height))
+            )
+                .scaledToFit()
+                .frame(width: width, height: height)
+
+            // Zoom icon
+            Button(action: onTap) {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.6))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+            }
+            .padding(.trailing, 16)
+            .padding(.bottom, 16)
+        }
+        .frame(width: width, height: height)
+        .ignoresSafeArea(edges: .top)
+        .onTapGesture(perform: onTap)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
 #Preview {
     if #available(iOS 26.0, *) {
         NavigationView {
             ArticleReaderView(
                 bookmarkId: "123",
-                useNativeWebView: .constant(true),
+                showingFontSettings: .constant(false),
                 viewModel: .init(MockUseCaseFactory())
             )
         }

@@ -13,6 +13,9 @@ struct FontSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var appSettings
 
+    @AppStorage(ArticleReaderAvailability.preferenceKey)
+    private var useNativeWebView = ArticleReaderAvailability.prefersNativeReaderByDefault
+
     init(viewModel: FontSettingsViewModel = FontSettingsViewModel()) {
         self.viewModel = viewModel
     }
@@ -29,6 +32,7 @@ struct FontSelectionView: View {
 
             // Scrollable settings below
             List {
+                articleReaderSection
                 fontSection
                 colorThemeSection
                 readerLayoutSection
@@ -95,6 +99,23 @@ struct FontSelectionView: View {
         .background(previewBackgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+    }
+
+    // MARK: - Article Reader Section
+
+    /// Only shown where the native reader can actually run, otherwise the toggle
+    /// would have no effect (see ArticleReaderAvailability).
+    @ViewBuilder
+    private var articleReaderSection: some View {
+        if ArticleReaderAvailability.isNativeReaderSupported {
+            Section {
+                Toggle("Modern Reader", isOn: $useNativeWebView)
+            } header: {
+                Text("Reader")
+            } footer: {
+                Text("Uses the new reader built for iOS 26. Faster and better integrated. Switch it off if you run into display problems.")
+            }
+        }
     }
 
     // MARK: - Font Section

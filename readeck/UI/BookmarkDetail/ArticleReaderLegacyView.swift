@@ -9,20 +9,54 @@ struct ContentHeightPreferenceKey: PreferenceKey {
     }
 }
 
+/// Carries the live reading progress to the progress bar.
+///
+/// The end-of-content marker reports its position in the scroll coordinate space, so
+/// `onPreferenceChange` fires on every rendered frame. Holding the value in `@State`
+/// meant every one of those frames invalidated the whole reader — header, title,
+/// web view — which on a 120 Hz display is 120 full rebuilds per second. As an
+/// `@Observable` reference only the views that actually read `value` are invalidated.
+@Observable
+final class ReadingProgressModel {
+    var value: Double = 0
+}
+
+/// Holds scroll bookkeeping that must survive view updates but must not trigger them.
+///
+/// `ScrollTracker` is a struct, so keeping it in `@State` wrote the mutated copy back
+/// through the `@State` setter on every scrolled frame and invalidated the view, even
+/// though nothing in the body reads the tracker.
+final class ScrollTrackerBox {
+    var tracker = ScrollTracker()
+    /// Legacy reader bookkeeping (it predates `ScrollTracker` and keeps its own math).
+    var initialContentEndPosition: Double = 0
+    var lastSentProgress: Double = 0
+}
+
+/// Renders the reading progress bar in isolation so that the per-frame progress
+/// updates only invalidate these three points of layout.
+struct ReadingProgressBar: View {
+    let model: ReadingProgressModel
+
+    var body: some View {
+        ProgressView(value: model.value)
+            .progressViewStyle(LinearProgressViewStyle())
+            .frame(height: 3)
+    }
+}
+
 struct ArticleReaderLegacyView: View {
     let bookmarkId: String
-    @Binding var useNativeWebView: Bool
+    @Binding var showingFontSettings: Bool
 
     // MARK: - States
 
     @State private var viewModel: BookmarkDetailViewModel
     @State private var webViewHeight: Double = 300
-    @State private var initialContentEndPosition: Double = 0
-    @State private var showingFontSettings = false
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
-    @State private var readingProgress = 0.0
-    @State private var lastSentProgress = 0.0
+    @State private var progressModel = ReadingProgressModel()
+    @State private var scrollBox = ScrollTrackerBox()
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
@@ -38,9 +72,13 @@ struct ArticleReaderLegacyView: View {
 
     private let headerHeight: Double = 360
 
-    init(bookmarkId: String, useNativeWebView: Binding<Bool>, viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()) {
+    init(
+        bookmarkId: String,
+        showingFontSettings: Binding<Bool>,
+        viewModel: BookmarkDetailViewModel = BookmarkDetailViewModel()
+    ) {
         self.bookmarkId = bookmarkId
-        self._useNativeWebView = useNativeWebView
+        self._showingFontSettings = showingFontSettings
         self.viewModel = viewModel
     }
 
@@ -58,9 +96,7 @@ struct ArticleReaderLegacyView: View {
     private var mainContent: some View {
         VStack(spacing: 0) {
             if viewModel.showProgressBar {
-                ProgressView(value: readingProgress)
-                    .progressViewStyle(LinearProgressViewStyle())
-                    .frame(height: 3)
+                ReadingProgressBar(model: progressModel)
             }
             GeometryReader { geometry in
                 ScrollView {
@@ -164,49 +200,47 @@ struct ArticleReaderLegacyView: View {
                 .ignoresSafeArea(edges: .top)
                 .scrollPosition($scrollPosition)
                 .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
+                    // Runs on every rendered frame while scrolling. Everything in here
+                    // writes to a reference box instead of `@State`, and the progress
+                    // value goes to `progressModel`, so a scroll no longer rebuilds the
+                    // reader — which used to re-hash the whole article HTML in
+                    // `WebView.updateUIView` each time.
                     let containerHeight = geometry.size.height
 
                     // Update initial position if content grows (WebView still loading) or first time
                     // We always take the maximum position seen (when scrolled to top, this is total content height)
-                    if endPosition > initialContentEndPosition && endPosition > containerHeight * 1.2 {
-                        initialContentEndPosition = endPosition
+                    if endPosition > scrollBox.initialContentEndPosition && endPosition > containerHeight * 1.2 {
+                        scrollBox.initialContentEndPosition = endPosition
                         Logger.ui.debug("Content end position updated: \(Int(endPosition)) (container: \(Int(containerHeight)))")
                     }
 
                     // Calculate progress from how much the end marker has moved up
-                    guard initialContentEndPosition > 0 else {
-                        Logger.ui.debug("Waiting for content to load... current: \(Int(endPosition)), container: \(Int(containerHeight))")
-                        return
-                    }
+                    guard scrollBox.initialContentEndPosition > 0 else { return }
 
-                    let totalScrollableDistance = initialContentEndPosition - containerHeight
+                    let totalScrollableDistance = scrollBox.initialContentEndPosition - containerHeight
 
-                    guard totalScrollableDistance > 0 else {
-                        Logger.ui.debug("Content not scrollable: initial=\(initialContentEndPosition), container=\(containerHeight)")
-                        return
-                    }
+                    guard totalScrollableDistance > 0 else { return }
 
                     // How far has the marker moved from its initial position?
-                    let scrolled = initialContentEndPosition - endPosition
+                    let scrolled = scrollBox.initialContentEndPosition - endPosition
                     let rawProgress = scrolled / totalScrollableDistance
                     var progress = min(max(rawProgress, 0), 1)
 
                     // Lock progress at 100% once reached (don't go back to 99% due to pixel variations)
-                    if lastSentProgress >= 0.995 {
+                    if scrollBox.lastSentProgress >= 0.995 {
                         progress = max(progress, 1.0)
                     }
 
-                    Logger.ui.debug("Progress: \(Int(progress * 100))% | scrolled: \(Int(scrolled)) / \(Int(totalScrollableDistance)) | endPos: \(Int(endPosition))")
+                    progressModel.value = progress
 
                     // Check if we should update: threshold OR reaching 100% for first time
                     let threshold: Double = 0.03
-                    let reachedEnd = progress >= 1.0 && lastSentProgress < 1.0
-                    let shouldUpdate = abs(progress - lastSentProgress) >= threshold || reachedEnd
+                    let reachedEnd = progress >= 1.0 && scrollBox.lastSentProgress < 1.0
+                    let shouldUpdate = abs(progress - scrollBox.lastSentProgress) >= threshold || reachedEnd
 
                     if shouldUpdate {
-                        Logger.ui.debug("Updating progress: \(Int(lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
-                        lastSentProgress = progress
-                        readingProgress = progress
+                        Logger.ui.debug("Updating progress: \(Int(scrollBox.lastSentProgress * 100))% → \(Int(progress * 100))%\(reachedEnd ? " [END]" : "")")
+                        scrollBox.lastSentProgress = progress
                         viewModel.debouncedUpdateReadProgress(id: bookmarkId, progress: progress, anchor: nil)
                     }
                 }
@@ -266,18 +300,6 @@ struct ArticleReaderLegacyView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
-            }
-        }
-        .sheet(isPresented: $showingFontSettings) {
-            NavigationView {
-                FontSelectionView()
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                showingFontSettings = false
-                            }
-                        }
-                    }
             }
         }
         .sheet(isPresented: $showingLabelsSheet) {
@@ -376,7 +398,10 @@ struct ArticleReaderLegacyView: View {
     private func headerView(width: Double) -> some View {
         if !viewModel.bookmarkDetail.imageUrl.isEmpty {
             ZStack(alignment: .bottomTrailing) {
-                CachedAsyncImage(url: URL(string: viewModel.bookmarkDetail.imageUrl))
+                CachedAsyncImage(
+                    url: URL(string: viewModel.bookmarkDetail.imageUrl),
+                    sizing: .fill(CGSize(width: width, height: headerHeight))
+                )
                     .scaledToFill()
                     .frame(width: width, height: headerHeight)
                     .clipped()
@@ -685,7 +710,7 @@ struct ArticleReaderLegacyView: View {
     NavigationView {
         ArticleReaderLegacyView(
             bookmarkId: "123",
-            useNativeWebView: .constant(false),
+            showingFontSettings: .constant(false),
             viewModel: .init(MockUseCaseFactory())
         )
     }

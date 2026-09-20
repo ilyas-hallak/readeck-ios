@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 import netfox
 
 @main
@@ -15,6 +16,24 @@ struct readeckApp: App {
     @State private var deepLinkRouter = DeepLinkRouter()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showDebugMenu = false
+
+    init() {
+        try? Tips.configure()
+        markUpgradingUserForReaderTip()
+    }
+
+    /// Must run before `MainTabView` calls `markVersionAsSeen()`, after which an
+    /// upgrade is indistinguishable from a fresh install. Only ever raised, so the tip
+    /// survives until the user actually opens an article.
+    private func markUpgradingUserForReaderTip() {
+        let versionManager = VersionManager.shared
+        let isUpgrade = ReaderSwitchTip.isUpgrade(
+            lastSeenVersion: versionManager.lastSeenVersion,
+            currentVersion: versionManager.currentVersion
+        )
+        guard isUpgrade else { return }
+        ReaderSwitchTip.isUpgradingUser = true
+    }
 
     var body: some Scene {
         WindowGroup {

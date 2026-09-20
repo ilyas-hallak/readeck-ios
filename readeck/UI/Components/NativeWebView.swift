@@ -15,10 +15,12 @@ struct NativeWebView: View {
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
     var onScrollToPosition: ((Double) -> Void)?
 
-    @State private var webPage = WebPage()
+    @State private var pageHolder = ReaderWebPageHolder()
     @State private var annotationPollingTask: Task<Void, Never>?
     @State private var scrollPollingTask: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
+
+    private var webPage: WebPage { pageHolder.page }
 
     /// Effective reader colors, shared with the surrounding SwiftUI chrome.
     private var theme: ReaderTheme {
@@ -32,9 +34,13 @@ struct NativeWebView: View {
             // no white or gray sliver flashes before the CSS applies.
             .background(theme.backgroundColor)
             .onAppear {
+                pageHolder.decider.openExternally = openExternally
                 loadStyledContent()
                 setupAnnotationMessageHandler()
                 setupScrollToPositionHandler()
+            }
+            .onChange(of: settings.urlOpener) { _, _ in
+                pageHolder.decider.openExternally = openExternally
             }
             .onChange(of: htmlContent) { _, _ in
                 loadStyledContent()
@@ -57,6 +63,17 @@ struct NativeWebView: View {
                 annotationPollingTask?.cancel()
                 scrollPollingTask?.cancel()
             }
+    }
+
+    /// Hands a tapped link to the browser, matching the reader's "open original page"
+    /// button, which honours the user's in-app vs. default browser preference.
+    private func openExternally(_ url: URL) {
+        if ReaderLinkPolicy.supportsInAppBrowser(url) {
+            URLUtil.open(url: url.absoluteString, urlOpener: settings.urlOpener ?? .inAppBrowser)
+        } else {
+            // mailto:, tel: and friends cannot be shown in SFSafariViewController.
+            URLUtil.openUrlInDefaultBrowser(url: url.absoluteString)
+        }
     }
 
     private func setupAnnotationMessageHandler() {
@@ -216,6 +233,9 @@ struct NativeWebView: View {
             : "'SF Mono', Menlo, Monaco, Consolas, monospace"
         Logger.ui.debug("NativeWebView font '\(selectedFontFamily.rawValue)' embedded: \(fontCSS.embedded)")
 
+        // Clean up problematic HTML that kills performance
+        let cleanedHTML = ArticleHTMLSanitizer.sanitize(htmlContent)
+
         let styledHTML = """
         <html>
         <head>
@@ -373,7 +393,7 @@ struct NativeWebView: View {
             </style>
         </head>
         <body>
-            \(htmlContent)
+            \(cleanedHTML)
             <script>
                 function measureHeight() {
                     return Math.max(
@@ -425,7 +445,9 @@ struct NativeWebView: View {
         </body>
         </html>
         """
-        webPage.load(html: styledHTML)
+        // Loading with an explicit base URL keeps in-document anchors recognisable
+        // for the navigation decider.
+        webPage.load(html: styledHTML, baseURL: ReaderWebPageHolder.baseURL)
 
         // Update height after content loads
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -771,6 +793,62 @@ struct NativeWebView: View {
                     setTimeout(scrollToAnnotation, 300);
                 }
         """
+    }
+}
+
+// MARK: - Navigation Handling
+
+/// Intercepts navigations in the native reader so that tapping a link opens the
+/// browser instead of replacing the article inside the web view.
+@available(iOS 26.0, *)
+@MainActor
+final class ReaderNavigationDecider: WebPage.NavigationDeciding {
+    /// Base URL the article HTML is loaded with, used to recognise in-document anchors.
+    private let documentURL: URL
+
+    /// Set by the view, so the link opens the way the user configured it.
+    var openExternally: (URL) -> Void = { _ in }
+
+    init(documentURL: URL) {
+        self.documentURL = documentURL
+    }
+
+    func decidePolicy(
+        for action: WebPage.NavigationAction,
+        preferences: inout WebPage.NavigationPreferences
+    ) async -> WKNavigationActionPolicy {
+        let decision = ReaderLinkPolicy.decide(
+            for: action.request.url,
+            navigationType: action.navigationType,
+            documentURL: documentURL
+        )
+
+        switch decision {
+        case .allowInPage:
+            return .allow
+        case .openExternally(let url):
+            openExternally(url)
+            return .cancel
+        case .cancel:
+            return .cancel
+        }
+    }
+}
+
+/// Keeps the `WebPage` and its navigation decider together, because the decider has
+/// to be handed to `WebPage` at initialisation time.
+@available(iOS 26.0, *)
+@MainActor
+final class ReaderWebPageHolder {
+    static let baseURL = URL(string: "about:blank")!
+
+    let decider: ReaderNavigationDecider
+    let page: WebPage
+
+    init() {
+        let decider = ReaderNavigationDecider(documentURL: Self.baseURL)
+        self.decider = decider
+        self.page = WebPage(navigationDecider: decider)
     }
 }
 
