@@ -99,6 +99,47 @@ struct BookmarksViewModelTests {
         #expect(factory.mockGetBookmarks.lastType == [.article, .video, .photo])
     }
 
+    @Test("A load requested while a refresh is in flight keeps its filter (regression: Codeberg #39)")
+    func loadDuringRefreshKeepsRequestedFilter() async {
+        let (vm, factory) = createSUT()
+        let allTypes: [BookmarkType] = [.article, .video, .photo]
+
+        // At launch a network change triggers a refresh before the view has set its filter.
+        factory.mockGetBookmarks.holdNextCall = true
+        let refresh = Task { await vm.refreshBookmarks() }
+        while factory.mockGetBookmarks.heldCall == nil { await Task.yield() }
+
+        // The view's own initial load arrives while that refresh is still running.
+        await vm.loadBookmarks(state: .unread, type: allTypes)
+        factory.mockGetBookmarks.releaseHeldCall()
+        await refresh.value
+
+        #expect(vm.currentType == allTypes)
+        #expect(factory.mockGetBookmarks.lastType == allTypes)
+
+        await vm.toggleArchive(bookmark: .mock)
+        #expect(factory.mockGetBookmarks.lastType == allTypes)
+    }
+
+    @Test("A load requested while more pages are loading still runs with its filter")
+    func loadDuringLoadMoreRunsAfterwards() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarks.result = .success(
+            BookmarksPage(bookmarks: [.mock], currentPage: 1, totalCount: 2, totalPages: 2, links: nil)
+        )
+        await vm.loadBookmarks(state: .unread, type: [.article])
+
+        factory.mockGetBookmarks.holdNextCall = true
+        let loadMore = Task { await vm.loadMoreBookmarks() }
+        while factory.mockGetBookmarks.heldCall == nil { await Task.yield() }
+
+        await vm.loadBookmarks(state: .unread, type: [.video])
+        factory.mockGetBookmarks.releaseHeldCall()
+        await loadMore.value
+
+        #expect(factory.mockGetBookmarks.lastType == [.video])
+    }
+
     // MARK: - Toggle Favorite
 
     @Test("Toggle favorite calls update use case")

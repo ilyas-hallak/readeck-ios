@@ -37,15 +37,10 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     // MARK: - Initialization
 
     init() {
-        // Check current network status synchronously before starting monitor
-        let currentPath = monitor.currentPath
-        let hasInterfaces = !currentPath.availableInterfaces.isEmpty
-        let initialStatus = currentPath.status == .satisfied && hasInterfaces
-
-        _isConnectedSubject = CurrentValueSubject<Bool, Never>(initialStatus)
-        hasPathConnection = initialStatus
-
-        Logger.network.info("🌐 Initial network status: \(initialStatus ? "Connected" : "Offline")")
+        // Start as connected. Before the monitor runs, currentPath always reports no
+        // connection, which made every launch flip to offline and back. The first path
+        // update after startMonitoring() corrects this if the device really is offline.
+        _isConnectedSubject = CurrentValueSubject<Bool, Never>(true)
     }
 
     deinit {

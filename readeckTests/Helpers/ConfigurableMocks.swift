@@ -13,6 +13,9 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
     // swiftlint:disable:next discouraged_optional_collection
     var lastType: [BookmarkType]?
     var lastTag: String?
+    // Suspends the next call until releaseHeldCall(), to model a request that is still in flight.
+    var holdNextCall = false
+    private(set) var heldCall: CheckedContinuation<Void, Never>?
 
     // swiftlint:disable:next discouraged_optional_collection
     func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage {
@@ -20,7 +23,16 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
         lastState = state
         lastType = type
         lastTag = tag
+        if holdNextCall {
+            holdNextCall = false
+            await withCheckedContinuation { heldCall = $0 }
+        }
         return try result.get()
+    }
+
+    func releaseHeldCall() {
+        heldCall?.resume()
+        heldCall = nil
     }
 }
 

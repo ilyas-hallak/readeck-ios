@@ -34,6 +34,7 @@ final class BookmarksViewModel {
 
     // Prevent concurrent updates
     private var isUpdating = false
+    private var needsReload = false
 
     private var cancellables = Set<AnyCancellable>()
     private var limit = 50
@@ -133,19 +134,33 @@ final class BookmarksViewModel {
 
     @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
+        currentState = state
+        currentType = type
+        currentTag = tag
+
+        // A load that is already running may use outdated filters, so run again once it is done.
         guard !isUpdating else {
-            Logger.viewModel.debug("⏭️ Skipping loadBookmarks - already updating")
+            Logger.viewModel.debug("⏭️ Load already running - queueing a reload")
+            needsReload = true
             return
         }
         isUpdating = true
         defer { isUpdating = false }
 
+        repeat {
+            needsReload = false
+            await loadFirstPage()
+        } while needsReload
+    }
+
+    @MainActor
+    private func loadFirstPage() async {
+        let state = currentState
+        let type = currentType
+        let tag = currentTag
+
         isLoading = true
         errorMessage = nil
-        currentState = state
-        currentType = type
-        currentTag = tag
-
         offset = 0
         hasMoreData = true
 
@@ -233,8 +248,16 @@ final class BookmarksViewModel {
     func loadMoreBookmarks() async {
         guard !isLoading && hasMoreData && !isUpdating else { return } // prevent multiple loads
         isUpdating = true
-        defer { isUpdating = false }
+        await loadNextPage()
+        isUpdating = false
 
+        if needsReload {
+            await refreshBookmarks()
+        }
+    }
+
+    @MainActor
+    private func loadNextPage() async {
         isLoading = true
         errorMessage = nil
 
