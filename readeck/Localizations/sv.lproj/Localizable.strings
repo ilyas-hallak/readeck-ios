@@ -60,6 +60,7 @@
 "Sorted by usage count" = "Sorterad efter användning";
 "Sorted alphabetically" = "Sorterade alfabetiskt";
 "Cancel" = "Avbryt";
+"Undo" = "Ångra";
 "Category-specific Levels" = "Kategorispecifika nivåer";
 "Changes take effect immediately. Lower log levels include higher ones (Felsök includes all, Critical includes only critical messages)." = "Ändringar träder i kraft omedelbart. Lägre loggnivåer inkluderar högre (Felsök inkluderar alla, Kritisk inkluderar endast kritiska meddelanden).";
 "Close" = "Stäng";
@@ -77,6 +78,7 @@
 "Enter your Readeck server details to get started." = "Ange dina Readeck-serveruppgifter för att komma igång.";
 "Error" = "Fel";
 "Error: %@" = "Fel: %@";
+"Error removing highlight" = "Kunde inte ta bort markeringen";
 "Export as PDF" = "Exportera som PDF";
 "Exporting PDF..." = "Exporterar PDF...";
 "Favorite" = "Favorit";
@@ -132,6 +134,7 @@
 "Reading %lld/%lld: " = "Läser %1$lld/%2$lld: ";
 "Reader" = "Läsare";
 "Remove" = "Ta bort";
+"Remove Highlight" = "Ta bort markering";
 "Reset" = "Återställ";
 "Reset to Defaults" = "Återställ till standard";
 "Restore" = "Återskapa";

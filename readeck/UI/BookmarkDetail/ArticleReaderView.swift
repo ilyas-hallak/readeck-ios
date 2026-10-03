@@ -13,6 +13,7 @@ struct ArticleReaderView: View {
     @State private var webViewHeight: Double = 300
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
+    @State private var highlightToRemove: String?
     @State private var progressModel = ReadingProgressModel()
     @State private var showFloatingActions = false
     @State private var showJumpToProgressButton = false
@@ -31,6 +32,7 @@ struct ArticleReaderView: View {
     @Environment(AppSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.undoManager) private var undoManager
 
     private let headerHeight: Double = 360
     private let readerSwitchTip = ReaderSwitchTip()
@@ -76,6 +78,11 @@ struct ArticleReaderView: View {
                 AnnotationsListView(bookmarkId: bookmarkId) { annotationId in
                     viewModel.selectedAnnotationId = annotationId
                 }
+            }
+            .highlightRemovalDialog(annotationId: $highlightToRemove, bookmarkId: bookmarkId, viewModel: viewModel)
+            .onDisappear {
+                // Highlights of a closed article must not be undone from another screen.
+                viewModel.discardHighlightUndo()
             }
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
@@ -540,9 +547,13 @@ struct ArticleReaderView: View {
                                 startOffset: startOffset,
                                 endOffset: endOffset,
                                 startSelector: startSelector,
-                                endSelector: endSelector
+                                endSelector: endSelector,
+                                undoManager: undoManager
                             )
                         }
+                    },
+                    onAnnotationTapped: { annotationId in
+                        highlightToRemove = annotationId
                     },
                     onScrollToPosition: { position in
                         // Calculate scroll position: add header height and webview offset

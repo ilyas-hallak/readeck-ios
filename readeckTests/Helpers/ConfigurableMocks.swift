@@ -175,6 +175,16 @@ class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
     }
 }
 
+class ConfigurableDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
+    var result: Result<Void, Error> = .success(())
+    private(set) var deletedAnnotationIds: [String] = []
+
+    func execute(bookmarkId: String, annotationId: String) async throws {
+        deletedAnnotationIds.append(annotationId)
+        try result.get()
+    }
+}
+
 class ConfigurableLogoutUseCase: PLogoutUseCase {
     var result: Result<Void, Error> = .success(())
     var executeCount = 0

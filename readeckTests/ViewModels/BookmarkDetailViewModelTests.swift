@@ -503,6 +503,98 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.errorMessage == "This text overlaps with an existing highlight")
     }
 
+    @Test("Deleting an annotation removes it and pulls the updated HTML")
+    func deleteAnnotationSuccess() async {
+        let (vm, factory) = createSUT()
+        await createHighlight(on: vm, factory: factory)
+        factory.mockGetBookmarkArticle.result = .success("<p>highlighted</p>")
+
+        let removed = await vm.deleteAnnotation(bookmarkId: "456", annotationId: "annotation-1")
+
+        #expect(removed)
+        #expect(factory.mockDeleteAnnotation.deletedAnnotationIds == ["annotation-1"])
+        #expect(vm.annotations.isEmpty)
+        #expect(vm.articleContent == "<p>highlighted</p>")
+        #expect(vm.hasAnnotations == false)
+    }
+
+    @Test("Delete failure keeps the annotation and sets an error message")
+    func deleteAnnotationFailure() async {
+        let (vm, factory) = createSUT()
+        await createHighlight(on: vm, factory: factory)
+        factory.mockDeleteAnnotation.result = .failure(TestError.networkError)
+
+        let removed = await vm.deleteAnnotation(bookmarkId: "456", annotationId: "annotation-1")
+
+        #expect(removed == false)
+        #expect(vm.errorMessage == NSLocalizedString("Error removing highlight", comment: ""))
+        #expect(vm.annotations.count == 1)
+    }
+
+    @Test("Undo after creating a highlight deletes it")
+    func undoDeletesNewHighlight() async {
+        let (vm, factory) = createSUT()
+        let undoManager = UndoManager()
+        await createHighlight(on: vm, factory: factory, undoManager: undoManager)
+
+        #expect(undoManager.canUndo)
+        undoManager.undo()
+        await waitUntil { vm.annotations.isEmpty }
+
+        #expect(factory.mockDeleteAnnotation.deletedAnnotationIds == ["annotation-1"])
+        #expect(vm.annotations.isEmpty)
+    }
+
+    @Test("Removing a new highlight also removes its undo action")
+    func removingHighlightDiscardsUndo() async {
+        let (vm, factory) = createSUT()
+        let undoManager = UndoManager()
+        await createHighlight(on: vm, factory: factory, undoManager: undoManager)
+
+        await vm.deleteAnnotation(bookmarkId: "456", annotationId: "annotation-1")
+
+        #expect(undoManager.canUndo == false)
+    }
+
+    @Test("Closing the article drops the undo actions of new highlights")
+    func discardHighlightUndo() async {
+        let (vm, factory) = createSUT()
+        let undoManager = UndoManager()
+        await createHighlight(on: vm, factory: factory, undoManager: undoManager)
+
+        vm.discardHighlightUndo()
+
+        #expect(undoManager.canUndo == false)
+        #expect(factory.mockDeleteAnnotation.deletedAnnotationIds.isEmpty)
+    }
+
+    @Test("Text of a highlight is found by its ID")
+    func annotationTextLookup() async {
+        let (vm, factory) = createSUT()
+        await createHighlight(on: vm, factory: factory)
+
+        #expect(vm.annotationText(for: "annotation-1") == "highlighted")
+        #expect(vm.annotationText(for: "missing") == nil)
+    }
+
+    private func createHighlight(
+        on vm: BookmarkDetailViewModel,
+        factory: TestUseCaseFactory,
+        undoManager: UndoManager? = nil
+    ) async {
+        factory.mockGetBookmarkArticle.result = .success("<p><rd-annotation>highlighted</rd-annotation></p>")
+        await vm.createAnnotation(
+            bookmarkId: "456", color: "yellow", text: "highlighted", startOffset: 0, endOffset: 5,
+            startSelector: "p", endSelector: "p", undoManager: undoManager
+        )
+    }
+
+    private func waitUntil(_ condition: () -> Bool) async {
+        for _ in 0..<100 where !condition() {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
     // MARK: - Share Content
 
     @Test("Share text combines title, URL and annotations")

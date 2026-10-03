@@ -12,6 +12,7 @@ final class BookmarkDetailViewModel {
     private let getCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
     private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
+    private let deleteAnnotationUseCase: PDeleteAnnotationUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let exportArticlePDFUseCase: PExportArticlePDFUseCase
     private let networkMonitorUseCase: PNetworkMonitorUseCase
@@ -30,6 +31,10 @@ final class BookmarkDetailViewModel {
     var hasAnnotations = false
     var isExportingPDF = false
     var exportedPDFURL: URL?
+
+    // One undo target per new highlight, so removing a highlight also removes its undo action.
+    @ObservationIgnored private var highlightUndoTargets: [String: HighlightUndoTarget] = [:]
+    @ObservationIgnored private weak var highlightUndoManager: UndoManager?
 
     var shareContent: String {
         var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
@@ -62,6 +67,7 @@ final class BookmarkDetailViewModel {
         self.getCachedBookmarkDetailUseCase = factory.makeGetCachedBookmarkDetailUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
+        self.deleteAnnotationUseCase = factory.makeDeleteAnnotationUseCase()
         self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         self.exportArticlePDFUseCase = factory.makeExportArticlePDFUseCase()
         self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
@@ -227,12 +233,12 @@ final class BookmarkDetailViewModel {
         Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
 
         // Refresh from server in background to pick up annotations
-        // that may have been added since the article was cached
+        // that were added or removed since the article was cached
         Task {
             do {
                 let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
-                if serverHTML.contains("<rd-annotation") && !cachedHTML.contains("<rd-annotation") {
-                    Logger.viewModel.info("🔄 Server has annotations not in cache, updating")
+                if AnnotationMarkup.annotationIds(in: serverHTML) != AnnotationMarkup.annotationIds(in: cachedHTML) {
+                    Logger.viewModel.info("🔄 Server annotations differ from cache, updating")
                     articleContent = serverHTML
                     processArticleContent()
                 }
@@ -405,8 +411,18 @@ final class BookmarkDetailViewModel {
         readProgressSubject.send((id, progress, anchor))
     }
 
+    /// Registers the new highlight with `undoManager`, so shake to undo removes it again.
     @MainActor
-    func createAnnotation(bookmarkId: String, color: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async {
+    func createAnnotation(
+        bookmarkId: String,
+        color: String,
+        text: String,
+        startOffset: Int,
+        endOffset: Int,
+        startSelector: String,
+        endSelector: String,
+        undoManager: UndoManager? = nil
+    ) async {
         do {
             let annotation = try await createAnnotationUseCase.execute(
                 bookmarkId: bookmarkId,
@@ -419,6 +435,7 @@ final class BookmarkDetailViewModel {
             Logger.viewModel.info("✅ Annotation created: \(annotation.id)")
             annotations.append(annotation)
             hasAnnotations = true
+            registerUndo(of: annotation.id, bookmarkId: bookmarkId, with: undoManager)
             await refreshArticleInBackground(id: bookmarkId)
         } catch {
             Logger.viewModel.error("❌ Failed to create annotation: \(error.localizedDescription)")
@@ -430,4 +447,52 @@ final class BookmarkDetailViewModel {
             }
         }
     }
+
+    /// Removes a highlight and re-renders the article without it.
+    @MainActor
+    @discardableResult
+    func deleteAnnotation(bookmarkId: String, annotationId: String) async -> Bool {
+        do {
+            try await deleteAnnotationUseCase.execute(bookmarkId: bookmarkId, annotationId: annotationId)
+            annotations.removeAll { $0.id == annotationId }
+            discardUndo(of: annotationId)
+            await refreshArticleInBackground(id: bookmarkId)
+            return true
+        } catch {
+            Logger.viewModel.error("❌ Failed to delete annotation: \(error.localizedDescription)")
+            errorMessage = NSLocalizedString("Error removing highlight", comment: "Annotation delete error")
+            return false
+        }
+    }
+
+    func annotationText(for annotationId: String) -> String? {
+        annotations.first { $0.id == annotationId }?.text
+    }
+
+    /// Drops the undo actions of all new highlights, e.g. when the article is closed.
+    func discardHighlightUndo() {
+        for annotationId in highlightUndoTargets.keys {
+            discardUndo(of: annotationId)
+        }
+    }
+
+    private func registerUndo(of annotationId: String, bookmarkId: String, with undoManager: UndoManager?) {
+        guard let undoManager else { return }
+        let target = HighlightUndoTarget()
+        highlightUndoTargets[annotationId] = target
+        highlightUndoManager = undoManager
+        undoManager.registerUndo(withTarget: target) { [weak self] _ in
+            Task { @MainActor in
+                await self?.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
+            }
+        }
+        undoManager.setActionName(NSLocalizedString("Highlight", comment: "Undo action name for a new highlight"))
+    }
+
+    private func discardUndo(of annotationId: String) {
+        guard let target = highlightUndoTargets.removeValue(forKey: annotationId) else { return }
+        highlightUndoManager?.removeAllActions(withTarget: target)
+    }
 }
+
+private final class HighlightUndoTarget {}

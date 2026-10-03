@@ -64,6 +64,7 @@
 "Sorted by usage count" = "Sortiert nach Verwendungshäufigkeit";
 "Sorted alphabetically" = "Alphabetisch sortiert";
 "Cancel" = "Abbrechen";
+"Undo" = "Widerrufen";
 "Category-specific Levels" = "Kategorie-spezifische Level";
 "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." = "Änderungen werden sofort wirksam. Niedrigere Log-Level enthalten höhere (Debug enthält alle, Critical nur kritische Nachrichten).";
 "Close" = "Schließen";
@@ -81,6 +82,7 @@
 "Enter your Readeck server details to get started." = "Readeck-Server-Details eingeben, um zu beginnen.";
 "Error" = "Fehler";
 "Error: %@" = "Fehler: %@";
+"Error removing highlight" = "Markierung konnte nicht entfernt werden";
 "Export as PDF" = "Als PDF exportieren";
 "Exporting PDF..." = "PDF wird erstellt...";
 "Favorite" = "Favorit";
@@ -136,6 +138,7 @@
 "Reading %lld/%lld: " = "Lese %1$lld/%2$lld: ";
 "Reader" = "Reader";
 "Remove" = "Entfernen";
+"Remove Highlight" = "Markierung entfernen";
 "Reset" = "Zurücksetzen";
 "Reset to Defaults" = "Auf Standardwerte zurücksetzen";
 "Restore" = "Wiederherstellen";
