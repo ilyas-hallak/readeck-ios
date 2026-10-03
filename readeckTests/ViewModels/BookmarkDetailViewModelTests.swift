@@ -177,6 +177,103 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.isLoadingArticle == false)
     }
 
+    // MARK: - Opening the Reader (Cache First)
+
+    @Test("A cached article opens at once with cached metadata when the server is unreachable")
+    func loadReaderServesCacheWhenOffline() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetCachedBookmarkDetail.result = makeDetail(title: "Cached title")
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+
+        let start = ContinuousClock.now
+        await vm.loadReader(id: "456")
+
+        #expect(ContinuousClock.now - start < .seconds(1))
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.bookmarkDetail.title == "Cached title")
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoadingArticle == false)
+        #expect(vm.isLoading == false)
+    }
+
+    @Test("A cached article without cached metadata does not wait for the server")
+    func loadReaderSkipsPollingForCachedArticle() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+
+        let start = ContinuousClock.now
+        await vm.loadReader(id: "456")
+
+        #expect(ContinuousClock.now - start < .seconds(1))
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("A cached article is shown before a hanging server request returns")
+    func loadReaderShowsCacheBeforeServerResponds() async throws {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetBookmark.delay = .seconds(30)
+
+        let loading = Task { await vm.loadReader(id: "456") }
+        defer { loading.cancel() }
+
+        let deadline = ContinuousClock.now + .seconds(1)
+        while vm.articleContent.isEmpty && ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.isLoadingArticle == false)
+    }
+
+    @Test("Server metadata replaces the cached metadata once it arrives")
+    func loadReaderRefreshesCachedDetailFromServer() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetCachedBookmarkDetail.result = makeDetail(title: "Cached title")
+
+        await vm.loadReader(id: "123")
+
+        #expect(vm.bookmarkDetail.title == "Test")
+    }
+
+    @Test("An uncached article still loads from the server")
+    func loadReaderFetchesUncachedArticle() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarkArticle.result = .success("<p>Server</p>")
+
+        await vm.loadReader(id: "123")
+
+        #expect(vm.articleContent == "<p>Server</p>")
+        #expect(vm.bookmarkDetail.id == "123")
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("Reloading the detail offline keeps the bookmark that is already shown")
+    func reloadBookmarkDetailOfflineKeepsDetail() async {
+        let (vm, factory) = createSUT()
+        await vm.loadBookmarkDetail(id: "123")
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.bookmarkDetail.id == "123")
+        #expect(vm.errorMessage == nil)
+    }
+
+    private func makeDetail(title: String) -> BookmarkDetail {
+        BookmarkDetail(
+            id: "123", title: title, url: "https://example.com", description: "", siteName: "Example",
+            authors: [], created: "", updated: "", wordCount: 100, readingTime: 1, hasArticle: true,
+            loaded: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "",
+            lang: "en", readProgress: 0
+        )
+    }
+
     // MARK: - Bookmark Detail Error Paths
 
     @Test("Failing annotations do not break loading the bookmark itself")

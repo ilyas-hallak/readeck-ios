@@ -16,6 +16,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockSummarizeArticle = ConfigurableSummarizeArticleUseCase()
     let mockGetCachedArticle = ConfigurableGetCachedArticleUseCase()
     let mockGetCachedBookmarks = ConfigurableGetCachedBookmarksUseCase()
+    let mockGetCachedBookmarkDetail = ConfigurableGetCachedBookmarkDetailUseCase()
     let mockGetAnnotations = ConfigurableGetBookmarkAnnotationsUseCase()
     let mockCreateAnnotation = ConfigurableCreateAnnotationUseCase()
     let mockLogout = ConfigurableLogoutUseCase()
@@ -34,6 +35,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { MockGetServerInfoUseCase() }
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase { mockGetCachedArticle }
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase { mockGetCachedBookmarks }
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase { mockGetCachedBookmarkDetail }
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase { mockGetAnnotations }
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase { mockCreateAnnotation }
     func makeLogoutUseCase() -> PLogoutUseCase { mockLogout }

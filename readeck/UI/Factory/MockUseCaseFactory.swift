@@ -17,6 +17,10 @@ final class MockUseCaseFactory: UseCaseFactory {
         MockGetCachedArticleUseCase()
     }
 
+    func makeGetCachedBookmarkDetailUseCase() -> any PGetCachedBookmarkDetailUseCase {
+        MockGetCachedBookmarkDetailUseCase()
+    }
+
     func makeCreateAnnotationUseCase() -> any PCreateAnnotationUseCase {
         MockCreateAnnotationUseCase()
     }
@@ -445,6 +449,12 @@ final class MockGetCachedArticleUseCase: PGetCachedArticleUseCase {
     func execute(id: String) -> String? {
         let path = Bundle.main.path(forResource: "article", ofType: "html")
         return try? String(contentsOfFile: path!)
+    }
+}
+
+final class MockGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase {
+    func execute(id: String) -> BookmarkDetail? {
+        nil
     }
 }
 

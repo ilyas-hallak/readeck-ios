@@ -69,6 +69,26 @@ struct OfflineCacheRepositoryTests {
         )
     }
 
+    // MARK: - Cached Bookmark Detail
+
+    @Test("A cached bookmark maps to the detail the reader shows offline")
+    func testCachedBookmarkMapsToDetail() throws {
+        let context = createInMemoryCoreDataStack()
+        let entity = createTestBookmark(title: "Offline Article").toEntity(context: context)
+        entity.heroImageURL = "https://example.com/hero.jpg"
+
+        let detail = try #require(entity.toDomain()?.toBookmarkDetail())
+
+        #expect(detail.id == "test-123")
+        #expect(detail.title == "Offline Article")
+        #expect(detail.url == "https://example.com/article")
+        #expect(detail.siteName == "Example Site")
+        #expect(detail.wordCount == 1000)
+        #expect(detail.imageUrl == "https://example.com/hero.jpg")
+        #expect(detail.loaded)
+        #expect(detail.hasArticle)
+    }
+
     // MARK: - HTML Extraction Tests
 
     @Test("Extract image URLs from HTML correctly")

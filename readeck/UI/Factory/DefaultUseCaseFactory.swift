@@ -31,6 +31,7 @@ protocol UseCaseFactory {
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
@@ -189,6 +190,10 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase {
         GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase {
+        GetCachedBookmarkDetailUseCase(offlineCacheRepository: offlineCacheRepository)
     }
 
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {

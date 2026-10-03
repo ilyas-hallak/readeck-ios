@@ -151,9 +151,7 @@ struct ArticleReaderView: View {
                 // Trigger WebView reload when annotation is selected
             }
             .task {
-                await viewModel.loadBookmarkDetail(id: bookmarkId)
-                await viewModel.waitForArticleReady(id: bookmarkId)
-                await viewModel.loadArticleContent(id: bookmarkId)
+                await viewModel.loadReader(id: bookmarkId)
             }
     }
 

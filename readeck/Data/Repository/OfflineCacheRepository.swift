@@ -85,6 +85,23 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         return html
     }
 
+    func getCachedBookmarkDetail(id: String) -> BookmarkDetail? {
+        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@ AND htmlContent != nil", id)
+        fetchRequest.fetchLimit = 1
+
+        let context = coreDataManager.context
+        var detail: BookmarkDetail?
+        context.performAndWait {
+            do {
+                detail = try context.fetch(fetchRequest).first?.toDomain()?.toBookmarkDetail()
+            } catch {
+                logger.error("Error fetching cached bookmark: \(error.localizedDescription)")
+            }
+        }
+        return detail
+    }
+
     func hasCachedArticle(id: String) -> Bool {
         getCachedArticle(id: id) != nil
     }

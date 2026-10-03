@@ -9,13 +9,14 @@ final class BookmarkDetailViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
+    private let getCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
     private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let exportArticlePDFUseCase: PExportArticlePDFUseCase
 
-    var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
-    var articleContent: String = ""
+    var bookmarkDetail = BookmarkDetail.empty
+    var articleContent = ""
     var articleParagraphs: [String] = []
     var annotations: [Annotation] = []
     var bookmark: Bookmark?
@@ -57,6 +58,7 @@ final class BookmarkDetailViewModel {
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
+        self.getCachedBookmarkDetailUseCase = factory.makeGetCachedBookmarkDetailUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
         self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
@@ -75,33 +77,72 @@ final class BookmarkDetailViewModel {
             .store(in: &cancellables)
     }
 
+    /// Opens the reader. A cached article is shown at once and the server is only
+    /// asked afterwards, so a dead or flaky network never blocks reading.
+    @MainActor
+    func loadReader(id: String) async {
+        guard let cachedHTML = getCachedArticleUseCase.execute(id: id) else {
+            await loadBookmarkDetail(id: id)
+            await waitForArticleReady(id: id)
+            await loadArticleContent(id: id)
+            return
+        }
+
+        try? await loadSettings()
+        if let cachedDetail = getCachedBookmarkDetailUseCase.execute(id: id) {
+            applyBookmarkDetail(cachedDetail)
+        }
+        showCachedArticle(cachedHTML, id: id)
+
+        do {
+            try await fetchBookmarkDetail(id: id)
+        } catch {
+            Logger.viewModel.info("⚠️ Showing cached bookmark \(id), server refresh failed: \(error.localizedDescription)")
+        }
+    }
+
     @MainActor
     func loadBookmarkDetail(id: String) async {
         isLoading = true
         errorMessage = nil
 
         do {
-            settings = try await loadSettingsUseCase.execute()
-            bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
-
-            // Always take the higher value between server and local progress
-            let serverProgress = bookmarkDetail.readProgress ?? 0
-            readProgress = max(readProgress, serverProgress)
-
-            if settings?.enableTTS == true {
-                self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
-            }
-
-            do {
-                annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: id)
-            } catch {
-                // Silent fail — annotations are supplementary
-            }
+            try await loadSettings()
+            try await fetchBookmarkDetail(id: id)
         } catch {
-            errorMessage = "Error loading bookmark"
+            // Keep showing the detail we already have, e.g. when offline.
+            if bookmarkDetail.id != id {
+                errorMessage = "Error loading bookmark"
+            }
         }
 
         isLoading = false
+    }
+
+    @MainActor
+    private func loadSettings() async throws {
+        settings = try await loadSettingsUseCase.execute()
+        if settings?.enableTTS == true {
+            self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
+        }
+    }
+
+    @MainActor
+    private func fetchBookmarkDetail(id: String) async throws {
+        applyBookmarkDetail(try await getBookmarkUseCase.execute(id: id))
+
+        do {
+            annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: id)
+        } catch {
+            // Silent fail, annotations are supplementary
+        }
+    }
+
+    @MainActor
+    private func applyBookmarkDetail(_ detail: BookmarkDetail) {
+        bookmarkDetail = detail
+        // Always take the higher value between server and local progress
+        readProgress = max(readProgress, detail.readProgress ?? 0)
     }
 
     /// After a bookmark is created the server fetches and extracts the page
@@ -138,51 +179,14 @@ final class BookmarkDetailViewModel {
 
         // First, try to load from cache (unless force refresh)
         if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
-            articleContent = cachedHTML
-            processArticleContent()
-            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, *) {
-                summaryViewModel.prewarm()
-            }
-            #endif
-            isLoadingArticle = false
-            Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
-
-            // Debug: Check for Base64 images
-            let base64Count = countOccurrences(in: cachedHTML, of: "data:image/")
-            let httpCount = countOccurrences(in: cachedHTML, of: "src=\"http")
-            Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
-
-            // Refresh from server in background to pick up annotations
-            // that may have been added since the article was cached
-            Task {
-                do {
-                    let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
-                    if serverHTML.contains("<rd-annotation") && !cachedHTML.contains("<rd-annotation") {
-                        Logger.viewModel.info("🔄 Server has annotations not in cache, updating")
-                        articleContent = serverHTML
-                        processArticleContent()
-                    }
-                } catch {
-                    Logger.viewModel.info("⚠️ Background refresh failed: \(error.localizedDescription)")
-                }
-            }
-
+            showCachedArticle(cachedHTML, id: id)
             return
         }
 
         // If not cached or force refresh, fetch from server
         Logger.viewModel.info("📡 Fetching article \(id) from server \(forceRefresh ? "(force refresh)" : "(not in cache)")")
         do {
-            articleContent = try await getBookmarkArticleUseCase.execute(id: id)
-            processArticleContent()
-            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, *) {
-                summaryViewModel.prewarm()
-            }
-            #endif
+            presentArticle(try await getBookmarkArticleUseCase.execute(id: id))
             Logger.viewModel.info("✅ Fetched article from server (\(articleContent.utf8.count) bytes)")
         } catch {
             errorMessage = "Error loading article"
@@ -190,6 +194,45 @@ final class BookmarkDetailViewModel {
         }
 
         isLoadingArticle = false
+    }
+
+    @MainActor
+    private func showCachedArticle(_ cachedHTML: String, id: String) {
+        presentArticle(cachedHTML)
+        isLoadingArticle = false
+        Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
+
+        // Debug: Check for Base64 images
+        let base64Count = countOccurrences(in: cachedHTML, of: "data:image/")
+        let httpCount = countOccurrences(in: cachedHTML, of: "src=\"http")
+        Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
+
+        // Refresh from server in background to pick up annotations
+        // that may have been added since the article was cached
+        Task {
+            do {
+                let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
+                if serverHTML.contains("<rd-annotation") && !cachedHTML.contains("<rd-annotation") {
+                    Logger.viewModel.info("🔄 Server has annotations not in cache, updating")
+                    articleContent = serverHTML
+                    processArticleContent()
+                }
+            } catch {
+                Logger.viewModel.info("⚠️ Background refresh failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    @MainActor
+    private func presentArticle(_ html: String) {
+        articleContent = html
+        processArticleContent()
+        self.summaryViewModel = ArticleSummaryViewModel(articleContent: html)
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            summaryViewModel.prewarm()
+        }
+        #endif
     }
 
     @MainActor
@@ -368,5 +411,4 @@ final class BookmarkDetailViewModel {
             }
         }
     }
-
 }
