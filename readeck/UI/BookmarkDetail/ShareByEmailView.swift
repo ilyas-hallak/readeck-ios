@@ -41,8 +41,11 @@ struct ShareByEmailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel".localized) {
+                    Button {
                         dismiss()
+                    } label: {
+                        Label("Cancel".localized, systemImage: "xmark")
+                            .labelStyle(.iconOnly)
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {

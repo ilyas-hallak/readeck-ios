@@ -739,4 +739,46 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.errorMessage != nil)
         #expect(vm.isCreatingShareLink == false)
     }
+
+    @Test("The share sheet lists every option when the server supports them")
+    func shareSheetListsAllOptions() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .success(
+            ServerInfo(version: "0.23.2", isReachable: true, features: ["email"])
+        )
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.shareOptions == [.email, .originalLink, .readeckLink, .pdf])
+    }
+
+    @Test("Without server info the share sheet offers the original link and the PDF")
+    func shareSheetFallsBackToLocalOptions() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.shareOptions == [.originalLink, .pdf])
+    }
+
+    @Test("Offline the server backed options are disabled")
+    func serverOptionsDisabledOffline() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarkArticle.result = .success("<p>Body</p>")
+        await vm.loadArticleContent(id: "123")
+
+        #expect(!vm.isShareOptionEnabled(.email, isOnline: false))
+        #expect(!vm.isShareOptionEnabled(.readeckLink, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.originalLink, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.pdf, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.readeckLink, isOnline: true))
+    }
+
+    @Test("The PDF option waits for the article content")
+    func pdfOptionNeedsContent() {
+        let (vm, _) = createSUT()
+
+        #expect(!vm.isShareOptionEnabled(.pdf, isOnline: true))
+    }
 }

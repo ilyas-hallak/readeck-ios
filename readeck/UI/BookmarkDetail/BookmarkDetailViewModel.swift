@@ -53,6 +53,26 @@ final class BookmarkDetailViewModel {
     var canShareReadeckLink: Bool { serverCapabilities.supportsShareLink }
     var canSendByEmail: Bool { serverCapabilities.supportsEmailSharing }
 
+    /// The share options this server supports, in display order.
+    var shareOptions: [ArticleShareOption] {
+        ArticleShareOption.allCases.filter { option in
+            switch option {
+            case .email: canSendByEmail
+            case .readeckLink: canShareReadeckLink
+            case .originalLink, .pdf: true
+            }
+        }
+    }
+
+    func isShareOptionEnabled(_ option: ArticleShareOption, isOnline: Bool) -> Bool {
+        switch option {
+        case .email: isOnline
+        case .readeckLink: isOnline && !isCreatingShareLink
+        case .originalLink: true
+        case .pdf: canExportPDF && !isExportingPDF
+        }
+    }
+
     var showProgressBar: Bool { settings?.hideProgressBar != true }
     var showHeroImage: Bool { settings?.hideHeroImage != true }
     var showWordCount: Bool { settings?.hideWordCount != true }

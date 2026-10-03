@@ -22,10 +22,7 @@ struct ArticleReaderView: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingArchiveConfirmation = false
-    @State private var showingPDFShareSheet = false
-    @State private var showingActionError = false
-    @State private var showingShareLinkSheet = false
-    @State private var showingEmailSheet = false
+    @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
@@ -91,24 +88,11 @@ struct ArticleReaderView: View {
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
             }
-            .sheet(isPresented: $showingPDFShareSheet) {
-                if let url = viewModel.exportedPDFURL {
-                    ActivityView(activityItems: [url])
-                }
-            }
-            .sheet(isPresented: $showingShareLinkSheet) {
-                if let url = viewModel.shareLinkURL {
-                    ActivityView(activityItems: [url])
-                }
-            }
-            .sheet(isPresented: $showingEmailSheet) {
-                ShareByEmailView(bookmarkId: bookmarkId)
-            }
-            .alert("Error".localized, isPresented: $showingActionError) {
-                Button("OK".localized, role: .cancel) {}
-            } message: {
-                Text(viewModel.errorMessage ?? "")
-            }
+            .articleSharing(
+                isPresented: $showingShareSheet,
+                viewModel: viewModel,
+                isOnline: appSettings.isNetworkConnected
+            )
             .alert(
                 "Delete this bookmark?".localized,
                 isPresented: $showingDeleteConfirmation
@@ -321,20 +305,11 @@ struct ArticleReaderView: View {
                     }
                 }
 
-                ArticleShareMenu(
-                    viewModel: viewModel,
-                    isOnline: appSettings.isNetworkConnected,
-                    onShareReadeckLink: shareReadeckLink
-                ) {
-                    showingEmailSheet = true
-                }
-
                 Button {
-                    exportAsPDF()
+                    showingShareSheet = true
                 } label: {
-                    Label("Export as PDF".localized, systemImage: "doc.richtext")
+                    Label("Share".localized, systemImage: "square.and.arrow.up")
                 }
-                .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
 
                 Button {
                     readerSwitchTip.invalidate(reason: .actionPerformed)
@@ -366,28 +341,6 @@ struct ArticleReaderView: View {
                 Image(systemName: "ellipsis.circle")
             }
             .popoverTip(readerSwitchTip)
-        }
-    }
-
-    // MARK: - Actions
-
-    private func exportAsPDF() {
-        Task {
-            if await viewModel.exportArticleAsPDF() {
-                showingPDFShareSheet = true
-            } else {
-                showingActionError = true
-            }
-        }
-    }
-
-    private func shareReadeckLink() {
-        Task {
-            if await viewModel.createShareLink() {
-                showingShareLinkSheet = true
-            } else {
-                showingActionError = true
-            }
         }
     }
 
