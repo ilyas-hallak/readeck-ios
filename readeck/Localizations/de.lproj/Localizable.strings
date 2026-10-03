@@ -338,3 +338,17 @@
 "Go Online" = "Online gehen";
 "This article isn't available offline." = "Dieser Artikel ist offline nicht verfügbar.";
 "Offline mode, showing cached articles." = "Offline-Modus, gespeicherte Artikel werden angezeigt.";
+
+/* Sharing */
+"Share" = "Teilen";
+"Share Original Link" = "Originallink teilen";
+"Share Readeck Link" = "Readeck-Link teilen";
+"Send by Email" = "Per E-Mail senden";
+"Could not create a share link" = "Der Link zum Teilen konnte nicht erstellt werden";
+"Email address" = "E-Mail-Adresse";
+"Format" = "Format";
+"Article" = "Artikel";
+"E-Book" = "E-Book";
+"Send" = "Senden";
+"Email Sent" = "E-Mail gesendet";
+"Could not send the email" = "Die E-Mail konnte nicht gesendet werden";

@@ -67,6 +67,7 @@ Gesucht wurde in `docs/`, CHANGELOG und den Issues #166, #844, #904.
 | `PATCH` auf Annotationen (Farben) | 0.17.0 | mit "Colored highlights" |
 | Annotation `note`-Feld | 0.22.0 | CHANGELOG |
 | Bookmark-User-Note, `has_notes`-Filter | 0.23.0 | Commit `9f7031d5` |
+| Teilen per öffentlichem Link (`GET share/link`) und per E-Mail (`POST share/email`) | 0.19.0 | Commits `9d049d72`, `99668813`; E-Mail zusätzlich nur mit Feature `email` |
 | `read_progress`, `read_anchor`, `word_count`, `reading_time` | 0.17.0 | `docs/api/bookmarks/types.yaml`, fehlt in 0.16.0 |
 | `read_status`, mehrwertiger `type`-Filter | 0.17.0 | CHANGELOG |
 | 422 mit Fehlerobjekt bei ungültigen Filtern | 0.21.4 | CHANGELOG |

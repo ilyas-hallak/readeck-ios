@@ -63,7 +63,9 @@ struct ArticleReaderLegacyView: View {
     @State private var showingImageViewer = false
     @State private var showingDeleteConfirmation = false
     @State private var showingPDFShareSheet = false
-    @State private var showingExportError = false
+    @State private var showingActionError = false
+    @State private var showingShareLinkSheet = false
+    @State private var showingEmailSheet = false
 
     // MARK: - Envs
 
@@ -279,8 +281,12 @@ struct ArticleReaderLegacyView: View {
                         Label("Annotations".localized, systemImage: "pencil.line")
                     }
 
-                    ShareLink(item: viewModel.shareContent) {
-                        Label("Share".localized, systemImage: "square.and.arrow.up")
+                    ArticleShareMenu(
+                        viewModel: viewModel,
+                        isOnline: appSettings.isNetworkConnected,
+                        onShareReadeckLink: shareReadeckLink
+                    ) {
+                        showingEmailSheet = true
                     }
 
                     Button {
@@ -332,7 +338,15 @@ struct ArticleReaderLegacyView: View {
                 ActivityView(activityItems: [url])
             }
         }
-        .alert("Error".localized, isPresented: $showingExportError) {
+        .sheet(isPresented: $showingShareLinkSheet) {
+            if let url = viewModel.shareLinkURL {
+                ActivityView(activityItems: [url])
+            }
+        }
+        .sheet(isPresented: $showingEmailSheet) {
+            ShareByEmailView(bookmarkId: bookmarkId)
+        }
+        .alert("Error".localized, isPresented: $showingActionError) {
             Button("OK".localized, role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "")
@@ -399,7 +413,17 @@ struct ArticleReaderLegacyView: View {
             if await viewModel.exportArticleAsPDF() {
                 showingPDFShareSheet = true
             } else {
-                showingExportError = true
+                showingActionError = true
+            }
+        }
+    }
+
+    private func shareReadeckLink() {
+        Task {
+            if await viewModel.createShareLink() {
+                showingShareLinkSheet = true
+            } else {
+                showingActionError = true
             }
         }
     }

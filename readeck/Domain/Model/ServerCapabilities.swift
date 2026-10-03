@@ -52,6 +52,8 @@ struct ServerCapabilities: Equatable, Sendable {
         static let bookmarkNotes = SemanticVersion(major: 0, minor: 23)
         /// The `has_notes` filter arrived together with bookmark notes in 0.23.0.
         static let notesFilter = SemanticVersion(major: 0, minor: 23)
+        /// `GET /bookmarks/{id}/share/link` (public share link) exists from 0.19.0 on.
+        static let shareLink = SemanticVersion(major: 0, minor: 19)
         /// Invalid filters return 422 with a machine-readable error object from 0.21.4 on.
         static let validationErrors = SemanticVersion(major: 0, minor: 21, patch: 4)
         /// Oldest version the app supports. 0.20.0 and 0.20.1 ship a CSRF
@@ -134,6 +136,11 @@ struct ServerCapabilities: Equatable, Sendable {
     /// The `has_notes` bookmark filter exists from 0.23.0 on.
     var supportsNotesFilter: Bool {
         isAtLeast(Boundary.notesFilter)
+    }
+
+    /// A public share link can be created from 0.19.0 on.
+    var supportsShareLink: Bool {
+        isAtLeast(Boundary.shareLink)
     }
 
     // MARK: - Annotations

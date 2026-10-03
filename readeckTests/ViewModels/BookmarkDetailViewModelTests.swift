@@ -676,4 +676,67 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.shareContent.contains("https://example.com"))
         #expect(vm.shareContent.contains("first note"))
     }
+
+    // MARK: - Readeck Sharing
+
+    @Test("Share options follow the server capabilities")
+    func shareOptionsFollowCapabilities() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .success(
+            ServerInfo(version: "0.23.2", isReachable: true, features: ["email", "oauth"])
+        )
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.canShareReadeckLink)
+        #expect(vm.canSendByEmail)
+    }
+
+    @Test("Email stays hidden without the email feature")
+    func emailHiddenWithoutFeature() async {
+        let (vm, _) = createSUT()
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.canShareReadeckLink)
+        #expect(!vm.canSendByEmail)
+    }
+
+    @Test("Without server info no Readeck share option is offered")
+    func shareOptionsHiddenWhenServerInfoFails() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(!vm.canShareReadeckLink)
+        #expect(!vm.canSendByEmail)
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("Creating a share link publishes the URL for the current bookmark")
+    func createShareLinkSuccess() async {
+        let (vm, factory) = createSUT()
+        await vm.loadBookmarkDetail(id: "123")
+
+        let created = await vm.createShareLink()
+
+        #expect(created)
+        #expect(factory.mockCreateShareLink.lastBookmarkId == "123")
+        #expect(vm.shareLinkURL?.absoluteString == "https://readeck.example.com/@b/abc")
+        #expect(vm.isCreatingShareLink == false)
+    }
+
+    @Test("A failed share link sets an error and no URL")
+    func createShareLinkFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateShareLink.result = .failure(TestError.networkError)
+
+        let created = await vm.createShareLink()
+
+        #expect(!created)
+        #expect(vm.shareLinkURL == nil)
+        #expect(vm.errorMessage != nil)
+        #expect(vm.isCreatingShareLink == false)
+    }
 }

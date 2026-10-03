@@ -223,6 +223,40 @@ class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
     }
 }
 
+class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase {
+    var result: Result<ServerInfo, Error> = .success(
+        ServerInfo(version: "0.23.2", isReachable: true, features: ["oauth"])
+    )
+
+    func execute(endpoint: String?) async throws -> ServerInfo {
+        try result.get()
+    }
+}
+
+class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase {
+    var result: Result<URL, Error> = .success(URL(string: "https://readeck.example.com/@b/abc")!)
+    var lastBookmarkId: String?
+
+    func execute(bookmarkId: String) async throws -> URL {
+        lastBookmarkId = bookmarkId
+        return try result.get()
+    }
+}
+
+class ConfigurableShareByEmailUseCase: PShareByEmailUseCase {
+    var result: Result<Void, Error> = .success(())
+    var executeCount = 0
+    var lastEmail: String?
+    var lastFormat: EmailShareFormat?
+
+    func execute(bookmarkId: String, email: String, format: EmailShareFormat) async throws {
+        executeCount += 1
+        lastEmail = email
+        lastFormat = format
+        try result.get()
+    }
+}
+
 class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
     static var isAvailable: Bool { true }
     var result: Result<String, Error> = .success("Test summary")

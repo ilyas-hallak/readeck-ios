@@ -31,6 +31,8 @@ final class StubAPI: PAPI, @unchecked Sendable {
     var searchBookmarksHandler: ((String) async throws -> BookmarksPageDto)?
     var getBookmarkLabelsHandler: (() async throws -> [BookmarkLabelDto])?
     var loginHandler: ((String, String, String) async throws -> UserDto)?
+    var getBookmarkShareLinkHandler: ((String) async throws -> BookmarkShareLinkDto)?
+    var shareBookmarkByEmailHandler: ((String, ShareBookmarkEmailRequestDto) async throws -> Void)?
 
     // Recorded calls for assertions
     private(set) var updateBookmarkCalls: [(String, UpdateBookmarkRequestDto)] = []
@@ -94,6 +96,16 @@ final class StubAPI: PAPI, @unchecked Sendable {
 
     func deleteAnnotation(bookmarkId: String, annotationId: String) async throws {
         throw StubError.notStubbed("deleteAnnotation")
+    }
+
+    func getBookmarkShareLink(id: String) async throws -> BookmarkShareLinkDto {
+        guard let getBookmarkShareLinkHandler else { throw StubError.notStubbed("getBookmarkShareLink") }
+        return try await getBookmarkShareLinkHandler(id)
+    }
+
+    func shareBookmarkByEmail(id: String, request: ShareBookmarkEmailRequestDto) async throws {
+        guard let shareBookmarkByEmailHandler else { throw StubError.notStubbed("shareBookmarkByEmail") }
+        try await shareBookmarkByEmailHandler(id, request)
     }
 
     func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto {

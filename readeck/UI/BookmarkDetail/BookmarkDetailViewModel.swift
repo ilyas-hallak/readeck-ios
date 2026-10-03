@@ -16,6 +16,8 @@ final class BookmarkDetailViewModel {
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let exportArticlePDFUseCase: PExportArticlePDFUseCase
     private let networkMonitorUseCase: PNetworkMonitorUseCase
+    private let getServerInfoUseCase: PGetServerInfoUseCase
+    private let createShareLinkUseCase: PCreateShareLinkUseCase
 
     var bookmarkDetail = BookmarkDetail.empty
     var articleContent = ""
@@ -31,6 +33,9 @@ final class BookmarkDetailViewModel {
     var hasAnnotations = false
     var isExportingPDF = false
     var exportedPDFURL: URL?
+    var serverCapabilities: ServerCapabilities = .unknown
+    var isCreatingShareLink = false
+    var shareLinkURL: URL?
 
     // One undo target per new highlight, so removing a highlight also removes its undo action.
     @ObservationIgnored private var highlightUndoTargets: [String: HighlightUndoTarget] = [:]
@@ -45,6 +50,8 @@ final class BookmarkDetailViewModel {
     }
 
     var canExportPDF: Bool { !articleContent.isEmpty }
+    var canShareReadeckLink: Bool { serverCapabilities.supportsShareLink }
+    var canSendByEmail: Bool { serverCapabilities.supportsEmailSharing }
 
     var showProgressBar: Bool { settings?.hideProgressBar != true }
     var showHeroImage: Bool { settings?.hideHeroImage != true }
@@ -71,6 +78,8 @@ final class BookmarkDetailViewModel {
         self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         self.exportArticlePDFUseCase = factory.makeExportArticlePDFUseCase()
         self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
+        self.getServerInfoUseCase = factory.makeGetServerInfoUseCase()
+        self.createShareLinkUseCase = factory.makeCreateShareLinkUseCase()
         self.factory = factory
         self.summaryViewModel = ArticleSummaryViewModel()
 
@@ -137,6 +146,14 @@ final class BookmarkDetailViewModel {
         }
 
         isLoading = false
+        await loadServerCapabilities()
+    }
+
+    /// Without server info the Readeck share options simply stay hidden.
+    @MainActor
+    private func loadServerCapabilities() async {
+        guard let info = try? await getServerInfoUseCase.execute(endpoint: nil) else { return }
+        serverCapabilities = info.capabilities
     }
 
     @MainActor
@@ -316,6 +333,28 @@ final class BookmarkDetailViewModel {
         } catch {
             Logger.viewModel.error("❌ PDF export failed: \(error.localizedDescription)")
             errorMessage = NSLocalizedString("Could not export this article as a PDF", comment: "PDF export error")
+            return false
+        }
+    }
+
+    /// Asks the server for a public link to this bookmark and publishes it for
+    /// the share sheet. Returns whether that worked, like the PDF export.
+    @MainActor
+    @discardableResult
+    func createShareLink() async -> Bool {
+        guard !isCreatingShareLink else { return false }
+
+        isCreatingShareLink = true
+        errorMessage = nil
+        shareLinkURL = nil
+        defer { isCreatingShareLink = false }
+
+        do {
+            shareLinkURL = try await createShareLinkUseCase.execute(bookmarkId: bookmarkDetail.id)
+            return true
+        } catch {
+            Logger.viewModel.error("❌ Share link failed: \(error.localizedDescription)")
+            errorMessage = NSLocalizedString("Could not create a share link", comment: "Share link error")
             return false
         }
     }

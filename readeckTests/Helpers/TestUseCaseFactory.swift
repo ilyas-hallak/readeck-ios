@@ -24,6 +24,9 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockUpdateUnreadBadge = ConfigurableUpdateUnreadBadgeUseCase()
     let mockExportArticlePDF = ConfigurableExportArticlePDFUseCase()
     let mockNetworkMonitor = MockNetworkMonitorUseCase()
+    let mockGetServerInfo = ConfigurableGetServerInfoUseCase()
+    let mockCreateShareLink = ConfigurableCreateShareLinkUseCase()
+    let mockShareByEmail = ConfigurableShareByEmailUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -34,7 +37,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase { mockDeleteBookmark }
     func makeCreateBookmarkUseCase() -> PCreateBookmarkUseCase { mockCreateBookmark }
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase { mockCheckReachability }
-    func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { MockGetServerInfoUseCase() }
+    func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { mockGetServerInfo }
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase { mockGetCachedArticle }
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase { mockGetCachedBookmarks }
     func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase { mockGetCachedBookmarkDetail }
@@ -43,6 +46,8 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeLogoutUseCase() -> PLogoutUseCase { mockLogout }
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase { mockUpdateUnreadBadge }
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase { mockExportArticlePDF }
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase { mockCreateShareLink }
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase { mockShareByEmail }
 
     // Non-configurable — use existing mocks from MockUseCaseFactory pattern
     func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { MockSaveSettingsUseCase() }

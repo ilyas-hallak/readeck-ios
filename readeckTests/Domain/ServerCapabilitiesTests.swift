@@ -148,6 +148,17 @@ struct ServerCapabilitiesTests {
 
     // MARK: - Email Sharing (features)
 
+    // MARK: - Share Link (>= 0.19.0)
+
+    @Test("Share link boundary", arguments: [
+        ("0.18.9", false),
+        ("0.19.0", true),
+        ("0.23.2", true)
+    ])
+    func shareLink_Boundary(version: String, expected: Bool) {
+        #expect(capabilities(version).supportsShareLink == expected)
+    }
+
     @Test("Email sharing comes from the features array")
     func emailSharing_FromFeatures() {
         #expect(capabilities("0.23.2", features: ["oauth", "email"]).supportsEmailSharing)
@@ -204,6 +215,7 @@ struct ServerCapabilitiesTests {
         #expect(!unknown.supportsBookmarkNotes)
         #expect(!unknown.supportsNotesFilter)
         #expect(!unknown.supportsValidationErrors)
+        #expect(!unknown.supportsShareLink)
         #expect(!unknown.supportsEmailSharing)
         #expect(!unknown.canUseOAuth)
     }
