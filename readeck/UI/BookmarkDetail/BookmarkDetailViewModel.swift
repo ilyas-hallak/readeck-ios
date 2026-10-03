@@ -189,7 +189,10 @@ final class BookmarkDetailViewModel {
             presentArticle(try await getBookmarkArticleUseCase.execute(id: id))
             Logger.viewModel.info("✅ Fetched article from server (\(articleContent.utf8.count) bytes)")
         } catch {
-            errorMessage = "Error loading article"
+            // Keep the article that is already shown, e.g. when a refresh fails offline.
+            if articleContent.isEmpty {
+                errorMessage = "Error loading article"
+            }
             Logger.viewModel.error("❌ Failed to load article: \(error.localizedDescription)")
         }
 

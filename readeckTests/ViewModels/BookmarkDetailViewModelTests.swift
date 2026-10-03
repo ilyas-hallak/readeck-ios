@@ -265,6 +265,23 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.errorMessage == nil)
     }
 
+    @Test("Refreshing a cached article offline keeps it without an error")
+    func refreshCachedArticleOfflineKeepsContent() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetCachedBookmarkDetail.result = makeDetail(title: "Cached title")
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+        await vm.loadReader(id: "123")
+
+        await vm.refreshBookmarkDetail(id: "123")
+
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.bookmarkDetail.title == "Cached title")
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoadingArticle == false)
+    }
+
     private func makeDetail(title: String) -> BookmarkDetail {
         BookmarkDetail(
             id: "123", title: title, url: "https://example.com", description: "", siteName: "Example",
