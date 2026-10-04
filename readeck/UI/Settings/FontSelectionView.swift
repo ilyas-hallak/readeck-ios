@@ -10,6 +10,7 @@ import SwiftUI
 struct FontSelectionView: View {
     @State private var viewModel: FontSettingsViewModel
     @State private var showCSSHelp = false
+    @State private var isPreviewExpanded = false
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var appSettings
 
@@ -21,27 +22,16 @@ struct FontSelectionView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Pinned preview at top
-            readerPreview
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.secondarySystemBackground))
-
-            Divider()
-
-            // Scrollable settings below
-            List {
-                articleReaderSection
-                fontSection
-                colorThemeSection
-                readerLayoutSection
-                visibilitySection
-                customCSSSection
-            }
-            .listStyle(.insetGrouped)
-            .oledScrollBackground(appSettings.theme.isOLED)
+        List {
+            articleReaderSection
+            fontSection
+            colorThemeSection
+            readerLayoutSection
+            visibilitySection
+            customCSSSection
         }
+        .listStyle(.insetGrouped)
+        .oledScrollBackground(appSettings.theme.isOLED)
         .navigationTitle("Reader Settings")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -110,11 +100,11 @@ struct FontSelectionView: View {
         if ArticleReaderAvailability.isNativeReaderSupported {
             Section {
                 Toggle("Modern Reader", isOn: $useNativeWebView)
-                if #available(iOS 26.0, *), useNativeWebView, !viewModel.hideProgressBar {
+                if #available(iOS 26.0, *), useNativeWebView {
                     NavigationLink {
                         ReadingProgressStyleView(viewModel: viewModel)
                     } label: {
-                        LabeledContent("Progress Style", value: viewModel.readingProgressStyle.localizedTitle)
+                        LabeledContent("Progress Style", value: progressStyleTitle)
                     }
                 }
             } header: {
@@ -125,23 +115,46 @@ struct FontSelectionView: View {
         }
     }
 
+    private var showsProgressStyle: Bool {
+        guard #available(iOS 26.0, *) else { return false }
+        return ArticleReaderAvailability.isNativeReaderSupported && useNativeWebView
+    }
+
+    private var progressStyleTitle: String {
+        viewModel.hideProgressBar ? "Off".localized : viewModel.readingProgressStyle.localizedTitle
+    }
+
     // MARK: - Font Section
 
     private var fontSection: some View {
         Section {
-            Picker("Font family", selection: $viewModel.selectedFontFamily) {
-                ForEach(FontFamily.allCases, id: \.self) { family in
-                    Text(family.displayName).tag(family)
+            // Not a DisclosureGroup, that one indents the preview against the other rows
+            Button {
+                withAnimation { isPreviewExpanded.toggle() }
+            } label: {
+                HStack {
+                    Text("Preview")
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(isPreviewExpanded ? 180 : 0))
                 }
+                .contentShape(.rect)
             }
-            .onChange(of: viewModel.selectedFontFamily) {
-                guard !viewModel.isLoading else { return }
-                Task { await viewModel.saveFontSettings() }
+            .buttonStyle(.plain)
+
+            if isPreviewExpanded {
+                readerPreview
+                    .padding(.vertical, 4)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
             }
 
-            Text("font.web.match.hint".localized)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            NavigationLink {
+                FontFamilySelectionView(viewModel: viewModel, onSelect: revealPreview)
+            } label: {
+                LabeledContent("Font family", value: viewModel.selectedFontFamily.displayName)
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Font size")
@@ -154,6 +167,7 @@ struct FontSelectionView: View {
                             if size != .custom {
                                 viewModel.fontSizeNumeric = size.size
                             }
+                            revealPreview()
                             Task { await viewModel.saveFontSettings() }
                         }) {
                             Text(size.displayName)
@@ -179,6 +193,7 @@ struct FontSelectionView: View {
                         range: 10...30,
                         step: 1
                     ) {
+                        revealPreview()
                         Task { await viewModel.saveFontSettings() }
                     }
                 }
@@ -186,6 +201,11 @@ struct FontSelectionView: View {
         } header: {
             Text("Font")
         }
+    }
+
+    // Only user changes open the preview, loading the saved values must not
+    private func revealPreview() {
+        withAnimation { isPreviewExpanded = true }
     }
 
     // MARK: - Color Theme Section
@@ -351,11 +371,14 @@ struct FontSelectionView: View {
 
     private var visibilitySection: some View {
         Section {
-            Toggle("Hide progress bar", isOn: $viewModel.hideProgressBar)
-                .onChange(of: viewModel.hideProgressBar) {
-                    guard !viewModel.isLoading else { return }
-                    Task { await viewModel.saveVisibilitySettings() }
-                }
+            // The modern reader turns the progress off in its progress style list instead
+            if !showsProgressStyle {
+                Toggle("Hide progress bar", isOn: $viewModel.hideProgressBar)
+                    .onChange(of: viewModel.hideProgressBar) {
+                        guard !viewModel.isLoading else { return }
+                        Task { await viewModel.saveVisibilitySettings() }
+                    }
+            }
             Toggle("Hide word count & reading time", isOn: $viewModel.hideWordCount)
                 .onChange(of: viewModel.hideWordCount) {
                     guard !viewModel.isLoading else { return }

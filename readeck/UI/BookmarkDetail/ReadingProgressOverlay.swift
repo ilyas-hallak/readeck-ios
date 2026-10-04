@@ -13,11 +13,6 @@ struct ReadingProgressOverlay: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // The other styles take over from the line while the bar is away
-            ReadingProgressBar(model: model)
-                .offset(y: isToolbarVisible ? topBarInset : statusBarHeight)
-                .opacity(isToolbarVisible || resolvedStyle == .line ? 1 : 0)
-
             indicator
         }
         .animation(.easeInOut(duration: 0.3), value: isScrollPaused)
@@ -38,7 +33,8 @@ struct ReadingProgressOverlay: View {
     private var indicator: some View {
         switch resolvedStyle {
         case .line:
-            EmptyView()
+            ReadingProgressBar(model: model)
+                .offset(y: isToolbarVisible ? topBarInset : statusBarHeight)
         case .islandRing, .islandRingOnStop:
             let isShown = resolvedStyle == .islandRing ? !isToolbarVisible : isPopUpShown
             IslandProgressRing(model: model, isShown: isShown)

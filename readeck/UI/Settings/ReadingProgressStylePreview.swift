@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// A mock of the top of a phone running the reader, which scrolls through an article in a
-/// loop and shows the progress the way the given style does.
+/// loop and shows the progress the way the given style does. Without a style it shows none.
 @available(iOS 26.0, *)
 struct ReadingProgressStylePreview: View {
-    let style: ReadingProgressStyle
+    let style: ReadingProgressStyle?
 
     @State private var model = ReadingProgressModel()
     @State private var isToolbarVisible = true
@@ -21,14 +21,16 @@ struct ReadingProgressStylePreview: View {
             articleLines
             frostedStrip
             navigationBar
-            ReadingProgressOverlay(
-                style: style,
-                model: model,
-                isToolbarVisible: isToolbarVisible,
-                isScrollPaused: isScrollPaused,
-                topBarInset: Self.topBarInset,
-                statusBarHeight: Self.statusBarHeight
-            )
+            if let style {
+                ReadingProgressOverlay(
+                    style: style,
+                    model: model,
+                    isToolbarVisible: isToolbarVisible,
+                    isScrollPaused: isScrollPaused,
+                    topBarInset: Self.topBarInset,
+                    statusBarHeight: Self.statusBarHeight
+                )
+            }
             statusBar
         }
         .frame(width: Self.screen.width, height: Self.screen.height, alignment: .top)

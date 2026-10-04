@@ -379,7 +379,7 @@ struct ArticleReaderView: View {
                     readerSwitchTip.invalidate(reason: .actionPerformed)
                     showingFontSettings = true
                 } label: {
-                    Label("Font Settings".localized, systemImage: "textformat")
+                    Label("Reader Settings".localized, systemImage: "textformat.size")
                 }
 
                 Button {

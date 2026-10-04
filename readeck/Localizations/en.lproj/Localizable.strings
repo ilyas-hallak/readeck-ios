@@ -308,7 +308,7 @@
 
 /* Reader Switch Tip */
 "New reader" = "New reader";
-"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings.";
 
 /* Slow connection and offline mode */
 "Your connection seems very slow or offline." = "Your connection seems very slow or offline.";
@@ -335,6 +335,12 @@
 
 /* Reading progress style */
 "Progress Style" = "Progress Style";
+"Off" = "Off";
+"No progress is shown while you read." = "No progress is shown while you read.";
+"Serif" = "Serif";
+"Sans Serif" = "Sans Serif";
+"Monospace" = "Monospace";
+"font.sample" = "The quick brown fox jumps over the lazy dog.";
 "Line" = "Line";
 "Island Ring" = "Island Ring";
 "Island Ring on Pause" = "Island Ring on Pause";
