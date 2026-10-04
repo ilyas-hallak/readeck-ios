@@ -62,12 +62,13 @@ struct ArticleReaderView: View {
             .toolbar {
                 toolbarContent
             }
-            .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
             // Local to this screen on purpose: OLEDTheme.swift owns the global
             // UINavigationBar appearance proxy, and a second writer would leave the
             // bookmark list tinted after leaving the reader.
             .toolbarBackground(readerTheme.backgroundColor, for: .navigationBar)
-            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+            // Fades the bar instead of hiding it. Hiding changes the safe area, which shifts
+            // the article mid scroll, and iOS 26 drops the swipe back without a bar.
+            .toolbarBackgroundVisibility(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
             .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
             .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
             .sheet(isPresented: $showingLabelsSheet) {
@@ -159,24 +160,21 @@ struct ArticleReaderView: View {
     }
 
     private var content: some View {
-        VStack(spacing: 0) {
-            // Progress bar at top
-            if !(viewModel.settings?.hideProgressBar ?? false) {
-                ReadingProgressBar(model: progressModel)
+        scrollViewContent
+            .overlay(alignment: .top) {
+                if !(viewModel.settings?.hideProgressBar ?? false) {
+                    ReadingProgressBar(model: progressModel)
+                }
             }
-
-            // Main scroll content
-            scrollViewContent
-                .overlay(alignment: .bottomTrailing) {
-                    if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                        if showFloatingActions {
-                            floatingActionButtons
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
+            .overlay(alignment: .bottomTrailing) {
+                if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                    if showFloatingActions {
+                        floatingActionButtons
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
-        }
+            }
+            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
         // Everything inside the reader adopts the theme's brightness so system-tinted
         // elements (progress bar, dividers, glass buttons, loading labels) stay legible
         // on a light theme while the app runs in dark mode, and vice versa. Applied
@@ -259,7 +257,7 @@ struct ArticleReaderView: View {
             }
             .coordinateSpace(name: "scrollView")
             .clipped()
-            .ignoresSafeArea(edges: [.top, .bottom])
+            .ignoresSafeArea(edges: .bottom)
             .scrollPosition($scrollPosition)
             .disableScrollBounce()
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
@@ -285,6 +283,7 @@ struct ArticleReaderView: View {
                 }
             }
         }
+        .ignoresSafeArea(edges: .top)
     }
 
     @ToolbarContentBuilder
