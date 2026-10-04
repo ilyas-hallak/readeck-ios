@@ -11,7 +11,7 @@ struct ShareAPITests {
         return (API(tokenProvider: TestMockTokenProvider(), session: session), session)
     }
 
-    @Test("getBookmarkShareLink sends a GET and decodes the server's 201 body")
+    @Test("getBookmarkShareLink sends a GET and decodes the server's 200 body")
     func shareLinkDecodesResponse() async throws {
         let json = """
         {
@@ -21,7 +21,7 @@ struct ShareAPITests {
           "id": "8vnRoGbXUoWdyiHvqaosTu"
         }
         """
-        let (api, session) = makeAPI(.json(json, status: 201))
+        let (api, session) = makeAPI(.json(json, status: 200))
 
         let dto = try await api.getBookmarkShareLink(id: "8vnRoGbXUoWdyiHvqaosTu")
 

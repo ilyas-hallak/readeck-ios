@@ -324,6 +324,7 @@
 "Share Readeck Link" = "Share Readeck Link";
 "Send by Email" = "Send by Email";
 "Could not create a share link" = "Could not create a share link";
+"Could not open the original link" = "Could not open the original link";
 "Email address" = "Email address";
 "Format" = "Format";
 "Article" = "Article";

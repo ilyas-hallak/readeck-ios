@@ -345,6 +345,7 @@
 "Share Readeck Link" = "Readeck-Link teilen";
 "Send by Email" = "Per E-Mail senden";
 "Could not create a share link" = "Der Link zum Teilen konnte nicht erstellt werden";
+"Could not open the original link" = "Der Originallink konnte nicht geöffnet werden";
 "Email address" = "E-Mail-Adresse";
 "Format" = "Format";
 "Article" = "Artikel";

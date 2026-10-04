@@ -324,6 +324,7 @@
 "Share Readeck Link" = "Dela Readeck-länk";
 "Send by Email" = "Skicka via e-post";
 "Could not create a share link" = "Det gick inte att skapa en delningslänk";
+"Could not open the original link" = "Det gick inte att öppna originallänken";
 "Email address" = "E-postadress";
 "Format" = "Format";
 "Article" = "Artikel";

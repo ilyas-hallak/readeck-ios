@@ -36,22 +36,20 @@ final class BookmarkDetailViewModel {
     var serverCapabilities: ServerCapabilities = .unknown
     var isCreatingShareLink = false
     var shareLinkURL: URL?
+    var shareErrorMessage: String?
 
     // One undo target per new highlight, so removing a highlight also removes its undo action.
     @ObservationIgnored private var highlightUndoTargets: [String: HighlightUndoTarget] = [:]
     @ObservationIgnored private weak var highlightUndoManager: UndoManager?
 
-    var shareContent: String {
-        var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
-        for annotation in annotations {
-            text += "\n\n  - \(annotation.text)"
-        }
-        return text
-    }
-
     var canExportPDF: Bool { !articleContent.isEmpty }
     var canShareReadeckLink: Bool { serverCapabilities.supportsShareLink }
     var canSendByEmail: Bool { serverCapabilities.supportsEmailSharing }
+
+    /// Whether a share-producing task (Readeck link or PDF) is still running. While
+    /// true every option stays disabled, so a slow task can't pop an unsolicited
+    /// share sheet after the user already shared a different way.
+    private var isPreparingShare: Bool { isCreatingShareLink || isExportingPDF }
 
     /// The share options this server supports, in display order.
     var shareOptions: [ArticleShareOption] {
@@ -65,12 +63,29 @@ final class BookmarkDetailViewModel {
     }
 
     func isShareOptionEnabled(_ option: ArticleShareOption, isOnline: Bool) -> Bool {
-        switch option {
+        guard !isPreparingShare else { return false }
+        return switch option {
         case .email: isOnline
-        case .readeckLink: isOnline && !isCreatingShareLink
+        case .readeckLink: isOnline
         case .originalLink: true
-        case .pdf: canExportPDF && !isExportingPDF
+        case .pdf: canExportPDF
         }
+    }
+
+    /// Resolves the URL to share for "Share Original Link". Returns nil and sets
+    /// `shareErrorMessage` when the bookmark's URL string doesn't parse.
+    @MainActor
+    func prepareOriginalLinkShare() -> URL? {
+        guard let url = URL(string: bookmarkDetail.url) else {
+            shareErrorMessage = NSLocalizedString("Could not open the original link", comment: "Original link share error")
+            return nil
+        }
+        return url
+    }
+
+    @MainActor
+    func clearShareError() {
+        shareErrorMessage = nil
     }
 
     var showProgressBar: Bool { settings?.hideProgressBar != true }
@@ -339,7 +354,7 @@ final class BookmarkDetailViewModel {
         guard !isExportingPDF else { return false }
 
         isExportingPDF = true
-        errorMessage = nil
+        shareErrorMessage = nil
         exportedPDFURL = nil
         defer { isExportingPDF = false }
 
@@ -352,7 +367,7 @@ final class BookmarkDetailViewModel {
             return true
         } catch {
             Logger.viewModel.error("❌ PDF export failed: \(error.localizedDescription)")
-            errorMessage = NSLocalizedString("Could not export this article as a PDF", comment: "PDF export error")
+            shareErrorMessage = NSLocalizedString("Could not export this article as a PDF", comment: "PDF export error")
             return false
         }
     }
@@ -365,7 +380,7 @@ final class BookmarkDetailViewModel {
         guard !isCreatingShareLink else { return false }
 
         isCreatingShareLink = true
-        errorMessage = nil
+        shareErrorMessage = nil
         shareLinkURL = nil
         defer { isCreatingShareLink = false }
 
@@ -374,7 +389,7 @@ final class BookmarkDetailViewModel {
             return true
         } catch {
             Logger.viewModel.error("❌ Share link failed: \(error.localizedDescription)")
-            errorMessage = NSLocalizedString("Could not create a share link", comment: "Share link error")
+            shareErrorMessage = NSLocalizedString("Could not create a share link", comment: "Share link error")
             return false
         }
     }

@@ -236,10 +236,37 @@ class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase {
 class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase {
     var result: Result<URL, Error> = .success(URL(string: "https://readeck.example.com/@b/abc")!)
     var lastBookmarkId: String?
+    /// When true, `execute` suspends until `resume()` is called, so tests can observe
+    /// state while the call is still in flight.
+    var holdsExecution = false
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var isReleased = false
 
     func execute(bookmarkId: String) async throws -> URL {
         lastBookmarkId = bookmarkId
+        if holdsExecution {
+            await withCheckedContinuation { continuation in
+                lock.withLock {
+                    if isReleased {
+                        continuation.resume()
+                    } else {
+                        self.continuation = continuation
+                    }
+                }
+            }
+        }
         return try result.get()
+    }
+
+    /// Safe to call before `execute` reached its suspension point.
+    func resume() {
+        let pending = lock.withLock {
+            isReleased = true
+            defer { continuation = nil }
+            return continuation
+        }
+        pending?.resume()
     }
 }
 

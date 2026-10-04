@@ -662,19 +662,31 @@ struct BookmarkDetailViewModelTests {
         }
     }
 
-    // MARK: - Share Content
+    // MARK: - Original Link Sharing
 
-    @Test("Share text combines title, URL and annotations")
-    func shareContentIncludesAnnotations() async {
+    @Test("Sharing the original link shares the bookmark URL only, not the annotations")
+    func originalLinkSharesBookmarkURLOnly() async {
         let (vm, factory) = createSUT()
         factory.mockGetAnnotations.result = .success([
             Annotation(id: "1", text: "first note", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
         ])
 
         await vm.loadBookmarkDetail(id: "456")
+        let url = vm.prepareOriginalLinkShare()
 
-        #expect(vm.shareContent.contains("https://example.com"))
-        #expect(vm.shareContent.contains("first note"))
+        #expect(url?.absoluteString == "https://example.com")
+        #expect(vm.shareErrorMessage == nil)
+    }
+
+    @Test("A bookmark with an unparseable URL fails to share the original link")
+    func originalLinkShareFailsForUnparseableURL() {
+        let (vm, _) = createSUT()
+        // BookmarkDetail.empty has an empty url string, which URL(string:) rejects.
+
+        let url = vm.prepareOriginalLinkShare()
+
+        #expect(url == nil)
+        #expect(vm.shareErrorMessage != nil)
     }
 
     // MARK: - Readeck Sharing
@@ -727,7 +739,7 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.isCreatingShareLink == false)
     }
 
-    @Test("A failed share link sets an error and no URL")
+    @Test("A failed share link sets the share error, not the screen-wide error")
     func createShareLinkFailure() async {
         let (vm, factory) = createSUT()
         factory.mockCreateShareLink.result = .failure(TestError.networkError)
@@ -736,8 +748,40 @@ struct BookmarkDetailViewModelTests {
 
         #expect(!created)
         #expect(vm.shareLinkURL == nil)
-        #expect(vm.errorMessage != nil)
+        #expect(vm.shareErrorMessage != nil)
+        #expect(vm.errorMessage == nil)
         #expect(vm.isCreatingShareLink == false)
+    }
+
+    @Test("Dismissing the share error clears it")
+    func clearShareErrorResetsState() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateShareLink.result = .failure(TestError.networkError)
+        _ = await vm.createShareLink()
+        #expect(vm.shareErrorMessage != nil)
+
+        vm.clearShareError()
+
+        #expect(vm.shareErrorMessage == nil)
+    }
+
+    @Test("While a share link is being created every share option is disabled")
+    func allOptionsDisabledWhilePreparingShare() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateShareLink.holdsExecution = true
+
+        let task = Task { await vm.createShareLink() }
+        while !vm.isCreatingShareLink {
+            await Task.yield()
+        }
+
+        #expect(!vm.isShareOptionEnabled(.email, isOnline: true))
+        #expect(!vm.isShareOptionEnabled(.originalLink, isOnline: true))
+        #expect(!vm.isShareOptionEnabled(.readeckLink, isOnline: true))
+        #expect(!vm.isShareOptionEnabled(.pdf, isOnline: true))
+
+        factory.mockCreateShareLink.resume()
+        _ = await task.value
     }
 
     @Test("The share sheet lists every option when the server supports them")

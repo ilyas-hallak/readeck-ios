@@ -9,7 +9,6 @@ struct ArticleSharing: ViewModifier {
 
     @State private var pendingOption: ArticleShareOption?
     @State private var destination: Destination?
-    @State private var showingError = false
 
     func body(content: Content) -> some View {
         content
@@ -32,10 +31,18 @@ struct ArticleSharing: ViewModifier {
                     ShareByEmailView(bookmarkId: viewModel.bookmarkDetail.id)
                 }
             }
-            .alert("Error".localized, isPresented: $showingError) {
+            .alert(
+                "Error".localized,
+                isPresented: Binding(
+                    get: { viewModel.shareErrorMessage != nil },
+                    set: { isPresented in
+                        if !isPresented { viewModel.clearShareError() }
+                    }
+                )
+            ) {
                 Button("OK".localized, role: .cancel) {}
             } message: {
-                Text(viewModel.errorMessage ?? "")
+                Text(viewModel.shareErrorMessage ?? "")
             }
     }
 
@@ -47,25 +54,23 @@ struct ArticleSharing: ViewModifier {
         case .email:
             destination = .email
         case .originalLink:
-            destination = .activity([viewModel.shareContent])
+            if let url = viewModel.prepareOriginalLinkShare() {
+                destination = .activity([url])
+            }
         case .readeckLink:
             Task {
                 let succeeded = await viewModel.createShareLink()
-                presentShareSheet(for: succeeded ? viewModel.shareLinkURL : nil)
+                if succeeded, let url = viewModel.shareLinkURL {
+                    destination = .activity([url])
+                }
             }
         case .pdf:
             Task {
                 let succeeded = await viewModel.exportArticleAsPDF()
-                presentShareSheet(for: succeeded ? viewModel.exportedPDFURL : nil)
+                if succeeded, let url = viewModel.exportedPDFURL {
+                    destination = .activity([url])
+                }
             }
-        }
-    }
-
-    private func presentShareSheet(for url: URL?) {
-        if let url {
-            destination = .activity([url])
-        } else {
-            showingError = true
         }
     }
 }

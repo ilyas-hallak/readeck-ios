@@ -640,6 +640,7 @@ final class API: PAPI {
     }
 
     func getBookmarkShareLink(id: String) async throws -> BookmarkShareLinkDto {
+        logger.debug("Fetching share link for bookmark: \(id)")
         let endpoint = "/api/bookmarks/\(id)/share/link"
         logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
 
@@ -648,11 +649,12 @@ final class API: PAPI {
             responseType: BookmarkShareLinkDto.self
         )
 
-        logger.info("Created share link for bookmark: \(id)")
+        logger.info("Successfully created share link for bookmark: \(id)")
         return result
     }
 
     func shareBookmarkByEmail(id: String, request: ShareBookmarkEmailRequestDto) async throws {
+        logger.debug("Sharing bookmark by email: \(id)")
         let endpoint = "/api/bookmarks/\(id)/share/email"
         let requestData = try JSONEncoder().encode(request)
         logger.logNetworkRequest(method: "POST", url: await self.baseURL + endpoint)
@@ -664,7 +666,7 @@ final class API: PAPI {
             responseType: ServerMessageDto.self
         )
 
-        logger.info("Sent bookmark \(id) by email")
+        logger.info("Successfully sent bookmark by email: \(id)")
     }
 
     func getBookmarkLabels() async throws -> [BookmarkLabelDto] {
