@@ -19,6 +19,8 @@ import Foundation
 final class AppSettings {
     var settings: Settings?
     var isNetworkConnected = true
+    var isForcedOffline = false
+    var isServerBackOnline = false
 
     var enableTTS: Bool {
         settings?.enableTTS ?? false

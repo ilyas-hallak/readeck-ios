@@ -306,3 +306,11 @@
 /* Reader Switch Tip */
 "New reader" = "New reader";
 "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";
+
+/* Slow connection and offline mode */
+"Your connection seems very slow or offline." = "Your connection seems very slow or offline.";
+"Go Offline" = "Go Offline";
+"You're back online." = "You're back online.";
+"Go Online" = "Go Online";
+"This article isn't available offline." = "This article isn't available offline.";
+"Offline mode, showing cached articles." = "Offline mode, showing cached articles.";

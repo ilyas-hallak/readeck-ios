@@ -306,3 +306,11 @@
 /* Reader Switch Tip */
 "New reader" = "Ny läsare";
 "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artiklar öppnas nu i den moderna läsaren. Om något ser fel ut kan du växla tillbaka under Typsnittsinställningar.";
+
+/* Slow connection and offline mode */
+"Your connection seems very slow or offline." = "Din anslutning verkar mycket långsam eller offline.";
+"Go Offline" = "Gå offline";
+"You're back online." = "Du är online igen.";
+"Go Online" = "Gå online";
+"This article isn't available offline." = "Den här artikeln är inte tillgänglig offline.";
+"Offline mode, showing cached articles." = "Offlineläge, visar cachade artiklar.";

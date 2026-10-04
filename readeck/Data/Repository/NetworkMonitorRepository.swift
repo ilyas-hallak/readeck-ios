@@ -13,10 +13,12 @@ import Combine
 
 protocol PNetworkMonitorRepository {
     var isConnected: AnyPublisher<Bool, Never> { get }
+    var isForcedOffline: AnyPublisher<Bool, Never> { get }
     func startMonitoring()
     func stopMonitoring()
     func reportConnectionFailure()
     func reportConnectionSuccess()
+    func setForcedOffline(_ isForced: Bool)
 }
 
 // MARK: - Implementation
@@ -29,9 +31,15 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
     private var hasPathConnection = true
     private var hasRealConnection = true
+    private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
 
     var isConnected: AnyPublisher<Bool, Never> {
         _isConnectedSubject.eraseToAnyPublisher()
+    }
+
+    /// True while the user chose to work offline, e.g. on a network that connects but never answers.
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        forcedOfflineSubject.removeDuplicates().eraseToAnyPublisher()
     }
 
     // MARK: - Initialization
@@ -93,9 +101,15 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
         Logger.network.info("✅ Real connection success reported")
     }
 
+    func setForcedOffline(_ isForced: Bool) {
+        forcedOfflineSubject.send(isForced)
+        updateConnectionState()
+        Logger.network.info("🔌 Forced offline mode: \(isForced)")
+    }
+
     private func updateConnectionState() {
-        // Only connected if BOTH path is available AND real connection works
-        let isConnected = hasPathConnection && hasRealConnection
+        // Only connected if BOTH path is available AND real connection works, and the user did not go offline
+        let isConnected = hasPathConnection && hasRealConnection && !forcedOfflineSubject.value
 
         DispatchQueue.main.async {
             self._isConnectedSubject.send(isConnected)

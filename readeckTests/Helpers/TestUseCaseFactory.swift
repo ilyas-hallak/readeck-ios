@@ -22,6 +22,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockLogout = ConfigurableLogoutUseCase()
     let mockUpdateUnreadBadge = ConfigurableUpdateUnreadBadgeUseCase()
     let mockExportArticlePDF = ConfigurableExportArticlePDFUseCase()
+    let mockNetworkMonitor = MockNetworkMonitorUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -59,7 +60,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase { MockDeleteAnnotationUseCase() }
     func makeSettingsRepository() -> PSettingsRepository { mockSettingsRepository }
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase { MockOfflineCacheSyncUseCase() }
-    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase { MockNetworkMonitorUseCase() }
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase { mockNetworkMonitor }
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase { MockGetCacheSizeUseCase() }
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase { MockGetMaxCacheSizeUseCase() }
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase { MockUpdateMaxCacheSizeUseCase() }

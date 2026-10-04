@@ -151,10 +151,11 @@ struct ArticleReaderLegacyView: View {
                                 .padding(.horizontal, 4)
                                 .id(settings.webViewIdentifier)
                             } else if viewModel.isLoadingArticle {
-                                ProgressView("Loading article...")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding()
+                                ArticleLoadingView { viewModel.goOffline() }
                             } else {
+                                if !appSettings.isNetworkConnected {
+                                    OfflineArticleNote()
+                                }
                                 Button(action: {
                                     URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
                                 }) {
@@ -479,10 +480,11 @@ struct ArticleReaderLegacyView: View {
             .animation(.easeInOut, value: webViewHeight)
             .id(settings.webViewIdentifier)
         } else if viewModel.isLoadingArticle {
-            ProgressView("Loading article...")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+            ArticleLoadingView { viewModel.goOffline() }
         } else {
+            if !appSettings.isNetworkConnected {
+                OfflineArticleNote()
+            }
             Button(action: {
                 URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
             }) {

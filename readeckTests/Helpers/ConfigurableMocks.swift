@@ -111,8 +111,12 @@ class ConfigurableLoginUseCase: PLoginUseCase {
 class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
     var isReachable: Bool = true
     var serverInfo: ServerInfo = ServerInfo(version: "1.0.0", isReachable: true, features: ["oauth"])
+    private(set) var executeCount = 0
 
-    func execute() async -> Bool { isReachable }
+    func execute() async -> Bool {
+        executeCount += 1
+        return isReachable
+    }
     func getServerInfo() async throws -> ServerInfo { serverInfo }
 }
 

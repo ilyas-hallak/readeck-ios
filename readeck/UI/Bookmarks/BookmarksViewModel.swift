@@ -9,6 +9,7 @@ final class BookmarksViewModel {
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
+    private let networkMonitorUseCase: PNetworkMonitorUseCase
     private let logger = Logger.viewModel
 
     var bookmarks: BookmarksPage?
@@ -54,6 +55,7 @@ final class BookmarksViewModel {
         deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
         getCachedBookmarksUseCase = factory.makeGetCachedBookmarksUseCase()
+        networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
 
         setupNotificationObserver()
 
@@ -295,6 +297,16 @@ final class BookmarksViewModel {
     @MainActor
     func refreshBookmarks() async {
         await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
+    }
+
+    /// Switches the app to offline mode, which also cuts off the requests still waiting.
+    func goOffline() {
+        networkMonitorUseCase.setForcedOffline(true)
+    }
+
+    /// Leaves offline mode. The list reloads once the app reports itself online again.
+    func goOnline() {
+        networkMonitorUseCase.setForcedOffline(false)
     }
 
     @MainActor

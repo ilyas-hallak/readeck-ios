@@ -11,6 +11,7 @@ struct BookmarksView: View {
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
+    @State private var slowLoading = SlowLoadingMonitor()
 
     let state: BookmarkState
     let type: [BookmarkType]
@@ -84,10 +85,7 @@ struct BookmarksView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Offline banner
-                if !appSettings.isNetworkConnected && (viewModel.bookmarks?.bookmarks.isEmpty == false) {
-                    offlineBanner
-                }
+                connectionBanner
 
                 // Main content
                 if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
@@ -166,6 +164,9 @@ struct BookmarksView: View {
                     await viewModel.refreshBookmarks()
                 }
             }
+        }
+        .onChange(of: viewModel.isLoading, initial: true) { _, isLoading in
+            slowLoading.update(isLoading: isLoading)
         }
         .onChange(of: appSettings.isNetworkConnected) { oldValue, newValue in
             // Network status changed
@@ -438,20 +439,42 @@ struct BookmarksView: View {
     }
 
     @ViewBuilder
+    private var connectionBanner: some View {
+        if appSettings.isServerBackOnline {
+            ConnectionBanner(systemImage: "wifi", message: "You're back online.", actionTitle: "Go Online") {
+                viewModel.goOnline()
+            }
+        } else if !appSettings.isNetworkConnected {
+            if viewModel.bookmarks?.bookmarks.isEmpty == false {
+                offlineBanner
+            }
+        } else if slowLoading.isSlow {
+            ConnectionBanner(
+                systemImage: "wifi.exclamationmark",
+                message: "Your connection seems very slow or offline.",
+                actionTitle: "Go Offline"
+            ) {
+                viewModel.goOffline()
+            }
+        }
+    }
+
+    @ViewBuilder
     private var offlineBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "wifi.slash")
                 .font(.body)
                 .foregroundColor(.secondary)
 
-            Text("Offline Mode – Showing cached articles")
+            Text("Offline mode, showing cached articles.")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 8)
+        .frame(minHeight: 44)
         .background(Color(.systemGray6))
         .overlay(
             Rectangle()

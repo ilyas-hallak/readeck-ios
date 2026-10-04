@@ -12,10 +12,12 @@ import Combine
 
 protocol PNetworkMonitorUseCase {
     var isConnected: AnyPublisher<Bool, Never> { get }
+    var isForcedOffline: AnyPublisher<Bool, Never> { get }
     func startMonitoring()
     func stopMonitoring()
     func reportConnectionFailure()
     func reportConnectionSuccess()
+    func setForcedOffline(_ isForced: Bool)
 }
 
 // MARK: - Implementation
@@ -29,6 +31,10 @@ final class NetworkMonitorUseCase: PNetworkMonitorUseCase {
 
     var isConnected: AnyPublisher<Bool, Never> {
         repository.isConnected
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        repository.isForcedOffline
     }
 
     // MARK: - Initialization
@@ -53,5 +59,9 @@ final class NetworkMonitorUseCase: PNetworkMonitorUseCase {
 
     func reportConnectionSuccess() {
         repository.reportConnectionSuccess()
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        repository.setForcedOffline(isForced)
     }
 }

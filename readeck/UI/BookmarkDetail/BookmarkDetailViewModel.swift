@@ -14,6 +14,7 @@ final class BookmarkDetailViewModel {
     private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let exportArticlePDFUseCase: PExportArticlePDFUseCase
+    private let networkMonitorUseCase: PNetworkMonitorUseCase
 
     var bookmarkDetail = BookmarkDetail.empty
     var articleContent = ""
@@ -63,6 +64,7 @@ final class BookmarkDetailViewModel {
         self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
         self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         self.exportArticlePDFUseCase = factory.makeExportArticlePDFUseCase()
+        self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
         self.factory = factory
         self.summaryViewModel = ArticleSummaryViewModel()
 
@@ -83,7 +85,10 @@ final class BookmarkDetailViewModel {
     func loadReader(id: String) async {
         guard let cachedHTML = getCachedArticleUseCase.execute(id: id) else {
             await loadBookmarkDetail(id: id)
-            await waitForArticleReady(id: id)
+            // Polling only makes sense when the server answered at all.
+            if bookmarkDetail.id == id {
+                await waitForArticleReady(id: id)
+            }
             await loadArticleContent(id: id)
             return
         }
@@ -99,6 +104,11 @@ final class BookmarkDetailViewModel {
         } catch {
             Logger.viewModel.info("⚠️ Showing cached bookmark \(id), server refresh failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Switches the app to offline mode, which also cuts off the requests still waiting.
+    func goOffline() {
+        networkMonitorUseCase.setForcedOffline(true)
     }
 
     @MainActor
@@ -166,8 +176,10 @@ final class BookmarkDetailViewModel {
                     Logger.viewModel.info("📦 Bookmark \(id) ready after \(attempt) poll(s)")
                     return
                 }
+            } catch let error as URLError where error.code == .notConnectedToInternet {
+                return
             } catch {
-                // Transient (e.g. offline) — keep polling until the attempts run out.
+                // Transient, keep polling until the attempts run out.
             }
         }
         Logger.viewModel.info("⏳ Bookmark \(id) still not loaded after \(maxAttempts) polls; showing as-is")

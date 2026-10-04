@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import Combine
 @testable import readeck
 
 @Suite("BookmarkDetailViewModel Tests")
@@ -251,6 +252,32 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.articleContent == "<p>Server</p>")
         #expect(vm.bookmarkDetail.id == "123")
         #expect(vm.errorMessage == nil)
+    }
+
+    @Test("An uncached article that can't be reached fails fast instead of polling")
+    func loadReaderSkipsPollingWhenDetailFails() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmark.result = .failure(URLError(.notConnectedToInternet))
+        factory.mockGetBookmarkArticle.result = .failure(URLError(.notConnectedToInternet))
+
+        let start = ContinuousClock.now
+        await vm.loadReader(id: "123")
+
+        #expect(ContinuousClock.now - start < .seconds(1))
+        #expect(vm.isLoadingArticle == false)
+        #expect(vm.articleContent.isEmpty)
+    }
+
+    @Test("Go Offline switches the app to offline mode")
+    func goOfflineForcesOffline() async {
+        let (vm, factory) = createSUT()
+        var forced: [Bool] = []
+        let sub = factory.mockNetworkMonitor.isForcedOffline.sink { forced.append($0) }
+
+        vm.goOffline()
+
+        #expect(forced.last == true)
+        sub.cancel()
     }
 
     @Test("Reloading the detail offline keeps the bookmark that is already shown")

@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import Combine
 @testable import readeck
 
 @Suite("BookmarksViewModel Tests")
@@ -397,5 +398,18 @@ struct BookmarksViewModelTests {
 
         #expect(vm.bookmarks == nil)
         #expect(vm.errorMessage == "No internet connection")
+    }
+
+    @Test("Go Offline and Go Online toggle the forced offline mode")
+    func goOfflineAndOnlineToggleForcedOffline() {
+        let (vm, factory) = createSUT()
+        var forced: [Bool] = []
+        let sub = factory.mockNetworkMonitor.isForcedOffline.sink { forced.append($0) }
+
+        vm.goOffline()
+        vm.goOnline()
+
+        #expect(forced == [false, true, false])
+        sub.cancel()
     }
 }

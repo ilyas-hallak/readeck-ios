@@ -401,8 +401,18 @@ final class MockOfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 }
 
 final class MockNetworkMonitorRepository: PNetworkMonitorRepository {
+    private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
+
     var isConnected: AnyPublisher<Bool, Never> {
-        Just(true).eraseToAnyPublisher()
+        forcedOfflineSubject.map { !$0 }.eraseToAnyPublisher()
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        forcedOfflineSubject.eraseToAnyPublisher()
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        forcedOfflineSubject.send(isForced)
     }
 
     func startMonitoring() {}
@@ -420,6 +430,14 @@ final class MockNetworkMonitorUseCase: PNetworkMonitorUseCase {
 
     var isConnected: AnyPublisher<Bool, Never> {
         repository.isConnected
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        repository.isForcedOffline
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        repository.setForcedOffline(isForced)
     }
 
     func startMonitoring() {
