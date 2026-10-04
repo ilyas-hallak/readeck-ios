@@ -33,6 +33,7 @@ final class NavigationBarFaderView: UIView {
         super.didMoveToWindow()
         guard window != nil else {
             restore()
+            detach()
             return
         }
         attach()
@@ -60,9 +61,18 @@ final class NavigationBarFaderView: UIView {
         }
     }
 
+    private func detach() {
+        guard let controller = navigationController else { return }
+        controller.interactivePopGestureRecognizer?.removeTarget(self, action: #selector(popGestureChanged))
+        if #available(iOS 26, *) {
+            controller.interactiveContentPopGestureRecognizer?.removeTarget(self, action: #selector(popGestureChanged))
+        }
+        navigationController = nil
+    }
+
     private func applyFade(animated: Bool) {
         guard let bar = navigationController?.navigationBar else { return }
-        let alpha: CGFloat = isFaded ? 0 : 1
+        let alpha = isFaded ? 0.0 : 1.0
         // Slides the bar up behind the status bar while it fades. Its bottom edge ends where
         // the status bar ends, so the progress line in the reader can move along with it.
         let transform: CGAffineTransform = isFaded ? CGAffineTransform(translationX: 0, y: -bar.bounds.height) : .identity

@@ -297,16 +297,7 @@ struct ArticleReaderView: View {
     private var topChrome: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
-                Rectangle()
-                    .fill(.regularMaterial)
-                    .mask {
-                        LinearGradient(
-                            stops: [.init(color: .black, location: 0.6), .init(color: .clear, location: 1)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-                    .frame(height: (isToolbarVisible ? topBarInset : statusBarHeight) + 12)
+                FrostedTopStrip(height: isToolbarVisible ? topBarInset : statusBarHeight)
 
                 if !(viewModel.settings?.hideProgressBar ?? false) {
                     ReadingProgressOverlay(
@@ -347,8 +338,7 @@ struct ArticleReaderView: View {
     }
 
     private var statusBarHeight: Double {
-        let scene = UIApplication.shared.connectedScenes.first { $0 is UIWindowScene } as? UIWindowScene
-        return Double(scene?.keyWindow?.safeAreaInsets.top ?? 0)
+        Double(UIWindow.current?.safeAreaInsets.top ?? 0)
     }
 
     @ToolbarContentBuilder

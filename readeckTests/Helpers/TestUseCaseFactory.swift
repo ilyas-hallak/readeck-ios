@@ -27,6 +27,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockGetServerInfo = ConfigurableGetServerInfoUseCase()
     let mockCreateShareLink = ConfigurableCreateShareLinkUseCase()
     let mockShareByEmail = ConfigurableShareByEmailUseCase()
+    let mockSaveSettings = ConfigurableSaveSettingsUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -48,9 +49,9 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase { mockExportArticlePDF }
     func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase { mockCreateShareLink }
     func makeShareByEmailUseCase() -> PShareByEmailUseCase { mockShareByEmail }
+    func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { mockSaveSettings }
 
     // Non-configurable — use existing mocks from MockUseCaseFactory pattern
-    func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { MockSaveSettingsUseCase() }
     func makeLoadSettingsUseCase() -> PLoadSettingsUseCase { MockLoadSettingsUseCase() }
     func makeSearchBookmarksUseCase() -> PSearchBookmarksUseCase { MockSearchBookmarksUseCase() }
     func makeSaveServerSettingsUseCase() -> PSaveServerSettingsUseCase { MockSaveServerSettingsUseCase() }

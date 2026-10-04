@@ -19,7 +19,7 @@ struct ReadingProgressStylePreview: View {
     var body: some View {
         ZStack(alignment: .top) {
             articleLines
-            frostedStrip
+            FrostedTopStrip(height: isToolbarVisible ? Self.topBarInset : Self.statusBarHeight)
             navigationBar
             if let style {
                 ReadingProgressOverlay(
@@ -71,20 +71,6 @@ struct ReadingProgressStylePreview: View {
             .padding(.horizontal, 44)
             .padding(.top, 22)
         }
-    }
-
-    // Same strip as in the reader, so the article fades out below the status bar
-    private var frostedStrip: some View {
-        Rectangle()
-            .fill(.regularMaterial)
-            .mask {
-                LinearGradient(
-                    stops: [.init(color: .black, location: 0.6), .init(color: .clear, location: 1)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-            .frame(height: (isToolbarVisible ? Self.topBarInset : Self.statusBarHeight) + 12)
     }
 
     private var navigationBar: some View {

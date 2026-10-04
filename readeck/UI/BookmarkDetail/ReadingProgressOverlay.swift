@@ -74,9 +74,12 @@ struct ProgressPillAtScrollIndicator: View {
     let model: ReadingProgressModel
     let top: Double
 
+    // Keeps the pill clear of the bottom edge at 100 percent
+    private static let bottomClearance: Double = 60
+
     var body: some View {
         GeometryReader { proxy in
-            let travel = max(proxy.size.height - top - 60, 0)
+            let travel = max(proxy.size.height - top - Self.bottomClearance, 0)
             ProgressPill(model: model)
                 .padding(.trailing, 12)
                 .frame(maxWidth: .infinity, alignment: .trailing)

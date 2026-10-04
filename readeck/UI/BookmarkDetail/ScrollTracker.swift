@@ -14,7 +14,7 @@ struct ScrollTracker {
 
     var scrollUpThresholdRatio: CGFloat = 0.12
     var scrollDownThresholdRatio: CGFloat = 0.06
-    var topZoneRatio: CGFloat = 0.1
+    var topZoneRatio = 0.1
 
     // MARK: - State
 

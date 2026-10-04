@@ -306,3 +306,27 @@ enum TestError: Error, Equatable {
     case unauthorized
     case serverUnreachable
 }
+
+class ConfigurableSaveSettingsUseCase: PSaveSettingsUseCase {
+    var savedReadingProgressStyles: [ReadingProgressStyle] = []
+    var savedHideProgressBar: [Bool] = []
+
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize, fontSizeNumeric: Double) async throws {}
+    func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws {}
+    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws {
+        savedHideProgressBar.append(hideProgressBar)
+    }
+    func execute(customCSS: String) async throws {}
+    func execute(readingProgressStyle: ReadingProgressStyle) async throws {
+        savedReadingProgressStyles.append(readingProgressStyle)
+    }
+    func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws {}
+    func execute(enableTTS: Bool) async throws {}
+    func execute(theme: Theme) async throws {}
+    func execute(urlOpener: UrlOpener) async throws {}
+    func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
+    func execute(disableReaderBackSwipe: Bool) async throws {}
+    func execute(archiveAdvanceMode: ArchiveAdvanceMode) async throws {}
+    func execute(showUnreadBadge: Bool) async throws {}
+    func execute(swipeActionConfig: SwipeActionConfig) async throws {}
+}

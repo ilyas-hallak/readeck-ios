@@ -22,8 +22,7 @@ struct IslandProgressRing: View {
 
     /// Also true in landscape, where the island sits on the side.
     static var isAvailableOnDevice: Bool {
-        let scene = UIApplication.shared.connectedScenes.first { $0 is UIWindowScene } as? UIWindowScene
-        guard let insets = scene?.keyWindow?.safeAreaInsets else { return false }
+        guard let insets = UIWindow.current?.safeAreaInsets else { return false }
         return isAvailable(statusBarHeight: max(insets.top, insets.left, insets.right))
     }
 
