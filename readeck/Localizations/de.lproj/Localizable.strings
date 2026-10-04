@@ -327,3 +327,11 @@
 /* Reader Switch Tip */
 "New reader" = "Neuer Reader";
 "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artikel öffnen jetzt im modernen Reader. Falls etwas nicht stimmt, kannst du unter Schrift zurückschalten.";
+
+/* Slow connection and offline mode */
+"Your connection seems very slow or offline." = "Deine Verbindung ist sehr langsam oder weg.";
+"Go Offline" = "Offline gehen";
+"You're back online." = "Du bist wieder online.";
+"Go Online" = "Online gehen";
+"This article isn't available offline." = "Dieser Artikel ist offline nicht verfügbar.";
+"Offline mode, showing cached articles." = "Offline-Modus, gespeicherte Artikel werden angezeigt.";

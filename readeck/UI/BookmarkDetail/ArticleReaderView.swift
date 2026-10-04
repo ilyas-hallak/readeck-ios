@@ -151,9 +151,7 @@ struct ArticleReaderView: View {
                 // Trigger WebView reload when annotation is selected
             }
             .task {
-                await viewModel.loadBookmarkDetail(id: bookmarkId)
-                await viewModel.waitForArticleReady(id: bookmarkId)
-                await viewModel.loadArticleContent(id: bookmarkId)
+                await viewModel.loadReader(id: bookmarkId)
             }
     }
 
@@ -563,23 +561,26 @@ struct ArticleReaderView: View {
                 .id(settings.webViewIdentifier)
             }
         } else if viewModel.isLoadingArticle {
-            ProgressView("Loading article...")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+            ArticleLoadingView { viewModel.goOffline() }
         } else {
-            Button(action: {
-                URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-            }) {
-                HStack {
-                    Image(systemName: "safari")
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                }
-                .font(.title3.bold())
-                .frame(maxWidth: .infinity)
+            if !appSettings.isNetworkConnected {
+                OfflineArticleNote()
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
-            .padding(.top, 0)
+            if !viewModel.bookmarkDetail.url.isEmpty {
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    HStack {
+                        Image(systemName: "safari")
+                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+                    }
+                    .font(.title3.bold())
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
+                .padding(.top, 0)
+            }
         }
     }
 

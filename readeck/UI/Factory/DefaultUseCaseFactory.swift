@@ -31,6 +31,7 @@ protocol UseCaseFactory {
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
@@ -47,9 +48,15 @@ protocol UseCaseFactory {
 final class DefaultUseCaseFactory: UseCaseFactory {
     // One shared session, configured with timeouts, for the whole app.
     private let httpSession: HTTPSession = HTTPSessionFactory.makeDefault()
+    // Content requests fail fast while the user chose to go offline. Token refresh and
+    // the reachability check keep the raw session, so they still reach the server.
+    private lazy var gatedHTTPSession: HTTPSession = OfflineGatedHTTPSession(
+        base: httpSession,
+        isForcedOffline: networkMonitorRepository.isForcedOffline
+    )
     private lazy var tokenProvider = KeychainTokenProvider(session: httpSession)
-    private lazy var api: PAPI = API(tokenProvider: tokenProvider, session: httpSession)
-    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider, session: httpSession)
+    private lazy var api: PAPI = API(tokenProvider: tokenProvider, session: gatedHTTPSession)
+    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider, session: gatedHTTPSession)
     private lazy var getUserProfileUseCase: PGetUserProfileUseCase = GetUserProfileUseCase(profileApiClient: profileApiClient)
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
@@ -189,6 +196,10 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase {
         GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase {
+        GetCachedBookmarkDetailUseCase(offlineCacheRepository: offlineCacheRepository)
     }
 
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {

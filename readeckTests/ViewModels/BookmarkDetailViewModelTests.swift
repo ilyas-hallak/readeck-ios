@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import Combine
 @testable import readeck
 
 @Suite("BookmarkDetailViewModel Tests")
@@ -57,6 +58,73 @@ struct BookmarkDetailViewModelTests {
 
         #expect(vm.errorMessage == "Error loading bookmark")
         #expect(vm.isLoading == false)
+    }
+
+    @Test("Load bookmark detail falls back to cached metadata when offline")
+    func loadBookmarkDetailFailureFallsBackToCachedMetadata() async {
+        let (vm, factory) = createSUT()
+        let cachedDetail = BookmarkDetail(
+            id: "456",
+            title: "Cached Title",
+            url: "https://example.com/cached",
+            description: "",
+            siteName: "Example",
+            authors: [],
+            created: "2024-01-01",
+            updated: "2024-01-02",
+            wordCount: 0,
+            readingTime: 0,
+            hasArticle: false,
+            loaded: false,
+            isMarked: false,
+            isArchived: false,
+            labels: [],
+            thumbnailUrl: "",
+            imageUrl: "",
+            lang: "en",
+            readProgress: 0
+        )
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+        factory.mockGetCachedBookmarkDetail.result = cachedDetail
+
+        await vm.loadBookmarkDetail(id: "456")
+
+        #expect(vm.bookmarkDetail.url == "https://example.com/cached")
+        #expect(vm.bookmarkDetail.title == "Cached Title")
+        #expect(vm.errorMessage == nil)
+    }
+
+    // MARK: - Wait For Article Ready
+
+    @Test("Wait for article ready stops after one poll when offline")
+    func waitForArticleReadyStopsOnNoConnection() async {
+        let (vm, factory) = createSUT()
+        vm.bookmarkDetail = BookmarkDetail(
+            id: "456",
+            title: "Test",
+            url: "https://example.com",
+            description: "",
+            siteName: "",
+            authors: [],
+            created: "",
+            updated: "",
+            wordCount: 0,
+            readingTime: 0,
+            hasArticle: false,
+            loaded: false,
+            isMarked: false,
+            isArchived: false,
+            labels: [],
+            thumbnailUrl: "",
+            imageUrl: "",
+            lang: "en",
+            readProgress: 0
+        )
+        factory.mockGetBookmark.result = .failure(URLError(.notConnectedToInternet))
+
+        await vm.waitForArticleReady(id: "456", maxAttempts: 8, delay: 0.01)
+
+        #expect(factory.mockGetBookmark.executeCallCount == 1)
     }
 
     // MARK: - Load Article Content
@@ -175,6 +243,146 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.articleContent == "<p>Cached</p>")
         #expect(vm.errorMessage == nil)
         #expect(vm.isLoadingArticle == false)
+    }
+
+    // MARK: - Opening the Reader (Cache First)
+
+    @Test("A cached article opens at once with cached metadata when the server is unreachable")
+    func loadReaderServesCacheWhenOffline() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetCachedBookmarkDetail.result = makeDetail(title: "Cached title")
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+
+        let start = ContinuousClock.now
+        await vm.loadReader(id: "456")
+
+        #expect(ContinuousClock.now - start < .seconds(1))
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.bookmarkDetail.title == "Cached title")
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoadingArticle == false)
+        #expect(vm.isLoading == false)
+    }
+
+    @Test("A cached article without cached metadata does not wait for the server")
+    func loadReaderSkipsPollingForCachedArticle() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+
+        let start = ContinuousClock.now
+        await vm.loadReader(id: "456")
+
+        #expect(ContinuousClock.now - start < .seconds(1))
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("A cached article is shown before a hanging server request returns")
+    func loadReaderShowsCacheBeforeServerResponds() async throws {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetBookmark.delay = .seconds(30)
+
+        let loading = Task { await vm.loadReader(id: "456") }
+        defer { loading.cancel() }
+
+        let deadline = ContinuousClock.now + .seconds(1)
+        while vm.articleContent.isEmpty && ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.isLoadingArticle == false)
+    }
+
+    @Test("Server metadata replaces the cached metadata once it arrives")
+    func loadReaderRefreshesCachedDetailFromServer() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetCachedBookmarkDetail.result = makeDetail(title: "Cached title")
+
+        await vm.loadReader(id: "123")
+
+        #expect(vm.bookmarkDetail.title == "Test")
+    }
+
+    @Test("An uncached article still loads from the server")
+    func loadReaderFetchesUncachedArticle() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarkArticle.result = .success("<p>Server</p>")
+
+        await vm.loadReader(id: "123")
+
+        #expect(vm.articleContent == "<p>Server</p>")
+        #expect(vm.bookmarkDetail.id == "123")
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("An uncached article that can't be reached fails fast instead of polling")
+    func loadReaderSkipsPollingWhenDetailFails() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmark.result = .failure(URLError(.notConnectedToInternet))
+        factory.mockGetBookmarkArticle.result = .failure(URLError(.notConnectedToInternet))
+
+        let start = ContinuousClock.now
+        await vm.loadReader(id: "123")
+
+        #expect(ContinuousClock.now - start < .seconds(1))
+        #expect(vm.isLoadingArticle == false)
+        #expect(vm.articleContent.isEmpty)
+    }
+
+    @Test("Go Offline switches the app to offline mode")
+    func goOfflineForcesOffline() async {
+        let (vm, factory) = createSUT()
+        var forced: [Bool] = []
+        let sub = factory.mockNetworkMonitor.isForcedOffline.sink { forced.append($0) }
+
+        vm.goOffline()
+
+        #expect(forced.last == true)
+        sub.cancel()
+    }
+
+    @Test("Reloading the detail offline keeps the bookmark that is already shown")
+    func reloadBookmarkDetailOfflineKeepsDetail() async {
+        let (vm, factory) = createSUT()
+        await vm.loadBookmarkDetail(id: "123")
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.bookmarkDetail.id == "123")
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("Refreshing a cached article offline keeps it without an error")
+    func refreshCachedArticleOfflineKeepsContent() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetCachedArticle.result = "<p>Cached</p>"
+        factory.mockGetCachedBookmarkDetail.result = makeDetail(title: "Cached title")
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+        await vm.loadReader(id: "123")
+
+        await vm.refreshBookmarkDetail(id: "123")
+
+        #expect(vm.articleContent == "<p>Cached</p>")
+        #expect(vm.bookmarkDetail.title == "Cached title")
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isLoadingArticle == false)
+    }
+
+    private func makeDetail(title: String) -> BookmarkDetail {
+        BookmarkDetail(
+            id: "123", title: title, url: "https://example.com", description: "", siteName: "Example",
+            authors: [], created: "", updated: "", wordCount: 100, readingTime: 1, hasArticle: true,
+            loaded: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "",
+            lang: "en", readProgress: 0
+        )
     }
 
     // MARK: - Bookmark Detail Error Paths

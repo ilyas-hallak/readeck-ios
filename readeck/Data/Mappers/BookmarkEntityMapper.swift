@@ -133,6 +133,33 @@ extension BookmarkEntity {
     }
 }
 
+// MARK: - Cached Bookmark to BookmarkDetail Mapping
+extension Bookmark {
+    func toBookmarkDetail() -> BookmarkDetail {
+        BookmarkDetail(
+            id: id,
+            title: title,
+            url: url,
+            description: description,
+            siteName: siteName,
+            authors: authors,
+            created: created,
+            updated: updated,
+            wordCount: wordCount,
+            readingTime: readingTime,
+            hasArticle: hasArticle,
+            loaded: loaded,
+            isMarked: isMarked,
+            isArchived: isArchived,
+            labels: labels,
+            thumbnailUrl: resources.thumbnail?.src ?? "",
+            imageUrl: resources.image?.src ?? "",
+            lang: lang ?? "",
+            readProgress: readProgress
+        )
+    }
+}
+
 // MARK: - Domain to BookmarkEntity Mapping
 extension Bookmark {
     func toEntity(context: NSManagedObjectContext) -> BookmarkEntity {

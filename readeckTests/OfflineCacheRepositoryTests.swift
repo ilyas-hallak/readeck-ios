@@ -69,6 +69,64 @@ struct OfflineCacheRepositoryTests {
         )
     }
 
+    // MARK: - Cached Bookmark Detail
+
+    @Test("A cached bookmark maps to the detail the reader shows offline")
+    func testCachedBookmarkMapsToDetail() throws {
+        let context = createInMemoryCoreDataStack()
+        let entity = createTestBookmark(title: "Offline Article").toEntity(context: context)
+        entity.heroImageURL = "https://example.com/hero.jpg"
+
+        let detail = try #require(entity.toDomain()?.toBookmarkDetail())
+
+        #expect(detail.id == "test-123")
+        #expect(detail.title == "Offline Article")
+        #expect(detail.url == "https://example.com/article")
+        #expect(detail.siteName == "Example Site")
+        #expect(detail.wordCount == 1000)
+        #expect(detail.imageUrl == "https://example.com/hero.jpg")
+        #expect(detail.loaded)
+        #expect(detail.hasArticle)
+    }
+
+    @Test("getCachedBookmarkDetail returns nil for an unknown id")
+    func testGetCachedBookmarkDetailUnknownId() {
+        let coreDataManager = CoreDataManager.inMemory()
+        let repository = OfflineCacheRepository(coreDataManager: coreDataManager)
+
+        let detail = repository.getCachedBookmarkDetail(id: "missing")
+
+        #expect(detail == nil)
+    }
+
+    @Test("getCachedBookmarkDetail returns metadata for a row without htmlContent")
+    func testGetCachedBookmarkDetailWithoutHTML() {
+        let coreDataManager = CoreDataManager.inMemory()
+        _ = createTestBookmark(id: "no-html", title: "List Only").toEntity(context: coreDataManager.context)
+        try! coreDataManager.context.save()
+
+        let repository = OfflineCacheRepository(coreDataManager: coreDataManager)
+        let detail = repository.getCachedBookmarkDetail(id: "no-html")
+
+        #expect(detail?.id == "no-html")
+        #expect(detail?.title == "List Only")
+        #expect(detail?.url == "https://example.com/article")
+    }
+
+    @Test("getCachedBookmarkDetail returns metadata for a row with htmlContent")
+    func testGetCachedBookmarkDetailWithHTML() {
+        let coreDataManager = CoreDataManager.inMemory()
+        let entity = createTestBookmark(id: "with-html", title: "Cached Article").toEntity(context: coreDataManager.context)
+        entity.htmlContent = "<p>Hello</p>"
+        try! coreDataManager.context.save()
+
+        let repository = OfflineCacheRepository(coreDataManager: coreDataManager)
+        let detail = repository.getCachedBookmarkDetail(id: "with-html")
+
+        #expect(detail?.id == "with-html")
+        #expect(detail?.title == "Cached Article")
+    }
+
     // MARK: - HTML Extraction Tests
 
     @Test("Extract image URLs from HTML correctly")

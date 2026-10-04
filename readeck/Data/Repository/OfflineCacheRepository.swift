@@ -12,8 +12,12 @@ import Kingfisher
 final class OfflineCacheRepository: POfflineCacheRepository {
     // MARK: - Dependencies
 
-    private let coreDataManager = CoreDataManager.shared
+    private let coreDataManager: CoreDataManager
     private let logger = Logger.sync
+
+    init(coreDataManager: CoreDataManager = .shared) {
+        self.coreDataManager = coreDataManager
+    }
 
     // MARK: - Cache Operations
 
@@ -83,6 +87,25 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         }
 
         return html
+    }
+
+    func getCachedBookmarkDetail(id: String) -> BookmarkDetail? {
+        // No htmlContent filter here: this returns bookmark metadata (title, url, …)
+        // even for rows that only come from the bookmark list cache, not the reader cache.
+        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+        fetchRequest.fetchLimit = 1
+
+        let context = coreDataManager.context
+        var detail: BookmarkDetail?
+        context.performAndWait {
+            do {
+                detail = try context.fetch(fetchRequest).first?.toDomain()?.toBookmarkDetail()
+            } catch {
+                logger.error("Error fetching cached bookmark: \(error.localizedDescription)")
+            }
+        }
+        return detail
     }
 
     func hasCachedArticle(id: String) -> Bool {

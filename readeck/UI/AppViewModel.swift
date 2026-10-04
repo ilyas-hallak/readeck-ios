@@ -21,13 +21,21 @@ final class AppViewModel {
     var hasFinishedSetup = true
     var isServerReachable = false
     var isNetworkConnected = true
+    private(set) var isForcedOffline = false
+    private(set) var isServerBackOnline = false {
+        didSet { appSettings?.isServerBackOnline = isServerBackOnline }
+    }
 
+    private let reconnectInterval: Duration
+    private var reconnectTask: Task<Void, Never>?
+    private weak var appSettings: AppSettings?
     private var lastAppStartTagSyncTime: Date?
     private var cancellables = Set<AnyCancellable>()
     private var notificationObservers: [Any] = []
 
-    init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
+    init(factory: UseCaseFactory = DefaultUseCaseFactory.shared, reconnectInterval: Duration = .seconds(30)) {
         self.factory = factory
+        self.reconnectInterval = reconnectInterval
         self.settingsRepository = factory.makeSettingsRepository()
         self.syncTagsUseCase = factory.makeSyncTagsUseCase()
         self.updateUnreadBadgeUseCase = factory.makeUpdateUnreadBadgeUseCase()
@@ -98,9 +106,47 @@ final class AppViewModel {
             .receive(on: DispatchQueue.main)
             .assign(to: \.isNetworkConnected, on: self)
             .store(in: &cancellables)
+
+        networkMonitorUseCase.isForcedOffline
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isForced in
+                self?.handleForcedOfflineChange(isForced)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func handleForcedOfflineChange(_ isForced: Bool) {
+        isForcedOffline = isForced
+        appSettings?.isForcedOffline = isForced
+        isServerBackOnline = false
+        reconnectTask?.cancel()
+        reconnectTask = isForced ? makeReconnectTask() : nil
+    }
+
+    // Only reports that the server answers again. Going back online stays the user's call.
+    private func makeReconnectTask() -> Task<Void, Never> {
+        Task { [weak self, reconnectInterval] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: reconnectInterval)
+                guard !Task.isCancelled, let self else { return }
+                if await self.checkServerBackOnline() { return }
+            }
+        }
+    }
+
+    private func checkServerBackOnline() async -> Bool {
+        guard isForcedOffline else { return false }
+        let isReachable = await factory.makeCheckServerReachabilityUseCase().execute()
+        guard isForcedOffline else { return false }
+        if isReachable { isServerBackOnline = true }
+        return isReachable
     }
 
     func bindNetworkStatus(to appSettings: AppSettings) {
+        self.appSettings = appSettings
+        appSettings.isForcedOffline = isForcedOffline
+        appSettings.isServerBackOnline = isServerBackOnline
+
         // Bind network status to AppSettings for global access
         networkMonitorUseCase.isConnected
             .receive(on: DispatchQueue.main)
@@ -116,6 +162,10 @@ final class AppViewModel {
     }
 
     func onAppResume() async {
+        if isForcedOffline {
+            _ = await checkServerBackOnline()
+            return
+        }
         await checkServerReachability()
         await syncTagsOnAppStart()
         syncOfflineArticlesIfNeeded()

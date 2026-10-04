@@ -17,6 +17,10 @@ final class MockUseCaseFactory: UseCaseFactory {
         MockGetCachedArticleUseCase()
     }
 
+    func makeGetCachedBookmarkDetailUseCase() -> any PGetCachedBookmarkDetailUseCase {
+        MockGetCachedBookmarkDetailUseCase()
+    }
+
     func makeCreateAnnotationUseCase() -> any PCreateAnnotationUseCase {
         MockCreateAnnotationUseCase()
     }
@@ -397,8 +401,18 @@ final class MockOfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 }
 
 final class MockNetworkMonitorRepository: PNetworkMonitorRepository {
+    private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
+
     var isConnected: AnyPublisher<Bool, Never> {
-        Just(true).eraseToAnyPublisher()
+        forcedOfflineSubject.map { !$0 }.eraseToAnyPublisher()
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        forcedOfflineSubject.eraseToAnyPublisher()
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        forcedOfflineSubject.send(isForced)
     }
 
     func startMonitoring() {}
@@ -416,6 +430,14 @@ final class MockNetworkMonitorUseCase: PNetworkMonitorUseCase {
 
     var isConnected: AnyPublisher<Bool, Never> {
         repository.isConnected
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        repository.isForcedOffline
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        repository.setForcedOffline(isForced)
     }
 
     func startMonitoring() {
@@ -445,6 +467,12 @@ final class MockGetCachedArticleUseCase: PGetCachedArticleUseCase {
     func execute(id: String) -> String? {
         let path = Bundle.main.path(forResource: "article", ofType: "html")
         return try? String(contentsOfFile: path!)
+    }
+}
+
+final class MockGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase {
+    func execute(id: String) -> BookmarkDetail? {
+        nil
     }
 }
 

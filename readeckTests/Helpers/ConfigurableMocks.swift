@@ -80,8 +80,14 @@ class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase {
     var result: Result<BookmarkDetail, Error> = .success(
         BookmarkDetail(id: "123", title: "Test", url: "https://example.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 2, hasArticle: true, loaded: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "", lang: "en", readProgress: 0)
     )
+    var delay: Duration?
+    var executeCallCount = 0
 
     func execute(id: String) async throws -> BookmarkDetail {
+        executeCallCount += 1
+        if let delay {
+            try await Task.sleep(for: delay)
+        }
         return try result.get()
     }
 }
@@ -107,8 +113,12 @@ class ConfigurableLoginUseCase: PLoginUseCase {
 class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
     var isReachable: Bool = true
     var serverInfo: ServerInfo = ServerInfo(version: "1.0.0", isReachable: true, features: ["oauth"])
+    private(set) var executeCount = 0
 
-    func execute() async -> Bool { isReachable }
+    func execute() async -> Bool {
+        executeCount += 1
+        return isReachable
+    }
     func getServerInfo() async throws -> ServerInfo { serverInfo }
 }
 
@@ -127,6 +137,12 @@ class ConfigurableGetCachedArticleUseCase: PGetCachedArticleUseCase {
     var result: String?
 
     func execute(id: String) -> String? { result }
+}
+
+class ConfigurableGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase {
+    var result: BookmarkDetail?
+
+    func execute(id: String) -> BookmarkDetail? { result }
 }
 
 class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
