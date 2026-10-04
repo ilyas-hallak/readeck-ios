@@ -611,20 +611,30 @@ struct BookmarkDetailViewModelTests {
     func undoOnlyRemovesTheLatestHighlight() async {
         let (vm, factory) = createSUT()
         let undoManager = UndoManager()
+        // Disable automatic per-run-loop-turn grouping and bracket each creation in its own
+        // group, the way two separate user events (two taps, two run loop turns) would in
+        // production, instead of letting both calls land in one group because the test runs
+        // them back to back in the same turn.
+        undoManager.groupsByEvent = false
         factory.mockCreateAnnotation.resultQueue = [
             .success(Annotation(id: "annotation-1", text: "first", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")),
             .success(Annotation(id: "annotation-2", text: "second", created: "", startOffset: 2, endOffset: 3, startSelector: "", endSelector: ""))
         ]
         factory.mockGetBookmarkArticle.result = .success("<p>highlighted</p>")
 
+        undoManager.beginUndoGrouping()
         await vm.createAnnotation(
             bookmarkId: "456", color: "yellow", text: "first", startOffset: 0, endOffset: 1,
             startSelector: "p", endSelector: "p", undoManager: undoManager
         )
+        undoManager.endUndoGrouping()
+
+        undoManager.beginUndoGrouping()
         await vm.createAnnotation(
             bookmarkId: "456", color: "yellow", text: "second", startOffset: 2, endOffset: 3,
             startSelector: "p", endSelector: "p", undoManager: undoManager
         )
+        undoManager.endUndoGrouping()
 
         undoManager.undo()
         await waitUntil { factory.mockDeleteAnnotation.deletedAnnotationIds.isEmpty == false }

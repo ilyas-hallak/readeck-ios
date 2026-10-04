@@ -499,19 +499,12 @@ final class BookmarkDetailViewModel {
         let target = HighlightUndoTarget()
         highlightUndoTargets[annotationId] = target
         highlightUndoManager = undoManager
-
-        // groupsByEvent groups every registration made in the same run loop turn into one
-        // undo action, so two highlights created back to back would otherwise be undone
-        // together. Grouping explicitly gives each highlight its own, independent group.
-        undoManager.groupsByEvent = false
-        undoManager.beginUndoGrouping()
         undoManager.registerUndo(withTarget: target) { [weak self] _ in
             Task { @MainActor in
                 await self?.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
             }
         }
         undoManager.setActionName(NSLocalizedString("Highlight", comment: "Undo action name for a new highlight"))
-        undoManager.endUndoGrouping()
     }
 
     private func discardUndo(of annotationId: String) {
