@@ -5,6 +5,7 @@ protocol PSaveSettingsUseCase {
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws
     func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws
     func execute(customCSS: String) async throws
+    func execute(readingProgressStyle: ReadingProgressStyle) async throws
     func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws
     func execute(enableTTS: Bool) async throws
     func execute(theme: Theme) async throws
@@ -56,6 +57,12 @@ final class SaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(customCSS: String) async throws {
         try await settingsRepository.saveSettings(
             .init(customCSS: customCSS)
+        )
+    }
+
+    func execute(readingProgressStyle: ReadingProgressStyle) async throws {
+        try await settingsRepository.saveSettings(
+            .init(readingProgressStyle: readingProgressStyle)
         )
     }
 

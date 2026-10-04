@@ -227,3 +227,16 @@
 "Send" = "Send";
 "Email Sent" = "Email Sent";
 "Could not send the email" = "Could not send the email";
+
+/* Reading progress style */
+"Progress Style" = "Progress Style";
+"Line" = "Line";
+"Island Ring" = "Island Ring";
+"Island Ring on Pause" = "Island Ring on Pause";
+"Percent in Corner" = "Percent in Corner";
+"Percent at Scroll Indicator" = "Percent at Scroll Indicator";
+"A thin line below the navigation bar slides away with it." = "A thin line below the navigation bar slides away with it.";
+"A ring around the Dynamic Island fills up as you read." = "A ring around the Dynamic Island fills up as you read.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "The ring around the Dynamic Island shows up when you stop scrolling.";
+"The percentage pops up in the top corner when you stop scrolling." = "The percentage pops up in the top corner when you stop scrolling.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "The percentage follows the scroll indicator and shows up when you stop scrolling.";

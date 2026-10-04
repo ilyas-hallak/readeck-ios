@@ -353,3 +353,16 @@
 "Send" = "Senden";
 "Email Sent" = "E-Mail gesendet";
 "Could not send the email" = "Die E-Mail konnte nicht gesendet werden";
+
+/* Reading progress style */
+"Progress Style" = "Fortschrittsanzeige";
+"Line" = "Linie";
+"Island Ring" = "Ring um die Dynamic Island";
+"Island Ring on Pause" = "Ring bei Pause";
+"Percent in Corner" = "Prozent in der Ecke";
+"Percent at Scroll Indicator" = "Prozent an der Scrollleiste";
+"A thin line below the navigation bar slides away with it." = "Eine dünne Linie unter der Navigationsleiste, die mit ihr verschwindet.";
+"A ring around the Dynamic Island fills up as you read." = "Ein Ring um die Dynamic Island füllt sich beim Lesen.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "Der Ring um die Dynamic Island erscheint, sobald du aufhörst zu scrollen.";
+"The percentage pops up in the top corner when you stop scrolling." = "Der Prozentwert erscheint oben in der Ecke, sobald du aufhörst zu scrollen.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "Der Prozentwert folgt der Scrollleiste und erscheint, sobald du aufhörst zu scrollen.";

@@ -24,7 +24,9 @@ struct ArticleReaderView: View {
     @State private var showingArchiveConfirmation = false
     @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
-    @State private var topBarInset: CGFloat = 0
+    @State private var topBarInset: Double = 0
+    @State private var isScrollPaused = false
+    @State private var progressFlashTask: Task<Void, Never>?
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
@@ -260,6 +262,9 @@ struct ArticleReaderView: View {
             .clipped()
             .ignoresSafeArea(edges: .bottom)
             .scrollPosition($scrollPosition)
+            .onScrollPhaseChange { _, phase in
+                flashProgress(when: phase)
+            }
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 // Runs on every rendered frame while scrolling, so nothing in here may
                 // write `@State` unconditionally — see ReadingProgressModel.
@@ -295,14 +300,23 @@ struct ArticleReaderView: View {
                 Rectangle()
                     .fill(.regularMaterial)
                     .mask {
-                        LinearGradient(stops: [.init(color: .black, location: 0.6), .init(color: .clear, location: 1)],
-                                       startPoint: .top, endPoint: .bottom)
+                        LinearGradient(
+                            stops: [.init(color: .black, location: 0.6), .init(color: .clear, location: 1)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
                     }
                     .frame(height: (isToolbarVisible ? topBarInset : statusBarHeight) + 12)
 
                 if !(viewModel.settings?.hideProgressBar ?? false) {
-                    ReadingProgressBar(model: progressModel)
-                        .offset(y: isToolbarVisible ? topBarInset : statusBarHeight)
+                    ReadingProgressOverlay(
+                        style: viewModel.settings?.readingProgressStyle ?? .line,
+                        model: progressModel,
+                        isToolbarVisible: isToolbarVisible,
+                        isScrollPaused: isScrollPaused,
+                        topBarInset: topBarInset,
+                        statusBarHeight: statusBarHeight
+                    )
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -317,9 +331,24 @@ struct ArticleReaderView: View {
         .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
     }
 
-    private var statusBarHeight: CGFloat {
+    // Shows the progress for a moment once the reader stops scrolling
+    private func flashProgress(when phase: ScrollPhase) {
+        progressFlashTask?.cancel()
+        guard phase == .idle else {
+            isScrollPaused = false
+            return
+        }
+        isScrollPaused = true
+        progressFlashTask = Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled else { return }
+            isScrollPaused = false
+        }
+    }
+
+    private var statusBarHeight: Double {
         let scene = UIApplication.shared.connectedScenes.first { $0 is UIWindowScene } as? UIWindowScene
-        return scene?.keyWindow?.safeAreaInsets.top ?? 0
+        return Double(scene?.keyWindow?.safeAreaInsets.top ?? 0)
     }
 
     @ToolbarContentBuilder

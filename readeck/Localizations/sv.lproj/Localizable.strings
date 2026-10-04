@@ -332,3 +332,16 @@
 "Send" = "Skicka";
 "Email Sent" = "E-post skickat";
 "Could not send the email" = "Det gick inte att skicka e-postmeddelandet";
+
+/* Reading progress style */
+"Progress Style" = "Förloppsvisning";
+"Line" = "Linje";
+"Island Ring" = "Ring runt Dynamic Island";
+"Island Ring on Pause" = "Ring vid paus";
+"Percent in Corner" = "Procent i hörnet";
+"Percent at Scroll Indicator" = "Procent vid rullningslisten";
+"A thin line below the navigation bar slides away with it." = "En tunn linje under navigeringsfältet som försvinner med det.";
+"A ring around the Dynamic Island fills up as you read." = "En ring runt Dynamic Island fylls medan du läser.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "Ringen runt Dynamic Island visas när du slutar rulla.";
+"The percentage pops up in the top corner when you stop scrolling." = "Procenten visas i det övre hörnet när du slutar rulla.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "Procenten följer rullningslisten och visas när du slutar rulla.";

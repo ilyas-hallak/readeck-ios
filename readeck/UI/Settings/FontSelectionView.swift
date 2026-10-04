@@ -110,6 +110,13 @@ struct FontSelectionView: View {
         if ArticleReaderAvailability.isNativeReaderSupported {
             Section {
                 Toggle("Modern Reader", isOn: $useNativeWebView)
+                if #available(iOS 26.0, *), useNativeWebView, !viewModel.hideProgressBar {
+                    NavigationLink {
+                        ReadingProgressStyleView(viewModel: viewModel)
+                    } label: {
+                        LabeledContent("Progress Style", value: viewModel.readingProgressStyle.localizedTitle)
+                    }
+                }
             } header: {
                 Text("Reader")
             } footer: {

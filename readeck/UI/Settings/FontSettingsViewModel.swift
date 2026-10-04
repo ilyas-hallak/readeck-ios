@@ -28,6 +28,7 @@ final class FontSettingsViewModel {
     var hideWordCount: Bool = false
     var hideHeroImage: Bool = false
     var hideSummary: Bool = false
+    var readingProgressStyle: ReadingProgressStyle = .line
 
     // MARK: - Loading State
     var isLoading = false
@@ -213,6 +214,7 @@ final class FontSettingsViewModel {
                 hideWordCount = settings.hideWordCount ?? false
                 hideHeroImage = settings.hideHeroImage ?? false
                 hideSummary = settings.hideSummary ?? false
+                readingProgressStyle = settings.readingProgressStyle ?? .line
                 customCSS = settings.customCSS ?? ""
                 readerColorTheme = settings.readerColorTheme ?? .system
                 if let bgHex = settings.customBackgroundColor {
@@ -263,6 +265,15 @@ final class FontSettingsViewModel {
             )
         } catch {
             errorMessage = "Error saving visibility settings"
+        }
+    }
+
+    @MainActor
+    func saveReadingProgressStyle() async {
+        do {
+            try await saveSettingsUseCase.execute(readingProgressStyle: readingProgressStyle)
+        } catch {
+            errorMessage = "Error saving progress style"
         }
     }
 
