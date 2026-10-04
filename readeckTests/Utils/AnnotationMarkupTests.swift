@@ -21,4 +21,32 @@ struct AnnotationMarkupTests {
 
         #expect(AnnotationMarkup.annotationIds(in: html).isEmpty)
     }
+
+    @Test("Unwraps a single highlight span, keeping its text")
+    func removesSingleSpan() {
+        let html = #"<p><rd-annotation data-annotation-id-value="a">hello</rd-annotation> world</p>"#
+
+        #expect(AnnotationMarkup.removingAnnotation(id: "a", from: html) == "<p>hello world</p>")
+    }
+
+    @Test("Unwraps every tag of a multi paragraph highlight sharing the same ID")
+    func removesAllSpansOfTheSameId() {
+        let html = """
+        <p><rd-annotation data-annotation-id-value="a">one</rd-annotation></p>
+        <p><rd-annotation data-annotation-id-value="a">two</rd-annotation></p>
+        """
+
+        let result = AnnotationMarkup.removingAnnotation(id: "a", from: html)
+
+        #expect(result == "<p>one</p>\n<p>two</p>")
+    }
+
+    @Test("Leaves highlights with a different ID untouched")
+    func leavesOtherIdsUntouched() {
+        let html = #"<p><rd-annotation data-annotation-id-value="a">one</rd-annotation></p><p><rd-annotation data-annotation-id-value="b">two</rd-annotation></p>"#
+
+        let result = AnnotationMarkup.removingAnnotation(id: "a", from: html)
+
+        #expect(result == #"<p>one</p><p><rd-annotation data-annotation-id-value="b">two</rd-annotation></p>"#)
+    }
 }

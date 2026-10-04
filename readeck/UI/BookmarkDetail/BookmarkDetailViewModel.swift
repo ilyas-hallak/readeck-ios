@@ -454,8 +454,7 @@ final class BookmarkDetailViewModel {
     func deleteAnnotation(bookmarkId: String, annotationId: String) async -> Bool {
         do {
             try await deleteAnnotationUseCase.execute(bookmarkId: bookmarkId, annotationId: annotationId)
-            annotations.removeAll { $0.id == annotationId }
-            discardUndo(of: annotationId)
+            removeAnnotationLocally(id: annotationId)
             await refreshArticleInBackground(id: bookmarkId)
             return true
         } catch {
@@ -463,6 +462,25 @@ final class BookmarkDetailViewModel {
             errorMessage = NSLocalizedString("Error removing highlight", comment: "Annotation delete error")
             return false
         }
+    }
+
+    /// Brings the reader in sync with a highlight deleted elsewhere (the Annotations sheet),
+    /// so shake-to-undo and the article content don't keep pointing at a removed highlight.
+    @MainActor
+    func annotationWasDeleted(id: String, bookmarkId: String) {
+        removeAnnotationLocally(id: id)
+        Task {
+            await refreshArticleInBackground(id: bookmarkId)
+        }
+    }
+
+    /// Drops the annotation from state and strips its markup from the article right away,
+    /// instead of waiting for `refreshArticleInBackground`, which silently fails offline.
+    private func removeAnnotationLocally(id: String) {
+        annotations.removeAll { $0.id == id }
+        discardUndo(of: id)
+        articleContent = AnnotationMarkup.removingAnnotation(id: id, from: articleContent)
+        processArticleContent()
     }
 
     func annotationText(for annotationId: String) -> String? {
@@ -481,12 +499,19 @@ final class BookmarkDetailViewModel {
         let target = HighlightUndoTarget()
         highlightUndoTargets[annotationId] = target
         highlightUndoManager = undoManager
+
+        // groupsByEvent groups every registration made in the same run loop turn into one
+        // undo action, so two highlights created back to back would otherwise be undone
+        // together. Grouping explicitly gives each highlight its own, independent group.
+        undoManager.groupsByEvent = false
+        undoManager.beginUndoGrouping()
         undoManager.registerUndo(withTarget: target) { [weak self] _ in
             Task { @MainActor in
                 await self?.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
             }
         }
         undoManager.setActionName(NSLocalizedString("Highlight", comment: "Undo action name for a new highlight"))
+        undoManager.endUndoGrouping()
     }
 
     private func discardUndo(of annotationId: String) {

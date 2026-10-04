@@ -31,6 +31,10 @@ private struct HighlightRemovalDialog: ViewModifier {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
+            .onDisappear {
+                // Highlights of a closed article must not be undone from another screen.
+                viewModel.discardHighlightUndo()
+            }
     }
 
     private var isPresented: Binding<Bool> {
@@ -42,7 +46,8 @@ private struct HighlightRemovalDialog: ViewModifier {
 
     private func remove(_ annotationId: String) {
         Task {
-            if await !viewModel.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId) {
+            let succeeded = await viewModel.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
+            if !succeeded {
                 showingError = true
             }
         }

@@ -75,15 +75,17 @@ struct ArticleReaderView: View {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
             .sheet(isPresented: $showingAnnotationsSheet) {
-                AnnotationsListView(bookmarkId: bookmarkId) { annotationId in
-                    viewModel.selectedAnnotationId = annotationId
-                }
+                AnnotationsListView(
+                    bookmarkId: bookmarkId,
+                    onAnnotationTap: { annotationId in
+                        viewModel.selectedAnnotationId = annotationId
+                    },
+                    onAnnotationDeleted: { annotationId in
+                        viewModel.annotationWasDeleted(id: annotationId, bookmarkId: bookmarkId)
+                    }
+                )
             }
             .highlightRemovalDialog(annotationId: $highlightToRemove, bookmarkId: bookmarkId, viewModel: viewModel)
-            .onDisappear {
-                // Highlights of a closed article must not be undone from another screen.
-                viewModel.discardHighlightUndo()
-            }
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
             }

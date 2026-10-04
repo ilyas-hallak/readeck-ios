@@ -577,6 +577,63 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.annotationText(for: "missing") == nil)
     }
 
+    @Test("A deletion made in the Annotations sheet also clears the reader's undo action")
+    func annotationWasDeletedClearsUndoAndState() async {
+        let (vm, factory) = createSUT()
+        let undoManager = UndoManager()
+        await createHighlight(on: vm, factory: factory, undoManager: undoManager)
+        vm.articleContent = #"<p><rd-annotation data-annotation-id-value="annotation-1">highlighted</rd-annotation></p>"#
+        #expect(undoManager.canUndo)
+
+        vm.annotationWasDeleted(id: "annotation-1", bookmarkId: "456")
+
+        #expect(undoManager.canUndo == false)
+        #expect(vm.annotations.isEmpty)
+        #expect(!vm.articleContent.contains("annotation-1"))
+        #expect(vm.articleContent.contains("highlighted"))
+    }
+
+    @Test("Delete removes the highlight markup locally even when the background refresh fails")
+    func deleteAnnotationStripsMarkupWhenRefreshFails() async {
+        let (vm, factory) = createSUT()
+        await createHighlight(on: vm, factory: factory)
+        vm.articleContent = #"<p><rd-annotation data-annotation-id-value="annotation-1">highlighted</rd-annotation> and more</p>"#
+        factory.mockGetBookmarkArticle.result = .failure(TestError.networkError)
+
+        let removed = await vm.deleteAnnotation(bookmarkId: "456", annotationId: "annotation-1")
+
+        #expect(removed)
+        #expect(!vm.articleContent.contains("annotation-1"))
+        #expect(vm.articleContent.contains("highlighted"))
+    }
+
+    @Test("Undoing only removes the most recently created highlight")
+    func undoOnlyRemovesTheLatestHighlight() async {
+        let (vm, factory) = createSUT()
+        let undoManager = UndoManager()
+        factory.mockCreateAnnotation.resultQueue = [
+            .success(Annotation(id: "annotation-1", text: "first", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")),
+            .success(Annotation(id: "annotation-2", text: "second", created: "", startOffset: 2, endOffset: 3, startSelector: "", endSelector: ""))
+        ]
+        factory.mockGetBookmarkArticle.result = .success("<p>highlighted</p>")
+
+        await vm.createAnnotation(
+            bookmarkId: "456", color: "yellow", text: "first", startOffset: 0, endOffset: 1,
+            startSelector: "p", endSelector: "p", undoManager: undoManager
+        )
+        await vm.createAnnotation(
+            bookmarkId: "456", color: "yellow", text: "second", startOffset: 2, endOffset: 3,
+            startSelector: "p", endSelector: "p", undoManager: undoManager
+        )
+
+        undoManager.undo()
+        await waitUntil { factory.mockDeleteAnnotation.deletedAnnotationIds.isEmpty == false }
+
+        #expect(factory.mockDeleteAnnotation.deletedAnnotationIds == ["annotation-2"])
+        #expect(vm.annotations.map(\.id) == ["annotation-1"])
+        #expect(undoManager.canUndo)
+    }
+
     private func createHighlight(
         on vm: BookmarkDetailViewModel,
         factory: TestUseCaseFactory,
