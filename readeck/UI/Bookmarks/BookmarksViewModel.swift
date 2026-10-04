@@ -34,6 +34,7 @@ final class BookmarksViewModel {
 
     // Prevent concurrent updates
     private var isUpdating = false
+    private var needsReload = false
 
     private var cancellables = Set<AnyCancellable>()
     private var limit = 50
@@ -133,19 +134,33 @@ final class BookmarksViewModel {
 
     @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
+        currentState = state
+        currentType = type
+        currentTag = tag
+
+        // A load that is already running may use outdated filters, so run again once it is done.
         guard !isUpdating else {
-            Logger.viewModel.debug("⏭️ Skipping loadBookmarks - already updating")
+            Logger.viewModel.debug("⏭️ Load already running - queueing a reload")
+            needsReload = true
             return
         }
         isUpdating = true
         defer { isUpdating = false }
 
+        repeat {
+            needsReload = false
+            await loadFirstPage()
+        } while needsReload
+    }
+
+    @MainActor
+    private func loadFirstPage() async {
+        let state = currentState
+        let type = currentType
+        let tag = currentTag
+
         isLoading = true
         errorMessage = nil
-        currentState = state
-        currentType = type
-        currentTag = tag
-
         offset = 0
         hasMoreData = true
 
@@ -233,10 +248,22 @@ final class BookmarksViewModel {
     func loadMoreBookmarks() async {
         guard !isLoading && hasMoreData && !isUpdating else { return } // prevent multiple loads
         isUpdating = true
-        defer { isUpdating = false }
+        await loadNextPage()
+        isUpdating = false
 
+        if needsReload {
+            // The filter changed while the page above was in flight, so that page (if any)
+            // was for the old filter and got discarded. Refresh from page one for the filter
+            // that is current now.
+            await refreshBookmarks()
+        }
+    }
+
+    @MainActor
+    private func loadNextPage() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
             offset += limit // inc. offset
@@ -251,14 +278,18 @@ final class BookmarksViewModel {
                 tag: currentTag,
                 sort: sortToken
             )
+
+            // The filter may have changed while this request was in flight. Don't apply a
+            // page fetched for the old filter; loadMoreBookmarks() will trigger a full
+            // first-page refresh for the new filter right after this returns.
+            guard !needsReload else { return }
+
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
             logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
         } catch {
             handleError(error, context: "load more bookmarks (offset: \(offset), limit: \(limit))")
         }
-
-        isLoading = false
     }
 
     @MainActor

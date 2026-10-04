@@ -438,7 +438,7 @@ struct ArticleReaderLegacyView: View {
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                Text(viewModel.bookmarkDetail.title)
+                Text(viewModel.bookmarkDetail.displayTitle)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(nativeTextColor)

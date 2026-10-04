@@ -131,6 +131,17 @@ struct APIClientTests {
         #expect(query == "type=article&type=video")
     }
 
+    @Test("getBookmarks sends no type filter when every type is requested")
+    func apiBookmarksAllTypesSendsNoFilter() async throws {
+        let session = MockHTTPSession(.json("[]"))
+        let api = API(tokenProvider: TestMockTokenProvider(), session: session)
+
+        _ = try await api.getBookmarks(state: .unread, type: [.article, .video, .photo])
+
+        let query = session.lastRequest?.url?.query ?? ""
+        #expect(!query.contains("type="))
+    }
+
     @Test("getBookmarks decodes image resources without width and height")
     func apiBookmarksImageResourceWithoutSize() async throws {
         let json = """
@@ -163,6 +174,33 @@ struct APIClientTests {
         #expect(page.bookmarks.first?.resources.image?.height == nil)
         #expect(page.bookmarks.first?.resources.icon?.height == nil)
         #expect(page.bookmarks.first?.resources.thumbnail?.height == nil)
+    }
+
+    @Test("getBookmarks decodes a bookmark that is still loading (authors is null)")
+    func apiBookmarksStillLoading() async throws {
+        // Real server response right after saving a URL, before the content was fetched.
+        let json = """
+        [
+          {
+            "id": "bm-2", "href": "/api/bookmarks/bm-2",
+            "created": "2026-10-03T17:30:31.51709Z", "updated": "2026-10-03T17:30:31.51709Z",
+            "state": 2, "loaded": false, "url": "https://www.maz-online.de/a",
+            "title": "", "site_name": "www.maz-online.de", "site": "www.maz-online.de",
+            "authors": null, "lang": "", "text_direction": "", "document_type": "",
+            "type": "article", "has_article": false, "description": "", "note": "",
+            "is_deleted": false, "is_marked": false, "is_archived": false,
+            "labels": [], "read_progress": 0, "resources": {}
+          }
+        ]
+        """
+        let session = MockHTTPSession(.json(json))
+        let api = API(tokenProvider: TestMockTokenProvider(), session: session)
+
+        let page = try await api.getBookmarks()
+
+        #expect(page.bookmarks.count == 1)
+        #expect(page.bookmarks.first?.authors == nil)
+        #expect(page.bookmarks.first?.toDomain().authors.isEmpty == true)
     }
 
     @Test("API surfaces serverError from the injected session")

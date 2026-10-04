@@ -128,9 +128,11 @@ struct BookmarksView: View {
             // Set appSettings reference
             viewModel.appSettings = appSettings
 
-            // Wait briefly for initial network status to be set
-            // NetworkMonitor checks status synchronously in init, but the publisher
-            // might not have propagated to appSettings yet
+            // Wait briefly for initial network status to be set.
+            // readeckApp binds the network publisher to appSettings in its own onAppear,
+            // and that subscription's first value is delivered via receive(on: .main), i.e.
+            // asynchronously. This task can start before that delivery lands, so give it a
+            // moment, otherwise a device that's actually offline briefly reads as connected.
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
 
             Logger.ui.info("📲 BookmarksView.task - Loading bookmarks, isNetworkConnected: \(appSettings.isNetworkConnected)")

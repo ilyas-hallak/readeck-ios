@@ -12,6 +12,18 @@ struct BookmarksViewModelTests {
         return (vm, factory)
     }
 
+    private func bookmark(id: String) -> Bookmark {
+        Bookmark(
+            id: id, title: id, url: "https://example.com/\(id)", href: "https://example.com/\(id)",
+            description: "", authors: [], created: "", published: "", updated: "",
+            siteName: "example.com", site: "https://example.com", readingTime: 2, wordCount: 20,
+            hasArticle: true, isArchived: false, isDeleted: false, isMarked: false, labels: [],
+            lang: "EN", loaded: false, readProgress: 0, documentType: "", state: 0,
+            textDirection: "ltr", type: "",
+            resources: .init(article: nil, icon: nil, image: nil, log: nil, props: nil, thumbnail: nil)
+        )
+    }
+
     // MARK: - Load Bookmarks
 
     @Test("Load bookmarks populates list")
@@ -97,6 +109,87 @@ struct BookmarksViewModelTests {
         // The reload after archiving must keep the active filter instead of falling back to
         // [.article]; otherwise videos/photos vanish from the list until the tab is switched.
         #expect(factory.mockGetBookmarks.lastType == [.article, .video, .photo])
+    }
+
+    @Test("A load requested while a refresh is in flight keeps its filter (regression: Codeberg #39)")
+    func loadDuringRefreshKeepsRequestedFilter() async {
+        let (vm, factory) = createSUT()
+        let allTypes: [BookmarkType] = [.article, .video, .photo]
+
+        // At launch a network change triggers a refresh before the view has set its filter.
+        factory.mockGetBookmarks.holdNextCall = true
+        let refresh = Task { await vm.refreshBookmarks() }
+        while factory.mockGetBookmarks.heldCall == nil { await Task.yield() }
+
+        // The view's own initial load arrives while that refresh is still running.
+        await vm.loadBookmarks(state: .unread, type: allTypes)
+        factory.mockGetBookmarks.releaseHeldCall()
+        await refresh.value
+
+        #expect(vm.currentType == allTypes)
+        #expect(factory.mockGetBookmarks.lastType == allTypes)
+
+        await vm.toggleArchive(bookmark: .mock)
+        #expect(factory.mockGetBookmarks.lastType == allTypes)
+    }
+
+    @Test("A load requested while more pages are loading still runs with its filter")
+    func loadDuringLoadMoreRunsAfterwards() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarks.result = .success(
+            BookmarksPage(bookmarks: [.mock], currentPage: 1, totalCount: 2, totalPages: 2, links: nil)
+        )
+        await vm.loadBookmarks(state: .unread, type: [.article])
+
+        factory.mockGetBookmarks.holdNextCall = true
+        let loadMore = Task { await vm.loadMoreBookmarks() }
+        while factory.mockGetBookmarks.heldCall == nil { await Task.yield() }
+
+        await vm.loadBookmarks(state: .unread, type: [.video])
+        factory.mockGetBookmarks.releaseHeldCall()
+        await loadMore.value
+
+        #expect(factory.mockGetBookmarks.lastType == [.video])
+    }
+
+    @Test("A filter change while loading the next page discards that stale page (regression: Codeberg #39)")
+    func filterChangeDuringLoadMoreDiscardsStalePage() async {
+        let (vm, factory) = createSUT()
+        let firstBookmark = bookmark(id: "page1")
+        let staleBookmark = bookmark(id: "stale-page2")
+        let newFilterBookmark = bookmark(id: "video-page1")
+
+        factory.mockGetBookmarks.result = .success(
+            BookmarksPage(bookmarks: [firstBookmark], currentPage: 1, totalCount: 2, totalPages: 2, links: nil)
+        )
+        await vm.loadBookmarks(state: .unread, type: [.article])
+
+        // The in-flight "load more" call still targets the old filter.
+        factory.mockGetBookmarks.result = .success(
+            BookmarksPage(bookmarks: [staleBookmark], currentPage: 2, totalCount: 2, totalPages: 2, links: nil)
+        )
+        factory.mockGetBookmarks.holdNextCall = true
+        let loadMore = Task { await vm.loadMoreBookmarks() }
+        while factory.mockGetBookmarks.heldCall == nil { await Task.yield() }
+
+        // The filter changes while that request is still in flight.
+        await vm.loadBookmarks(state: .unread, type: [.video])
+
+        // Hold the refresh's own fetch too, so we can inspect the state right after the
+        // stale page's request resolves but before the refresh has replaced the list.
+        factory.mockGetBookmarks.holdNextCall = true
+        factory.mockGetBookmarks.releaseHeldCall()
+        while factory.mockGetBookmarks.heldCall == nil { await Task.yield() }
+
+        #expect(vm.bookmarks?.bookmarks.contains(where: { $0.id == staleBookmark.id }) == false)
+
+        factory.mockGetBookmarks.result = .success(
+            BookmarksPage(bookmarks: [newFilterBookmark], currentPage: 1, totalCount: 1, totalPages: 1, links: nil)
+        )
+        factory.mockGetBookmarks.releaseHeldCall()
+        await loadMore.value
+
+        #expect(vm.bookmarks?.bookmarks.map(\.id) == [newFilterBookmark.id])
     }
 
     // MARK: - Toggle Favorite

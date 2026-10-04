@@ -9,13 +9,12 @@ extension BookmarkDto {
         let entity = BookmarkEntity(context: context)
         entity.title = self.title
         entity.url = self.url
-        entity.authors = self.authors.first
         entity.desc = self.description
         entity.created = self.created
 
         entity.siteName = self.siteName
         entity.site = self.site
-        entity.authors = self.authors.first // TODO: support multiple authors
+        entity.authors = self.authors?.first // TODO: support multiple authors
         entity.published = self.published
         entity.created = self.created
         entity.update = self.updated

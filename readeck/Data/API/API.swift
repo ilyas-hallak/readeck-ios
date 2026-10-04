@@ -292,8 +292,9 @@ final class API: PAPI {
             queryItems.append(URLQueryItem(name: "search", value: search))
         }
 
-        // type-Parameter als Array von BookmarkType
-        if let type, !type.isEmpty {
+        // Any type filter makes the server drop bookmarks without a type, for example
+        // pages it could not fetch. So asking for every type means sending no filter.
+        if let type, !type.isEmpty, Set(type) != Set(BookmarkType.allCases) {
             for t in type {
                 queryItems.append(URLQueryItem(name: "type", value: t.rawValue))
             }

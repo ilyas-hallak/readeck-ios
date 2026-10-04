@@ -21,7 +21,7 @@ final class BookmarksRepository: PBookmarksRepository {
             url: bookmarkDetailDto.url,
             description: bookmarkDetailDto.description,
             siteName: bookmarkDetailDto.siteName,
-            authors: bookmarkDetailDto.authors,
+            authors: bookmarkDetailDto.authors ?? [],
             created: bookmarkDetailDto.created,
             updated: bookmarkDetailDto.updated,
             wordCount: bookmarkDetailDto.wordCount,
