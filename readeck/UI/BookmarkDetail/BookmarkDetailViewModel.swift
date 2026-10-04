@@ -122,7 +122,11 @@ final class BookmarkDetailViewModel {
         } catch {
             // Keep showing the detail we already have, e.g. when offline.
             if bookmarkDetail.id != id {
-                errorMessage = "Error loading bookmark"
+                if let cachedDetail = getCachedBookmarkDetailUseCase.execute(id: id) {
+                    applyBookmarkDetail(cachedDetail)
+                } else {
+                    errorMessage = "Error loading bookmark"
+                }
             }
         }
 

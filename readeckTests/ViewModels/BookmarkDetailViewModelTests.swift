@@ -60,6 +60,73 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.isLoading == false)
     }
 
+    @Test("Load bookmark detail falls back to cached metadata when offline")
+    func loadBookmarkDetailFailureFallsBackToCachedMetadata() async {
+        let (vm, factory) = createSUT()
+        let cachedDetail = BookmarkDetail(
+            id: "456",
+            title: "Cached Title",
+            url: "https://example.com/cached",
+            description: "",
+            siteName: "Example",
+            authors: [],
+            created: "2024-01-01",
+            updated: "2024-01-02",
+            wordCount: 0,
+            readingTime: 0,
+            hasArticle: false,
+            loaded: false,
+            isMarked: false,
+            isArchived: false,
+            labels: [],
+            thumbnailUrl: "",
+            imageUrl: "",
+            lang: "en",
+            readProgress: 0
+        )
+        factory.mockGetBookmark.result = .failure(TestError.networkError)
+        factory.mockGetCachedBookmarkDetail.result = cachedDetail
+
+        await vm.loadBookmarkDetail(id: "456")
+
+        #expect(vm.bookmarkDetail.url == "https://example.com/cached")
+        #expect(vm.bookmarkDetail.title == "Cached Title")
+        #expect(vm.errorMessage == nil)
+    }
+
+    // MARK: - Wait For Article Ready
+
+    @Test("Wait for article ready stops after one poll when offline")
+    func waitForArticleReadyStopsOnNoConnection() async {
+        let (vm, factory) = createSUT()
+        vm.bookmarkDetail = BookmarkDetail(
+            id: "456",
+            title: "Test",
+            url: "https://example.com",
+            description: "",
+            siteName: "",
+            authors: [],
+            created: "",
+            updated: "",
+            wordCount: 0,
+            readingTime: 0,
+            hasArticle: false,
+            loaded: false,
+            isMarked: false,
+            isArchived: false,
+            labels: [],
+            thumbnailUrl: "",
+            imageUrl: "",
+            lang: "en",
+            readProgress: 0
+        )
+        factory.mockGetBookmark.result = .failure(URLError(.notConnectedToInternet))
+
+        await vm.waitForArticleReady(id: "456", maxAttempts: 8, delay: 0.01)
+
+        #expect(factory.mockGetBookmark.executeCallCount == 1)
+    }
+
     // MARK: - Load Article Content
 
     @Test("Load article content populates articleContent")

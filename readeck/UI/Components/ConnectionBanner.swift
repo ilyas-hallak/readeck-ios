@@ -5,12 +5,12 @@
 
 import SwiftUI
 
-/// Slim bar at the top of the list, styled like the offline banner, with one action.
+/// Slim bar at the top of the list, styled consistently whether or not it offers an action.
 struct ConnectionBanner: View {
     let systemImage: String
     let message: LocalizedStringKey
-    let actionTitle: LocalizedStringKey
-    let action: () -> Void
+    var actionTitle: LocalizedStringKey?
+    var action: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -25,11 +25,13 @@ struct ConnectionBanner: View {
 
             Spacer(minLength: 8)
 
-            Button(actionTitle, action: action)
-                .font(.caption.weight(.semibold))
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-                .controlSize(.small)
+            if let actionTitle, let action {
+                Button(actionTitle, action: action)
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -52,6 +54,7 @@ struct ConnectionBanner: View {
             actionTitle: "Go Offline"
         ) {}
         ConnectionBanner(systemImage: "wifi", message: "You're back online.", actionTitle: "Go Online") {}
+        ConnectionBanner(systemImage: "wifi.slash", message: "Offline mode, showing cached articles.")
         Spacer()
     }
 }

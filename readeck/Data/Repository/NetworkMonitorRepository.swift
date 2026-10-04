@@ -29,6 +29,9 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.readeck.networkmonitor")
     private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
+    // hasPathConnection/hasRealConnection are written from the NWPathMonitor queue
+    // and from the main actor, so access is guarded by this lock.
+    private let stateLock = NSLock()
     private var hasPathConnection = true
     private var hasRealConnection = true
     private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
@@ -65,7 +68,9 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
             let hasInterfaces = !path.availableInterfaces.isEmpty
             let isConnected = path.status == .satisfied && hasInterfaces
 
+            self.stateLock.lock()
             self.hasPathConnection = isConnected
+            self.stateLock.unlock()
             self.updateConnectionState()
 
             // Log network changes with details
@@ -90,13 +95,17 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     }
 
     func reportConnectionFailure() {
+        stateLock.lock()
         hasRealConnection = false
+        stateLock.unlock()
         updateConnectionState()
         Logger.network.warning("⚠️ Real connection failure reported (VPN/unreachable server)")
     }
 
     func reportConnectionSuccess() {
+        stateLock.lock()
         hasRealConnection = true
+        stateLock.unlock()
         updateConnectionState()
         Logger.network.info("✅ Real connection success reported")
     }
@@ -108,6 +117,11 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     }
 
     private func updateConnectionState() {
+        stateLock.lock()
+        let hasPathConnection = hasPathConnection
+        let hasRealConnection = hasRealConnection
+        stateLock.unlock()
+
         // Only connected if BOTH path is available AND real connection works, and the user did not go offline
         let isConnected = hasPathConnection && hasRealConnection && !forcedOfflineSubject.value
 

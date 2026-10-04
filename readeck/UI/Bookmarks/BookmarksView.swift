@@ -444,10 +444,8 @@ struct BookmarksView: View {
             ConnectionBanner(systemImage: "wifi", message: "You're back online.", actionTitle: "Go Online") {
                 viewModel.goOnline()
             }
-        } else if !appSettings.isNetworkConnected {
-            if viewModel.bookmarks?.bookmarks.isEmpty == false {
-                offlineBanner
-            }
+        } else if !appSettings.isNetworkConnected, viewModel.bookmarks?.bookmarks.isEmpty == false {
+            ConnectionBanner(systemImage: "wifi.slash", message: "Offline mode, showing cached articles.")
         } else if slowLoading.isSlow {
             ConnectionBanner(
                 systemImage: "wifi.exclamationmark",
@@ -457,31 +455,6 @@ struct BookmarksView: View {
                 viewModel.goOffline()
             }
         }
-    }
-
-    @ViewBuilder
-    private var offlineBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "wifi.slash")
-                .font(.body)
-                .foregroundColor(.secondary)
-
-            Text("Offline mode, showing cached articles.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(minHeight: 44)
-        .background(Color(.systemGray6))
-        .overlay(
-            Rectangle()
-                .frame(height: 0.5)
-                .foregroundColor(Color(.separator)),
-            alignment: .bottom
-        )
     }
 
     @ViewBuilder

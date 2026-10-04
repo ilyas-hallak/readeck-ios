@@ -566,19 +566,21 @@ struct ArticleReaderView: View {
             if !appSettings.isNetworkConnected {
                 OfflineArticleNote()
             }
-            Button(action: {
-                URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-            }) {
-                HStack {
-                    Image(systemName: "safari")
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+            if !viewModel.bookmarkDetail.url.isEmpty {
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    HStack {
+                        Image(systemName: "safari")
+                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+                    }
+                    .font(.title3.bold())
+                    .frame(maxWidth: .infinity)
                 }
-                .font(.title3.bold())
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
+                .padding(.top, 0)
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
-            .padding(.top, 0)
         }
     }
 
