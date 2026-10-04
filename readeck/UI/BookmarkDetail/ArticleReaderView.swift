@@ -24,6 +24,7 @@ struct ArticleReaderView: View {
     @State private var showingArchiveConfirmation = false
     @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
+    @State private var topBarInset: CGFloat = 0
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
@@ -66,11 +67,9 @@ struct ArticleReaderView: View {
             // UINavigationBar appearance proxy, and a second writer would leave the
             // bookmark list tinted after leaving the reader.
             .toolbarBackground(readerTheme.backgroundColor, for: .navigationBar)
-            // Fades the bar instead of hiding it. Hiding changes the safe area, which shifts
-            // the article mid scroll, and iOS 26 drops the swipe back without a bar.
-            .toolbarBackgroundVisibility(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
+            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
             .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
-            .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
+            .navigationBarFaded(!isToolbarVisible)
             .sheet(isPresented: $showingLabelsSheet) {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
@@ -162,9 +161,7 @@ struct ArticleReaderView: View {
     private var content: some View {
         scrollViewContent
             .overlay(alignment: .top) {
-                if !(viewModel.settings?.hideProgressBar ?? false) {
-                    ReadingProgressBar(model: progressModel)
-                }
+                topChrome
             }
             .overlay(alignment: .bottomTrailing) {
                 if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
@@ -254,12 +251,15 @@ struct ArticleReaderView: View {
                             }
                         )
                 }
+                // Inside the content, so the helper finds the scroll view among its superviews
+                .disableScrollBounce()
             }
             .coordinateSpace(name: "scrollView")
+            // The scroll view runs under the bar, so the article has to start below it
+            .contentMargins(.top, topBarInset, for: .scrollContent)
             .clipped()
             .ignoresSafeArea(edges: .bottom)
             .scrollPosition($scrollPosition)
-            .disableScrollBounce()
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 // Runs on every rendered frame while scrolling, so nothing in here may
                 // write `@State` unconditionally — see ReadingProgressModel.
@@ -284,6 +284,42 @@ struct ArticleReaderView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
+    }
+
+    // The scroll view ignores the top safe area, so the system scroll edge effect never
+    // kicks in. A frosted strip behind the bar takes its place and shrinks to the status
+    // bar while the bar is faded, with the progress line following its edge.
+    private var topChrome: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                Rectangle()
+                    .fill(.regularMaterial)
+                    .mask {
+                        LinearGradient(stops: [.init(color: .black, location: 0.6), .init(color: .clear, location: 1)],
+                                       startPoint: .top, endPoint: .bottom)
+                    }
+                    .frame(height: (isToolbarVisible ? topBarInset : statusBarHeight) + 12)
+
+                if !(viewModel.settings?.hideProgressBar ?? false) {
+                    ReadingProgressBar(model: progressModel)
+                        .offset(y: isToolbarVisible ? topBarInset : statusBarHeight)
+                }
+            }
+            .ignoresSafeArea(edges: .top)
+            .onChange(of: proxy.safeAreaInsets.top, initial: true) { _, inset in
+                // The slid away bar shrinks the safe area. Following it would shift the
+                // article, which flips the bar back and loops until the watchdog kills the app.
+                guard isToolbarVisible else { return }
+                topBarInset = inset
+            }
+        }
+        .allowsHitTesting(false)
+        .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
+    }
+
+    private var statusBarHeight: CGFloat {
+        let scene = UIApplication.shared.connectedScenes.first { $0 is UIWindowScene } as? UIWindowScene
+        return scene?.keyWindow?.safeAreaInsets.top ?? 0
     }
 
     @ToolbarContentBuilder

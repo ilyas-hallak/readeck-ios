@@ -14,6 +14,7 @@ struct ScrollTracker {
 
     var scrollUpThresholdRatio: CGFloat = 0.12
     var scrollDownThresholdRatio: CGFloat = 0.06
+    var topZoneRatio: CGFloat = 0.1
 
     // MARK: - State
 
@@ -87,7 +88,7 @@ struct ScrollTracker {
             toolbarVisible = true
             toolbarChange = true
         } else {
-            toolbarChange = updateToolbar(endPosition: endPosition, progress: progress, containerHeight: containerHeight)
+            toolbarChange = updateToolbar(endPosition: endPosition, scrolled: scrolled, containerHeight: containerHeight)
         }
 
         return Result(readingProgress: progress, shouldUpdateProgress: shouldUpdate, isToolbarVisible: toolbarChange)
@@ -95,7 +96,7 @@ struct ScrollTracker {
 
     // MARK: - Private
 
-    private mutating func updateToolbar(endPosition: CGFloat, progress: Double, containerHeight: CGFloat) -> Bool? {
+    private mutating func updateToolbar(endPosition: CGFloat, scrolled: CGFloat, containerHeight: CGFloat) -> Bool? {
         guard let prev = previousEndPosition else {
             previousEndPosition = endPosition
             return nil
@@ -103,8 +104,9 @@ struct ScrollTracker {
         let delta = endPosition - prev
         previousEndPosition = endPosition
 
-        // Always show toolbar near top — also prevents hide from scroll bounce
-        if progress <= 0.05 {
+        // Always show toolbar near top, also prevents hide from scroll bounce.
+        // Measured in points, a share of the article would be several screens on long ones.
+        if scrolled <= containerHeight * topZoneRatio {
             accumulatedScrollUp = 0
             if !toolbarVisible {
                 toolbarVisible = true
