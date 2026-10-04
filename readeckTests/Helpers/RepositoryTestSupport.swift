@@ -258,7 +258,9 @@ enum DtoFixture {
         labels: [String] = [],
         isArchived: Bool = false,
         isMarked: Bool = false,
-        readProgress: Int = 0
+        readProgress: Int = 0,
+        // swiftlint:disable:next discouraged_optional_collection
+        authors: [String]? = ["Author"]
     ) -> BookmarkDto {
         BookmarkDto(
             id: id,
@@ -266,7 +268,7 @@ enum DtoFixture {
             url: "https://example.com/\(id)",
             href: "https://api.example.com/bookmarks/\(id)",
             description: "A description",
-            authors: ["Author"],
+            authors: authors,
             created: "2026-01-01T00:00:00Z",
             published: nil,
             updated: "2026-01-02T00:00:00Z",

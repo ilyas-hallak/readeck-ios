@@ -252,6 +252,9 @@ final class BookmarksViewModel {
         isUpdating = false
 
         if needsReload {
+            // The filter changed while the page above was in flight, so that page (if any)
+            // was for the old filter and got discarded. Refresh from page one for the filter
+            // that is current now.
             await refreshBookmarks()
         }
     }
@@ -260,6 +263,7 @@ final class BookmarksViewModel {
     private func loadNextPage() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
             offset += limit // inc. offset
@@ -274,14 +278,18 @@ final class BookmarksViewModel {
                 tag: currentTag,
                 sort: sortToken
             )
+
+            // The filter may have changed while this request was in flight. Don't apply a
+            // page fetched for the old filter; loadMoreBookmarks() will trigger a full
+            // first-page refresh for the new filter right after this returns.
+            guard !needsReload else { return }
+
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
             logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
         } catch {
             handleError(error, context: "load more bookmarks (offset: \(offset), limit: \(limit))")
         }
-
-        isLoading = false
     }
 
     @MainActor
