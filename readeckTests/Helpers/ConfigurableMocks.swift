@@ -165,13 +165,29 @@ class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
     var result: Result<Annotation, Error> = .success(
         Annotation(id: "annotation-1", text: "highlighted", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
     )
+    /// Results returned before falling back to `result`, for tests that create several
+    /// annotations and need each one to get a different ID.
+    var resultQueue: [Result<Annotation, Error>] = []
 
     func execute(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> Annotation {
-        try result.get()
+        if !resultQueue.isEmpty {
+            return try resultQueue.removeFirst().get()
+        }
+        return try result.get()
     }
 
     func execute(bookmarkId: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws {
         _ = try result.get()
+    }
+}
+
+class ConfigurableDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
+    var result: Result<Void, Error> = .success(())
+    private(set) var deletedAnnotationIds: [String] = []
+
+    func execute(bookmarkId: String, annotationId: String) async throws {
+        deletedAnnotationIds.append(annotationId)
+        try result.get()
     }
 }
 

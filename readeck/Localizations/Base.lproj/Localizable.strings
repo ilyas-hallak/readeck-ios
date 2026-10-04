@@ -55,6 +55,7 @@
 "Are you sure you want to log out? This will delete all your login credentials and return you to setup." = "Are you sure you want to log out? This will delete all your login credentials and return you to setup.";
 "Available tags" = "Available tags";
 "Cancel" = "Cancel";
+"Undo" = "Undo";
 "Category-specific Levels" = "Category-specific Levels";
 "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." = "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages).";
 "Close" = "Close";
@@ -72,6 +73,7 @@
 "Enter your Readeck server details to get started." = "Enter your Readeck server details to get started.";
 "Error" = "Error";
 "Error: %@" = "Error: %@";
+"Error removing highlight" = "Error removing highlight";
 "Export as PDF" = "Export as PDF";
 "Exporting PDF..." = "Exporting PDF...";
 "Favorite" = "Favorite";
@@ -124,6 +126,7 @@
 "Reading %lld/%lld: " = "Reading %1$lld/%2$lld: ";
 "Reader" = "Reader";
 "Remove" = "Remove";
+"Remove Highlight" = "Remove Highlight";
 "Reset" = "Reset";
 "Reset to Defaults" = "Reset to Defaults";
 "Restore" = "Restore";

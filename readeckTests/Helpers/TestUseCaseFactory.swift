@@ -19,6 +19,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockGetCachedBookmarkDetail = ConfigurableGetCachedBookmarkDetailUseCase()
     let mockGetAnnotations = ConfigurableGetBookmarkAnnotationsUseCase()
     let mockCreateAnnotation = ConfigurableCreateAnnotationUseCase()
+    let mockDeleteAnnotation = ConfigurableDeleteAnnotationUseCase()
     let mockLogout = ConfigurableLogoutUseCase()
     let mockUpdateUnreadBadge = ConfigurableUpdateUnreadBadgeUseCase()
     let mockExportArticlePDF = ConfigurableExportArticlePDFUseCase()
@@ -57,7 +58,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase { MockOfflineBookmarkSyncUseCase() }
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase { MockLoadCardLayoutUseCase() }
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase { MockSaveCardLayoutUseCase() }
-    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase { MockDeleteAnnotationUseCase() }
+    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase { mockDeleteAnnotation }
     func makeSettingsRepository() -> PSettingsRepository { mockSettingsRepository }
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase { MockOfflineCacheSyncUseCase() }
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase { mockNetworkMonitor }

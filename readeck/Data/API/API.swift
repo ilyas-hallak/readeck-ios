@@ -454,6 +454,9 @@ final class API: PAPI {
             additionalHeaders: additionalHeaders
         )
         request.timeoutInterval = timeout
+        // The server sends Last-Modified without Cache-Control, so URLCache would treat the
+        // article as fresh for a while and hide highlights that were just added or removed.
+        request.cachePolicy = .reloadIgnoringLocalCacheData
 
         let (data, response) = try await session.data(for: request)
 

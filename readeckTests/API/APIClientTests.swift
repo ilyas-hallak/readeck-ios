@@ -212,4 +212,15 @@ struct APIClientTests {
             _ = try await api.getBookmarkLabels()
         }
     }
+
+    @Test("getBookmarkArticle bypasses the local HTTP cache, so changed highlights show up")
+    func articleIgnoresLocalCache() async throws {
+        let session = MockHTTPSession(.http(status: 200, data: Data("<p>article</p>".utf8)))
+        let api = API(tokenProvider: TestMockTokenProvider(), session: session)
+
+        let html = try await api.getBookmarkArticle(id: "bm-1")
+
+        #expect(html == "<p>article</p>")
+        #expect(session.lastRequest?.cachePolicy == .reloadIgnoringLocalCacheData)
+    }
 }
