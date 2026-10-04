@@ -662,18 +662,167 @@ struct BookmarkDetailViewModelTests {
         }
     }
 
-    // MARK: - Share Content
+    // MARK: - Original Link Sharing
 
-    @Test("Share text combines title, URL and annotations")
-    func shareContentIncludesAnnotations() async {
+    @Test("Sharing the original link shares the bookmark URL only, not the annotations")
+    func originalLinkSharesBookmarkURLOnly() async {
         let (vm, factory) = createSUT()
         factory.mockGetAnnotations.result = .success([
             Annotation(id: "1", text: "first note", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
         ])
 
         await vm.loadBookmarkDetail(id: "456")
+        let url = vm.prepareOriginalLinkShare()
 
-        #expect(vm.shareContent.contains("https://example.com"))
-        #expect(vm.shareContent.contains("first note"))
+        #expect(url?.absoluteString == "https://example.com")
+        #expect(vm.shareErrorMessage == nil)
+    }
+
+    @Test("A bookmark with an unparseable URL fails to share the original link")
+    func originalLinkShareFailsForUnparseableURL() {
+        let (vm, _) = createSUT()
+        // BookmarkDetail.empty has an empty url string, which URL(string:) rejects.
+
+        let url = vm.prepareOriginalLinkShare()
+
+        #expect(url == nil)
+        #expect(vm.shareErrorMessage != nil)
+    }
+
+    // MARK: - Readeck Sharing
+
+    @Test("Share options follow the server capabilities")
+    func shareOptionsFollowCapabilities() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .success(
+            ServerInfo(version: "0.23.2", isReachable: true, features: ["email", "oauth"])
+        )
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.canShareReadeckLink)
+        #expect(vm.canSendByEmail)
+    }
+
+    @Test("Email stays hidden without the email feature")
+    func emailHiddenWithoutFeature() async {
+        let (vm, _) = createSUT()
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.canShareReadeckLink)
+        #expect(!vm.canSendByEmail)
+    }
+
+    @Test("Without server info no Readeck share option is offered")
+    func shareOptionsHiddenWhenServerInfoFails() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(!vm.canShareReadeckLink)
+        #expect(!vm.canSendByEmail)
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("Creating a share link publishes the URL for the current bookmark")
+    func createShareLinkSuccess() async {
+        let (vm, factory) = createSUT()
+        await vm.loadBookmarkDetail(id: "123")
+
+        let created = await vm.createShareLink()
+
+        #expect(created)
+        #expect(factory.mockCreateShareLink.lastBookmarkId == "123")
+        #expect(vm.shareLinkURL?.absoluteString == "https://readeck.example.com/@b/abc")
+        #expect(vm.isCreatingShareLink == false)
+    }
+
+    @Test("A failed share link sets the share error, not the screen-wide error")
+    func createShareLinkFailure() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateShareLink.result = .failure(TestError.networkError)
+
+        let created = await vm.createShareLink()
+
+        #expect(!created)
+        #expect(vm.shareLinkURL == nil)
+        #expect(vm.shareErrorMessage != nil)
+        #expect(vm.errorMessage == nil)
+        #expect(vm.isCreatingShareLink == false)
+    }
+
+    @Test("Dismissing the share error clears it")
+    func clearShareErrorResetsState() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateShareLink.result = .failure(TestError.networkError)
+        _ = await vm.createShareLink()
+        #expect(vm.shareErrorMessage != nil)
+
+        vm.clearShareError()
+
+        #expect(vm.shareErrorMessage == nil)
+    }
+
+    @Test("While a share link is being created every share option is disabled")
+    func allOptionsDisabledWhilePreparingShare() async {
+        let (vm, factory) = createSUT()
+        factory.mockCreateShareLink.holdsExecution = true
+
+        let task = Task { await vm.createShareLink() }
+        while !vm.isCreatingShareLink {
+            await Task.yield()
+        }
+
+        #expect(!vm.isShareOptionEnabled(.email, isOnline: true))
+        #expect(!vm.isShareOptionEnabled(.originalLink, isOnline: true))
+        #expect(!vm.isShareOptionEnabled(.readeckLink, isOnline: true))
+        #expect(!vm.isShareOptionEnabled(.pdf, isOnline: true))
+
+        factory.mockCreateShareLink.resume()
+        _ = await task.value
+    }
+
+    @Test("The share sheet lists every option when the server supports them")
+    func shareSheetListsAllOptions() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .success(
+            ServerInfo(version: "0.23.2", isReachable: true, features: ["email"])
+        )
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.shareOptions == [.email, .originalLink, .readeckLink, .pdf])
+    }
+
+    @Test("Without server info the share sheet offers the original link and the PDF")
+    func shareSheetFallsBackToLocalOptions() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .failure(TestError.networkError)
+
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.shareOptions == [.originalLink, .pdf])
+    }
+
+    @Test("Offline the server backed options are disabled")
+    func serverOptionsDisabledOffline() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetBookmarkArticle.result = .success("<p>Body</p>")
+        await vm.loadArticleContent(id: "123")
+
+        #expect(!vm.isShareOptionEnabled(.email, isOnline: false))
+        #expect(!vm.isShareOptionEnabled(.readeckLink, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.originalLink, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.pdf, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.readeckLink, isOnline: true))
+    }
+
+    @Test("The PDF option waits for the article content")
+    func pdfOptionNeedsContent() {
+        let (vm, _) = createSUT()
+
+        #expect(!vm.isShareOptionEnabled(.pdf, isOnline: true))
     }
 }

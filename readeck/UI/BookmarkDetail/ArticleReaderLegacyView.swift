@@ -62,8 +62,7 @@ struct ArticleReaderLegacyView: View {
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingDeleteConfirmation = false
-    @State private var showingPDFShareSheet = false
-    @State private var showingExportError = false
+    @State private var showingShareSheet = false
 
     // MARK: - Envs
 
@@ -279,16 +278,11 @@ struct ArticleReaderLegacyView: View {
                         Label("Annotations".localized, systemImage: "pencil.line")
                     }
 
-                    ShareLink(item: viewModel.shareContent) {
+                    Button {
+                        showingShareSheet = true
+                    } label: {
                         Label("Share".localized, systemImage: "square.and.arrow.up")
                     }
-
-                    Button {
-                        exportAsPDF()
-                    } label: {
-                        Label("Export as PDF".localized, systemImage: "doc.richtext")
-                    }
-                    .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
 
                     Button {
                         showingFontSettings = true
@@ -327,16 +321,11 @@ struct ArticleReaderLegacyView: View {
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
         }
-        .sheet(isPresented: $showingPDFShareSheet) {
-            if let url = viewModel.exportedPDFURL {
-                ActivityView(activityItems: [url])
-            }
-        }
-        .alert("Error".localized, isPresented: $showingExportError) {
-            Button("OK".localized, role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }
+        .articleSharing(
+            isPresented: $showingShareSheet,
+            viewModel: viewModel,
+            isOnline: appSettings.isNetworkConnected
+        )
         .alert(
             "Delete this bookmark?".localized,
             isPresented: $showingDeleteConfirmation
@@ -389,18 +378,6 @@ struct ArticleReaderLegacyView: View {
         }
         .task {
             await viewModel.loadReader(id: bookmarkId)
-        }
-    }
-
-    // MARK: - Actions
-
-    private func exportAsPDF() {
-        Task {
-            if await viewModel.exportArticleAsPDF() {
-                showingPDFShareSheet = true
-            } else {
-                showingExportError = true
-            }
         }
     }
 

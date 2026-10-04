@@ -21,6 +21,8 @@ struct GetBookmarksUseCaseTests {
         func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws {}
         func deleteBookmark(id: String) async throws {}
         func searchBookmarks(search: String) async throws -> BookmarksPage { fatalError("unused") }
+        func createShareLink(id: String) async throws -> URL { fatalError("unused") }
+        func shareByEmail(id: String, email: String, format: EmailShareFormat) async throws {}
     }
 
     private func bookmark(id: String, isArchived: Bool = false, isMarked: Bool = false) -> Bookmark {

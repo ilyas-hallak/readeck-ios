@@ -43,6 +43,8 @@ protocol UseCaseFactory {
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase
 }
 
 final class DefaultUseCaseFactory: UseCaseFactory {
@@ -252,5 +254,13 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase {
         ExportArticlePDFUseCase(renderingService: WebKitPDFRenderingService())
+    }
+
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase {
+        CreateShareLinkUseCase(repository: bookmarksRepository)
+    }
+
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase {
+        ShareByEmailUseCase(repository: bookmarksRepository)
     }
 }

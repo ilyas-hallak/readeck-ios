@@ -22,8 +22,7 @@ struct ArticleReaderView: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingArchiveConfirmation = false
-    @State private var showingPDFShareSheet = false
-    @State private var showingExportError = false
+    @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
@@ -89,16 +88,11 @@ struct ArticleReaderView: View {
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
             }
-            .sheet(isPresented: $showingPDFShareSheet) {
-                if let url = viewModel.exportedPDFURL {
-                    ActivityView(activityItems: [url])
-                }
-            }
-            .alert("Error".localized, isPresented: $showingExportError) {
-                Button("OK".localized, role: .cancel) {}
-            } message: {
-                Text(viewModel.errorMessage ?? "")
-            }
+            .articleSharing(
+                isPresented: $showingShareSheet,
+                viewModel: viewModel,
+                isOnline: appSettings.isNetworkConnected
+            )
             .alert(
                 "Delete this bookmark?".localized,
                 isPresented: $showingDeleteConfirmation
@@ -311,16 +305,11 @@ struct ArticleReaderView: View {
                     }
                 }
 
-                ShareLink(item: viewModel.shareContent) {
+                Button {
+                    showingShareSheet = true
+                } label: {
                     Label("Share".localized, systemImage: "square.and.arrow.up")
                 }
-
-                Button {
-                    exportAsPDF()
-                } label: {
-                    Label("Export as PDF".localized, systemImage: "doc.richtext")
-                }
-                .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
 
                 Button {
                     readerSwitchTip.invalidate(reason: .actionPerformed)
@@ -352,18 +341,6 @@ struct ArticleReaderView: View {
                 Image(systemName: "ellipsis.circle")
             }
             .popoverTip(readerSwitchTip)
-        }
-    }
-
-    // MARK: - Actions
-
-    private func exportAsPDF() {
-        Task {
-            if await viewModel.exportArticleAsPDF() {
-                showingPDFShareSheet = true
-            } else {
-                showingExportError = true
-            }
         }
     }
 

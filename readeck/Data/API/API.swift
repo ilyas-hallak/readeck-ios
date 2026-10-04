@@ -22,6 +22,8 @@ protocol PAPI {
     func getBookmarkAnnotations(bookmarkId: String) async throws -> [AnnotationDto]
     func createAnnotation(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> AnnotationDto
     func deleteAnnotation(bookmarkId: String, annotationId: String) async throws
+    func getBookmarkShareLink(id: String) async throws -> BookmarkShareLinkDto
+    func shareBookmarkByEmail(id: String, request: ShareBookmarkEmailRequestDto) async throws
 
     // OAuth methods
     func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto
@@ -635,6 +637,36 @@ final class API: PAPI {
             totalPages: totalPages,
             links: links
         )
+    }
+
+    func getBookmarkShareLink(id: String) async throws -> BookmarkShareLinkDto {
+        logger.debug("Fetching share link for bookmark: \(id)")
+        let endpoint = "/api/bookmarks/\(id)/share/link"
+        logger.logNetworkRequest(method: "GET", url: await self.baseURL + endpoint)
+
+        let result = try await makeJSONRequest(
+            endpoint: endpoint,
+            responseType: BookmarkShareLinkDto.self
+        )
+
+        logger.info("Successfully created share link for bookmark: \(id)")
+        return result
+    }
+
+    func shareBookmarkByEmail(id: String, request: ShareBookmarkEmailRequestDto) async throws {
+        logger.debug("Sharing bookmark by email: \(id)")
+        let endpoint = "/api/bookmarks/\(id)/share/email"
+        let requestData = try JSONEncoder().encode(request)
+        logger.logNetworkRequest(method: "POST", url: await self.baseURL + endpoint)
+
+        _ = try await makeJSONRequest(
+            endpoint: endpoint,
+            method: .POST,
+            body: requestData,
+            responseType: ServerMessageDto.self
+        )
+
+        logger.info("Successfully sent bookmark by email: \(id)")
     }
 
     func getBookmarkLabels() async throws -> [BookmarkLabelDto] {

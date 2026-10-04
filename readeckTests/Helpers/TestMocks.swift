@@ -88,6 +88,14 @@ class TestMockAPI: PAPI {
         fatalError("Not implemented for tests")
     }
 
+    func getBookmarkShareLink(id: String) async throws -> BookmarkShareLinkDto {
+        fatalError("Not implemented for tests")
+    }
+
+    func shareBookmarkByEmail(id: String, request: ShareBookmarkEmailRequestDto) async throws {
+        fatalError("Not implemented for tests")
+    }
+
     func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto {
         fatalError("Not implemented for tests")
     }

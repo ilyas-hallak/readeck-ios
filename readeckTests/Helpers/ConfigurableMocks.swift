@@ -223,6 +223,67 @@ class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
     }
 }
 
+class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase {
+    var result: Result<ServerInfo, Error> = .success(
+        ServerInfo(version: "0.23.2", isReachable: true, features: ["oauth"])
+    )
+
+    func execute(endpoint: String?) async throws -> ServerInfo {
+        try result.get()
+    }
+}
+
+class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase {
+    var result: Result<URL, Error> = .success(URL(string: "https://readeck.example.com/@b/abc")!)
+    var lastBookmarkId: String?
+    /// When true, `execute` suspends until `resume()` is called, so tests can observe
+    /// state while the call is still in flight.
+    var holdsExecution = false
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var isReleased = false
+
+    func execute(bookmarkId: String) async throws -> URL {
+        lastBookmarkId = bookmarkId
+        if holdsExecution {
+            await withCheckedContinuation { continuation in
+                lock.withLock {
+                    if isReleased {
+                        continuation.resume()
+                    } else {
+                        self.continuation = continuation
+                    }
+                }
+            }
+        }
+        return try result.get()
+    }
+
+    /// Safe to call before `execute` reached its suspension point.
+    func resume() {
+        let pending = lock.withLock {
+            isReleased = true
+            defer { continuation = nil }
+            return continuation
+        }
+        pending?.resume()
+    }
+}
+
+class ConfigurableShareByEmailUseCase: PShareByEmailUseCase {
+    var result: Result<Void, Error> = .success(())
+    var executeCount = 0
+    var lastEmail: String?
+    var lastFormat: EmailShareFormat?
+
+    func execute(bookmarkId: String, email: String, format: EmailShareFormat) async throws {
+        executeCount += 1
+        lastEmail = email
+        lastFormat = format
+        try result.get()
+    }
+}
+
 class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
     static var isAvailable: Bool { true }
     var result: Result<String, Error> = .success("Test summary")

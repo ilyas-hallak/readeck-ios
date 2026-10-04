@@ -537,6 +537,24 @@ extension MockUseCaseFactory {
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase {
         MockExportArticlePDFUseCase()
     }
+
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase {
+        MockCreateShareLinkUseCase()
+    }
+
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase {
+        MockShareByEmailUseCase()
+    }
+}
+
+final class MockCreateShareLinkUseCase: PCreateShareLinkUseCase {
+    func execute(bookmarkId: String) async throws -> URL {
+        URL(string: "https://readeck.example.com/@b/mock")!
+    }
+}
+
+final class MockShareByEmailUseCase: PShareByEmailUseCase {
+    func execute(bookmarkId: String, email: String, format: EmailShareFormat) async throws {}
 }
 
 final class MockExportArticlePDFUseCase: PExportArticlePDFUseCase {
