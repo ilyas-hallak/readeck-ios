@@ -8,7 +8,7 @@ struct ReadingProgressStylePreview: View {
 
     @State private var model = ReadingProgressModel()
     @State private var isToolbarVisible = true
-    @State private var isScrollPaused = false
+    @State private var pause = ScrollPauseModel()
 
     // Drawn at the size of an iPhone 17 Pro and scaled down, so the real indicators fit as they are
     private static let screen = CGSize(width: 402, height: 300)
@@ -26,7 +26,7 @@ struct ReadingProgressStylePreview: View {
                     style: style,
                     model: model,
                     isToolbarVisible: isToolbarVisible,
-                    isScrollPaused: isScrollPaused,
+                    pause: pause,
                     topBarInset: Self.topBarInset,
                     statusBarHeight: Self.statusBarHeight
                 )
@@ -116,14 +116,14 @@ struct ReadingProgressStylePreview: View {
         while !Task.isCancelled {
             try? await Task.sleep(for: .seconds(1))
             for step in 1...steps {
-                isScrollPaused = false
+                pause.isPaused = false
                 withAnimation(.easeInOut(duration: 0.35)) { isToolbarVisible = false }
                 withAnimation(.easeInOut(duration: 1.2)) { model.value = Double(step) / Double(steps) }
                 try? await Task.sleep(for: .seconds(1.2))
-                isScrollPaused = true
+                pause.isPaused = true
                 try? await Task.sleep(for: .seconds(1.8))
             }
-            isScrollPaused = false
+            pause.isPaused = false
             withAnimation(.easeInOut(duration: 0.35)) { isToolbarVisible = true }
             withAnimation(.easeInOut(duration: 0.8)) { model.value = 0 }
             try? await Task.sleep(for: .seconds(0.8))

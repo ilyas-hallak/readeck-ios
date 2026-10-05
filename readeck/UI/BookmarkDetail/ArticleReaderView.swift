@@ -25,8 +25,7 @@ struct ArticleReaderView: View {
     @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
     @State private var topBarInset: Double = 0
-    @State private var isScrollPaused = false
-    @State private var progressFlashTask: Task<Void, Never>?
+    @State private var scrollPause = ScrollPauseModel()
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
@@ -217,6 +216,8 @@ struct ArticleReaderView: View {
 
     private var scrollViewContent: some View {
         GeometryReader { geometry in
+            // The scroll view runs under the home indicator, so it is taller than the safe area
+            let visibleHeight = geometry.size.height + geometry.safeAreaInsets.bottom
             ScrollView {
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
@@ -232,7 +233,7 @@ struct ArticleReaderView: View {
                             Divider().padding(.horizontal)
 
                             if showJumpToProgressButton {
-                                jumpButton(containerHeight: geometry.size.height)
+                                jumpButton(containerHeight: visibleHeight)
                             }
 
                             // Article content (WebView)
@@ -263,12 +264,12 @@ struct ArticleReaderView: View {
             .ignoresSafeArea(edges: .bottom)
             .scrollPosition($scrollPosition)
             .onScrollPhaseChange { _, phase in
-                flashProgress(when: phase)
+                scrollPause.scrollPhaseChanged(isIdle: phase == .idle)
             }
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 // Runs on every rendered frame while scrolling, so nothing in here may
                 // write `@State` unconditionally — see ReadingProgressModel.
-                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
+                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: visibleHeight)
 
                 if let progress = result.readingProgress {
                     progressModel.value = progress
@@ -304,7 +305,7 @@ struct ArticleReaderView: View {
                         style: viewModel.settings?.readingProgressStyle ?? .line,
                         model: progressModel,
                         isToolbarVisible: isToolbarVisible,
-                        isScrollPaused: isScrollPaused,
+                        pause: scrollPause,
                         topBarInset: topBarInset,
                         statusBarHeight: statusBarHeight
                     )
@@ -320,21 +321,6 @@ struct ArticleReaderView: View {
         }
         .allowsHitTesting(false)
         .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
-    }
-
-    // Shows the progress for a moment once the reader stops scrolling
-    private func flashProgress(when phase: ScrollPhase) {
-        progressFlashTask?.cancel()
-        guard phase == .idle else {
-            isScrollPaused = false
-            return
-        }
-        isScrollPaused = true
-        progressFlashTask = Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            guard !Task.isCancelled else { return }
-            isScrollPaused = false
-        }
     }
 
     private var statusBarHeight: Double {

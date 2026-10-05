@@ -1,13 +1,40 @@
 import SwiftUI
 
+/// Whether scrolling came to rest a moment ago. A reference type, so a change only
+/// redraws the progress overlay and not the whole reader with its web view.
+@MainActor
+@Observable
+final class ScrollPauseModel {
+    var isPaused = false
+    @ObservationIgnored private var resetTask: Task<Void, Never>?
+
+    func scrollPhaseChanged(isIdle: Bool, holdFor duration: Duration = .seconds(1.5)) {
+        resetTask?.cancel()
+        setPaused(isIdle)
+        guard isIdle else { return }
+        resetTask = Task { [weak self] in
+            try? await Task.sleep(for: duration)
+            guard !Task.isCancelled else { return }
+            self?.setPaused(false)
+        }
+    }
+
+    // Every write notifies the observers, even one that changes nothing
+    private func setPaused(_ paused: Bool) {
+        if isPaused != paused {
+            isPaused = paused
+        }
+    }
+}
+
 /// The reading progress in the top chrome of the reader, in the style the user picked.
 @available(iOS 26.0, *)
 struct ReadingProgressOverlay: View {
     let style: ReadingProgressStyle
     let model: ReadingProgressModel
     let isToolbarVisible: Bool
-    /// True for a moment after scrolling stopped, the styles that pop up use it.
-    let isScrollPaused: Bool
+    /// The styles that pop up show while scrolling is paused.
+    let pause: ScrollPauseModel
     let topBarInset: Double
     let statusBarHeight: Double
 
@@ -15,7 +42,7 @@ struct ReadingProgressOverlay: View {
         ZStack(alignment: .top) {
             indicator
         }
-        .animation(.easeInOut(duration: 0.3), value: isScrollPaused)
+        .animation(.easeInOut(duration: 0.3), value: pause.isPaused)
     }
 
     // Devices without a Dynamic Island fall back to the line
@@ -26,7 +53,7 @@ struct ReadingProgressOverlay: View {
     }
 
     private var isPopUpShown: Bool {
-        !isToolbarVisible && isScrollPaused
+        !isToolbarVisible && pause.isPaused
     }
 
     @ViewBuilder
