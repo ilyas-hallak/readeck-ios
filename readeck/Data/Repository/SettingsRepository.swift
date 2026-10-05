@@ -134,6 +134,9 @@ final class SettingsRepository: PSettingsRepository {
                     if let hideProgressBar = settings.hideProgressBar {
                         existingSettings.hideProgressBar = hideProgressBar
                     }
+                    if let readingProgressStyle = settings.readingProgressStyle {
+                        existingSettings.readingProgressStyle = readingProgressStyle.rawValue
+                    }
                     if let hideWordCount = settings.hideWordCount {
                         existingSettings.hideWordCount = hideWordCount
                     }
@@ -249,7 +252,8 @@ final class SettingsRepository: PSettingsRepository {
                         customCSS: settingEntity?.customCSS,
                         readerColorTheme: ReaderColorTheme(rawValue: settingEntity?.readerColorTheme ?? ReaderColorTheme.system.rawValue),
                         customBackgroundColor: settingEntity?.customBackgroundColor,
-                        customTextColor: settingEntity?.customTextColor
+                        customTextColor: settingEntity?.customTextColor,
+                        readingProgressStyle: ReadingProgressStyle(rawValue: settingEntity?.readingProgressStyle ?? ReadingProgressStyle.line.rawValue)
                     )
                     continuation.resume(returning: settings)
                 } catch {

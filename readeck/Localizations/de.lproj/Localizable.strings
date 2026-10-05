@@ -329,7 +329,7 @@
 
 /* Reader Switch Tip */
 "New reader" = "Neuer Reader";
-"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artikel öffnen jetzt im modernen Reader. Falls etwas nicht stimmt, kannst du unter Schrift zurückschalten.";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings." = "Artikel öffnen jetzt im modernen Reader. Falls etwas nicht stimmt, kannst du in den Reader-Einstellungen zurückschalten.";
 
 /* Slow connection and offline mode */
 "Your connection seems very slow or offline." = "Deine Verbindung ist sehr langsam oder weg.";
@@ -353,3 +353,22 @@
 "Send" = "Senden";
 "Email Sent" = "E-Mail gesendet";
 "Could not send the email" = "Die E-Mail konnte nicht gesendet werden";
+
+/* Reading progress style */
+"Progress Style" = "Fortschrittsanzeige";
+"Off" = "Aus";
+"No progress is shown while you read." = "Beim Lesen wird kein Fortschritt angezeigt.";
+"Serif" = "Serifen";
+"Sans Serif" = "Serifenlos";
+"Monospace" = "Monospace";
+"font.sample" = "Franz jagt im komplett verwahrlosten Taxi quer durch Bayern.";
+"Line" = "Linie";
+"Island Ring" = "Ring um die Dynamic Island";
+"Island Ring on Pause" = "Ring bei Pause";
+"Percent in Corner" = "Prozent in der Ecke";
+"Percent at Scroll Indicator" = "Prozent an der Scrollleiste";
+"A thin line below the navigation bar slides away with it." = "Eine dünne Linie unter der Navigationsleiste, die mit ihr verschwindet.";
+"A ring around the Dynamic Island fills up as you read." = "Ein Ring um die Dynamic Island füllt sich beim Lesen.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "Der Ring um die Dynamic Island erscheint, sobald du aufhörst zu scrollen.";
+"The percentage pops up in the top corner when you stop scrolling." = "Der Prozentwert erscheint oben in der Ecke, sobald du aufhörst zu scrollen.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "Der Prozentwert folgt der Scrollleiste und erscheint, sobald du aufhörst zu scrollen.";

@@ -61,6 +61,10 @@ enum FontFamily: String, CaseIterable {
         }
     }
 
+    var isLegacy: Bool {
+        self == .serif || self == .sansSerif
+    }
+
     var isReadeckWebMatch: Bool {
         switch self {
         case .literata, .merriweather, .sourceSerif, .sourceSans:

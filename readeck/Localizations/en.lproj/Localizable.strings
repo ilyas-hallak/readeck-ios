@@ -308,7 +308,7 @@
 
 /* Reader Switch Tip */
 "New reader" = "New reader";
-"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings.";
 
 /* Slow connection and offline mode */
 "Your connection seems very slow or offline." = "Your connection seems very slow or offline.";
@@ -332,3 +332,22 @@
 "Send" = "Send";
 "Email Sent" = "Email Sent";
 "Could not send the email" = "Could not send the email";
+
+/* Reading progress style */
+"Progress Style" = "Progress Style";
+"Off" = "Off";
+"No progress is shown while you read." = "No progress is shown while you read.";
+"Serif" = "Serif";
+"Sans Serif" = "Sans Serif";
+"Monospace" = "Monospace";
+"font.sample" = "The quick brown fox jumps over the lazy dog.";
+"Line" = "Line";
+"Island Ring" = "Island Ring";
+"Island Ring on Pause" = "Island Ring on Pause";
+"Percent in Corner" = "Percent in Corner";
+"Percent at Scroll Indicator" = "Percent at Scroll Indicator";
+"A thin line below the navigation bar slides away with it." = "A thin line below the navigation bar slides away with it.";
+"A ring around the Dynamic Island fills up as you read." = "A ring around the Dynamic Island fills up as you read.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "The ring around the Dynamic Island shows up when you stop scrolling.";
+"The percentage pops up in the top corner when you stop scrolling." = "The percentage pops up in the top corner when you stop scrolling.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "The percentage follows the scroll indicator and shows up when you stop scrolling.";

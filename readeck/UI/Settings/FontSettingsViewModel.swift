@@ -21,19 +21,20 @@ final class FontSettingsViewModel {
 
     // MARK: - Reader Layout
     var horizontalMargin: Double = 16
-    var lineHeight: Double = 1.4
+    var lineHeight = 1.4
 
     // MARK: - Visibility
-    var hideProgressBar: Bool = false
-    var hideWordCount: Bool = false
-    var hideHeroImage: Bool = false
-    var hideSummary: Bool = false
+    var hideProgressBar = false
+    var hideWordCount = false
+    var hideHeroImage = false
+    var hideSummary = false
+    var readingProgressStyle: ReadingProgressStyle = .line
 
     // MARK: - Loading State
     var isLoading = false
 
     // MARK: - Custom CSS
-    var customCSS: String = ""
+    var customCSS = ""
 
     // MARK: - Color Theme
     var readerColorTheme: ReaderColorTheme = .system
@@ -58,10 +59,10 @@ final class FontSettingsViewModel {
     }
 
     // MARK: - Computed Preview Properties
-    var previewLineSpacing: CGFloat {
+    var previewLineSpacing: Double {
         // SwiftUI lineSpacing is extra space between lines, not the CSS line-height multiplier.
         // CSS line-height 1.8 at 20px = 36px total line height, so extra = (1.8 - 1.0) * fontSize
-        return (lineHeight - 1.0) * fontSizeNumeric
+        (lineHeight - 1.0) * fontSizeNumeric
     }
 
     // MARK: - Messages
@@ -70,117 +71,15 @@ final class FontSettingsViewModel {
 
     // MARK: - Computed Font Properties for Preview
     var previewTitleFont: Font {
-        let size = fontSizeNumeric
-
-        switch selectedFontFamily {
-        // Apple System Fonts
-        case .system:
-            return Font.system(size: size).weight(.semibold)
-        case .newYork:
-            return Font.system(size: size, design: .serif).weight(.semibold)
-        case .avenirNext:
-            return Font.custom("AvenirNext-DemiBold", size: size)
-        case .monospace:
-            return Font.system(size: size, design: .monospaced).weight(.semibold)
-
-        // Google Serif Fonts
-        case .literata:
-            return Font.custom("Literata-Bold", size: size)
-        case .merriweather:
-            return Font.custom("Merriweather-Bold", size: size)
-        case .sourceSerif:
-            return Font.custom("SourceSerif4-Bold", size: size)
-
-        // Google Sans Serif Fonts
-        case .lato:
-            return Font.custom("Lato-Bold", size: size)
-        case .montserrat:
-            return Font.custom("Montserrat-Bold", size: size)
-        case .sourceSans:
-            return Font.custom("SourceSans3-Bold", size: size)
-
-        // Legacy
-        case .serif:
-            return Font.custom("Times New Roman", size: size).weight(.semibold)
-        case .sansSerif:
-            return Font.custom("Helvetica Neue", size: size).weight(.semibold)
-        }
+        selectedFontFamily.font(size: fontSizeNumeric, bold: true)
     }
 
     var previewBodyFont: Font {
-        let size = fontSizeNumeric
-
-        switch selectedFontFamily {
-        // Apple System Fonts
-        case .system:
-            return Font.system(size: size)
-        case .newYork:
-            return Font.system(size: size, design: .serif)
-        case .avenirNext:
-            return Font.custom("AvenirNext-Regular", size: size)
-        case .monospace:
-            return Font.system(size: size, design: .monospaced)
-
-        // Google Serif Fonts
-        case .literata:
-            return Font.custom("Literata-Regular", size: size)
-        case .merriweather:
-            return Font.custom("Merriweather-Regular", size: size)
-        case .sourceSerif:
-            return Font.custom("SourceSerif4-Regular", size: size)
-
-        // Google Sans Serif Fonts
-        case .lato:
-            return Font.custom("Lato-Regular", size: size)
-        case .montserrat:
-            return Font.custom("Montserrat-Regular", size: size)
-        case .sourceSans:
-            return Font.custom("SourceSans3-Regular", size: size)
-
-        // Legacy
-        case .serif:
-            return Font.custom("Times New Roman", size: size)
-        case .sansSerif:
-            return Font.custom("Helvetica Neue", size: size)
-        }
+        selectedFontFamily.font(size: fontSizeNumeric)
     }
 
     var previewCaptionFont: Font {
-        let captionSize = fontSizeNumeric * 0.85
-
-        switch selectedFontFamily {
-        // Apple System Fonts
-        case .system:
-            return Font.system(size: captionSize)
-        case .newYork:
-            return Font.system(size: captionSize, design: .serif)
-        case .avenirNext:
-            return Font.custom("AvenirNext-Regular", size: captionSize)
-        case .monospace:
-            return Font.system(size: captionSize, design: .monospaced)
-
-        // Google Serif Fonts
-        case .literata:
-            return Font.custom("Literata-Regular", size: captionSize)
-        case .merriweather:
-            return Font.custom("Merriweather-Regular", size: captionSize)
-        case .sourceSerif:
-            return Font.custom("SourceSerif4-Regular", size: captionSize)
-
-        // Google Sans Serif Fonts
-        case .lato:
-            return Font.custom("Lato-Regular", size: captionSize)
-        case .montserrat:
-            return Font.custom("Montserrat-Regular", size: captionSize)
-        case .sourceSans:
-            return Font.custom("SourceSans3-Regular", size: captionSize)
-
-        // Legacy
-        case .serif:
-            return Font.custom("Times New Roman", size: captionSize)
-        case .sansSerif:
-            return Font.custom("Helvetica Neue", size: captionSize)
-        }
+        selectedFontFamily.font(size: fontSizeNumeric * 0.85)
     }
 
     init(factory: UseCaseFactory = DefaultUseCaseFactory.shared) {
@@ -213,6 +112,7 @@ final class FontSettingsViewModel {
                 hideWordCount = settings.hideWordCount ?? false
                 hideHeroImage = settings.hideHeroImage ?? false
                 hideSummary = settings.hideSummary ?? false
+                readingProgressStyle = settings.readingProgressStyle ?? .line
                 customCSS = settings.customCSS ?? ""
                 readerColorTheme = settings.readerColorTheme ?? .system
                 if let bgHex = settings.customBackgroundColor {
@@ -263,6 +163,29 @@ final class FontSettingsViewModel {
             )
         } catch {
             errorMessage = "Error saving visibility settings"
+        }
+    }
+
+    /// Shows the progress in the given style, or hides it when the style is nil.
+    @MainActor
+    func saveProgressDisplay(_ style: ReadingProgressStyle?) async {
+        if let style, style != readingProgressStyle {
+            readingProgressStyle = style
+            await saveReadingProgressStyle()
+        }
+        let hide = style == nil
+        if hide != hideProgressBar {
+            hideProgressBar = hide
+            await saveVisibilitySettings()
+        }
+    }
+
+    @MainActor
+    func saveReadingProgressStyle() async {
+        do {
+            try await saveSettingsUseCase.execute(readingProgressStyle: readingProgressStyle)
+        } catch {
+            errorMessage = "Error saving progress style"
         }
     }
 

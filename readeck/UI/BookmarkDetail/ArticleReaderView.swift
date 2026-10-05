@@ -24,6 +24,8 @@ struct ArticleReaderView: View {
     @State private var showingArchiveConfirmation = false
     @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
+    @State private var topBarInset: Double = 0
+    @State private var scrollPause = ScrollPauseModel()
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
@@ -62,14 +64,13 @@ struct ArticleReaderView: View {
             .toolbar {
                 toolbarContent
             }
-            .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
             // Local to this screen on purpose: OLEDTheme.swift owns the global
             // UINavigationBar appearance proxy, and a second writer would leave the
             // bookmark list tinted after leaving the reader.
             .toolbarBackground(readerTheme.backgroundColor, for: .navigationBar)
-            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
             .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
-            .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
+            .navigationBarFaded(!isToolbarVisible)
             .sheet(isPresented: $showingLabelsSheet) {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
@@ -159,24 +160,19 @@ struct ArticleReaderView: View {
     }
 
     private var content: some View {
-        VStack(spacing: 0) {
-            // Progress bar at top
-            if !(viewModel.settings?.hideProgressBar ?? false) {
-                ReadingProgressBar(model: progressModel)
+        scrollViewContent
+            .overlay(alignment: .top) {
+                topChrome
             }
-
-            // Main scroll content
-            scrollViewContent
-                .overlay(alignment: .bottomTrailing) {
-                    if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                        if showFloatingActions {
-                            floatingActionButtons
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
+            .overlay(alignment: .bottomTrailing) {
+                if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                    if showFloatingActions {
+                        floatingActionButtons
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
-        }
+            }
+            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
         // Everything inside the reader adopts the theme's brightness so system-tinted
         // elements (progress bar, dividers, glass buttons, loading labels) stay legible
         // on a light theme while the app runs in dark mode, and vice versa. Applied
@@ -220,6 +216,8 @@ struct ArticleReaderView: View {
 
     private var scrollViewContent: some View {
         GeometryReader { geometry in
+            // The scroll view runs under the home indicator, so it is taller than the safe area
+            let visibleHeight = geometry.size.height + geometry.safeAreaInsets.bottom
             ScrollView {
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
@@ -235,7 +233,7 @@ struct ArticleReaderView: View {
                             Divider().padding(.horizontal)
 
                             if showJumpToProgressButton {
-                                jumpButton(containerHeight: geometry.size.height)
+                                jumpButton(containerHeight: visibleHeight)
                             }
 
                             // Article content (WebView)
@@ -256,16 +254,22 @@ struct ArticleReaderView: View {
                             }
                         )
                 }
+                // Inside the content, so the helper finds the scroll view among its superviews
+                .disableScrollBounce()
             }
             .coordinateSpace(name: "scrollView")
+            // The scroll view runs under the bar, so the article has to start below it
+            .contentMargins(.top, topBarInset, for: .scrollContent)
             .clipped()
-            .ignoresSafeArea(edges: [.top, .bottom])
+            .ignoresSafeArea(edges: .bottom)
             .scrollPosition($scrollPosition)
-            .disableScrollBounce()
+            .onScrollPhaseChange { _, phase in
+                scrollPause.scrollPhaseChanged(isIdle: phase == .idle)
+            }
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 // Runs on every rendered frame while scrolling, so nothing in here may
                 // write `@State` unconditionally — see ReadingProgressModel.
-                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
+                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: visibleHeight)
 
                 if let progress = result.readingProgress {
                     progressModel.value = progress
@@ -285,6 +289,42 @@ struct ArticleReaderView: View {
                 }
             }
         }
+        .ignoresSafeArea(edges: .top)
+    }
+
+    // The scroll view ignores the top safe area, so the system scroll edge effect never
+    // kicks in. A frosted strip behind the bar takes its place and shrinks to the status
+    // bar while the bar is faded, with the progress line following its edge.
+    private var topChrome: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                FrostedTopStrip(height: isToolbarVisible ? topBarInset : statusBarHeight)
+
+                if !(viewModel.settings?.hideProgressBar ?? false) {
+                    ReadingProgressOverlay(
+                        style: viewModel.settings?.readingProgressStyle ?? .line,
+                        model: progressModel,
+                        isToolbarVisible: isToolbarVisible,
+                        pause: scrollPause,
+                        topBarInset: topBarInset,
+                        statusBarHeight: statusBarHeight
+                    )
+                }
+            }
+            .ignoresSafeArea(edges: .top)
+            .onChange(of: proxy.safeAreaInsets.top, initial: true) { _, inset in
+                // The slid away bar shrinks the safe area. Following it would shift the
+                // article, which flips the bar back and loops until the watchdog kills the app.
+                guard isToolbarVisible else { return }
+                topBarInset = inset
+            }
+        }
+        .allowsHitTesting(false)
+        .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
+    }
+
+    private var statusBarHeight: Double {
+        Double(UIWindow.current?.safeAreaInsets.top ?? 0)
     }
 
     @ToolbarContentBuilder
@@ -315,7 +355,7 @@ struct ArticleReaderView: View {
                     readerSwitchTip.invalidate(reason: .actionPerformed)
                     showingFontSettings = true
                 } label: {
-                    Label("Font Settings".localized, systemImage: "textformat")
+                    Label("Reader Settings".localized, systemImage: "textformat.size")
                 }
 
                 Button {
