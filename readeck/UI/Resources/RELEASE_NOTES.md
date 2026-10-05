@@ -8,11 +8,10 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ### Modern Reader
 
-- **Pick how your reading progress is shown:** the line, a ring around the Dynamic Island (always or when you stop scrolling), a percent pill in the corner or next to the scroll indicator, or nothing at all. Every option comes with a small animated preview
-- The navigation bar **slides away while you read** and leaves a frosted strip behind, the article no longer jumps and swipe back keeps working
-- Reaching the end of an article now always counts as 100 percent
-- **All reader settings are reachable from the article menu** and take up less space. The preview stays folded until you change the font
-- Font families have their own page, each shown in its own typeface
+- **New progress styles:** a line, a ring around the Dynamic Island, a percent pill, or off
+- The navigation bar **slides away while you read**
+- The end of an article now counts as 100 percent
+- **Reader settings** open from the article menu and are more compact, fonts get their own page with a preview
 
 ### Sharing
 
