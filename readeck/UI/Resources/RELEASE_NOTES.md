@@ -6,7 +6,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ## Version 3.3.0
 
-### Reader
+### Modern Reader
 
 - **Pick how your reading progress is shown:** the line, a ring around the Dynamic Island (always or when you stop scrolling), a percent pill in the corner or next to the scroll indicator, or nothing at all. Every option comes with a small animated preview
 - The navigation bar **slides away while you read** and leaves a frosted strip behind, the article no longer jumps and swipe back keeps working
