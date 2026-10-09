@@ -4,9 +4,9 @@
 
 # Readeck for iOS
 
-**Your read-it-later library, native on iPhone and iPad.**
+**Save the story, cut the clutter.**
 
-A client for [Readeck](https://readeck.org), the self-hosted bookmark manager.
+The native iPhone and iPad app for [Readeck](https://readeck.org), the self-hosted read-it-later service.
 Save articles from anywhere, read them distraction free, and take them offline.
 
 [![Download on the App Store](https://img.shields.io/badge/App%20Store-Download-0D5866?style=for-the-badge&logo=appstore&logoColor=white)](https://apps.apple.com/app/readeck/id6748764703)
