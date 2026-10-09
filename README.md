@@ -9,9 +9,8 @@
 A client for [Readeck](https://readeck.org), the self-hosted bookmark manager.
 Save articles from anywhere, read them distraction free, and take them offline.
 
-<a href="https://apps.apple.com/app/readeck/id6748764703"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="48" /></a>
-&nbsp;
-<a href="https://testflight.apple.com/join/cV55mKsR"><img src="https://img.shields.io/badge/TestFlight-Join%20the%20beta-0D5866?style=for-the-badge&logo=apple&logoColor=white" alt="Join the TestFlight beta" height="48" /></a>
+[![Download on the App Store](https://img.shields.io/badge/App%20Store-Download-0D5866?style=for-the-badge&logo=appstore&logoColor=white)](https://apps.apple.com/app/readeck/id6748764703)
+[![Join the TestFlight beta](https://img.shields.io/badge/TestFlight-Join%20the%20beta-4AB7D6?style=for-the-badge&logo=apple&logoColor=white)](https://testflight.apple.com/join/cV55mKsR)
 
 [![App Store version](https://img.shields.io/itunes/v/6748764703?label=App%20Store&color=4AB7D6)](https://apps.apple.com/app/readeck/id6748764703)
 [![Platform](https://img.shields.io/badge/iPhone%20%7C%20iPad-iOS%2018.1%2B-000000?logo=apple&logoColor=white)](#getting-started)
@@ -34,7 +33,7 @@ Save articles from anywhere, read them distraction free, and take them offline.
 - **Made for reading.** A clean reader with your font, size, margins and color theme, and progress that follows you.
 - **Save from anywhere.** The share extension adds a page from Safari or any other app in two taps.
 - **Works offline.** Articles are cached on the device, so the train or the plane is no problem.
-- **Your server, your data.** The app talks only to your own Readeck instance, no account with anyone else.
+- **Your server, your data.** The app only talks to your own Readeck server, no tracking, no third party account.
 
 ## Features
 
@@ -85,9 +84,8 @@ To save a page, share it from Safari or any other app and pick Readeck in the sh
 
 <br />
 
-Local network addresses work out of the box.
-For an external domain, your Readeck server needs HTTPS, since iOS does not allow plain HTTP to external domains in App Store builds.
-The TestFlight beta still allows HTTP.
+Local network and VPN addresses (for example Tailscale) also work over plain HTTP and with self-signed certificates.
+For a public domain, your Readeck server needs HTTPS, since iOS does not allow plain HTTP there.
 
 Custom HTTP headers are sent with every API request, which helps when Readeck runs behind a proxy like Pangolin.
 `Content-Type` and `Authorization` are managed by the app and cannot be overridden.
@@ -96,7 +94,7 @@ Custom HTTP headers are sent with every API request, which helps when Readeck ru
 
 ## Feedback and contributing
 
-Bugs, crashes and ideas are welcome through TestFlight, as an issue, or by email at ilhallak@gmail.com.
+Bugs, crashes and ideas are welcome through TestFlight, as an issue, or by email at hi@ilyashallak.de.
 Pull requests too, see [Contribute.md](Contribute.md) for how to get started.
 
 The Readeck server itself lives on [Codeberg](https://codeberg.org/readeck/readeck).
