@@ -1,27 +1,24 @@
 import CoreData
 import Foundation
 
-final class CoreDataManager {
+final class CoreDataManager: Sendable {
     static let shared = CoreDataManager()
 
-    private var isInMemoryStore = false
+    let persistentContainer: NSPersistentContainer
     private let logger = Logger.data
-    private let injectedContainer: NSPersistentContainer?
 
     private init() {
-        self.injectedContainer = nil
+        self.persistentContainer = Self.makeContainer()
     }
 
     /// Accepts a preconfigured container, e.g. an in-memory store in tests.
     /// The regular app path keeps going through `shared`.
     init(container: NSPersistentContainer) {
-        self.injectedContainer = container
+        self.persistentContainer = container
     }
 
-    lazy var persistentContainer: NSPersistentContainer = {
-        if let injectedContainer {
-            return injectedContainer
-        }
+    private static func makeContainer() -> NSPersistentContainer {
+        let logger = Logger.data
 
         // Try to find the model in the main bundle first, then in extension bundle
         guard let modelURL = Bundle.main.url(forResource: "readeck", withExtension: "momd") ??
@@ -50,21 +47,21 @@ final class CoreDataManager {
             container.persistentStoreDescriptions = [storeDescription]
         }
 
-        container.loadPersistentStores { [weak self] _, error in
+        container.loadPersistentStores { _, error in
             if let error {
-                self?.logger.error("Core Data failed to load persistent store: \(error)", file: #file, function: #function, line: #line)
-                self?.setupInMemoryStore(container: container)
+                logger.error("Core Data failed to load persistent store: \(error)", file: #file, function: #function, line: #line)
+                setupInMemoryStore(container: container)
             } else {
-                self?.logger.info("Core Data persistent store loaded successfully")
+                logger.info("Core Data persistent store loaded successfully")
             }
         }
 
         // Configure viewContext for better extension support
         container.viewContext.automaticallyMergesChangesFromParent = true
-        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        container.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
 
         return container
-    }()
+    }
 
     var context: NSManagedObjectContext {
         persistentContainer.viewContext
@@ -75,7 +72,7 @@ final class CoreDataManager {
         context.automaticallyMergesChangesFromParent = true
         // Match the viewContext's policy so conflicts resolve consistently;
         // the default (NSErrorMergePolicy) would fail the save on a conflict.
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        context.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
         return context
     }
 
@@ -125,25 +122,26 @@ final class CoreDataManager {
         logger.info("Core Data database files deleted successfully")
     }
 
-    private func setupInMemoryStore(container: NSPersistentContainer) {
+    private static func setupInMemoryStore(container: NSPersistentContainer) {
+        let logger = Logger.data
         logger.warning("Setting up in-memory Core Data store as fallback")
-        isInMemoryStore = true
 
         let inMemoryDescription = NSPersistentStoreDescription()
         inMemoryDescription.type = NSInMemoryStoreType
         container.persistentStoreDescriptions = [inMemoryDescription]
 
-        container.loadPersistentStores { [weak self] _, error in
+        container.loadPersistentStores { _, error in
             if let error {
-                self?.logger.error("Failed to setup in-memory store: \(error.localizedDescription)")
+                logger.error("Failed to setup in-memory store: \(error.localizedDescription)")
                 // Continue with empty container - app will work with reduced functionality
             } else {
-                self?.logger.info("In-memory Core Data store setup successfully")
+                logger.info("In-memory Core Data store setup successfully")
             }
         }
     }
 
-    private func migrateStoreToAppGroupIfNeeded(targetURL: URL) {
+    private static func migrateStoreToAppGroupIfNeeded(targetURL: URL) {
+        let logger = Logger.data
         let fileManager = FileManager.default
 
         // Check if store already exists in app group
@@ -190,7 +188,8 @@ final class CoreDataManager {
         }
     }
 
-    private func migrateFromPath(oldStoreURL: URL, targetURL: URL) -> Bool {
+    private static func migrateFromPath(oldStoreURL: URL, targetURL: URL) -> Bool {
+        let logger = Logger.data
         let fileManager = FileManager.default
         let oldStoreWAL = oldStoreURL.appendingPathExtension("wal")
         let oldStoreSHM = oldStoreURL.appendingPathExtension("shm")

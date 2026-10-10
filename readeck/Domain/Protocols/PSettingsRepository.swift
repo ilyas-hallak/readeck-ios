@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PSettingsRepository {
+protocol PSettingsRepository: Sendable {
     // Existing Settings methods
     func saveSettings(_ settings: Settings) async throws
     func loadSettings() async throws -> Settings?

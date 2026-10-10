@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class ArticleSummaryViewModel {
     private let summarizeUseCase: PSummarizeArticleUseCase
@@ -37,7 +38,6 @@ final class ArticleSummaryViewModel {
         summarizeUseCase.prewarm()
     }
 
-    @MainActor
     func summarize() async {
         currentTask?.cancel()
         isLoading = true

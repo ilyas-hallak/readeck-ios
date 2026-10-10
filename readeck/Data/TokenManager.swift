@@ -1,16 +1,13 @@
 import Foundation
 import OSLog
 
-@Observable
-final class TokenManager {
-    static let shared = TokenManager()
-
+actor TokenManager {
     private let logger = Logger.auth
     private let settingsRepository: PSettingsRepository
     private var cachedSettings: Settings?
 
-    private init() {
-        self.settingsRepository = DefaultUseCaseFactory.shared.makeSettingsRepository()
+    init(settingsRepository: PSettingsRepository) {
+        self.settingsRepository = settingsRepository
     }
 
     var currentToken: String? {

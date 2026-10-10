@@ -671,7 +671,7 @@ struct HeroHeaderView: View, Equatable {
     let height: Double
     let onTap: () -> Void
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
+    nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.imageUrl == rhs.imageUrl
             && lhs.cacheKey == rhs.cacheKey
             && lhs.width == rhs.width

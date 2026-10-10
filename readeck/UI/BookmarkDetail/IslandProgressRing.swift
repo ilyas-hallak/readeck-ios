@@ -13,7 +13,7 @@ struct IslandProgressRing: View {
     private static let islandSize = CGSize(width: 125, height: 37)
     private static let islandTop: Double = 14
     private static let gap: Double = 3
-    private static let lineWidth = 2.5
+    private nonisolated static let lineWidth = 2.5
 
     /// Devices with a Dynamic Island have a top safe area of at least 59 points.
     static func isAvailable(statusBarHeight: Double) -> Bool {

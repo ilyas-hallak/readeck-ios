@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PGetCachedArticleUseCase {
+protocol PGetCachedArticleUseCase: Sendable {
     func execute(id: String) -> String?
 }
 

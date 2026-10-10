@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AVFoundation
 
+@MainActor
 @Observable
 final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     private let logger = Logger.general
@@ -249,7 +250,7 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
         nowPlayingManager.clearNowPlaying()
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             // Only update state if the synthesizer isn't already speaking a new utterance
             if !self.synthesizer.isSpeaking {
@@ -263,7 +264,7 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             // Only update state if the synthesizer isn't already speaking a new utterance
             if !self.synthesizer.isSpeaking {
@@ -275,24 +276,24 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             self.isSpeaking = false
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didContinue utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didContinue utterance: AVSpeechUtterance) {
         DispatchQueue.main.async {
             self.isSpeaking = true
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
         let spoken = characterRange.location + characterRange.length
-        let absolutePosition = currentStartOffset + spoken
-        let total = currentFullText.count
 
         DispatchQueue.main.async {
+            let absolutePosition = self.currentStartOffset + spoken
+            let total = self.currentFullText.count
             self.currentCharacterIndex = absolutePosition
             if total > 0 {
                 self.articleProgress = min(Double(absolutePosition) / Double(total), 1.0)

@@ -16,7 +16,7 @@ enum PDFRenderingError: Error, Equatable {
     case emptyDocument
 }
 
-protocol PPDFRenderingService {
+protocol PPDFRenderingService: Sendable {
     /// Renders a complete HTML document into paginated PDF data.
     /// - Parameters:
     ///   - html: A self-contained HTML document. Remote resources are given a short

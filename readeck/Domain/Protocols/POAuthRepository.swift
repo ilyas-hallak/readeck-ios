@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol POAuthRepository {
+protocol POAuthRepository: Sendable {
     /// Registers an OAuth client with the server
     /// - Parameters:
     ///   - endpoint: Server endpoint URL

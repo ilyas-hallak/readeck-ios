@@ -6,7 +6,7 @@
 
 import Foundation
 
-protocol PInfoApiClient {
+protocol PInfoApiClient: Sendable {
     func getServerInfo(endpoint: String?) async throws -> ServerInfoDto
 }
 

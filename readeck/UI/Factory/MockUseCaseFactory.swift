@@ -6,8 +6,10 @@
 //
 
 import Foundation
-import Combine
+@preconcurrency import Combine
+import Synchronization
 
+@MainActor
 final class MockUseCaseFactory: UseCaseFactory {
     func makeGetCachedBookmarksUseCase() -> any PGetCachedBookmarksUseCase {
         MockGetCachedBookmarksUseCase()
@@ -354,7 +356,11 @@ final class MockDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
 }
 
 final class MockSettingsRepository: PSettingsRepository {
-    var hasFinishedSetup = true
+    private let setupFinished = Mutex(true)
+    var hasFinishedSetup: Bool {
+        get { setupFinished.withLock { $0 } }
+        set { setupFinished.withLock { $0 = newValue } }
+    }
 
     func saveSettings(_ settings: Settings) async throws {}
     func loadSettings() async throws -> Settings? {

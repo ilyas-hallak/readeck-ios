@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 
+@MainActor
 @Observable
 final class VoiceManager {
     private let logger = Logger.general

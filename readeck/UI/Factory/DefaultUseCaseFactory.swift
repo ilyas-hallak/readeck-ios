@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 protocol UseCaseFactory {
     func makeLoginUseCase() -> PLoginUseCase
     func makeGetBookmarksUseCase() -> PGetBookmarksUseCase
@@ -47,6 +48,7 @@ protocol UseCaseFactory {
     func makeShareByEmailUseCase() -> PShareByEmailUseCase
 }
 
+@MainActor
 final class DefaultUseCaseFactory: UseCaseFactory {
     // One shared session, configured with timeouts, for the whole app.
     private let httpSession: HTTPSession = HTTPSessionFactory.makeDefault()
@@ -63,6 +65,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     private lazy var settingsRepository: PSettingsRepository = SettingsRepository(tokenProvider: tokenProvider)
+    private lazy var tokenManager = TokenManager(settingsRepository: settingsRepository)
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider, session: httpSession)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
@@ -105,7 +108,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeLogoutUseCase() -> PLogoutUseCase {
-        LogoutUseCase(settingsRepository: settingsRepository)
+        LogoutUseCase(settingsRepository: settingsRepository, tokenManager: tokenManager)
     }
 
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase {
@@ -231,7 +234,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var oauthRepository: POAuthRepository = OAuthRepository(api: api)
     private lazy var oauthManager = OAuthManager(repository: oauthRepository)
 
-    @MainActor func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
+    func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
         let coordinator = OAuthFlowCoordinator(manager: oauthManager)
         return LoginWithOAuthUseCase(oauthCoordinator: coordinator)
     }

@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PUpdateBookmarkUseCase {
+protocol PUpdateBookmarkUseCase: Sendable {
     func execute(bookmarkId: String, updateRequest: BookmarkUpdateRequest) async throws
     func toggleArchive(bookmarkId: String, isArchived: Bool) async throws
     func toggleFavorite(bookmarkId: String, isMarked: Bool) async throws

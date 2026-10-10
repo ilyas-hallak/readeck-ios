@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSaveSettingsUseCase {
+protocol PSaveSettingsUseCase: Sendable {
     func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize, fontSizeNumeric: Double) async throws
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws
     func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws

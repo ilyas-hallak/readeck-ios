@@ -4,7 +4,8 @@ import Kingfisher
 
 final class SettingsRepository: PSettingsRepository {
     private let coreDataManager: CoreDataManager
-    private let userDefault: UserDefaults
+    // UserDefaults is thread-safe but not marked Sendable.
+    nonisolated(unsafe) private let userDefault: UserDefaults
     private let keychainHelper = KeychainHelper.shared
     private let tokenProvider: TokenProvider
 

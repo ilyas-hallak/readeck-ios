@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSummarizationRepository {
+protocol PSummarizationRepository: Sendable {
     static var isAvailable: Bool { get }
     static var supportedLanguages: [String] { get }
     func summarize(text: String, instructions: String) async throws -> String

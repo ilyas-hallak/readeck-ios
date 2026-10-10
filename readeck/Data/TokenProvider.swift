@@ -1,6 +1,6 @@
 import Foundation
 
-protocol TokenProvider {
+protocol TokenProvider: Sendable {
     func getToken() async -> String?
     func getEndpoint() async -> String?
     func setToken(_ token: String) async
@@ -16,7 +16,7 @@ protocol TokenProvider {
     func getOAuthClientId() async -> String?
 }
 
-final class KeychainTokenProvider: TokenProvider {
+actor KeychainTokenProvider: TokenProvider {
     private let keychainHelper = KeychainHelper.shared
     private let session: HTTPSession
     private let logger = Logger.network

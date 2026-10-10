@@ -58,7 +58,8 @@ struct SpeechPlayerViewModelTests {
         await vm.setup()
         SpeechQueue.shared.clear()
 
-        var didFire = false
+        // onChange runs synchronously inside the enqueue below, on this thread.
+        nonisolated(unsafe) var didFire = false
         // Mirrors what SwiftUI does when a view body reads viewModel.queueCount.
         withObservationTracking {
             _ = vm.queueCount

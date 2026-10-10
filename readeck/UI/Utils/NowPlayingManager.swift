@@ -2,7 +2,8 @@ import Foundation
 import MediaPlayer
 import UIKit
 
-class NowPlayingManager {
+@MainActor
+final class NowPlayingManager {
     static let shared = NowPlayingManager()
     private let commandCenter = MPRemoteCommandCenter.shared()
     private var ttsManager: TTSManager { .shared }
@@ -73,13 +74,13 @@ class NowPlayingManager {
             if let cached = artworkCache.object(forKey: cacheKey) {
                 info[MPMediaItemPropertyArtwork] = cached
             } else {
-                loadArtwork(from: url) { [weak self] artwork in
-                    if let artwork {
-                        self?.artworkCache.setObject(artwork, forKey: cacheKey)
-                        var updatedInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-                        updatedInfo[MPMediaItemPropertyArtwork] = artwork
-                        MPNowPlayingInfoCenter.default().nowPlayingInfo = updatedInfo
-                    }
+                Task { [weak self] in
+                    guard let image = await Self.loadArtworkImage(from: url) else { return }
+                    let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                    self?.artworkCache.setObject(artwork, forKey: cacheKey)
+                    var updatedInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+                    updatedInfo[MPMediaItemPropertyArtwork] = artwork
+                    MPNowPlayingInfoCenter.default().nowPlayingInfo = updatedInfo
                 }
             }
         }
@@ -106,14 +107,8 @@ class NowPlayingManager {
 
     // MARK: - Artwork Loading
 
-    private func loadArtwork(from url: URL, completion: @escaping (MPMediaItemArtwork?) -> Void) {
-        URLSession.shared.dataTask(with: url) { data, _, _ in
-            guard let data, let image = UIImage(data: data) else {
-                DispatchQueue.main.async { completion(nil) }
-                return
-            }
-            let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-            DispatchQueue.main.async { completion(artwork) }
-        }.resume()
+    private nonisolated static func loadArtworkImage(from url: URL) async -> UIImage? {
+        guard let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
+        return UIImage(data: data)
     }
 }

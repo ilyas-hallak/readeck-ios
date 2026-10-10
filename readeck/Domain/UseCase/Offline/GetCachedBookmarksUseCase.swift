@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PGetCachedBookmarksUseCase {
+protocol PGetCachedBookmarksUseCase: Sendable {
     func execute() async throws -> [Bookmark]
 }
 

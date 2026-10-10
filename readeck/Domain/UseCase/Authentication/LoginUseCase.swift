@@ -1,4 +1,4 @@
-protocol PLoginUseCase {
+protocol PLoginUseCase: Sendable {
     func execute(endpoint: String, username: String, password: String) async throws -> User
 }
 

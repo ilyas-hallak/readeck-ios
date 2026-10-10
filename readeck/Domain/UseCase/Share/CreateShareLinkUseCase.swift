@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PCreateShareLinkUseCase {
+protocol PCreateShareLinkUseCase: Sendable {
     func execute(bookmarkId: String) async throws -> URL
 }
 

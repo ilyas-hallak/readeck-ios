@@ -1,7 +1,7 @@
 import Foundation
 
 final class BookmarksRepository: PBookmarksRepository {
-    private var api: PAPI
+    private let api: PAPI
 
     init(api: PAPI) {
         self.api = api

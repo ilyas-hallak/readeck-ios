@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 
+@MainActor
 @Observable
 final class AddBookmarkViewModel {
     // MARK: - Dependencies
@@ -70,12 +71,10 @@ final class AddBookmarkViewModel {
 
     /// Triggers background sync of tags from server to Core Data
     /// CoreDataTagManagementView will automatically update via @FetchRequest
-    @MainActor
     func syncTags() async {
         try? await syncTagsUseCase.execute()
     }
 
-    @MainActor
     func loadAllLabels() async {
         isLabelsLoading = true
         defer { isLabelsLoading = false }
@@ -89,7 +88,6 @@ final class AddBookmarkViewModel {
         }
     }
 
-    @MainActor
     func addCustomTag() {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -111,7 +109,6 @@ final class AddBookmarkViewModel {
         }
     }
 
-    @MainActor
     func toggleLabel(_ label: String) {
         if selectedLabels.contains(label) {
             selectedLabels.remove(label)
@@ -121,14 +118,12 @@ final class AddBookmarkViewModel {
         searchText = ""
     }
 
-    @MainActor
     func removeLabel(_ label: String) {
         selectedLabels.remove(label)
     }
 
     // MARK: - Bookmark Creation
 
-    @MainActor
     func createBookmark() async {
         guard isValid else { return }
 

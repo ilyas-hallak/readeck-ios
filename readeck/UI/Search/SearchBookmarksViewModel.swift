@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 @Observable
 final class SearchBookmarksViewModel {
     private let searchBookmarksUseCase: PSearchBookmarksUseCase
@@ -33,7 +34,6 @@ final class SearchBookmarksViewModel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
 
-    @MainActor
     func search() async {
         guard !searchQuery.isEmpty else {
             bookmarks = nil

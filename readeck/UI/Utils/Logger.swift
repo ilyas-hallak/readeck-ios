@@ -42,8 +42,10 @@ enum LogCategory: String, CaseIterable, Codable {
     case sync = "Sync"
 }
 
+// Changed from the debug settings on the main thread, read by loggers on any thread.
+// A stale read only means one log line more or less, so there is no lock.
 @Observable
-final class LogConfiguration {
+final class LogConfiguration: @unchecked Sendable {
     static let shared = LogConfiguration()
 
     private var categoryLevels: [LogCategory: LogLevel] = [:]

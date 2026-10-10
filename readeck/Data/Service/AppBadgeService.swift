@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 final class AppBadgeService: PAppBadgeService {
     private let notificationCenter: UNUserNotificationCenter

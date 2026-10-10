@@ -2,6 +2,7 @@ import UIKit
 import SafariServices
 
 struct URLUtil {
+    @MainActor
     static func open(url: String, urlOpener: UrlOpener = .inAppBrowser) {
         // Could be extended to open in other browsers like Firefox, Brave etc. if somebody has a multi browser setup
         // and wants readeck links to always opened in a specific browser
@@ -13,11 +14,13 @@ struct URLUtil {
         }
     }
 
+    @MainActor
     static func openUrlInDefaultBrowser(url: String) {
         guard let url = URL(string: url) else { return }
         UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 
+    @MainActor
     static func openUrlInInAppBrowser(url: String) {
         guard let url = URL(string: url) else { return }
 

@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PLogoutUseCase {
+protocol PLogoutUseCase: Sendable {
     func execute() async throws
 }
 
@@ -18,7 +18,7 @@ final class LogoutUseCase: PLogoutUseCase {
 
     init(
         settingsRepository: PSettingsRepository,
-        tokenManager: TokenManager = TokenManager.shared
+        tokenManager: TokenManager
     ) {
         self.settingsRepository = settingsRepository
         self.tokenManager = tokenManager

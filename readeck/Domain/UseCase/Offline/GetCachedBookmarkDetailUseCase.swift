@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PGetCachedBookmarkDetailUseCase {
+protocol PGetCachedBookmarkDetailUseCase: Sendable {
     func execute(id: String) -> BookmarkDetail?
 }
 

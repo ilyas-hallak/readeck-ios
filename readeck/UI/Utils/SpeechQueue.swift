@@ -47,6 +47,7 @@ extension BookmarkDetail {
     }
 }
 
+@MainActor
 @Observable
 final class SpeechQueue {
     private let logger = Logger.general

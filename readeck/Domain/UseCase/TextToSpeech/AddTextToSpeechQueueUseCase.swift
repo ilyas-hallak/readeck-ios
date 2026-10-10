@@ -1,9 +1,11 @@
 import Foundation
 
+@MainActor
 protocol PAddTextToSpeechQueueUseCase {
     func execute(bookmarkDetail: BookmarkDetail)
 }
 
+@MainActor
 final class AddTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase {
     private let speechQueue: SpeechQueue
 

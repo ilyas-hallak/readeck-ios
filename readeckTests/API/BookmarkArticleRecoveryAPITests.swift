@@ -8,7 +8,8 @@ import XCTest
 
 private final class ArticleRecoveryURLProtocol: URLProtocol {
 
-    static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+    // Set by each test before its request starts; XCTest runs these tests one at a time.
+    nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
 
     /// `URLSession` may supply `httpBodyStream` instead of `httpBody` for POST requests.
     private static func requestBodyData(for request: URLRequest) -> Data {

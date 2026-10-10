@@ -8,7 +8,7 @@
 import Foundation
 
 /// Orchestrates the OAuth 2.0 Authorization Code flow with PKCE
-final class OAuthManager {
+final class OAuthManager: Sendable {
     private let repository: POAuthRepository
     private let logger = Logger.network
 

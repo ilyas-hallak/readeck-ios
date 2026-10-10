@@ -1,7 +1,7 @@
 import Foundation
 
 /// Simple server check manager for Share Extension with caching
-final class ShareExtensionServerCheck {
+actor ShareExtensionServerCheck {
     static let shared = ShareExtensionServerCheck()
 
     private var cachedInfo: ServerInfoDto?

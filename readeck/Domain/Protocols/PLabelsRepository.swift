@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PLabelsRepository {
+protocol PLabelsRepository: Sendable {
     func getLabels() async throws -> [BookmarkLabel]
     func saveLabels(_ dtos: [BookmarkLabelDto]) async throws
     func saveNewLabel(name: String) async throws

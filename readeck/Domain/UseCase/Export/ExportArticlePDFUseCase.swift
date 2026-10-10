@@ -20,14 +20,15 @@ enum ExportArticlePDFError: Error, Equatable {
     case writeFailed
 }
 
-protocol PExportArticlePDFUseCase {
+protocol PExportArticlePDFUseCase: Sendable {
     /// Renders the article as a PDF and returns the file URL it was written to.
     func execute(bookmark: BookmarkDetail, articleHTML: String, settings: Settings?) async throws -> URL
 }
 
 final class ExportArticlePDFUseCase: PExportArticlePDFUseCase {
     private let renderingService: PPDFRenderingService
-    private let fileManager: FileManager
+    // FileManager is thread-safe but not marked Sendable, and it is only used for plain file operations.
+    nonisolated(unsafe) private let fileManager: FileManager
 
     /// Temporary home of the generated files. Cleared before every export so old
     /// documents cannot pile up in the container.

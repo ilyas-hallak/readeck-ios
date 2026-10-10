@@ -9,6 +9,7 @@ import Foundation
 import Observation
 import SwiftUI
 
+@MainActor
 @Observable
 final class FontSettingsViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
@@ -87,7 +88,6 @@ final class FontSettingsViewModel {
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
     }
 
-    @MainActor
     func loadFontSettings() async {
         isLoading = true
         defer { isLoading = false }
@@ -127,7 +127,6 @@ final class FontSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveFontSettings() async {
         do {
             try await saveSettingsUseCase.execute(
@@ -140,7 +139,6 @@ final class FontSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveReaderLayout() async {
         do {
             try await saveSettingsUseCase.execute(
@@ -152,7 +150,6 @@ final class FontSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveVisibilitySettings() async {
         do {
             try await saveSettingsUseCase.execute(
@@ -167,7 +164,6 @@ final class FontSettingsViewModel {
     }
 
     /// Shows the progress in the given style, or hides it when the style is nil.
-    @MainActor
     func saveProgressDisplay(_ style: ReadingProgressStyle?) async {
         if let style, style != readingProgressStyle {
             readingProgressStyle = style
@@ -180,7 +176,6 @@ final class FontSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveReadingProgressStyle() async {
         do {
             try await saveSettingsUseCase.execute(readingProgressStyle: readingProgressStyle)
@@ -189,7 +184,6 @@ final class FontSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveCustomCSS() async {
         do {
             try await saveSettingsUseCase.execute(customCSS: customCSS)
@@ -198,7 +192,6 @@ final class FontSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveColorTheme() async {
         do {
             let bgHex = readerColorTheme == .custom ? customBackgroundColor.hexString : nil

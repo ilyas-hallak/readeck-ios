@@ -6,13 +6,13 @@
 //
 
 import Foundation
-import Combine
+@preconcurrency import Combine
 
 // MARK: - Protocol
 
 /// Use case for syncing articles for offline reading
 /// Handles downloading article content and images based on user settings
-protocol POfflineCacheSyncUseCase {
+protocol POfflineCacheSyncUseCase: Sendable {
     var isSyncing: AnyPublisher<Bool, Never> { get }
     var syncProgress: AnyPublisher<String?, Never> { get }
 

@@ -9,6 +9,7 @@ import Foundation
 import Observation
 import Combine
 
+@MainActor
 @Observable
 final class OfflineSettingsViewModel {
     // MARK: - Dependencies
@@ -52,7 +53,6 @@ final class OfflineSettingsViewModel {
 
     // MARK: - Public Methods
 
-    @MainActor
     func loadSettings() async {
         do {
             offlineSettings = try await settingsRepository.loadOfflineSettings()
@@ -63,7 +63,6 @@ final class OfflineSettingsViewModel {
         }
     }
 
-    @MainActor
     func saveSettings() async {
         do {
             try await settingsRepository.saveOfflineSettings(offlineSettings)
@@ -73,7 +72,6 @@ final class OfflineSettingsViewModel {
         }
     }
 
-    @MainActor
     func syncNow() async {
         Logger.viewModel.info("Manual sync triggered")
         await offlineCacheSyncUseCase.syncOfflineArticles(settings: offlineSettings)
@@ -82,7 +80,6 @@ final class OfflineSettingsViewModel {
         updateCacheStats()
     }
 
-    @MainActor
     func updateCacheStats() {
         cachedArticlesCount = offlineCacheSyncUseCase.getCachedArticlesCount()
         cacheSize = offlineCacheSyncUseCase.getCacheSize()
