@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 
+@MainActor
 @Observable
 final class LabelsViewModel {
     private let getLabelsUseCase: PGetLabelsUseCase
@@ -16,7 +17,6 @@ final class LabelsViewModel {
         getLabelsUseCase = factory.makeGetLabelsUseCase()
     }
 
-    @MainActor
     func loadLabels() async {
         isLoading = true
         errorMessage = nil

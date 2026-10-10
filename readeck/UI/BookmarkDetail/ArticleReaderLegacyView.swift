@@ -3,7 +3,7 @@ import SafariServices
 
 // PreferenceKey for content height tracking
 struct ContentHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: Double = 0
+    static let defaultValue: Double = 0
     static func reduce(value: inout Double, nextValue: () -> Double) {
         value = nextValue()
     }
@@ -16,6 +16,7 @@ struct ContentHeightPreferenceKey: PreferenceKey {
 /// meant every one of those frames invalidated the whole reader — header, title,
 /// web view — which on a 120 Hz display is 120 full rebuilds per second. As an
 /// `@Observable` reference only the views that actually read `value` are invalidated.
+@MainActor
 @Observable
 final class ReadingProgressModel {
     var value: Double = 0

@@ -4,6 +4,7 @@ import UIKit
 import UniformTypeIdentifiers
 import CoreData
 
+@MainActor
 @Observable
 final class ShareBookmarkViewModel {
     var url: String?
@@ -58,12 +59,11 @@ final class ShareBookmarkViewModel {
             return
         }
 
-        var extractedUrl: String?
+        let inputItems = extensionContext.inputItems.compactMap { $0 as? NSExtensionItem }
+        // The load callbacks below arrive after this loop, so they always saw the title
+        // of the last item. Resolving it up front keeps that and lets them capture a constant.
         var extractedTitle: String?
-
-        for item in extensionContext.inputItems {
-            guard let inputItem = item as? NSExtensionItem else { continue }
-
+        for inputItem in inputItems {
             // Use the inputItem's attributedTitle or attributedContentText as potential title
             if let attributedTitle = inputItem.attributedTitle?.string, !attributedTitle.isEmpty {
                 extractedTitle = attributedTitle
@@ -72,17 +72,21 @@ final class ShareBookmarkViewModel {
                 extractedTitle = attributedContent
                 logger.info("Extracted title from content text: \(attributedContent)")
             }
+        }
+        let sharedTitle = extractedTitle
 
+        for inputItem in inputItems {
             for attachment in inputItem.attachments ?? [] {
                 if attachment.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                    attachment.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] url, error in
-                        DispatchQueue.main.async {
-                            if let url = url as? URL {
+                    attachment.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, error in
+                        let url = item as? URL
+                        DispatchQueue.main.async { [weak self] in
+                            if let url {
                                 self?.url = url.absoluteString
                                 self?.logger.info("Extracted URL from shared content: \(url.absoluteString)")
 
                                 // Set title if we extracted one and current title is empty
-                                if let title = extractedTitle, self?.title.isEmpty == true {
+                                if let title = sharedTitle, self?.title.isEmpty == true {
                                     self?.title = title
                                     self?.logger.info("Set title from shared content: \(title)")
                                 }
@@ -93,9 +97,10 @@ final class ShareBookmarkViewModel {
                     }
                 }
                 if attachment.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                    attachment.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] text, error in
-                        DispatchQueue.main.async {
-                            if let text = text as? String {
+                    attachment.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, error in
+                        let text = item as? String
+                        DispatchQueue.main.async { [weak self] in
+                            if let text {
                                 // Only treat as URL if it's a valid URL and we don't have one yet
                                 if self?.url == nil, let url = URL(string: text), url.scheme != nil {
                                     self?.url = url.absoluteString
@@ -259,8 +264,11 @@ final class ShareBookmarkViewModel {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.logger.warning("Received 401 Unauthorized - session expired")
-            self?.sessionExpired = true
+            // Delivered on the main queue, see `queue: .main` above.
+            MainActor.assumeIsolated {
+                self?.logger.warning("Received 401 Unauthorized - session expired")
+                self?.sessionExpired = true
+            }
         }
     }
 
@@ -289,7 +297,7 @@ final class ShareBookmarkViewModel {
         logger.info("Responder chain could not open the URL, falling back to extensionContext.open")
         extensionContext?.open(url) { [weak self] success in
             self?.logger.info("extensionContext.open returned success: \(success)")
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 self?.completeExtensionRequest()
             }
         }
@@ -343,22 +351,21 @@ final class ShareBookmarkViewModel {
     }
 
     deinit {
-        autoCloseTask?.cancel()
+        // The auto-close task holds self weakly, so it ends on its own once self is gone.
         NotificationCenter.default.removeObserver(self)
     }
 
     private static func loadTagSortOrder() -> TagSortOrder {
         let context = CoreDataManager.shared.context
-        var result: TagSortOrder = .byCount
-        context.performAndWait {
+        return context.performAndWait {
             let fetchRequest: NSFetchRequest<SettingEntity> = SettingEntity.fetchRequest()
             fetchRequest.fetchLimit = 1
-            if let entity = try? context.fetch(fetchRequest).first,
-               let raw = entity.tagSortOrder,
-               let parsed = TagSortOrder(rawValue: raw) {
-                result = parsed
+            guard let entity = try? context.fetch(fetchRequest).first,
+                  let raw = entity.tagSortOrder,
+                  let parsed = TagSortOrder(rawValue: raw) else {
+                return .byCount
             }
+            return parsed
         }
-        return result
     }
 }

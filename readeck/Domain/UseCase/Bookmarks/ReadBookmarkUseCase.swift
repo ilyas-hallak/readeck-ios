@@ -1,9 +1,11 @@
 import Foundation
 
+@MainActor
 protocol PReadBookmarkUseCase {
     func execute(bookmarkDetail: BookmarkDetail)
 }
 
+@MainActor
 final class ReadBookmarkUseCase: PReadBookmarkUseCase {
     private let addToSpeechQueue: AddTextToSpeechQueueUseCase
 

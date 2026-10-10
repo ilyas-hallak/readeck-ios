@@ -13,7 +13,7 @@ import CoreData
 
 @MainActor
 class TestMockAPI: PAPI {
-    var tokenProvider: TokenProvider = TestMockTokenProvider()
+    nonisolated let tokenProvider: TokenProvider = TestMockTokenProvider()
 
     var createBookmarkCalls: [(CreateBookmarkRequestDto, Result<CreateBookmarkResponseDto, Error>)] = []
     var createBookmarkResults: [Result<CreateBookmarkResponseDto, Error>] = []
@@ -107,7 +107,7 @@ class TestMockAPI: PAPI {
 
 // MARK: - Mock Token Provider
 
-class TestMockTokenProvider: TokenProvider {
+final class TestMockTokenProvider: TokenProvider {
     func getToken() async -> String? { return "mock-token" }
     func setToken(_ token: String) async {}
     func clearToken() async {}
@@ -132,7 +132,8 @@ class TestMockTokenProvider: TokenProvider {
 /// `+entity` ("Failed to find a unique match for an NSEntityDescription") and crashes on
 /// save as soon as multiple CoreData suites run in the same process.
 enum TestCoreDataModel {
-    static let shared: NSManagedObjectModel = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
+    // Built once and only read afterwards.
+    nonisolated(unsafe) static let shared: NSManagedObjectModel = NSManagedObjectModel.mergedModel(from: [Bundle.main])!
 }
 
 // MARK: - Test CoreData Manager
@@ -152,7 +153,7 @@ class TestCoreDataManager {
 
         context = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
         context.persistentStoreCoordinator = persistentStoreCoordinator
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        context.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
     }
 
     func createTestBookmark(url: String, title: String, tags: String? = nil) -> ArticleURLEntity {
@@ -181,8 +182,8 @@ class TestCoreDataManager {
 
 // MARK: - Testable OfflineSyncManager
 
-@MainActor
-class TestableOfflineSyncManager: OfflineSyncManager {
+// Unchecked for the same reason as the OfflineSyncManager it stands in for.
+class TestableOfflineSyncManager: OfflineSyncManager, @unchecked Sendable {
     let mockCoreDataManager: TestCoreDataManager
 
     init(api: PAPI, coreDataManager: TestCoreDataManager, retryBackoffBaseSeconds: Double = 0) {

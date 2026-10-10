@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class AnnotationsListViewModel {
     private let getAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
@@ -19,7 +20,6 @@ final class AnnotationsListViewModel {
         self.deleteAnnotationUseCase = factory.makeDeleteAnnotationUseCase()
     }
 
-    @MainActor
     func loadAnnotations(for bookmarkId: String) async {
         isLoading = true
         errorMessage = nil
@@ -33,7 +33,6 @@ final class AnnotationsListViewModel {
         }
     }
 
-    @MainActor
     func deleteAnnotation(bookmarkId: String, annotationId: String) async {
         do {
             try await deleteAnnotationUseCase.execute(bookmarkId: bookmarkId, annotationId: annotationId)

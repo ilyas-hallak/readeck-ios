@@ -1,11 +1,11 @@
 import Foundation
 
-public struct ServerInfoDto: Codable {
+public struct ServerInfoDto: Codable, Sendable {
     public let version: VersionInfo
     // swiftlint:disable:next discouraged_optional_collection
     public let features: [String]?
 
-    public struct VersionInfo: Codable {
+    public struct VersionInfo: Codable, Sendable {
         public let canonical: String
         public let release: String?
         public let build: String?
@@ -35,7 +35,7 @@ public struct ServerInfoDto: Codable {
     }
 }
 
-public struct CreateBookmarkRequestDto: Codable {
+public struct CreateBookmarkRequestDto: Codable, Sendable {
     // swiftlint:disable:next discouraged_optional_collection
     public let labels: [String]?
     public let title: String?
@@ -51,12 +51,12 @@ public struct CreateBookmarkRequestDto: Codable {
     }
 }
 
-public struct CreateBookmarkResponseDto: Codable {
+public struct CreateBookmarkResponseDto: Codable, Sendable {
     public let message: String
     public let status: Int
 }
 
-public struct BookmarkLabelDto: Codable, Identifiable {
+public struct BookmarkLabelDto: Codable, Sendable, Identifiable {
     public var id: String { href }
     public let name: String
     public let count: Int

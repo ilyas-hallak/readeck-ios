@@ -10,7 +10,7 @@ import Foundation
 /// Slim abstraction over the one URLSession method the app actually uses.
 /// `URLSession` already satisfies the signature natively, so the extension stays empty.
 /// Tests can inject a simple mock without any URLProtocol setup.
-protocol HTTPSession {
+protocol HTTPSession: Sendable {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
 }
 

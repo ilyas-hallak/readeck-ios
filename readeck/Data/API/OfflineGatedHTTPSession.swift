@@ -5,20 +5,25 @@
 
 import Foundation
 import Combine
+import Synchronization
 
 /// Fails requests at once while the user works offline, and cancels the requests
 /// that are still waiting when offline mode starts. Callers then see the same
 /// `URLError` as on a real offline device, so the existing offline paths apply.
 final class OfflineGatedHTTPSession: HTTPSession {
+    private struct State {
+        var isForcedOffline = false
+        var inFlight: [UUID: Task<(Data, URLResponse), Error>] = [:]
+    }
+
     private let base: HTTPSession
-    private let lock = NSLock()
-    private var isForcedOffline = false
-    private var inFlight: [UUID: Task<(Data, URLResponse), Error>] = [:]
-    private var cancellable: AnyCancellable?
+    private let state = Mutex(State())
+    // Set once in init and only released with self.
+    nonisolated(unsafe) private var subscription: AnyCancellable?
 
     init(base: HTTPSession, isForcedOffline: AnyPublisher<Bool, Never>) {
         self.base = base
-        cancellable = isForcedOffline.sink { [weak self] isForced in
+        subscription = isForcedOffline.sink { [weak self] isForced in
             self?.update(isForcedOffline: isForced)
         }
     }
@@ -38,28 +43,28 @@ final class OfflineGatedHTTPSession: HTTPSession {
             }
         } catch {
             // A request cut off by going offline reads like any other offline failure.
-            if lock.withLock({ isForcedOffline }) { throw URLError(.notConnectedToInternet) }
+            if state.withLock({ $0.isForcedOffline }) { throw URLError(.notConnectedToInternet) }
             throw error
         }
     }
 
     private func startTask(for request: URLRequest, id: UUID) -> Task<(Data, URLResponse), Error>? {
-        lock.withLock {
-            guard !isForcedOffline else { return nil }
+        state.withLock { state in
+            guard !state.isForcedOffline else { return nil }
             let task = Task { [base] in try await base.data(for: request) }
-            inFlight[id] = task
+            state.inFlight[id] = task
             return task
         }
     }
 
     private func unregister(id: UUID) {
-        lock.withLock { _ = inFlight.removeValue(forKey: id) }
+        state.withLock { _ = $0.inFlight.removeValue(forKey: id) }
     }
 
     private func update(isForcedOffline isForced: Bool) {
-        let waiting = lock.withLock {
-            isForcedOffline = isForced
-            return isForced ? Array(inFlight.values) : []
+        let waiting = state.withLock { state in
+            state.isForcedOffline = isForced
+            return isForced ? Array(state.inFlight.values) : []
         }
         waiting.forEach { $0.cancel() }
     }

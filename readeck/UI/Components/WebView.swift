@@ -751,14 +751,10 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
     var lastScrollTime = Date()
     var scrollEndTimer: Timer?
 
-    // Lifecycle
+    // Lifecycle. There is no deinit cleanup: the timers hold self weakly and do nothing once it is gone.
     private var isCleanedUp = false
 
-    deinit {
-        cleanup()
-    }
-
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
         let decision = ReaderLinkPolicy.decide(
             for: navigationAction.request.url,
             navigationType: navigationAction.navigationType,
@@ -841,8 +837,11 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
         let scrollEndDelay: TimeInterval = scrollVelocity > 2.0 ? 0.8 : 0.5
 
         scrollEndTimer?.invalidate()
+        // Scheduled on the main run loop, so the timer fires on the main thread.
         scrollEndTimer = Timer.scheduledTimer(withTimeInterval: scrollEndDelay, repeats: false) { [weak self] _ in
-            self?.handleScrollEnd()
+            MainActor.assumeIsolated {
+                self?.handleScrollEnd()
+            }
         }
 
         onScroll?(progress)
@@ -857,8 +856,10 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
             // Add small delay to ensure scroll has fully stopped
             heightUpdateTimer?.invalidate()
             heightUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
-                guard let self else { return }
-                self.applyHeightUpdate(height: self.pendingHeight)
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.applyHeightUpdate(height: self.pendingHeight)
+                }
             }
         }
     }

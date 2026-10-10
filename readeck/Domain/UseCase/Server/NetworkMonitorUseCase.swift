@@ -10,7 +10,7 @@ import Combine
 
 // MARK: - Protocol
 
-protocol PNetworkMonitorUseCase {
+protocol PNetworkMonitorUseCase: Sendable {
     var isConnected: AnyPublisher<Bool, Never> { get }
     var isForcedOffline: AnyPublisher<Bool, Never> { get }
     func startMonitoring()

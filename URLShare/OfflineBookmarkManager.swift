@@ -1,7 +1,7 @@
 import Foundation
 import CoreData
 
-final class OfflineBookmarkManager: @unchecked Sendable {
+final class OfflineBookmarkManager: Sendable {
     static let shared = OfflineBookmarkManager()
 
     private let coreDataManager: CoreDataManager

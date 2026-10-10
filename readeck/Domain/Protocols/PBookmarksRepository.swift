@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PBookmarksRepository {
+protocol PBookmarksRepository: Sendable {
     // Bookmark API methods
     // swiftlint:disable:next discouraged_optional_collection
     func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage

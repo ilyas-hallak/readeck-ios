@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PCreateBookmarkUseCase {
+protocol PCreateBookmarkUseCase: Sendable {
     func execute(createRequest: CreateBookmarkRequest) async throws -> String
     func createFromURL(_ url: String) async throws -> String
     func createFromURLWithTitle(_ url: String, title: String) async throws -> String

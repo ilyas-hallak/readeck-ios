@@ -1,6 +1,7 @@
 import Testing
 @testable import readeck
 
+@MainActor
 @Suite("ArchiveAdvanceMode migration")
 struct ArchiveAdvanceModeTests {
 

@@ -4,7 +4,11 @@ import Testing
 
 // MARK: - Configurable Mock Use Cases
 
-class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
+// The mocks below are `@unchecked Sendable`: a test sets them up before the call and reads
+// them after awaiting it, so the accesses never overlap. They stay off the main actor on
+// purpose, like the real use cases, so a test still sees the hop off the main actor.
+
+class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase, @unchecked Sendable {
     var result: Result<BookmarksPage, Error> = .success(
         BookmarksPage(bookmarks: [.mock], currentPage: 1, totalCount: 1, totalPages: 1, links: nil)
     )
@@ -36,7 +40,7 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
     }
 }
 
-class ConfigurableUpdateBookmarkUseCase: PUpdateBookmarkUseCase {
+class ConfigurableUpdateBookmarkUseCase: PUpdateBookmarkUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var toggleArchiveCalled = false
     var toggleFavoriteCalled = false
@@ -64,7 +68,7 @@ class ConfigurableUpdateBookmarkUseCase: PUpdateBookmarkUseCase {
     func removeLabels(bookmarkId: String, labels: [String]) async throws { try result.get() }
 }
 
-class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase {
+class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var deleteCalled = false
     var lastDeletedId: String?
@@ -76,7 +80,7 @@ class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase {
     }
 }
 
-class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase {
+class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase, @unchecked Sendable {
     var result: Result<BookmarkDetail, Error> = .success(
         BookmarkDetail(id: "123", title: "Test", url: "https://example.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 2, hasArticle: true, loaded: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "", lang: "en", readProgress: 0)
     )
@@ -92,7 +96,7 @@ class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase {
     }
 }
 
-class ConfigurableGetBookmarkArticleUseCase: PGetBookmarkArticleUseCase {
+class ConfigurableGetBookmarkArticleUseCase: PGetBookmarkArticleUseCase, @unchecked Sendable {
     var result: Result<String, Error> = .success("<p>Test article content</p>")
 
     func execute(id: String) async throws -> String {
@@ -100,7 +104,7 @@ class ConfigurableGetBookmarkArticleUseCase: PGetBookmarkArticleUseCase {
     }
 }
 
-class ConfigurableLoginUseCase: PLoginUseCase {
+class ConfigurableLoginUseCase: PLoginUseCase, @unchecked Sendable {
     var result: Result<User, Error> = .success(User(id: "123", token: "abc"))
     var executeCalled = false
 
@@ -110,7 +114,7 @@ class ConfigurableLoginUseCase: PLoginUseCase {
     }
 }
 
-class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
+class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase, @unchecked Sendable {
     var isReachable: Bool = true
     var serverInfo: ServerInfo = ServerInfo(version: "1.0.0", isReachable: true, features: ["oauth"])
     private(set) var executeCount = 0
@@ -122,7 +126,7 @@ class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCas
     func getServerInfo() async throws -> ServerInfo { serverInfo }
 }
 
-class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase {
+class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase, @unchecked Sendable {
     var result: Result<String, Error> = .success("new-bookmark-id")
 
     func execute(createRequest: CreateBookmarkRequest) async throws -> String { try result.get() }
@@ -132,20 +136,20 @@ class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase {
     func createFromClipboard() async throws -> String? { try result.get() }
 }
 
-class ConfigurableGetCachedArticleUseCase: PGetCachedArticleUseCase {
+class ConfigurableGetCachedArticleUseCase: PGetCachedArticleUseCase, @unchecked Sendable {
     /// `nil` by default so tests exercise the server path instead of the bundled sample article.
     var result: String?
 
     func execute(id: String) -> String? { result }
 }
 
-class ConfigurableGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase {
+class ConfigurableGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase, @unchecked Sendable {
     var result: BookmarkDetail?
 
     func execute(id: String) -> BookmarkDetail? { result }
 }
 
-class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
+class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase, @unchecked Sendable {
     var result: Result<[Bookmark], Error> = .success([.mock])
     var executeCalled = false
 
@@ -155,13 +159,13 @@ class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
     }
 }
 
-class ConfigurableGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
+class ConfigurableGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase, @unchecked Sendable {
     var result: Result<[Annotation], Error> = .success([])
 
     func execute(bookmarkId: String) async throws -> [Annotation] { try result.get() }
 }
 
-class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
+class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase, @unchecked Sendable {
     var result: Result<Annotation, Error> = .success(
         Annotation(id: "annotation-1", text: "highlighted", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
     )
@@ -181,7 +185,7 @@ class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
     }
 }
 
-class ConfigurableDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
+class ConfigurableDeleteAnnotationUseCase: PDeleteAnnotationUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     private(set) var deletedAnnotationIds: [String] = []
 
@@ -191,7 +195,7 @@ class ConfigurableDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
     }
 }
 
-class ConfigurableLogoutUseCase: PLogoutUseCase {
+class ConfigurableLogoutUseCase: PLogoutUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var executeCount = 0
     var executeCalled: Bool { executeCount > 0 }
@@ -202,7 +206,7 @@ class ConfigurableLogoutUseCase: PLogoutUseCase {
     }
 }
 
-class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
+class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase, @unchecked Sendable {
     var refreshCount = 0
 
     func refresh() async { refreshCount += 1 }
@@ -211,7 +215,7 @@ class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
     func setEnabled(_ enabled: Bool) async -> Bool { true }
 }
 
-class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
+class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase, @unchecked Sendable {
     var result: Result<URL, Error> = .success(URL(fileURLWithPath: "/tmp/article.pdf"))
     var executeCount = 0
     var lastArticleHTML: String?
@@ -223,7 +227,7 @@ class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
     }
 }
 
-class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase {
+class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase, @unchecked Sendable {
     var result: Result<ServerInfo, Error> = .success(
         ServerInfo(version: "0.23.2", isReachable: true, features: ["oauth"])
     )
@@ -233,7 +237,7 @@ class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase {
     }
 }
 
-class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase {
+class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase, @unchecked Sendable {
     var result: Result<URL, Error> = .success(URL(string: "https://readeck.example.com/@b/abc")!)
     var lastBookmarkId: String?
     /// When true, `execute` suspends until `resume()` is called, so tests can observe
@@ -270,7 +274,7 @@ class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase {
     }
 }
 
-class ConfigurableShareByEmailUseCase: PShareByEmailUseCase {
+class ConfigurableShareByEmailUseCase: PShareByEmailUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var executeCount = 0
     var lastEmail: String?
@@ -284,7 +288,7 @@ class ConfigurableShareByEmailUseCase: PShareByEmailUseCase {
     }
 }
 
-class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
+class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase, @unchecked Sendable {
     static var isAvailable: Bool { true }
     var result: Result<String, Error> = .success("Test summary")
     var executeCalled = false
@@ -307,7 +311,7 @@ enum TestError: Error, Equatable {
     case serverUnreachable
 }
 
-class ConfigurableSaveSettingsUseCase: PSaveSettingsUseCase {
+class ConfigurableSaveSettingsUseCase: PSaveSettingsUseCase, @unchecked Sendable {
     var savedReadingProgressStyles: [ReadingProgressStyle] = []
     var savedHideProgressBar: [Bool] = []
 

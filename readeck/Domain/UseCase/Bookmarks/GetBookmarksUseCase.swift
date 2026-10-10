@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PGetBookmarksUseCase {
+protocol PGetBookmarksUseCase: Sendable {
     // swiftlint:disable:next discouraged_optional_collection
     func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage
 }

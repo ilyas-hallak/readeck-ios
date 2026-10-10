@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class ShareByEmailViewModel {
     private let bookmarkId: String
@@ -24,7 +25,6 @@ final class ShareByEmailViewModel {
         self.shareByEmailUseCase = factory.makeShareByEmailUseCase()
     }
 
-    @MainActor
     func send() async -> Bool {
         guard canSend else { return false }
 

@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 @Observable
 final class BookmarksViewModel {
     private let getBooksmarksUseCase: PGetBookmarksUseCase
@@ -134,7 +135,6 @@ final class BookmarksViewModel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
 
-    @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
         currentState = state
         currentType = type
@@ -155,7 +155,6 @@ final class BookmarksViewModel {
         } while needsReload
     }
 
-    @MainActor
     private func loadFirstPage() async {
         let state = currentState
         let type = currentType
@@ -204,7 +203,6 @@ final class BookmarksViewModel {
         isInitialLoading = false
     }
 
-    @MainActor
     private func loadCachedBookmarks() async {
         Logger.viewModel.info("📱 loadCachedBookmarks called for state: \(currentState.displayName)")
 
@@ -239,14 +237,12 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func loadCachedBookmarksFromUI() async {
         isNetworkError = true
         errorMessage = "No internet connection"
         await loadCachedBookmarks()
     }
 
-    @MainActor
     func loadMoreBookmarks() async {
         guard !isLoading && hasMoreData && !isUpdating else { return } // prevent multiple loads
         isUpdating = true
@@ -261,7 +257,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     private func loadNextPage() async {
         isLoading = true
         errorMessage = nil
@@ -294,7 +289,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func refreshBookmarks() async {
         await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
     }
@@ -309,7 +303,6 @@ final class BookmarksViewModel {
         networkMonitorUseCase.setForcedOffline(false)
     }
 
-    @MainActor
     func retryLoading() async {
         errorMessage = nil
         isNetworkError = false
@@ -328,7 +321,6 @@ final class BookmarksViewModel {
         return "\(direction)\(field)"
     }
 
-    @MainActor
     func toggleArchive(bookmark: Bookmark) async {
         do {
             try await updateBookmarkUseCase.toggleArchive(
@@ -342,7 +334,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func toggleFavorite(bookmark: Bookmark) async {
         do {
             try await updateBookmarkUseCase.toggleFavorite(
@@ -356,7 +347,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func handleSwipeAction(_ action: SwipeAction, bookmark: Bookmark) {
         switch action {
         case .archive:
@@ -374,7 +364,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func resetReadProgress(bookmark: Bookmark) async {
         do {
             try await updateBookmarkUseCase.updateReadProgress(
@@ -389,7 +378,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func deleteBookmarkWithUndo(bookmark: Bookmark) {
         // Don't remove from UI immediately - just mark as pending
         let pendingDelete = PendingDelete(bookmark: bookmark)
@@ -417,7 +405,6 @@ final class BookmarksViewModel {
         pendingDeletes[bookmark.id]?.deleteTask = deleteTask
     }
 
-    @MainActor
     func undoDelete(bookmarkId: String) {
         guard let pendingDelete = pendingDeletes[bookmarkId] else { return }
 
@@ -430,26 +417,29 @@ final class BookmarksViewModel {
     }
 
     private func startDeleteCountdown(for bookmarkId: String) {
+        // Scheduled on the main run loop, so the timer fires on the main thread.
         let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
-            DispatchQueue.main.async {
-                guard let self,
-                      let pendingDelete = self.pendingDeletes[bookmarkId] else {
-                    timer.invalidate()
-                    return
-                }
-
-                pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
-
-                // Trigger UI update by modifying the dictionary
-                self.pendingDeletes[bookmarkId] = pendingDelete
-
-                if pendingDelete.progress >= 1.0 {
-                    timer.invalidate()
-                }
+            let isRunning = MainActor.assumeIsolated {
+                self?.advanceDeleteCountdown(for: bookmarkId) ?? false
+            }
+            if !isRunning {
+                timer.invalidate()
             }
         }
 
         pendingDeletes[bookmarkId]?.timer = timer
+    }
+
+    /// Returns whether the countdown should keep running.
+    private func advanceDeleteCountdown(for bookmarkId: String) -> Bool {
+        guard let pendingDelete = pendingDeletes[bookmarkId] else { return false }
+
+        pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
+
+        // Trigger UI update by modifying the dictionary
+        pendingDeletes[bookmarkId] = pendingDelete
+
+        return pendingDelete.progress < 1.0
     }
 
     private func executeDelete(bookmark: Bookmark) async {

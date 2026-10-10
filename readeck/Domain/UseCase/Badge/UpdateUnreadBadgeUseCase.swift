@@ -12,7 +12,7 @@
 
 import Foundation
 
-protocol PUpdateUnreadBadgeUseCase {
+protocol PUpdateUnreadBadgeUseCase: Sendable {
     /// Recomputes the unread badge from the current setting and the server unread
     /// count and applies it. Clears the badge when the feature is off; leaves it
     /// untouched on fetch errors (e.g. offline).

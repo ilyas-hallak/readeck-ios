@@ -6,14 +6,16 @@
 import Testing
 import Foundation
 import Combine
+import Synchronization
 @testable import readeck
 
 /// Never answers, like a server behind a connection that drops every packet.
 private final class HangingHTTPSession: HTTPSession {
-    private(set) var callCount = 0
+    private let calls = Mutex(0)
+    var callCount: Int { calls.withLock { $0 } }
 
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        callCount += 1
+        calls.withLock { $0 += 1 }
         try await Task.sleep(for: .seconds(60))
         throw URLError(.timedOut)
     }

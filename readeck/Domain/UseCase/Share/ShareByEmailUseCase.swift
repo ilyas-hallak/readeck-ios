@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PShareByEmailUseCase {
+protocol PShareByEmailUseCase: Sendable {
     func execute(bookmarkId: String, email: String, format: EmailShareFormat) async throws
 }
 

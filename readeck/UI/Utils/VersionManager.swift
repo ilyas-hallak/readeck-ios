@@ -1,10 +1,10 @@
 import Foundation
 
-final class VersionManager {
+final class VersionManager: Sendable {
     static let shared = VersionManager()
 
     private let lastSeenVersionKey = "lastSeenAppVersion"
-    private let userDefaults = UserDefaults.standard
+    private var userDefaults: UserDefaults { .standard }
 
     var currentVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"

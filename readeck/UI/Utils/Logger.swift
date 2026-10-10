@@ -7,6 +7,7 @@
 
 import Foundation
 import os
+import Synchronization
 
 // MARK: - Log Configuration
 
@@ -43,15 +44,50 @@ enum LogCategory: String, CaseIterable, Codable {
 }
 
 @Observable
-final class LogConfiguration {
+final class LogConfiguration: Sendable {
     static let shared = LogConfiguration()
 
-    private var categoryLevels: [LogCategory: LogLevel] = [:]
-    var globalMinLevel: LogLevel = .debug
-    var showPerformanceLogs = true
-    var showTimestamps = true
-    var includeSourceLocation = true
-    var isLoggingEnabled = false
+    private struct State {
+        var categoryLevels: [LogCategory: LogLevel] = [:]
+        var globalMinLevel: LogLevel = .debug
+        var showPerformanceLogs = true
+        var showTimestamps = true
+        var includeSourceLocation = true
+        var isLoggingEnabled = false
+    }
+
+    // Written from the debug settings, read by loggers on any thread.
+    private let state = Mutex(State())
+
+    private var categoryLevels: [LogCategory: LogLevel] {
+        get { read(\.categoryLevels, \.categoryLevels) }
+        set { write(\.categoryLevels, \.categoryLevels, newValue) }
+    }
+
+    var globalMinLevel: LogLevel {
+        get { read(\.globalMinLevel, \.globalMinLevel) }
+        set { write(\.globalMinLevel, \.globalMinLevel, newValue) }
+    }
+
+    var showPerformanceLogs: Bool {
+        get { read(\.showPerformanceLogs, \.showPerformanceLogs) }
+        set { write(\.showPerformanceLogs, \.showPerformanceLogs, newValue) }
+    }
+
+    var showTimestamps: Bool {
+        get { read(\.showTimestamps, \.showTimestamps) }
+        set { write(\.showTimestamps, \.showTimestamps, newValue) }
+    }
+
+    var includeSourceLocation: Bool {
+        get { read(\.includeSourceLocation, \.includeSourceLocation) }
+        set { write(\.includeSourceLocation, \.includeSourceLocation, newValue) }
+    }
+
+    var isLoggingEnabled: Bool {
+        get { read(\.isLoggingEnabled, \.isLoggingEnabled) }
+        set { write(\.isLoggingEnabled, \.isLoggingEnabled, newValue) }
+    }
 
     private init() {
         // First time setup: Enable logging in DEBUG builds with sensible defaults
@@ -70,8 +106,29 @@ final class LogConfiguration {
         loadConfiguration()
     }
 
+    // The state lives in a mutex, so observation is reported by hand to keep the settings UI updating.
+    private func read<Value: Sendable>(
+        _ property: KeyPath<LogConfiguration, Value>,
+        _ field: KeyPath<State, Value> & Sendable
+    ) -> Value {
+        access(keyPath: property)
+        return state.withLock { $0[keyPath: field] }
+    }
+
+    private func write<Value: Sendable>(
+        _ property: KeyPath<LogConfiguration, Value>,
+        _ field: WritableKeyPath<State, Value> & Sendable,
+        _ value: Value
+    ) {
+        withMutation(keyPath: property) {
+            state.withLock { $0[keyPath: field] = value }
+        }
+    }
+
     func setLevel(_ level: LogLevel, for category: LogCategory) {
-        categoryLevels[category] = level
+        withMutation(keyPath: \.categoryLevels) {
+            state.withLock { $0.categoryLevels[category] = level }
+        }
         saveConfiguration()
     }
 

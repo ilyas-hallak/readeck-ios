@@ -7,11 +7,12 @@
 
 import Foundation
 import Network
-import Combine
+@preconcurrency import Combine
+import Synchronization
 
 // MARK: - Protocol
 
-protocol PNetworkMonitorRepository {
+protocol PNetworkMonitorRepository: Sendable {
     var isConnected: AnyPublisher<Bool, Never> { get }
     var isForcedOffline: AnyPublisher<Bool, Never> { get }
     func startMonitoring()
@@ -29,11 +30,8 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.readeck.networkmonitor")
     private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
-    // hasPathConnection/hasRealConnection are written from the NWPathMonitor queue
-    // and from the main actor, so access is guarded by this lock.
-    private let stateLock = NSLock()
-    private var hasPathConnection = true
-    private var hasRealConnection = true
+    // Written from the NWPathMonitor queue and from the main actor.
+    private let connection = Mutex((hasPath: true, hasReal: true))
     private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
 
     var isConnected: AnyPublisher<Bool, Never> {
@@ -68,9 +66,7 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
             let hasInterfaces = !path.availableInterfaces.isEmpty
             let isConnected = path.status == .satisfied && hasInterfaces
 
-            self.stateLock.lock()
-            self.hasPathConnection = isConnected
-            self.stateLock.unlock()
+            self.connection.withLock { $0.hasPath = isConnected }
             self.updateConnectionState()
 
             // Log network changes with details
@@ -95,17 +91,13 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     }
 
     func reportConnectionFailure() {
-        stateLock.lock()
-        hasRealConnection = false
-        stateLock.unlock()
+        connection.withLock { $0.hasReal = false }
         updateConnectionState()
         Logger.network.warning("⚠️ Real connection failure reported (VPN/unreachable server)")
     }
 
     func reportConnectionSuccess() {
-        stateLock.lock()
-        hasRealConnection = true
-        stateLock.unlock()
+        connection.withLock { $0.hasReal = true }
         updateConnectionState()
         Logger.network.info("✅ Real connection success reported")
     }
@@ -117,13 +109,10 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     }
 
     private func updateConnectionState() {
-        stateLock.lock()
-        let hasPathConnection = hasPathConnection
-        let hasRealConnection = hasRealConnection
-        stateLock.unlock()
+        let state = connection.withLock { $0 }
 
         // Only connected if BOTH path is available AND real connection works, and the user did not go offline
-        let isConnected = hasPathConnection && hasRealConnection && !forcedOfflineSubject.value
+        let isConnected = state.hasPath && state.hasReal && !forcedOfflineSubject.value
 
         DispatchQueue.main.async {
             self._isConnectedSubject.send(isConnected)

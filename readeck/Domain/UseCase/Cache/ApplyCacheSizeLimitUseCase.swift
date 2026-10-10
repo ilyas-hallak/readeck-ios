@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PApplyCacheSizeLimitUseCase {
+protocol PApplyCacheSizeLimitUseCase: Sendable {
     func execute() async throws
 }
 

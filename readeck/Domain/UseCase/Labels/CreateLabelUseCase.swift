@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PCreateLabelUseCase {
+protocol PCreateLabelUseCase: Sendable {
     func execute(name: String) async throws
 }
 

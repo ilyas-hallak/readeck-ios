@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PAPI {
+protocol PAPI: Sendable {
     var tokenProvider: TokenProvider { get }
     func login(endpoint: String, username: String, password: String) async throws -> UserDto
     // swiftlint:disable:next discouraged_optional_collection

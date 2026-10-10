@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSaveServerSettingsUseCase {
+protocol PSaveServerSettingsUseCase: Sendable {
     func execute(endpoint: String, username: String, password: String, token: String) async throws
 }
 

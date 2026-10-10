@@ -62,50 +62,44 @@ final class OfflineCacheRepository: POfflineCacheRepository {
     }
 
     func getCachedArticle(id: String) -> String? {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@ AND htmlContent != nil", id)
-        fetchRequest.fetchLimit = 1
-
         // Keep viewContext access on its queue; only the String? escapes.
         let context = coreDataManager.context
-        var html: String?
-        context.performAndWait {
+        return context.performAndWait {
+            let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@ AND htmlContent != nil", id)
+            fetchRequest.fetchLimit = 1
             do {
                 let results = try context.fetch(fetchRequest)
-                if let entity = results.first {
-                    // Update last access date
-                    entity.lastAccessDate = Date()
-                    if context.hasChanges {
-                        try context.save()
-                    }
-                    logger.debug("Retrieved cached article for bookmark \(id)")
-                    html = entity.htmlContent
+                guard let entity = results.first else { return nil }
+                // Update last access date
+                entity.lastAccessDate = Date()
+                if context.hasChanges {
+                    try context.save()
                 }
+                logger.debug("Retrieved cached article for bookmark \(id)")
+                return entity.htmlContent
             } catch {
                 logger.error("Error fetching cached article: \(error.localizedDescription)")
+                return nil
             }
         }
-
-        return html
     }
 
     func getCachedBookmarkDetail(id: String) -> BookmarkDetail? {
         // No htmlContent filter here: this returns bookmark metadata (title, url, …)
         // even for rows that only come from the bookmark list cache, not the reader cache.
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", id)
-        fetchRequest.fetchLimit = 1
-
         let context = coreDataManager.context
-        var detail: BookmarkDetail?
-        context.performAndWait {
+        return context.performAndWait {
+            let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+            fetchRequest.fetchLimit = 1
             do {
-                detail = try context.fetch(fetchRequest).first?.toDomain()?.toBookmarkDetail()
+                return try context.fetch(fetchRequest).first?.toDomain()?.toBookmarkDetail()
             } catch {
                 logger.error("Error fetching cached bookmark: \(error.localizedDescription)")
+                return nil
             }
         }
-        return detail
     }
 
     func hasCachedArticle(id: String) -> Bool {
@@ -113,12 +107,12 @@ final class OfflineCacheRepository: POfflineCacheRepository {
     }
 
     func getCachedBookmarks() async throws -> [Bookmark] {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "cachedDate", ascending: false)]
-
         let context = coreDataManager.context
         return try await context.perform {
+            let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
+            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "cachedDate", ascending: false)]
+
             // First check total bookmarks. This count is purely diagnostic; if it
             // fails the real fetch below throws, so try? is the right choice here.
             let allRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
@@ -145,40 +139,31 @@ final class OfflineCacheRepository: POfflineCacheRepository {
     // MARK: - Cache Statistics
 
     func getCachedArticlesCount() -> Int {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
-
         // Count on the context's queue; only the Int result escapes the block.
         let context = coreDataManager.context
-        var count = 0
-        context.performAndWait {
+        return context.performAndWait {
             do {
-                count = try context.count(for: fetchRequest)
+                return try context.count(for: Self.cachedArticlesRequest())
             } catch {
                 logger.error("Error counting cached articles: \(error.localizedDescription)")
+                return 0
             }
         }
-        return count
     }
 
     func getCacheSize() -> String {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
-
         // Fetch and reduce on the context's queue; only value types escape.
         let context = coreDataManager.context
-        var totalBytes: Int64 = 0
-        var failed = false
-        context.performAndWait {
+        let totalBytes: Int64? = context.performAndWait {
             do {
-                let entities = try context.fetch(fetchRequest)
-                totalBytes = entities.reduce(0) { $0 + $1.cacheSize }
+                let entities = try context.fetch(Self.cachedArticlesRequest())
+                return entities.reduce(0) { $0 + $1.cacheSize }
             } catch {
                 logger.error("Error calculating cache size: \(error.localizedDescription)")
-                failed = true
+                return nil
             }
         }
-        if failed {
+        guard let totalBytes else {
             return "0 KB"
         }
         return ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
@@ -187,14 +172,11 @@ final class OfflineCacheRepository: POfflineCacheRepository {
     // MARK: - Cache Management
 
     func clearCache() async throws {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
-
         let context = coreDataManager.context
 
         // Collect image URLs before clearing
         let imageURLsToDelete = try await context.perform {
-            let entities = try context.fetch(fetchRequest)
+            let entities = try context.fetch(Self.cachedArticlesRequest())
             // swiftlint:disable:next discouraged_optional_collection
             return entities.compactMap { entity -> [URL]? in
                 guard let imageURLsString = entity.imageURLs else { return nil }
@@ -209,7 +191,7 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         try await context.perform { [weak self] in
             guard let self else { return }
 
-            let entities = try context.fetch(fetchRequest)
+            let entities = try context.fetch(Self.cachedArticlesRequest())
             for entity in entities {
                 entity.htmlContent = nil
                 entity.cachedDate = nil
@@ -239,15 +221,11 @@ final class OfflineCacheRepository: POfflineCacheRepository {
     }
 
     func cleanupOldestCachedArticles(keepCount: Int) async throws {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "cachedDate", ascending: true)]
-
         let context = coreDataManager.context
 
         // 1. Collect image URLs from articles that will be deleted
         let imageURLsToDelete = try await context.perform {
-            let allEntities = try context.fetch(fetchRequest)
+            let allEntities = try context.fetch(Self.cachedArticlesRequest(oldestFirst: true))
             if allEntities.count > keepCount {
                 let entitiesToDelete = allEntities.prefix(allEntities.count - keepCount)
                 // swiftlint:disable:next discouraged_optional_collection
@@ -266,7 +244,7 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         try await context.perform { [weak self] in
             guard let self else { return }
 
-            let allEntities = try context.fetch(fetchRequest)
+            let allEntities = try context.fetch(Self.cachedArticlesRequest(oldestFirst: true))
 
             // Delete oldest articles if we exceed keepCount
             if allEntities.count > keepCount {
@@ -302,6 +280,16 @@ final class OfflineCacheRepository: POfflineCacheRepository {
     }
 
     // MARK: - Private Helper Methods
+
+    /// Fetch requests are not Sendable, so each context block builds its own.
+    private static func cachedArticlesRequest(oldestFirst: Bool = false) -> NSFetchRequest<BookmarkEntity> {
+        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "htmlContent != nil")
+        if oldestFirst {
+            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "cachedDate", ascending: true)]
+        }
+        return fetchRequest
+    }
 
     private func saveBookmarkToCache(bookmark: Bookmark, html: String, saveImages: Bool) async throws {
         let context = coreDataManager.context
@@ -552,18 +540,6 @@ final class OfflineCacheRepository: POfflineCacheRepository {
         }
 
         logger.info("📊 Cache verification: \(cachedCount) cached, \(missingCount) missing out of \(imageURLs.count) total")
-    }
-
-    private func getCachedEntity(id: String) async throws -> BookmarkEntity? {
-        let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", id)
-        fetchRequest.fetchLimit = 1
-
-        let context = coreDataManager.context
-        return try await context.perform {
-            let results = try context.fetch(fetchRequest)
-            return results.first
-        }
     }
 
     /// Caches hero/thumbnail image with a custom key for offline retrieval

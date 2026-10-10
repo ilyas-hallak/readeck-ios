@@ -58,14 +58,17 @@ final class ShareViewController: UIViewController {
                               let jsResults = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary else {
                             return
                         }
+                        let url = jsResults["url"] as? String
+                        let title = jsResults["title"] as? String
+                        let html = jsResults["html"] as? String
                         DispatchQueue.main.async {
-                            if let url = jsResults["url"] as? String {
+                            if let url {
                                 viewModel.url = url
                             }
-                            if let title = jsResults["title"] as? String, !title.isEmpty {
+                            if let title, !title.isEmpty {
                                 viewModel.title = title
                             }
-                            viewModel.pageHTML = jsResults["html"] as? String
+                            viewModel.pageHTML = html
                         }
                     }
                     return

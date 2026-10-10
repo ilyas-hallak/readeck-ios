@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PCreateAnnotationUseCase {
+protocol PCreateAnnotationUseCase: Sendable {
     func execute(
         bookmarkId: String,
         color: String,

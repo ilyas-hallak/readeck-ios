@@ -42,21 +42,23 @@ final class DataMigrator {
 
     /// Returns whether the migration finished without throwing.
     private func run(_ migration: DataMigration, in context: NSManagedObjectContext) async -> Bool {
-        await withCheckedContinuation { continuation in
+        // A local copy, so the Sendable closure below does not capture self.
+        let logger = logger
+        return await withCheckedContinuation { continuation in
             context.perform {
                 do {
                     try migration.run(in: context)
                     if context.hasChanges {
                         try context.save()
                     }
-                    self.logger.info("Data migration '\(migration.id)' completed")
+                    logger.info("Data migration '\(migration.id)' completed")
                     continuation.resume(returning: true)
                 } catch {
                     // Drop whatever the failed migration already changed, so a later save
                     // cannot persist a half-applied state. Migrations run before anything
                     // else touches the context, so there is nothing else to lose here.
                     context.rollback()
-                    self.logger.error("Data migration '\(migration.id)' failed: \(error.localizedDescription)")
+                    logger.error("Data migration '\(migration.id)' failed: \(error.localizedDescription)")
                     continuation.resume(returning: false)
                 }
             }

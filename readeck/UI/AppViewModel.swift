@@ -211,12 +211,13 @@ final class AppViewModel {
             return
         }
 
-        // Run offline sync in background without blocking app start
-        Task.detached(priority: .background) { [weak self] in
-            guard let self else { return }
+        let settingsRepository = settingsRepository
+        let offlineCacheSyncUseCase = factory.makeOfflineCacheSyncUseCase()
 
+        // Run offline sync in background without blocking app start
+        Task.detached(priority: .background) {
             do {
-                let settings = try await self.settingsRepository.loadOfflineSettings()
+                let settings = try await settingsRepository.loadOfflineSettings()
 
                 guard settings.shouldSyncOnAppStart else {
                     Logger.sync.debug("Offline sync not needed (disabled or synced recently)")
@@ -224,7 +225,6 @@ final class AppViewModel {
                 }
 
                 Logger.sync.info("Auto-sync triggered on app start")
-                let offlineCacheSyncUseCase = self.factory.makeOfflineCacheSyncUseCase()
                 await offlineCacheSyncUseCase.syncOfflineArticles(settings: settings)
             } catch {
                 Logger.sync.error("Failed to load offline settings for auto-sync: \(error.localizedDescription)")

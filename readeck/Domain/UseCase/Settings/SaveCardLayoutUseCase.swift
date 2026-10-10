@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSaveCardLayoutUseCase {
+protocol PSaveCardLayoutUseCase: Sendable {
     func execute(layout: CardLayoutStyle) async
 }
 

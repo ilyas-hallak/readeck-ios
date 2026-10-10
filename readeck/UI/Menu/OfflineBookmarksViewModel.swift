@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
+@MainActor
 @Observable
 final class OfflineBookmarksViewModel {
     var state: OfflineBookmarkSyncState = .idle
@@ -150,9 +151,5 @@ final class OfflineBookmarksViewModel {
         if case .syncing(let count, _) = state {
             state = .syncing(count: count, status: status)
         }
-    }
-
-    deinit {
-        cancellables.removeAll()
     }
 }
