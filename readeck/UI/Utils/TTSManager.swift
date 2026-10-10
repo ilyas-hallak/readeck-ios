@@ -331,19 +331,26 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
         resetSynthesizer()
     }
 
-    @objc private func handleAudioInterruption(_ notification: Notification) {
+    // AVAudioSession does not promise the main thread for this notification.
+    @objc private nonisolated func handleAudioInterruption(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
 
         if type == .ended {
-            do {
-                try AVAudioSession.sharedInstance().setActive(true)
-            } catch {
-                logger.error("Audio session reactivation after interruption failed: \(error.localizedDescription)")
+            MainThread.run { [weak self] in
+                self?.resumeAfterInterruption()
             }
-            resetSynthesizer()
         }
+    }
+
+    private func resumeAfterInterruption() {
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            logger.error("Audio session reactivation after interruption failed: \(error.localizedDescription)")
+        }
+        resetSynthesizer()
     }
 
     deinit {

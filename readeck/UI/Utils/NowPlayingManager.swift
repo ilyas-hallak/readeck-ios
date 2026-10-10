@@ -17,39 +17,42 @@ final class NowPlayingManager {
 
     // MARK: - Remote Commands
 
+    // MediaPlayer does not promise the main thread for command handlers.
     private func setupRemoteCommands() {
         commandCenter.playCommand.isEnabled = true
-        commandCenter.playCommand.addTarget { [weak self] _ in
-            self?.speechQueue.resumeOrReplay()
+        commandCenter.playCommand.addTarget { @Sendable [weak self] _ in
+            MainThread.run { self?.speechQueue.resumeOrReplay() }
             return .success
         }
 
         commandCenter.pauseCommand.isEnabled = true
-        commandCenter.pauseCommand.addTarget { [weak self] _ in
-            self?.ttsManager.pause()
+        commandCenter.pauseCommand.addTarget { @Sendable [weak self] _ in
+            MainThread.run { self?.ttsManager.pause() }
             return .success
         }
 
         commandCenter.nextTrackCommand.isEnabled = true
-        commandCenter.nextTrackCommand.addTarget { [weak self] _ in
-            self?.speechQueue.skipToNext()
+        commandCenter.nextTrackCommand.addTarget { @Sendable [weak self] _ in
+            MainThread.run { self?.speechQueue.skipToNext() }
             return .success
         }
 
         commandCenter.previousTrackCommand.isEnabled = true
-        commandCenter.previousTrackCommand.addTarget { [weak self] _ in
-            self?.ttsManager.seekBack(seconds: 30)
+        commandCenter.previousTrackCommand.addTarget { @Sendable [weak self] _ in
+            MainThread.run { self?.ttsManager.seekBack(seconds: 30) }
             return .success
         }
 
         commandCenter.changePlaybackPositionCommand.isEnabled = true
-        commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
+        commandCenter.changePlaybackPositionCommand.addTarget { @Sendable [weak self] event in
             guard let positionEvent = event as? MPChangePlaybackPositionCommandEvent else {
                 return .commandFailed
             }
-            let cps = self?.ttsManager.estimatedCharactersPerSecond() ?? 15
-            let targetChar = Int(positionEvent.positionTime * cps)
-            self?.ttsManager.seek(toCharacter: targetChar)
+            let positionTime = positionEvent.positionTime
+            MainThread.run {
+                let cps = self?.ttsManager.estimatedCharactersPerSecond() ?? 15
+                self?.ttsManager.seek(toCharacter: Int(positionTime * cps))
+            }
             return .success
         }
     }
@@ -76,7 +79,8 @@ final class NowPlayingManager {
             } else {
                 Task { [weak self] in
                     guard let image = await Self.loadArtworkImage(from: url) else { return }
-                    let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                    // MediaPlayer calls the request handler on a background queue, so it must not be main actor isolated.
+                    let artwork = MPMediaItemArtwork(boundsSize: image.size) { @Sendable _ in image }
                     self?.artworkCache.setObject(artwork, forKey: cacheKey)
                     var updatedInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
                     updatedInfo[MPMediaItemPropertyArtwork] = artwork

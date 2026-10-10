@@ -754,7 +754,7 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
     // Lifecycle. There is no deinit cleanup: the timers hold self weakly and do nothing once it is gone.
     private var isCleanedUp = false
 
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
         let decision = ReaderLinkPolicy.decide(
             for: navigationAction.request.url,
             navigationType: navigationAction.navigationType,

@@ -1,7 +1,7 @@
 import Foundation
 import CoreData
 
-final class LabelsRepository: PLabelsRepository, @unchecked Sendable {
+final class LabelsRepository: PLabelsRepository {
     private let api: PAPI
 
     private let coreDataManager: CoreDataManager

@@ -2,7 +2,7 @@ import Foundation
 import CoreData
 
 /// Simple repository for managing tags in Share Extension
-final class TagRepository {
+final class TagRepository: Sendable {
     private let logger = Logger.data
 
     /// Saves a new label to Core Data if it doesn't already exist
