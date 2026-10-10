@@ -42,6 +42,7 @@ final class DataMigrator {
 
     /// Returns whether the migration finished without throwing.
     private func run(_ migration: DataMigration, in context: NSManagedObjectContext) async -> Bool {
+        // A local copy, so the Sendable closure below does not capture self.
         let logger = logger
         return await withCheckedContinuation { continuation in
             context.perform {

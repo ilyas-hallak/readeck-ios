@@ -5,7 +5,7 @@ final class CoreDataManager: Sendable {
     static let shared = CoreDataManager()
 
     let persistentContainer: NSPersistentContainer
-    private let logger = Logger.data
+    private static let logger = Logger.data
 
     private init() {
         self.persistentContainer = Self.makeContainer()
@@ -18,8 +18,6 @@ final class CoreDataManager: Sendable {
     }
 
     private static func makeContainer() -> NSPersistentContainer {
-        let logger = Logger.data
-
         // Try to find the model in the main bundle first, then in extension bundle
         guard let modelURL = Bundle.main.url(forResource: "readeck", withExtension: "momd") ??
                              Bundle(for: CoreDataManager.self).url(forResource: "readeck", withExtension: "momd") else {
@@ -82,15 +80,15 @@ final class CoreDataManager: Sendable {
             guard context.hasChanges else { return }
             do {
                 try context.save()
-                logger.debug("Core Data context saved successfully")
+                Self.logger.debug("Core Data context saved successfully")
             } catch {
-                logger.error("Failed to save Core Data context: \(error.localizedDescription)")
+                Self.logger.error("Failed to save Core Data context: \(error.localizedDescription)")
             }
         }
     }
 
     func resetDatabase() throws {
-        logger.warning("⚠️ Resetting Core Data database - ALL DATA WILL BE DELETED")
+        Self.logger.warning("⚠️ Resetting Core Data database - ALL DATA WILL BE DELETED")
 
         guard let store = persistentContainer.persistentStoreCoordinator.persistentStores.first else {
             throw NSError(domain: "CoreDataManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No persistent store found"])
@@ -115,15 +113,14 @@ final class CoreDataManager: Sendable {
             do {
                 try FileManager.default.removeItem(at: auxURL)
             } catch {
-                logger.warning("Failed to remove Core Data auxiliary file \(auxURL.lastPathComponent): \(error.localizedDescription)")
+                Self.logger.warning("Failed to remove Core Data auxiliary file \(auxURL.lastPathComponent): \(error.localizedDescription)")
             }
         }
 
-        logger.info("Core Data database files deleted successfully")
+        Self.logger.info("Core Data database files deleted successfully")
     }
 
     private static func setupInMemoryStore(container: NSPersistentContainer) {
-        let logger = Logger.data
         logger.warning("Setting up in-memory Core Data store as fallback")
 
         let inMemoryDescription = NSPersistentStoreDescription()
@@ -141,7 +138,6 @@ final class CoreDataManager: Sendable {
     }
 
     private static func migrateStoreToAppGroupIfNeeded(targetURL: URL) {
-        let logger = Logger.data
         let fileManager = FileManager.default
 
         // Check if store already exists in app group
@@ -189,7 +185,6 @@ final class CoreDataManager: Sendable {
     }
 
     private static func migrateFromPath(oldStoreURL: URL, targetURL: URL) -> Bool {
-        let logger = Logger.data
         let fileManager = FileManager.default
         let oldStoreWAL = oldStoreURL.appendingPathExtension("wal")
         let oldStoreSHM = oldStoreURL.appendingPathExtension("shm")
