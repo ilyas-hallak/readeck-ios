@@ -19,13 +19,13 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     var volume: Float = 1.0
     var rate: Float = 0.5
 
-    var currentCharacterIndex: Int = 0
-    var totalCharacterCount: Int = 0
+    var currentCharacterIndex = 0
+    var totalCharacterCount = 0
     var onPositionUpdate: ((Int) -> Void)?
 
-    private var currentFullText: String = ""
-    private var currentLanguage: String = "en-US"
-    private var currentStartOffset: Int = 0
+    private var currentFullText = ""
+    private var currentLanguage = "en-US"
+    private var currentStartOffset = 0
 
     @ObservationIgnored private lazy var nowPlayingManager = NowPlayingManager.shared
 
@@ -210,7 +210,7 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     func estimatedCharactersPerSecond() -> Double {
         // AVSpeechUtterance rate 0.5 ≈ natural speaking ≈ 15 chars/sec
         // Scale linearly: rate 0.25 ≈ 7.5, rate 1.0 ≈ 30
-        return Double(rate) * 30.0
+        Double(rate) * 30.0
     }
 
     func estimatedDuration(for totalChars: Int) -> TimeInterval {
@@ -251,7 +251,8 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async {
+        MainThread.run { [weak self] in
+            guard let self else { return }
             // Only update state if the synthesizer isn't already speaking a new utterance
             if !self.synthesizer.isSpeaking {
                 self.isSpeaking = false
@@ -265,7 +266,8 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async {
+        MainThread.run { [weak self] in
+            guard let self else { return }
             // Only update state if the synthesizer isn't already speaking a new utterance
             if !self.synthesizer.isSpeaking {
                 self.isSpeaking = false
@@ -277,21 +279,31 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async {
-            self.isSpeaking = false
+        MainThread.run { [weak self] in
+            self?.isSpeaking = false
         }
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didContinue utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async {
-            self.isSpeaking = true
+        MainThread.run { [weak self] in
+            self?.isSpeaking = true
         }
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
         let spoken = characterRange.location + characterRange.length
 
-        DispatchQueue.main.async {
+        // currentStartOffset/currentFullText must be read inside the hop, not
+        // captured before it: a plain DispatchQueue.main.async always defers,
+        // so a seek() landing on the main actor between the callback firing
+        // and the closure running would otherwise combine this callback's
+        // `spoken` count with the seek's new offset/text. MainThread.run runs
+        // synchronously when already on the main thread, which AVSpeechSynthesizer
+        // does in practice, so the read happens at the same moment `spoken` does.
+        // A callback that truly fired off the main thread would still hop and
+        // could race, same residual risk as every other callback hop here.
+        MainThread.run { [weak self] in
+            guard let self else { return }
             let absolutePosition = self.currentStartOffset + spoken
             let total = self.currentFullText.count
             self.currentCharacterIndex = absolutePosition
