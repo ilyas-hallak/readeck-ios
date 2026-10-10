@@ -59,7 +59,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                 return (url, bookmark.title ?? "", tags, bookmark.html)
             }
 
-            guard let snapshot = snapshot ?? nil else {
+            guard let snapshot else {
                 // objectID is thread-safe; the String `id` attribute is not.
                 logger.error("Skipping offline bookmark without URL (id: \(bookmark.objectID))")
                 failedCount += 1

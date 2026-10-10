@@ -332,7 +332,7 @@ final class TTSManager: NSObject, AVSpeechSynthesizerDelegate {
     }
 
     // AVAudioSession does not promise the main thread for this notification.
-    @objc private nonisolated func handleAudioInterruption(_ notification: Notification) {
+    @objc nonisolated private func handleAudioInterruption(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }

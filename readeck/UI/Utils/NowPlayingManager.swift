@@ -111,7 +111,7 @@ final class NowPlayingManager {
 
     // MARK: - Artwork Loading
 
-    private nonisolated static func loadArtworkImage(from url: URL) async -> UIImage? {
+    nonisolated private static func loadArtworkImage(from url: URL) async -> UIImage? {
         guard let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
         return UIImage(data: data)
     }
