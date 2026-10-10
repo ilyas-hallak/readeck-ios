@@ -200,7 +200,8 @@ struct BookmarkDetailViewModelTests {
         let (vm, factory) = createSUT()
         factory.mockDeleteBookmark.result = .success(())
 
-        var receivedId: String?
+        // Written on the main queue by the observer below, read here after the sleep.
+        nonisolated(unsafe) var receivedId: String?
         let observer = NotificationCenter.default.addObserver(
             forName: .bookmarkDeleted,
             object: nil,

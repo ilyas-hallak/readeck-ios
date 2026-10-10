@@ -16,7 +16,7 @@ struct IslandProgressRing: View {
     private nonisolated static let lineWidth = 2.5
 
     /// Devices with a Dynamic Island have a top safe area of at least 59 points.
-    static func isAvailable(statusBarHeight: Double) -> Bool {
+    nonisolated static func isAvailable(statusBarHeight: Double) -> Bool {
         statusBarHeight >= 59
     }
 

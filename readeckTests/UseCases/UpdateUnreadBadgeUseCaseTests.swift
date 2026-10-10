@@ -7,7 +7,8 @@ struct UpdateUnreadBadgeUseCaseTests {
 
     // MARK: - Fakes
 
-    private final class FakeBadgeService: PAppBadgeService {
+    // Set up before the use case runs and only read after it returns.
+    private final class FakeBadgeService: PAppBadgeService, @unchecked Sendable {
         var authorizationGranted = true
         var lastBadgeCount: Int?
         var authorizationRequested = false
@@ -121,7 +122,8 @@ struct UpdateUnreadBadgeUseCaseTests {
 
 // MARK: - Stub settings repository (only loadSettings matters here)
 
-private final class StubSettingsRepository: PSettingsRepository {
+// Set up before the use case runs and only read afterwards.
+private final class StubSettingsRepository: PSettingsRepository, @unchecked Sendable {
     var stubbedSettings: Settings?
     var hasFinishedSetup = true
 

@@ -7,7 +7,8 @@ struct GetBookmarksUseCaseTests {
 
     // MARK: - Fakes
 
-    private final class StubBookmarksRepository: PBookmarksRepository {
+    // Set up before the use case runs and only read afterwards.
+    private final class StubBookmarksRepository: PBookmarksRepository, @unchecked Sendable {
         var bookmarks: [Bookmark] = []
 
         // swiftlint:disable:next discouraged_optional_collection

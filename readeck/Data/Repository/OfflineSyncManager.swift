@@ -8,6 +8,7 @@ protocol POfflineSyncManager: Sendable {
     func deleteOfflineBookmark(_ entity: ArticleURLEntity)
 }
 
+// The @Published state is only written on the main actor, everything else is immutable.
 open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     static let shared = OfflineSyncManager()
 

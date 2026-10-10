@@ -44,7 +44,8 @@ struct SummarizeArticleUseCaseTests {
     }
 }
 
-class MockSummarizationRepository: PSummarizationRepository {
+// Updated by the awaited call and only read after it returns.
+class MockSummarizationRepository: PSummarizationRepository, @unchecked Sendable {
     static var isAvailable: Bool { true }
     static var supportedLanguages: [String] { ["en-US", "de-DE"] }
     var summarizeCallCount = 0

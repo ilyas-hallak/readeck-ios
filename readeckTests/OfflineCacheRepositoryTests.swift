@@ -27,7 +27,7 @@ struct OfflineCacheRepositoryTests {
 
         let context = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
         context.persistentStoreCoordinator = persistentStoreCoordinator
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        context.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
         return context
     }
 
