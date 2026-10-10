@@ -1,7 +1,7 @@
 # SwiftLint Configuration for Readeck iOS
 # Based on sindresorhus/swiftlint-config (Apple sample code style)
 
-parent_config: https://raw.githubusercontent.com/sindresorhus/swiftlint-config/main/.swiftlint.yml
+parent_config: .swiftlint-parent.yml
 
 excluded:
   - .build
@@ -19,24 +19,6 @@ disabled_rules:
   - conditional_returns_on_newline
 
 # Project-specific overrides
-line_length:
-  warning: 150
-  error: 200
-  ignores_comments: true
-  ignores_urls: true
-
-type_body_length:
-  warning: 300
-  error: 500
-
-file_length:
-  warning: 500
-  error: 1000
-
-function_body_length:
-  warning: 50
-  error: 100
-
 identifier_name:
   min_length:
     warning: 2
@@ -58,7 +40,3 @@ identifier_name:
     - ButtonLabel
     - JumpButton
     - _body
-
-cyclomatic_complexity:
-  warning: 15
-  error: 25
