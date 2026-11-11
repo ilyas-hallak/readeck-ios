@@ -49,6 +49,9 @@ final class ShareBookmarkViewModel {
     private let requestCompleter: ExtensionRequestCompleting?
     private var notificationObserver: Any?
     private var autoCloseTask: Task<Void, Never>?
+    /// The extension request may be completed or cancelled only once. A save that is
+    /// still running when the user cancels would otherwise complete it afterwards.
+    private var isRequestFinished = false
 
     init(extensionContext: NSExtensionContext?, requestCompleter: ExtensionRequestCompleting? = nil) {
         self.extensionContext = extensionContext
@@ -347,12 +350,14 @@ final class ShareBookmarkViewModel {
         }
     }
 
-    private func completeExtensionRequest() {
+    func completeExtensionRequest() {
         logger.debug("Completing extension request")
+        guard !isRequestFinished else { return }
         guard let requestCompleter else {
-            logger.warning("Extension context not available for completion")
+            logger.warning("Request completer not available for completion")
             return
         }
+        isRequestFinished = true
 
         requestCompleter.completeRequest(returningItems: []) { [weak self] error in
             if error {
@@ -368,10 +373,12 @@ final class ShareBookmarkViewModel {
     func cancel() {
         logger.info("Cancelling share sheet")
         autoCloseTask?.cancel()
+        guard !isRequestFinished else { return }
         guard let requestCompleter else {
-            logger.warning("Extension context not available for cancellation")
+            logger.warning("Request completer not available for cancellation")
             return
         }
+        isRequestFinished = true
         requestCompleter.cancelRequest(withError: CocoaError(.userCancelled))
     }
 

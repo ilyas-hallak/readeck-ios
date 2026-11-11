@@ -13,24 +13,6 @@ struct ShareBookmarkView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            content
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button {
-                            viewModel.cancel()
-                        } label: {
-                            Label("Cancel", systemImage: "xmark")
-                                .labelStyle(.iconOnly)
-                        }
-                        .keyboardShortcut(.cancelAction)
-                    }
-                }
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
         VStack(spacing: 0) {
             if !viewModel.isConfigured || viewModel.sessionExpired {
                 // Show setup required screen
@@ -39,7 +21,7 @@ struct ShareBookmarkView: View {
                     setupRequiredSection
                     Spacer()
                 }
-                .padding()
+                .padding(.horizontal)
             } else {
                 // Normal UI
                 ScrollViewReader { proxy in
@@ -72,6 +54,9 @@ struct ShareBookmarkView: View {
                 saveButtonSection
             }
         }
+        .overlay(alignment: .topLeading) {
+            cancelButton
+        }
         .background(Color(.systemGroupedBackground))
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .contentShape(Rectangle())
@@ -94,6 +79,23 @@ struct ShareBookmarkView: View {
     }
 
     // MARK: - View Components
+
+    /// An overlay rather than a toolbar item, so the sheet gets no extra navigation bar row.
+    private var cancelButton: some View {
+        Button {
+            viewModel.cancel()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 19, weight: .medium))
+                .foregroundStyle(.primary)
+                .frame(width: 44, height: 44)
+        }
+        .cancelButtonBackground()
+        .accessibilityLabel("Cancel")
+        .keyboardShortcut(.cancelAction)
+        .padding(.leading, 16)
+        .padding(.top, 22)
+    }
 
     @ViewBuilder
     private var logoSection: some View {
@@ -299,5 +301,16 @@ struct ShareBookmarkView: View {
 
     private func addCustomTag() {
         viewModel.addCustomTag(context: viewContext)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func cancelButtonBackground() -> some View {
+        if #available(iOS 26.0, *) {
+            self.buttonStyle(.plain).glassEffect(.regular.interactive(), in: .circle)
+        } else {
+            self.buttonStyle(.plain).background(.regularMaterial, in: Circle())
+        }
     }
 }
