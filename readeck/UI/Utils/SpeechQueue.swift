@@ -9,8 +9,8 @@ struct SpeechQueueItem: Codable, Equatable, Identifiable {
     let labels: [String]?
     let imageUrl: String?
     let language: String
-    var lastCharacterIndex: Int = 0
-    var totalCharacters: Int = 0
+    var lastCharacterIndex = 0
+    var totalCharacters = 0
 }
 
 extension Bookmark {
@@ -63,8 +63,8 @@ final class SpeechQueue {
     static let shared = SpeechQueue()
 
     // Convert ISO 639-1 language codes (e.g., "de", "en") to BCP 47 (e.g., "de-DE", "en-US")
-    private func convertToBCP47(_ isoCode: String) -> String {
-        // Already a BCP 47 code (e.g. "en-US", "pt-BR")
+    static func convertToBCP47(_ isoCode: String) -> String {
+        // Already a BCP 47 code (e.g. "en-US", "pt-PT")
         if isoCode.contains("-") { return isoCode }
 
         let mapping: [String: String] = [
@@ -73,7 +73,7 @@ final class SpeechQueue {
             "es": "es-ES",
             "fr": "fr-FR",
             "it": "it-IT",
-            "pt": "pt-BR",
+            "pt": "pt-PT",
             "nl": "nl-NL",
             "ja": "ja-JP",
             "zh": "zh-CN",
@@ -197,7 +197,7 @@ final class SpeechQueue {
         updatePublishedProperties()
         saveQueue()
         let textToSpeak = (next.title + "\n" + (next.content ?? "").stripHTML).trimmingCharacters(in: .whitespacesAndNewlines)
-        let languageCode = convertToBCP47(next.language)
+        let languageCode = Self.convertToBCP47(next.language)
         ttsManager.speak(
             text: textToSpeak,
             language: languageCode,

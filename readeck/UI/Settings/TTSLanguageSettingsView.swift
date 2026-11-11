@@ -12,7 +12,8 @@ struct TTSLanguageSettingsView: View {
         ("en-GB", "English (UK)"),
         ("es-ES", "Español"),
         ("fr-FR", "Français"),
-        ("it-IT", "Italiano")
+        ("it-IT", "Italiano"),
+        ("pt-PT", "Português")
     ].sorted { $0.name < $1.name }
 
     var body: some View {

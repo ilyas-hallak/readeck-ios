@@ -5,7 +5,7 @@ struct VoiceListView: View {
     let languageCode: String
     let languageName: String
     @State private var voiceManager = VoiceManager.shared
-    @State private var previewingVoiceId: String? = nil
+    @State private var previewingVoiceId: String?
     @Environment(AppSettings.self) private var appSettings
 
     private var voicesByQuality: [(quality: String, voices: [AVSpeechSynthesisVoice])] {
@@ -77,6 +77,7 @@ struct VoiceListView: View {
                         .onTapGesture {
                             voiceManager.setVoice(voice, for: languageCode)
                         }
+                        .accessibilityAddTraits(.isButton)
                     }
                 } header: {
                     Text(group.quality)
@@ -112,6 +113,7 @@ struct VoiceListView: View {
         case "es": return "Hola, soy \(voiceName). Así leeré tus artículos."
         case "fr": return "Bonjour, je suis \(voiceName). Voici comment je lirai vos articles."
         case "it": return "Ciao, sono \(voiceName). Ecco come leggerò i tuoi articoli."
+        case "pt": return "Olá, sou \(voiceName). É assim que vou ler os seus artigos."
         default: return "Hello, I'm \(voiceName). This is how I'll read your articles."
         }
     }
