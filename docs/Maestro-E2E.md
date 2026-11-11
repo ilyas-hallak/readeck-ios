@@ -35,18 +35,19 @@ The suite only ever touches bookmarks under its own label and deletes all of the
 
 ## Flows
 
-- `01_load_list` — a pre-authenticated launch lands on the bookmark list.
-- `02_add_bookmark` — adds a bookmark through the UI, tags it for cleanup.
-- `03_archive_does_not_drop_other_unread` — regression test for cb#39: archiving one unread bookmark used to make other unread bookmarks disappear until you left the tab and came back.
-- `04_offline_article` — regression test for cb#45: enables offline reading, syncs, flips the debug-only "simulate offline" toggle, and opens whatever Preview Cached Articles lists, not a specific seeded bookmark, since the sync's own cap decides what gets cached on a server with this much existing content.
-- `05_share_sheet` — opens the reader's share sheet and checks the options render. Doesn't follow through on an option, since that hands off to system UI Maestro can't drive.
+- `01_load_list`: a pre-authenticated launch lands on the bookmark list.
+- `02_add_bookmark`: adds a bookmark through the UI, tags it for cleanup.
+- `03_archive_does_not_drop_other_unread`: regression test for cb#39: archiving one unread bookmark used to make other unread bookmarks disappear until you left the tab and came back.
+- `04_offline_article`: regression test for cb#45: enables offline reading, syncs, flips the debug-only "simulate offline" toggle, and opens whatever Preview Cached Articles lists, not a specific seeded bookmark, since the sync's own cap decides what gets cached on a server with this much existing content.
+- `05_share_sheet`: opens the reader's share sheet and checks the options render. Doesn't follow through on an option, since that hands off to system UI Maestro can't drive.
 
 Cancelling the share extension (cb#50) isn't covered yet: the fix for it hadn't merged when this suite was written.
 Add a flow once it has.
 
 ## Notes for the next change
 
-- A fresh install always shows a "What's New" sheet (`VersionManager`), so every flow dismisses it first via `releaseNotes.doneButton`.
+- New flows start with `runFlow: subflows/launch_signed_in.yaml`: it launches with the injected session and dismisses the "What's New" sheet a fresh install always shows (`VersionManager`) and any leftover "Allow Paste" dialog.
+- Files under `maestro/subflows/` are building blocks, not flows: `maestro test maestro/` only runs the top-level files.
 - Tapping a `Toggle`'s accessibility identifier dead-center lands on its label text, not the switch: use `point: "90%,50%"` to hit the switch.
 - The new iOS 26 tab bar's "Search" tab replaces the whole tab bar with a search field while active; the other tabs aren't reachable from there without leaving through a regular list screen first.
-- `inputText` writes to the simulator's pasteboard via CoreSimulatorBridge. The next screen that reads the clipboard (e.g. the add-bookmark screen's clipboard check) can trigger iOS's "Allow Paste" system dialog, which once shown persists across app relaunches for the rest of the simulator's boot session. Every flow dismisses it defensively right after the release-notes sheet.
+- `inputText` writes to the simulator's pasteboard via CoreSimulatorBridge. The next screen that reads the clipboard (e.g. the add-bookmark screen's clipboard check) can trigger iOS's "Allow Paste" system dialog, which once shown persists across app relaunches for the rest of the simulator's boot session. `subflows/dismiss_paste_dialog.yaml` taps it away, matching the German and English button text, so the suite doesn't depend on the simulator's language.

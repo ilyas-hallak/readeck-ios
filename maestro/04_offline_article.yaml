@@ -6,28 +6,7 @@ appId: de.ilyashallak.readeck
 # content, and the sync's own 20-article cap decides what gets cached, not
 # us). Uses the debug-only "simulate offline" toggle instead of touching the
 # simulator's real network.
-- launchApp:
-    clearState: true
-    arguments:
-      e2eEndpoint: "${E2E_ENDPOINT}"
-      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
-      e2eOAuthClientId: "${E2E_CLIENT_ID}"
-- runFlow:
-    when:
-      visible:
-        id: "releaseNotes.doneButton"
-    commands:
-      - tapOn:
-          id: "releaseNotes.doneButton"
-# A leftover iOS "Allow Paste" dialog from an earlier flow in the suite (see
-# 02_add_bookmark) would otherwise block every tap below.
-- runFlow:
-    when:
-      visible:
-        text: "Einsetzen erlauben"
-    commands:
-      - tapOn:
-          text: "Einsetzen erlauben"
+- runFlow: subflows/launch_signed_in.yaml
 - tapOn:
     id: "bookmarks.tab.search"
 - tapOn:

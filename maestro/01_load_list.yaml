@@ -1,28 +1,7 @@
 appId: de.ilyashallak.readeck
 ---
 # Smoke check: a pre-authenticated launch lands straight on the bookmark list.
-- launchApp:
-    clearState: true
-    arguments:
-      e2eEndpoint: "${E2E_ENDPOINT}"
-      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
-      e2eOAuthClientId: "${E2E_CLIENT_ID}"
-- runFlow:
-    when:
-      visible:
-        id: "releaseNotes.doneButton"
-    commands:
-      - tapOn:
-          id: "releaseNotes.doneButton"
-# A leftover iOS "Allow Paste" dialog from an earlier flow in the suite (see
-# 02_add_bookmark) would otherwise block every tap below.
-- runFlow:
-    when:
-      visible:
-        text: "Einsetzen erlauben"
-    commands:
-      - tapOn:
-          text: "Einsetzen erlauben"
+- runFlow: subflows/launch_signed_in.yaml
 - assertVisible:
     id: "bookmarks.tab.all"
 - assertVisible:

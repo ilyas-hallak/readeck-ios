@@ -3,35 +3,16 @@ appId: de.ilyashallak.readeck
 # Adds a bookmark through the UI and tags it with this run's e2e label so
 # scripts/e2e.sh can clean it up afterwards, same as the bookmarks it seeds
 # directly via the API.
-- launchApp:
-    clearState: true
-    arguments:
-      e2eEndpoint: "${E2E_ENDPOINT}"
-      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
-      e2eOAuthClientId: "${E2E_CLIENT_ID}"
-- runFlow:
-    when:
-      visible:
-        id: "releaseNotes.doneButton"
-    commands:
-      - tapOn:
-          id: "releaseNotes.doneButton"
+- runFlow: subflows/launch_signed_in.yaml
 - tapOn:
     id: "bookmarks.addButton"
-# The add-bookmark screen checks the clipboard on appear, which can trigger
-# iOS's "Allow Paste" system dialog the first time something else (here:
-# Maestro's own inputText, earlier in the suite) wrote to the pasteboard.
-# Left open, it blocks every subsequent tap, in this flow and the next one.
-- runFlow:
-    when:
-      visible:
-        text: "Einsetzen erlauben"
-    commands:
-      - tapOn:
-          text: "Einsetzen erlauben"
+# The screen reads the clipboard on appear and again on every URL change,
+# so the paste dialog can show up at either point.
+- runFlow: subflows/dismiss_paste_dialog.yaml
 - tapOn:
     id: "addBookmark.urlField"
 - inputText: "https://example.com"
+- runFlow: subflows/dismiss_paste_dialog.yaml
 - tapOn:
     id: "labels.searchField"
 - inputText: "${E2E_LABEL}"
@@ -57,3 +38,5 @@ appId: de.ilyashallak.readeck
     id: "addBookmark.saveButton"
 - assertVisible:
     id: "bookmarks.list"
+- assertVisible:
+    text: ".*example\\.com.*"

@@ -32,13 +32,6 @@ enum AccessibilityID {
         static func option(_ option: ArticleShareOption) -> String { "shareSheet.option.\(option)" }
     }
 
-    /// Shared between AddBookmarkView and the share extension (CoreDataTagManagementView).
-    enum Labels {
-        static let searchField = "labels.searchField"
-        static let addCustomTagButton = "labels.addCustomTagButton"
-        static func chip(_ name: String) -> String { "labels.chip.\(name)" }
-    }
-
     enum More {
         static func row(_ tab: SidebarTab) -> String { "more.row.\(tab)" }
     }

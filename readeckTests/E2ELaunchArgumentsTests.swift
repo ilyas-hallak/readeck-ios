@@ -61,4 +61,28 @@ struct E2ELaunchArgumentsTests {
     @Test func returnsNilWithoutAnyE2EFlags() {
         #expect(E2ELaunchArguments.parse(["/path/to/readeck.app"]) == nil)
     }
+
+    @Test func returnsNilWhenARequiredFlagHasNoValue() {
+        let arguments = [
+            "-e2eEndpoint", "https://readeck.example.com",
+            "-e2eOAuthAccessToken", "token-123",
+            "-e2eOAuthClientId"
+        ]
+
+        #expect(E2ELaunchArguments.parse(arguments) == nil)
+    }
+
+    @Test func dropsANonNumericExpiresIn() {
+        let arguments = [
+            "-e2eEndpoint", "https://readeck.example.com",
+            "-e2eOAuthAccessToken", "token-123",
+            "-e2eOAuthClientId", "client-456",
+            "-e2eOAuthExpiresIn", "soon"
+        ]
+
+        let parsed = E2ELaunchArguments.parse(arguments)
+
+        #expect(parsed != nil)
+        #expect(parsed?.expiresIn == nil)
+    }
 }
