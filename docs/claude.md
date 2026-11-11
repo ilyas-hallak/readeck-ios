@@ -192,7 +192,7 @@ if UIDevice.isPhone {
 
 ### Current Test Coverage
 - **Unit Tests:** `readeckTests/` (basic coverage)
-- **UI Tests:** `readeckUITests/` (smoke tests)
+- **E2E Tests:** `maestro/` smoke suite, see `docs/Maestro-E2E.md`
 
 ### Testing Philosophy
 - Protocol-based DI enables easy mocking
