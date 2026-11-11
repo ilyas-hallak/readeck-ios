@@ -8,6 +8,7 @@ struct WebView: UIViewRepresentable {
     var onScroll: ((Double) -> Void)?
     var selectedAnnotationId: String?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+    var onAnnotationTapped: ((String) -> Void)?
     var onScrollToPosition: ((Double) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
 
@@ -35,10 +36,12 @@ struct WebView: UIViewRepresentable {
         webView.configuration.userContentController.add(context.coordinator, name: "heightUpdate")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollProgress")
         webView.configuration.userContentController.add(context.coordinator, name: "annotationCreated")
+        webView.configuration.userContentController.add(context.coordinator, name: "annotationTapped")
         webView.configuration.userContentController.add(context.coordinator, name: "scrollToPosition")
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
         context.coordinator.onAnnotationCreated = onAnnotationCreated
+        context.coordinator.onAnnotationTapped = onAnnotationTapped
         context.coordinator.onScrollToPosition = onScrollToPosition
         context.coordinator.webView = webView
 
@@ -49,6 +52,7 @@ struct WebView: UIViewRepresentable {
         context.coordinator.onHeightChange = onHeightChange
         context.coordinator.onScroll = onScroll
         context.coordinator.onAnnotationCreated = onAnnotationCreated
+        context.coordinator.onAnnotationTapped = onAnnotationTapped
         context.coordinator.onScrollToPosition = onScrollToPosition
 
         let isDarkMode = colorScheme == .dark
@@ -354,6 +358,8 @@ struct WebView: UIViewRepresentable {
 
                 // Text Selection and Annotation Overlay
                 \(generateAnnotationOverlayJS(isDarkMode: isDarkMode))
+
+                \(AnnotationMarkup.tapHandlerScript(report: "id => window.webkit.messageHandlers.annotationTapped.postMessage(id)"))
             </script>
         </body>
         </html>
@@ -367,6 +373,7 @@ struct WebView: UIViewRepresentable {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "heightUpdate")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollProgress")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "annotationCreated")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "annotationTapped")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "scrollToPosition")
         webView.loadHTMLString("", baseURL: nil)
         coordinator.cleanup()
@@ -724,6 +731,7 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
     var onHeightChange: ((Double) -> Void)?
     var onScroll: ((Double) -> Void)?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+    var onAnnotationTapped: ((String) -> Void)?
     var onScrollToPosition: ((Double) -> Void)?
 
     // WebView reference
@@ -743,14 +751,10 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
     var lastScrollTime = Date()
     var scrollEndTimer: Timer?
 
-    // Lifecycle
+    // Lifecycle. There is no deinit cleanup: the timers hold self weakly and do nothing once it is gone.
     private var isCleanedUp = false
 
-    deinit {
-        cleanup()
-    }
-
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
         let decision = ReaderLinkPolicy.decide(
             for: navigationAction.request.url,
             navigationType: navigationAction.navigationType,
@@ -792,6 +796,11 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
                 self.onAnnotationCreated?(color, text, startOffset, endOffset, startSelector, endSelector)
             }
         }
+        if message.name == "annotationTapped", let annotationId = message.body as? String {
+            DispatchQueue.main.async {
+                self.onAnnotationTapped?(annotationId)
+            }
+        }
         if message.name == "scrollToPosition", let position = message.body as? Double {
             DispatchQueue.main.async {
                 self.onScrollToPosition?(Double(position))
@@ -828,8 +837,11 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
         let scrollEndDelay: TimeInterval = scrollVelocity > 2.0 ? 0.8 : 0.5
 
         scrollEndTimer?.invalidate()
+        // Scheduled on the main run loop, so the timer fires on the main thread.
         scrollEndTimer = Timer.scheduledTimer(withTimeInterval: scrollEndDelay, repeats: false) { [weak self] _ in
-            self?.handleScrollEnd()
+            MainActor.assumeIsolated {
+                self?.handleScrollEnd()
+            }
         }
 
         onScroll?(progress)
@@ -844,8 +856,10 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
             // Add small delay to ensure scroll has fully stopped
             heightUpdateTimer?.invalidate()
             heightUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
-                guard let self else { return }
-                self.applyHeightUpdate(height: self.pendingHeight)
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.applyHeightUpdate(height: self.pendingHeight)
+                }
             }
         }
     }
@@ -873,6 +887,7 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageH
         onHeightChange = nil
         onScroll = nil
         onAnnotationCreated = nil
+        onAnnotationTapped = nil
         onScrollToPosition = nil
     }
 }

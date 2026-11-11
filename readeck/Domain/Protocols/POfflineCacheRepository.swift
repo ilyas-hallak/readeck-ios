@@ -7,11 +7,12 @@
 
 import Foundation
 
-protocol POfflineCacheRepository {
+protocol POfflineCacheRepository: Sendable {
     // Cache operations
     func cacheBookmarkWithMetadata(bookmark: Bookmark, html: String, saveImages: Bool) async throws
     func hasCachedArticle(id: String) -> Bool
     func getCachedArticle(id: String) -> String?
+    func getCachedBookmarkDetail(id: String) -> BookmarkDetail?
     func getCachedBookmarks() async throws -> [Bookmark]
 
     // Cache statistics

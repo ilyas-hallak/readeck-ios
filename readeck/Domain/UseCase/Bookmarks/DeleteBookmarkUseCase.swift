@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PDeleteBookmarkUseCase {
+protocol PDeleteBookmarkUseCase: Sendable {
     func execute(bookmarkId: String) async throws
 }
 

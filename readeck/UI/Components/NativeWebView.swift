@@ -13,6 +13,7 @@ struct NativeWebView: View {
     var onScroll: ((Double) -> Void)?
     var selectedAnnotationId: String?
     var onAnnotationCreated: ((String, String, Int, Int, String, String) -> Void)?
+    var onAnnotationTapped: ((String) -> Void)?
     var onScrollToPosition: ((Double) -> Void)?
 
     @State private var pageHolder = ReaderWebPageHolder()
@@ -80,7 +81,7 @@ struct NativeWebView: View {
         // Cancel any existing polling task
         annotationPollingTask?.cancel()
 
-        guard let onAnnotationCreated else { return }
+        guard onAnnotationCreated != nil || onAnnotationTapped != nil else { return }
 
         // Poll for annotation messages from JavaScript
         annotationPollingTask = Task { @MainActor in
@@ -91,29 +92,38 @@ struct NativeWebView: View {
 
                 let script = """
                 return (function() {
-                    if (window.__pendingAnnotation) {
-                        const data = window.__pendingAnnotation;
-                        window.__pendingAnnotation = null;
-                        return data;
-                    }
-                    return null;
+                    const created = window.__pendingAnnotation;
+                    const tappedId = window.__pendingAnnotationTap;
+                    window.__pendingAnnotation = null;
+                    window.__pendingAnnotationTap = null;
+                    if (!created && !tappedId) return null;
+                    return { created: created || null, tappedId: tappedId || null };
                 })();
                 """
 
                 do {
-                    if let result = try await page.callJavaScript(script) as? [String: Any],
-                       let color = result["color"] as? String,
-                       let text = result["text"] as? String,
-                       let startOffset = result["startOffset"] as? Int,
-                       let endOffset = result["endOffset"] as? Int,
-                       let startSelector = result["startSelector"] as? String,
-                       let endSelector = result["endSelector"] as? String {
-                        onAnnotationCreated(color, text, startOffset, endOffset, startSelector, endSelector)
+                    if let result = try await page.callJavaScript(script) as? [String: Any] {
+                        handleAnnotationMessage(result)
                     }
                 } catch {
                     // Silently continue polling
                 }
             }
+        }
+    }
+
+    private func handleAnnotationMessage(_ message: [String: Any]) {
+        if let tappedId = message["tappedId"] as? String {
+            onAnnotationTapped?(tappedId)
+        }
+        if let created = message["created"] as? [String: Any],
+           let color = created["color"] as? String,
+           let text = created["text"] as? String,
+           let startOffset = created["startOffset"] as? Int,
+           let endOffset = created["endOffset"] as? Int,
+           let startSelector = created["startSelector"] as? String,
+           let endSelector = created["endSelector"] as? String {
+            onAnnotationCreated?(color, text, startOffset, endOffset, startSelector, endSelector)
         }
     }
 
@@ -441,6 +451,8 @@ struct NativeWebView: View {
 
                 // Text Selection and Annotation Overlay
                 \(generateAnnotationOverlayJS(isDarkMode: isDarkMode, textColor: resolvedTextColor))
+
+                \(AnnotationMarkup.tapHandlerScript(report: "id => { window.__pendingAnnotationTap = id; }"))
             </script>
         </body>
         </html>

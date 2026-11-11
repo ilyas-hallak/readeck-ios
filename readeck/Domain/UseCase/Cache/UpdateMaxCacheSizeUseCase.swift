@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PUpdateMaxCacheSizeUseCase {
+protocol PUpdateMaxCacheSizeUseCase: Sendable {
     func execute(sizeInBytes: UInt) async throws
 }
 

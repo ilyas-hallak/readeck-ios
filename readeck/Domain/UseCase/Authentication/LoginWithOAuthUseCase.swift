@@ -2,7 +2,7 @@ import Foundation
 
 #if os(iOS) && !APP_EXTENSION
 
-protocol PLoginWithOAuthUseCase {
+protocol PLoginWithOAuthUseCase: Sendable {
     func execute(endpoint: String) async throws -> (OAuthToken, String)
 }
 

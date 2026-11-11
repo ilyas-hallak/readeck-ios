@@ -8,6 +8,7 @@
 import Foundation
 import Observation
 
+@MainActor
 @Observable
 final class CacheSettingsViewModel {
     // MARK: - Dependencies
@@ -35,13 +36,11 @@ final class CacheSettingsViewModel {
 
     // MARK: - Public Methods
 
-    @MainActor
     func loadCacheSettings() async {
         await updateCacheSize()
         await loadMaxCacheSize()
     }
 
-    @MainActor
     func updateCacheSize() async {
         do {
             let sizeInBytes = try await getCacheSizeUseCase.execute()
@@ -54,7 +53,6 @@ final class CacheSettingsViewModel {
         }
     }
 
-    @MainActor
     func loadMaxCacheSize() async {
         do {
             let sizeInBytes = try await getMaxCacheSizeUseCase.execute()
@@ -65,7 +63,6 @@ final class CacheSettingsViewModel {
         }
     }
 
-    @MainActor
     func updateMaxCacheSize(_ newSize: Double) async {
         let bytes = UInt(newSize * 1024 * 1024)
         do {
@@ -76,7 +73,6 @@ final class CacheSettingsViewModel {
         }
     }
 
-    @MainActor
     func clearCache() async {
         isClearing = true
         do {

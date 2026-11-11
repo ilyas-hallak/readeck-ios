@@ -167,6 +167,18 @@ final class ScrollTrackerTests: XCTestCase {
         XCTAssertFalse(tracker.toolbarVisible)
     }
 
+    func testToolbarHidesEarlyInLongArticle() {
+        var tracker = ScrollTracker()
+
+        // Long article: 5% of the scrollable distance would be almost 2000pt
+        _ = tracker.update(endPosition: 40000, containerHeight: 700)
+        for endPosition in stride(from: 39950, through: 39700, by: -50) {
+            _ = tracker.update(endPosition: CGFloat(endPosition), containerHeight: 700)
+        }
+
+        XCTAssertFalse(tracker.toolbarVisible, "Should hide after a few hundred points, not after 5% of the article")
+    }
+
     func testToolbarDoesNotHideOnSmallScrollDown() {
         var tracker = ScrollTracker()
         tracker.scrollDownThresholdRatio = 0.06

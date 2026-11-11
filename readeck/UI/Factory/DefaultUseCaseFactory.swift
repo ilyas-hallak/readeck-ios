@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 protocol UseCaseFactory {
     func makeLoginUseCase() -> PLoginUseCase
     func makeGetBookmarksUseCase() -> PGetBookmarksUseCase
@@ -31,6 +32,7 @@ protocol UseCaseFactory {
     func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase
@@ -42,18 +44,28 @@ protocol UseCaseFactory {
     func makeSummarizeArticleUseCase() -> PSummarizeArticleUseCase
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase
 }
 
+@MainActor
 final class DefaultUseCaseFactory: UseCaseFactory {
     // One shared session, configured with timeouts, for the whole app.
     private let httpSession: HTTPSession = HTTPSessionFactory.makeDefault()
+    // Content requests fail fast while the user chose to go offline. Token refresh and
+    // the reachability check keep the raw session, so they still reach the server.
+    private lazy var gatedHTTPSession: HTTPSession = OfflineGatedHTTPSession(
+        base: httpSession,
+        isForcedOffline: networkMonitorRepository.isForcedOffline
+    )
     private lazy var tokenProvider = KeychainTokenProvider(session: httpSession)
-    private lazy var api: PAPI = API(tokenProvider: tokenProvider, session: httpSession)
-    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider, session: httpSession)
+    private lazy var api: PAPI = API(tokenProvider: tokenProvider, session: gatedHTTPSession)
+    private lazy var profileApiClient: PProfileApiClient = ProfileApiClient(tokenProvider: tokenProvider, session: gatedHTTPSession)
     private lazy var getUserProfileUseCase: PGetUserProfileUseCase = GetUserProfileUseCase(profileApiClient: profileApiClient)
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     private lazy var settingsRepository: PSettingsRepository = SettingsRepository(tokenProvider: tokenProvider)
+    private lazy var tokenManager = TokenManager(settingsRepository: settingsRepository)
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider, session: httpSession)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
@@ -96,7 +108,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeLogoutUseCase() -> PLogoutUseCase {
-        LogoutUseCase(settingsRepository: settingsRepository)
+        LogoutUseCase(settingsRepository: settingsRepository, tokenManager: tokenManager)
     }
 
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase {
@@ -191,6 +203,10 @@ final class DefaultUseCaseFactory: UseCaseFactory {
         GetCachedArticleUseCase(offlineCacheRepository: offlineCacheRepository)
     }
 
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase {
+        GetCachedBookmarkDetailUseCase(offlineCacheRepository: offlineCacheRepository)
+    }
+
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase {
         CreateAnnotationUseCase(repository: annotationsRepository)
     }
@@ -218,7 +234,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var oauthRepository: POAuthRepository = OAuthRepository(api: api)
     private lazy var oauthManager = OAuthManager(repository: oauthRepository)
 
-    @MainActor func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
+    func makeLoginWithOAuthUseCase() -> PLoginWithOAuthUseCase {
         let coordinator = OAuthFlowCoordinator(manager: oauthManager)
         return LoginWithOAuthUseCase(oauthCoordinator: coordinator)
     }
@@ -241,5 +257,13 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase {
         ExportArticlePDFUseCase(renderingService: WebKitPDFRenderingService())
+    }
+
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase {
+        CreateShareLinkUseCase(repository: bookmarksRepository)
+    }
+
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase {
+        ShareByEmailUseCase(repository: bookmarksRepository)
     }
 }

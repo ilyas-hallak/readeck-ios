@@ -4,7 +4,11 @@ import Testing
 
 // MARK: - Configurable Mock Use Cases
 
-class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
+// The mocks below are `@unchecked Sendable`: a test sets them up before the call and reads
+// them after awaiting it, so the accesses never overlap. They stay off the main actor on
+// purpose, like the real use cases, so a test still sees the hop off the main actor.
+
+class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase, @unchecked Sendable {
     var result: Result<BookmarksPage, Error> = .success(
         BookmarksPage(bookmarks: [.mock], currentPage: 1, totalCount: 1, totalPages: 1, links: nil)
     )
@@ -13,6 +17,9 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
     // swiftlint:disable:next discouraged_optional_collection
     var lastType: [BookmarkType]?
     var lastTag: String?
+    // Suspends the next call until releaseHeldCall(), to model a request that is still in flight.
+    var holdNextCall = false
+    private(set) var heldCall: CheckedContinuation<Void, Never>?
 
     // swiftlint:disable:next discouraged_optional_collection
     func execute(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage {
@@ -20,11 +27,20 @@ class ConfigurableGetBookmarksUseCase: PGetBookmarksUseCase {
         lastState = state
         lastType = type
         lastTag = tag
+        if holdNextCall {
+            holdNextCall = false
+            await withCheckedContinuation { heldCall = $0 }
+        }
         return try result.get()
+    }
+
+    func releaseHeldCall() {
+        heldCall?.resume()
+        heldCall = nil
     }
 }
 
-class ConfigurableUpdateBookmarkUseCase: PUpdateBookmarkUseCase {
+class ConfigurableUpdateBookmarkUseCase: PUpdateBookmarkUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var toggleArchiveCalled = false
     var toggleFavoriteCalled = false
@@ -52,7 +68,7 @@ class ConfigurableUpdateBookmarkUseCase: PUpdateBookmarkUseCase {
     func removeLabels(bookmarkId: String, labels: [String]) async throws { try result.get() }
 }
 
-class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase {
+class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var deleteCalled = false
     var lastDeletedId: String?
@@ -64,17 +80,23 @@ class ConfigurableDeleteBookmarkUseCase: PDeleteBookmarkUseCase {
     }
 }
 
-class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase {
+class ConfigurableGetBookmarkUseCase: PGetBookmarkUseCase, @unchecked Sendable {
     var result: Result<BookmarkDetail, Error> = .success(
         BookmarkDetail(id: "123", title: "Test", url: "https://example.com", description: "Test", siteName: "Test", authors: ["Test"], created: "2021-01-01", updated: "2021-01-01", wordCount: 100, readingTime: 2, hasArticle: true, loaded: true, isMarked: false, isArchived: false, labels: [], thumbnailUrl: "", imageUrl: "", lang: "en", readProgress: 0)
     )
+    var delay: Duration?
+    var executeCallCount = 0
 
     func execute(id: String) async throws -> BookmarkDetail {
+        executeCallCount += 1
+        if let delay {
+            try await Task.sleep(for: delay)
+        }
         return try result.get()
     }
 }
 
-class ConfigurableGetBookmarkArticleUseCase: PGetBookmarkArticleUseCase {
+class ConfigurableGetBookmarkArticleUseCase: PGetBookmarkArticleUseCase, @unchecked Sendable {
     var result: Result<String, Error> = .success("<p>Test article content</p>")
 
     func execute(id: String) async throws -> String {
@@ -82,7 +104,7 @@ class ConfigurableGetBookmarkArticleUseCase: PGetBookmarkArticleUseCase {
     }
 }
 
-class ConfigurableLoginUseCase: PLoginUseCase {
+class ConfigurableLoginUseCase: PLoginUseCase, @unchecked Sendable {
     var result: Result<User, Error> = .success(User(id: "123", token: "abc"))
     var executeCalled = false
 
@@ -92,15 +114,19 @@ class ConfigurableLoginUseCase: PLoginUseCase {
     }
 }
 
-class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase {
+class ConfigurableCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase, @unchecked Sendable {
     var isReachable: Bool = true
     var serverInfo: ServerInfo = ServerInfo(version: "1.0.0", isReachable: true, features: ["oauth"])
+    private(set) var executeCount = 0
 
-    func execute() async -> Bool { isReachable }
+    func execute() async -> Bool {
+        executeCount += 1
+        return isReachable
+    }
     func getServerInfo() async throws -> ServerInfo { serverInfo }
 }
 
-class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase {
+class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase, @unchecked Sendable {
     var result: Result<String, Error> = .success("new-bookmark-id")
 
     func execute(createRequest: CreateBookmarkRequest) async throws -> String { try result.get() }
@@ -110,14 +136,20 @@ class ConfigurableCreateBookmarkUseCase: PCreateBookmarkUseCase {
     func createFromClipboard() async throws -> String? { try result.get() }
 }
 
-class ConfigurableGetCachedArticleUseCase: PGetCachedArticleUseCase {
+class ConfigurableGetCachedArticleUseCase: PGetCachedArticleUseCase, @unchecked Sendable {
     /// `nil` by default so tests exercise the server path instead of the bundled sample article.
     var result: String?
 
     func execute(id: String) -> String? { result }
 }
 
-class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
+class ConfigurableGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase, @unchecked Sendable {
+    var result: BookmarkDetail?
+
+    func execute(id: String) -> BookmarkDetail? { result }
+}
+
+class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase, @unchecked Sendable {
     var result: Result<[Bookmark], Error> = .success([.mock])
     var executeCalled = false
 
@@ -127,19 +159,25 @@ class ConfigurableGetCachedBookmarksUseCase: PGetCachedBookmarksUseCase {
     }
 }
 
-class ConfigurableGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase {
+class ConfigurableGetBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase, @unchecked Sendable {
     var result: Result<[Annotation], Error> = .success([])
 
     func execute(bookmarkId: String) async throws -> [Annotation] { try result.get() }
 }
 
-class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
+class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase, @unchecked Sendable {
     var result: Result<Annotation, Error> = .success(
         Annotation(id: "annotation-1", text: "highlighted", created: "", startOffset: 0, endOffset: 1, startSelector: "", endSelector: "")
     )
+    /// Results returned before falling back to `result`, for tests that create several
+    /// annotations and need each one to get a different ID.
+    var resultQueue: [Result<Annotation, Error>] = []
 
     func execute(bookmarkId: String, color: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws -> Annotation {
-        try result.get()
+        if !resultQueue.isEmpty {
+            return try resultQueue.removeFirst().get()
+        }
+        return try result.get()
     }
 
     func execute(bookmarkId: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async throws {
@@ -147,7 +185,17 @@ class ConfigurableCreateAnnotationUseCase: PCreateAnnotationUseCase {
     }
 }
 
-class ConfigurableLogoutUseCase: PLogoutUseCase {
+class ConfigurableDeleteAnnotationUseCase: PDeleteAnnotationUseCase, @unchecked Sendable {
+    var result: Result<Void, Error> = .success(())
+    private(set) var deletedAnnotationIds: [String] = []
+
+    func execute(bookmarkId: String, annotationId: String) async throws {
+        deletedAnnotationIds.append(annotationId)
+        try result.get()
+    }
+}
+
+class ConfigurableLogoutUseCase: PLogoutUseCase, @unchecked Sendable {
     var result: Result<Void, Error> = .success(())
     var executeCount = 0
     var executeCalled: Bool { executeCount > 0 }
@@ -158,7 +206,7 @@ class ConfigurableLogoutUseCase: PLogoutUseCase {
     }
 }
 
-class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
+class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase, @unchecked Sendable {
     var refreshCount = 0
 
     func refresh() async { refreshCount += 1 }
@@ -167,7 +215,7 @@ class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase {
     func setEnabled(_ enabled: Bool) async -> Bool { true }
 }
 
-class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
+class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase, @unchecked Sendable {
     var result: Result<URL, Error> = .success(URL(fileURLWithPath: "/tmp/article.pdf"))
     var executeCount = 0
     var lastArticleHTML: String?
@@ -179,7 +227,68 @@ class ConfigurableExportArticlePDFUseCase: PExportArticlePDFUseCase {
     }
 }
 
-class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase {
+class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase, @unchecked Sendable {
+    var result: Result<ServerInfo, Error> = .success(
+        ServerInfo(version: "0.23.2", isReachable: true, features: ["oauth"])
+    )
+
+    func execute(endpoint: String?) async throws -> ServerInfo {
+        try result.get()
+    }
+}
+
+class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase, @unchecked Sendable {
+    var result: Result<URL, Error> = .success(URL(string: "https://readeck.example.com/@b/abc")!)
+    var lastBookmarkId: String?
+    /// When true, `execute` suspends until `resume()` is called, so tests can observe
+    /// state while the call is still in flight.
+    var holdsExecution = false
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var isReleased = false
+
+    func execute(bookmarkId: String) async throws -> URL {
+        lastBookmarkId = bookmarkId
+        if holdsExecution {
+            await withCheckedContinuation { continuation in
+                lock.withLock {
+                    if isReleased {
+                        continuation.resume()
+                    } else {
+                        self.continuation = continuation
+                    }
+                }
+            }
+        }
+        return try result.get()
+    }
+
+    /// Safe to call before `execute` reached its suspension point.
+    func resume() {
+        let pending = lock.withLock {
+            isReleased = true
+            defer { continuation = nil }
+            return continuation
+        }
+        pending?.resume()
+    }
+}
+
+class ConfigurableShareByEmailUseCase: PShareByEmailUseCase, @unchecked Sendable {
+    var result: Result<Void, Error> = .success(())
+    var executeCount = 0
+    var lastEmail: String?
+    var lastFormat: EmailShareFormat?
+
+    func execute(bookmarkId: String, email: String, format: EmailShareFormat) async throws {
+        executeCount += 1
+        lastEmail = email
+        lastFormat = format
+        try result.get()
+    }
+}
+
+class ConfigurableSummarizeArticleUseCase: PSummarizeArticleUseCase, @unchecked Sendable {
     static var isAvailable: Bool { true }
     var result: Result<String, Error> = .success("Test summary")
     var executeCalled = false
@@ -200,4 +309,28 @@ enum TestError: Error, Equatable {
     case networkError
     case unauthorized
     case serverUnreachable
+}
+
+class ConfigurableSaveSettingsUseCase: PSaveSettingsUseCase, @unchecked Sendable {
+    var savedReadingProgressStyles: [ReadingProgressStyle] = []
+    var savedHideProgressBar: [Bool] = []
+
+    func execute(selectedFontFamily: FontFamily, selectedFontSize: FontSize, fontSizeNumeric: Double) async throws {}
+    func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws {}
+    func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws {
+        savedHideProgressBar.append(hideProgressBar)
+    }
+    func execute(customCSS: String) async throws {}
+    func execute(readingProgressStyle: ReadingProgressStyle) async throws {
+        savedReadingProgressStyles.append(readingProgressStyle)
+    }
+    func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws {}
+    func execute(enableTTS: Bool) async throws {}
+    func execute(theme: Theme) async throws {}
+    func execute(urlOpener: UrlOpener) async throws {}
+    func execute(bookmarkSortField: BookmarkSortField, bookmarkSortDirection: BookmarkSortDirection) async throws {}
+    func execute(disableReaderBackSwipe: Bool) async throws {}
+    func execute(archiveAdvanceMode: ArchiveAdvanceMode) async throws {}
+    func execute(showUnreadBadge: Bool) async throws {}
+    func execute(swipeActionConfig: SwipeActionConfig) async throws {}
 }

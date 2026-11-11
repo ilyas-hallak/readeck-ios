@@ -7,16 +7,19 @@
 
 import Foundation
 import Network
-import Combine
+@preconcurrency import Combine
+import Synchronization
 
 // MARK: - Protocol
 
-protocol PNetworkMonitorRepository {
+protocol PNetworkMonitorRepository: Sendable {
     var isConnected: AnyPublisher<Bool, Never> { get }
+    var isForcedOffline: AnyPublisher<Bool, Never> { get }
     func startMonitoring()
     func stopMonitoring()
     func reportConnectionFailure()
     func reportConnectionSuccess()
+    func setForcedOffline(_ isForced: Bool)
 }
 
 // MARK: - Implementation
@@ -27,25 +30,26 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.readeck.networkmonitor")
     private let _isConnectedSubject: CurrentValueSubject<Bool, Never>
-    private var hasPathConnection = true
-    private var hasRealConnection = true
+    // Written from the NWPathMonitor queue and from the main actor.
+    private let connection = Mutex((hasPath: true, hasReal: true))
+    private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
 
     var isConnected: AnyPublisher<Bool, Never> {
         _isConnectedSubject.eraseToAnyPublisher()
     }
 
+    /// True while the user chose to work offline, e.g. on a network that connects but never answers.
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        forcedOfflineSubject.removeDuplicates().eraseToAnyPublisher()
+    }
+
     // MARK: - Initialization
 
     init() {
-        // Check current network status synchronously before starting monitor
-        let currentPath = monitor.currentPath
-        let hasInterfaces = !currentPath.availableInterfaces.isEmpty
-        let initialStatus = currentPath.status == .satisfied && hasInterfaces
-
-        _isConnectedSubject = CurrentValueSubject<Bool, Never>(initialStatus)
-        hasPathConnection = initialStatus
-
-        Logger.network.info("🌐 Initial network status: \(initialStatus ? "Connected" : "Offline")")
+        // Start as connected. Before the monitor runs, currentPath always reports no
+        // connection, which made every launch flip to offline and back. The first path
+        // update after startMonitoring() corrects this if the device really is offline.
+        _isConnectedSubject = CurrentValueSubject<Bool, Never>(true)
     }
 
     deinit {
@@ -62,7 +66,7 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
             let hasInterfaces = !path.availableInterfaces.isEmpty
             let isConnected = path.status == .satisfied && hasInterfaces
 
-            self.hasPathConnection = isConnected
+            self.connection.withLock { $0.hasPath = isConnected }
             self.updateConnectionState()
 
             // Log network changes with details
@@ -87,20 +91,28 @@ final class NetworkMonitorRepository: PNetworkMonitorRepository {
     }
 
     func reportConnectionFailure() {
-        hasRealConnection = false
+        connection.withLock { $0.hasReal = false }
         updateConnectionState()
         Logger.network.warning("⚠️ Real connection failure reported (VPN/unreachable server)")
     }
 
     func reportConnectionSuccess() {
-        hasRealConnection = true
+        connection.withLock { $0.hasReal = true }
         updateConnectionState()
         Logger.network.info("✅ Real connection success reported")
     }
 
+    func setForcedOffline(_ isForced: Bool) {
+        forcedOfflineSubject.send(isForced)
+        updateConnectionState()
+        Logger.network.info("🔌 Forced offline mode: \(isForced)")
+    }
+
     private func updateConnectionState() {
-        // Only connected if BOTH path is available AND real connection works
-        let isConnected = hasPathConnection && hasRealConnection
+        let state = connection.withLock { $0 }
+
+        // Only connected if BOTH path is available AND real connection works, and the user did not go offline
+        let isConnected = state.hasPath && state.hasReal && !forcedOfflineSubject.value
 
         DispatchQueue.main.async {
             self._isConnectedSubject.send(isConnected)

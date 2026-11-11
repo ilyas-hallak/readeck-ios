@@ -1,7 +1,7 @@
 import Foundation
 
 final class BookmarksRepository: PBookmarksRepository {
-    private var api: PAPI
+    private let api: PAPI
 
     init(api: PAPI) {
         self.api = api
@@ -21,7 +21,7 @@ final class BookmarksRepository: PBookmarksRepository {
             url: bookmarkDetailDto.url,
             description: bookmarkDetailDto.description,
             siteName: bookmarkDetailDto.siteName,
-            authors: bookmarkDetailDto.authors,
+            authors: bookmarkDetailDto.authors ?? [],
             created: bookmarkDetailDto.created,
             updated: bookmarkDetailDto.updated,
             wordCount: bookmarkDetailDto.wordCount,
@@ -81,5 +81,18 @@ final class BookmarksRepository: PBookmarksRepository {
 
     func searchBookmarks(search: String) async throws -> BookmarksPage {
         try await api.searchBookmarks(search: search).toDomain()
+    }
+
+    func createShareLink(id: String) async throws -> URL {
+        let dto = try await api.getBookmarkShareLink(id: id)
+        guard let url = URL(string: dto.url) else {
+            throw APIError.invalidResponse
+        }
+        return url
+    }
+
+    func shareByEmail(id: String, email: String, format: EmailShareFormat) async throws {
+        let dto = ShareBookmarkEmailRequestDto(email: email, format: format.rawValue)
+        try await api.shareBookmarkByEmail(id: id, request: dto)
     }
 }

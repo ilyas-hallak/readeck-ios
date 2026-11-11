@@ -9,7 +9,7 @@ import Foundation
 import Kingfisher
 
 /// Wrapper around Kingfisher for prefetching and caching images for offline use
-final class KingfisherImagePrefetcher {
+final class KingfisherImagePrefetcher: Sendable {
     // MARK: - Public Methods
 
     /// Prefetches images and stores them in Kingfisher cache for offline access

@@ -4,7 +4,8 @@ import Kingfisher
 
 final class SettingsRepository: PSettingsRepository {
     private let coreDataManager: CoreDataManager
-    private let userDefault: UserDefaults
+    // UserDefaults is thread-safe but not marked Sendable.
+    nonisolated(unsafe) private let userDefault: UserDefaults
     private let keychainHelper = KeychainHelper.shared
     private let tokenProvider: TokenProvider
 
@@ -134,6 +135,9 @@ final class SettingsRepository: PSettingsRepository {
                     if let hideProgressBar = settings.hideProgressBar {
                         existingSettings.hideProgressBar = hideProgressBar
                     }
+                    if let readingProgressStyle = settings.readingProgressStyle {
+                        existingSettings.readingProgressStyle = readingProgressStyle.rawValue
+                    }
                     if let hideWordCount = settings.hideWordCount {
                         existingSettings.hideWordCount = hideWordCount
                     }
@@ -249,7 +253,8 @@ final class SettingsRepository: PSettingsRepository {
                         customCSS: settingEntity?.customCSS,
                         readerColorTheme: ReaderColorTheme(rawValue: settingEntity?.readerColorTheme ?? ReaderColorTheme.system.rawValue),
                         customBackgroundColor: settingEntity?.customBackgroundColor,
-                        customTextColor: settingEntity?.customTextColor
+                        customTextColor: settingEntity?.customTextColor,
+                        readingProgressStyle: ReadingProgressStyle(rawValue: settingEntity?.readingProgressStyle ?? ReadingProgressStyle.line.rawValue)
                     )
                     continuation.resume(returning: settings)
                 } catch {

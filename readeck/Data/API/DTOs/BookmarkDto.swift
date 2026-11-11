@@ -6,7 +6,9 @@ struct BookmarkDto: Codable {
     let url: String
     let href: String
     let description: String
-    let authors: [String]
+    // The server sends null while a bookmark is still being fetched.
+    // swiftlint:disable:next discouraged_optional_collection
+    let authors: [String]?
     let created: String
     let published: String?
     let updated: String

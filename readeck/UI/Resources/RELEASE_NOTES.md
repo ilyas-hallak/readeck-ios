@@ -4,6 +4,43 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 **AppStore:** The App is now in the App Store! [Get it here](https://apps.apple.com/de/app/readeck/id6748764703) for all TestFlight users. If you wish a more stable Version, please download it from there. Or you can continue using TestFlight for the latest features.
 
+## Version 3.3.0
+
+### Modern Reader
+
+- **New progress styles:** a line, a ring around the Dynamic Island, a percent pill, or off
+- The navigation bar **slides away while you read**
+- The end of an article now counts as 100 percent
+- **Reader settings** open from the article menu and are more compact, fonts get their own page with a preview
+
+### Sharing
+
+- The share button in the reader opens a **share sheet** with all options in one place
+- **Share Readeck Link** creates a public link to the article on your server (Readeck 0.19 or newer)
+- **Send by Email** has your server mail the article as HTML or EPUB, when the server has email set up
+- **Share Original Link** and **Export as PDF** moved into the same sheet
+
+### Highlights
+
+- **Tap a highlight to remove it**, in both readers
+- **Shake to undo** a highlight you just made
+- Removing a highlight in the Annotations list now also removes it from the open article, even offline
+- A changed highlight shows up right away instead of after a while
+
+### Offline
+
+- **Saved articles open instantly**, the app no longer waits for the server first
+- On a connection that hangs, the app **offers to go offline** after 10 seconds instead of spinning
+- While offline it checks the server in the background and offers to go back online
+- An article that is already shown stays on screen when a refresh fails
+
+### Bookmark List
+
+- The list keeps your filter after launch, and the archive no longer hides videos and photos
+- **Every saved bookmark shows up**, including pages the server could not fetch
+- Bookmarks without a title show the site name instead of an empty card
+- Changing the filter while more items are loading no longer mixes in results from the old filter
+
 ## Version 3.2.0
 
 ### Export as PDF

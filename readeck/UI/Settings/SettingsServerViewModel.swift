@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import SwiftUI
 
+@MainActor
 @Observable
 final class SettingsServerViewModel {
     // MARK: - Use Cases
@@ -56,7 +57,6 @@ final class SettingsServerViewModel {
         !hasFinishedSetup
     }
 
-    @MainActor
     func loadServerSettings() async {
         do {
             if let settings = try await loadSettingsUseCase.execute() {
@@ -76,7 +76,6 @@ final class SettingsServerViewModel {
         }
     }
 
-    @MainActor
     func saveServerSettings() async {
         guard canLogin else {
             errorMessage = "Please fill in all fields."
@@ -108,7 +107,6 @@ final class SettingsServerViewModel {
         }
     }
 
-    @MainActor
     func logout() async {
         do {
             try await logoutUseCase.execute()
@@ -131,7 +129,6 @@ final class SettingsServerViewModel {
 
     // MARK: - OAuth Methods
 
-    @MainActor
     func checkServerOAuthSupport() async {
         guard !endpoint.isEmpty else {
             serverSupportsOAuth = false
@@ -151,7 +148,6 @@ final class SettingsServerViewModel {
         }
     }
 
-    @MainActor
     func loginWithOAuth() async {
         guard !endpoint.isEmpty else {
             errorMessage = "Please enter a server endpoint."
@@ -186,7 +182,6 @@ final class SettingsServerViewModel {
         }
     }
 
-    @MainActor
     func addHeader(key: String, value: String) {
         let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedKey.isEmpty && HTTPHeadersHelper.isHeaderNameAllowed(trimmedKey) else {
@@ -197,14 +192,12 @@ final class SettingsServerViewModel {
         customHeaders = newHeaders
     }
 
-    @MainActor
     func removeHeader(key: String) {
         var newHeaders = customHeaders
         newHeaders.removeValue(forKey: key)
         customHeaders = newHeaders
     }
 
-    @MainActor
     func updateHeader(key: String, value: String) {
         let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedKey.isEmpty && HTTPHeadersHelper.isHeaderNameAllowed(trimmedKey) else {
@@ -217,21 +210,18 @@ final class SettingsServerViewModel {
 
     // MARK: - Header Editing Methods
 
-    @MainActor
     func startEditingHeader(key: String) {
         editingHeaderKey = key
         editingHeaderKeyValue = key
         editingHeaderValue = customHeaders[key] ?? ""
     }
 
-    @MainActor
     func cancelEditingHeader() {
         editingHeaderKey = nil
         editingHeaderKeyValue = ""
         editingHeaderValue = ""
     }
 
-    @MainActor
     func finishEditingHeader(originalKey: String, newKey: String, newValue: String) {
         if newKey != originalKey {
             removeHeader(key: originalKey)

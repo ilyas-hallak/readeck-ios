@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSearchBookmarksUseCase {
+protocol PSearchBookmarksUseCase: Sendable {
     func execute(search: String) async throws -> BookmarksPage
 }
 

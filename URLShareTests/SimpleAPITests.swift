@@ -10,6 +10,7 @@ import Foundation
 
 /// `SimpleAPI` is static by design, so the environment is set per test and
 /// restored to `live()` afterwards.
+@MainActor
 @Suite("SimpleAPI Tests", .serialized)
 struct SimpleAPITests {
     private func withEnvironment(

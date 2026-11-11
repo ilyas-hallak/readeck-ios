@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PRemoveLabelsFromBookmarkUseCase {
+protocol PRemoveLabelsFromBookmarkUseCase: Sendable {
     func execute(bookmarkId: String, labels: [String]) async throws
     func execute(bookmarkId: String, label: String) async throws
 }

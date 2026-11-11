@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PLoadCardLayoutUseCase {
+protocol PLoadCardLayoutUseCase: Sendable {
     func execute() async -> CardLayoutStyle
 }
 

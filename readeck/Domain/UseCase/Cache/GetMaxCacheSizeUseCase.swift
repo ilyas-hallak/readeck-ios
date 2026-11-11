@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PGetMaxCacheSizeUseCase {
+protocol PGetMaxCacheSizeUseCase: Sendable {
     func execute() async throws -> UInt
 }
 

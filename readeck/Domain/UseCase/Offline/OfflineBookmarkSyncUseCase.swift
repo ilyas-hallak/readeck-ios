@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-protocol POfflineBookmarkSyncUseCase {
+protocol POfflineBookmarkSyncUseCase: Sendable {
     var isSyncing: AnyPublisher<Bool, Never> { get }
     var syncStatus: AnyPublisher<String?, Never> { get }
 

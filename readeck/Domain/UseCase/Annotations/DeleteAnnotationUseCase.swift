@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PDeleteAnnotationUseCase {
+protocol PDeleteAnnotationUseCase: Sendable {
     func execute(bookmarkId: String, annotationId: String) async throws
 }
 

@@ -7,36 +7,45 @@
 
 import Foundation
 import CoreData
+import Synchronization
 
 /// HTTPSession mock for the share extension tests.
 /// A separate copy, because `readeckTests` is a different module.
-final class MockHTTPSession: HTTPSession, @unchecked Sendable {
+final class MockHTTPSession: HTTPSession {
     enum Stub {
         case http(status: Int, data: Data, headers: [String: String] = [:])
         case failure(Error)
     }
 
-    var stubs: [Stub]
-    private(set) var requests: [URLRequest] = []
-    private var index = 0
+    private struct State {
+        let stubs: [Stub]
+        var requests: [URLRequest] = []
+        var index = 0
+    }
+
+    private let state: Mutex<State>
 
     init(_ stubs: [Stub]) {
-        self.stubs = stubs
+        self.state = Mutex(State(stubs: stubs))
     }
 
     convenience init(_ stub: Stub) {
         self.init([stub])
     }
 
+    var requests: [URLRequest] { state.withLock { $0.requests } }
     var lastRequest: URLRequest? { requests.last }
 
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        requests.append(request)
-
-        guard let stub = index < stubs.count ? stubs[index] : stubs.last else {
+        let stub = state.withLock { state -> Stub? in
+            state.requests.append(request)
+            let stub = state.index < state.stubs.count ? state.stubs[state.index] : state.stubs.last
+            state.index += 1
+            return stub
+        }
+        guard let stub else {
             throw URLError(.unsupportedURL)
         }
-        index += 1
 
         switch stub {
         case let .http(status, data, headers):
@@ -68,7 +77,8 @@ enum TestCoreData {
     ///
     /// The model is loaded from the test bundle rather than `Bundle.main`:
     /// URLShareTests runs without a host app, where `Bundle.main` is the xctest tool.
-    static let model: NSManagedObjectModel = {
+    // Built once and only read afterwards.
+    nonisolated(unsafe) static let model: NSManagedObjectModel = {
         let bundle = Bundle(for: MockHTTPSession.self)
         guard let model = NSManagedObjectModel.mergedModel(from: [bundle]) else {
             preconditionFailure("CoreData model not found in the URLShareTests bundle")
@@ -87,7 +97,7 @@ enum TestCoreData {
         }
 
         container.viewContext.automaticallyMergesChangesFromParent = true
-        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        container.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
 
         return CoreDataManager(container: container)
     }

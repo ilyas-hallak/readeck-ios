@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 @Observable
 final class BookmarkDetailViewModel {
     private let getBookmarkUseCase: PGetBookmarkUseCase
@@ -9,13 +10,18 @@ final class BookmarkDetailViewModel {
     private let updateBookmarkUseCase: PUpdateBookmarkUseCase
     private var addTextToSpeechQueueUseCase: PAddTextToSpeechQueueUseCase?
     private let getCachedArticleUseCase: PGetCachedArticleUseCase
+    private let getCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase
     private let createAnnotationUseCase: PCreateAnnotationUseCase
     private let getBookmarkAnnotationsUseCase: PGetBookmarkAnnotationsUseCase
+    private let deleteAnnotationUseCase: PDeleteAnnotationUseCase
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let exportArticlePDFUseCase: PExportArticlePDFUseCase
+    private let networkMonitorUseCase: PNetworkMonitorUseCase
+    private let getServerInfoUseCase: PGetServerInfoUseCase
+    private let createShareLinkUseCase: PCreateShareLinkUseCase
 
-    var bookmarkDetail: BookmarkDetail = BookmarkDetail.empty
-    var articleContent: String = ""
+    var bookmarkDetail = BookmarkDetail.empty
+    var articleContent = ""
     var articleParagraphs: [String] = []
     var annotations: [Annotation] = []
     var bookmark: Bookmark?
@@ -28,16 +34,58 @@ final class BookmarkDetailViewModel {
     var hasAnnotations = false
     var isExportingPDF = false
     var exportedPDFURL: URL?
+    var serverCapabilities: ServerCapabilities = .unknown
+    var isCreatingShareLink = false
+    var shareLinkURL: URL?
+    var shareErrorMessage: String?
 
-    var shareContent: String {
-        var text = "\(bookmarkDetail.title)\n\(bookmarkDetail.url)"
-        for annotation in annotations {
-            text += "\n\n  - \(annotation.text)"
-        }
-        return text
-    }
+    // One undo target per new highlight, so removing a highlight also removes its undo action.
+    @ObservationIgnored private var highlightUndoTargets: [String: HighlightUndoTarget] = [:]
+    @ObservationIgnored private weak var highlightUndoManager: UndoManager?
 
     var canExportPDF: Bool { !articleContent.isEmpty }
+    var canShareReadeckLink: Bool { serverCapabilities.supportsShareLink }
+    var canSendByEmail: Bool { serverCapabilities.supportsEmailSharing }
+
+    /// Whether a share-producing task (Readeck link or PDF) is still running. While
+    /// true every option stays disabled, so a slow task can't pop an unsolicited
+    /// share sheet after the user already shared a different way.
+    private var isPreparingShare: Bool { isCreatingShareLink || isExportingPDF }
+
+    /// The share options this server supports, in display order.
+    var shareOptions: [ArticleShareOption] {
+        ArticleShareOption.allCases.filter { option in
+            switch option {
+            case .email: canSendByEmail
+            case .readeckLink: canShareReadeckLink
+            case .originalLink, .pdf: true
+            }
+        }
+    }
+
+    func isShareOptionEnabled(_ option: ArticleShareOption, isOnline: Bool) -> Bool {
+        guard !isPreparingShare else { return false }
+        return switch option {
+        case .email: isOnline
+        case .readeckLink: isOnline
+        case .originalLink: true
+        case .pdf: canExportPDF
+        }
+    }
+
+    /// Resolves the URL to share for "Share Original Link". Returns nil and sets
+    /// `shareErrorMessage` when the bookmark's URL string doesn't parse.
+    func prepareOriginalLinkShare() -> URL? {
+        guard let url = URL(string: bookmarkDetail.url) else {
+            shareErrorMessage = NSLocalizedString("Could not open the original link", comment: "Original link share error")
+            return nil
+        }
+        return url
+    }
+
+    func clearShareError() {
+        shareErrorMessage = nil
+    }
 
     var showProgressBar: Bool { settings?.hideProgressBar != true }
     var showHeroImage: Bool { settings?.hideHeroImage != true }
@@ -57,10 +105,15 @@ final class BookmarkDetailViewModel {
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
         self.updateBookmarkUseCase = factory.makeUpdateBookmarkUseCase()
         self.getCachedArticleUseCase = factory.makeGetCachedArticleUseCase()
+        self.getCachedBookmarkDetailUseCase = factory.makeGetCachedBookmarkDetailUseCase()
         self.createAnnotationUseCase = factory.makeCreateAnnotationUseCase()
         self.getBookmarkAnnotationsUseCase = factory.makeGetBookmarkAnnotationsUseCase()
+        self.deleteAnnotationUseCase = factory.makeDeleteAnnotationUseCase()
         self.deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         self.exportArticlePDFUseCase = factory.makeExportArticlePDFUseCase()
+        self.networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
+        self.getServerInfoUseCase = factory.makeGetServerInfoUseCase()
+        self.createShareLinkUseCase = factory.makeCreateShareLinkUseCase()
         self.factory = factory
         self.summaryViewModel = ArticleSummaryViewModel()
 
@@ -75,33 +128,86 @@ final class BookmarkDetailViewModel {
             .store(in: &cancellables)
     }
 
-    @MainActor
+    /// Opens the reader. A cached article is shown at once and the server is only
+    /// asked afterwards, so a dead or flaky network never blocks reading.
+    func loadReader(id: String) async {
+        guard let cachedHTML = getCachedArticleUseCase.execute(id: id) else {
+            await loadBookmarkDetail(id: id)
+            // Polling only makes sense when the server answered at all.
+            if bookmarkDetail.id == id {
+                await waitForArticleReady(id: id)
+            }
+            await loadArticleContent(id: id)
+            return
+        }
+
+        try? await loadSettings()
+        if let cachedDetail = getCachedBookmarkDetailUseCase.execute(id: id) {
+            applyBookmarkDetail(cachedDetail)
+        }
+        showCachedArticle(cachedHTML, id: id)
+
+        do {
+            try await fetchBookmarkDetail(id: id)
+        } catch {
+            Logger.viewModel.info("⚠️ Showing cached bookmark \(id), server refresh failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Switches the app to offline mode, which also cuts off the requests still waiting.
+    func goOffline() {
+        networkMonitorUseCase.setForcedOffline(true)
+    }
+
     func loadBookmarkDetail(id: String) async {
         isLoading = true
         errorMessage = nil
 
         do {
-            settings = try await loadSettingsUseCase.execute()
-            bookmarkDetail = try await getBookmarkUseCase.execute(id: id)
-
-            // Always take the higher value between server and local progress
-            let serverProgress = bookmarkDetail.readProgress ?? 0
-            readProgress = max(readProgress, serverProgress)
-
-            if settings?.enableTTS == true {
-                self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
-            }
-
-            do {
-                annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: id)
-            } catch {
-                // Silent fail — annotations are supplementary
-            }
+            try await loadSettings()
+            try await fetchBookmarkDetail(id: id)
         } catch {
-            errorMessage = "Error loading bookmark"
+            // Keep showing the detail we already have, e.g. when offline.
+            if bookmarkDetail.id != id {
+                if let cachedDetail = getCachedBookmarkDetailUseCase.execute(id: id) {
+                    applyBookmarkDetail(cachedDetail)
+                } else {
+                    errorMessage = "Error loading bookmark"
+                }
+            }
         }
 
         isLoading = false
+        await loadServerCapabilities()
+    }
+
+    /// Without server info the Readeck share options simply stay hidden.
+    private func loadServerCapabilities() async {
+        guard let info = try? await getServerInfoUseCase.execute(endpoint: nil) else { return }
+        serverCapabilities = info.capabilities
+    }
+
+    private func loadSettings() async throws {
+        settings = try await loadSettingsUseCase.execute()
+        if settings?.enableTTS == true {
+            self.addTextToSpeechQueueUseCase = factory?.makeAddTextToSpeechQueueUseCase()
+        }
+    }
+
+    private func fetchBookmarkDetail(id: String) async throws {
+        applyBookmarkDetail(try await getBookmarkUseCase.execute(id: id))
+
+        do {
+            annotations = try await getBookmarkAnnotationsUseCase.execute(bookmarkId: id)
+        } catch {
+            // Silent fail, annotations are supplementary
+        }
+    }
+
+    private func applyBookmarkDetail(_ detail: BookmarkDetail) {
+        bookmarkDetail = detail
+        // Always take the higher value between server and local progress
+        readProgress = max(readProgress, detail.readProgress ?? 0)
     }
 
     /// After a bookmark is created the server fetches and extracts the page
@@ -109,7 +215,6 @@ final class BookmarkDetailViewModel {
     /// until the server reports it as `loaded` (or an article shows up) so a freshly
     /// shared article isn't rendered as a blank page. Returns at once when already
     /// ready, so normal navigation is unaffected.
-    @MainActor
     func waitForArticleReady(id: String, maxAttempts: Int = 8, delay: TimeInterval = 1.5) async {
         guard !bookmarkDetail.loaded, !bookmarkDetail.hasArticle else { return }
 
@@ -125,74 +230,77 @@ final class BookmarkDetailViewModel {
                     Logger.viewModel.info("📦 Bookmark \(id) ready after \(attempt) poll(s)")
                     return
                 }
+            } catch let error as URLError where error.code == .notConnectedToInternet {
+                return
             } catch {
-                // Transient (e.g. offline) — keep polling until the attempts run out.
+                // Transient, keep polling until the attempts run out.
             }
         }
         Logger.viewModel.info("⏳ Bookmark \(id) still not loaded after \(maxAttempts) polls; showing as-is")
     }
 
-    @MainActor
     func loadArticleContent(id: String, forceRefresh: Bool = false) async {
         isLoadingArticle = true
 
         // First, try to load from cache (unless force refresh)
         if !forceRefresh, let cachedHTML = getCachedArticleUseCase.execute(id: id) {
-            articleContent = cachedHTML
-            processArticleContent()
-            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, *), canSummarize {
-                summaryViewModel.prewarm()
-            }
-            #endif
-            isLoadingArticle = false
-            Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
-
-            // Debug: Check for Base64 images
-            let base64Count = countOccurrences(in: cachedHTML, of: "data:image/")
-            let httpCount = countOccurrences(in: cachedHTML, of: "src=\"http")
-            Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
-
-            // Refresh from server in background to pick up annotations
-            // that may have been added since the article was cached
-            Task {
-                do {
-                    let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
-                    if serverHTML.contains("<rd-annotation") && !cachedHTML.contains("<rd-annotation") {
-                        Logger.viewModel.info("🔄 Server has annotations not in cache, updating")
-                        articleContent = serverHTML
-                        processArticleContent()
-                    }
-                } catch {
-                    Logger.viewModel.info("⚠️ Background refresh failed: \(error.localizedDescription)")
-                }
-            }
-
+            showCachedArticle(cachedHTML, id: id)
             return
         }
 
         // If not cached or force refresh, fetch from server
         Logger.viewModel.info("📡 Fetching article \(id) from server \(forceRefresh ? "(force refresh)" : "(not in cache)")")
         do {
-            articleContent = try await getBookmarkArticleUseCase.execute(id: id)
-            processArticleContent()
-            self.summaryViewModel = ArticleSummaryViewModel(articleContent: self.articleContent)
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, *), canSummarize {
-                summaryViewModel.prewarm()
-            }
-            #endif
+            presentArticle(try await getBookmarkArticleUseCase.execute(id: id))
             Logger.viewModel.info("✅ Fetched article from server (\(articleContent.utf8.count) bytes)")
         } catch {
-            errorMessage = "Error loading article"
+            // Keep the article that is already shown, e.g. when a refresh fails offline.
+            if articleContent.isEmpty {
+                errorMessage = "Error loading article"
+            }
             Logger.viewModel.error("❌ Failed to load article: \(error.localizedDescription)")
         }
 
         isLoadingArticle = false
     }
 
-    @MainActor
+    private func showCachedArticle(_ cachedHTML: String, id: String) {
+        presentArticle(cachedHTML)
+        isLoadingArticle = false
+        Logger.viewModel.info("📱 Loaded article \(id) from cache (\(cachedHTML.utf8.count) bytes)")
+
+        // Debug: Check for Base64 images
+        let base64Count = countOccurrences(in: cachedHTML, of: "data:image/")
+        let httpCount = countOccurrences(in: cachedHTML, of: "src=\"http")
+        Logger.viewModel.info("   Images in cached HTML: \(base64Count) Base64, \(httpCount) HTTP")
+
+        // Refresh from server in background to pick up annotations
+        // that were added or removed since the article was cached
+        Task {
+            do {
+                let serverHTML = try await getBookmarkArticleUseCase.execute(id: id)
+                if AnnotationMarkup.annotationIds(in: serverHTML) != AnnotationMarkup.annotationIds(in: cachedHTML) {
+                    Logger.viewModel.info("🔄 Server annotations differ from cache, updating")
+                    articleContent = serverHTML
+                    processArticleContent()
+                }
+            } catch {
+                Logger.viewModel.info("⚠️ Background refresh failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func presentArticle(_ html: String) {
+        articleContent = html
+        processArticleContent()
+        self.summaryViewModel = ArticleSummaryViewModel(articleContent: html)
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *), canSummarize {
+            summaryViewModel.prewarm()
+        }
+        #endif
+    }
+
     private func refreshArticleInBackground(id: String) async {
         Logger.viewModel.info("🔄 Background refresh for article \(id) to check for annotations")
         do {
@@ -228,13 +336,12 @@ final class BookmarkDetailViewModel {
     /// Renders the article as a PDF and publishes the file URL for the share sheet.
     /// Returns whether the export succeeded, so the caller can present either the
     /// share sheet or the error.
-    @MainActor
     @discardableResult
     func exportArticleAsPDF() async -> Bool {
         guard !isExportingPDF else { return false }
 
         isExportingPDF = true
-        errorMessage = nil
+        shareErrorMessage = nil
         exportedPDFURL = nil
         defer { isExportingPDF = false }
 
@@ -247,12 +354,32 @@ final class BookmarkDetailViewModel {
             return true
         } catch {
             Logger.viewModel.error("❌ PDF export failed: \(error.localizedDescription)")
-            errorMessage = NSLocalizedString("Could not export this article as a PDF", comment: "PDF export error")
+            shareErrorMessage = NSLocalizedString("Could not export this article as a PDF", comment: "PDF export error")
             return false
         }
     }
 
-    @MainActor
+    /// Asks the server for a public link to this bookmark and publishes it for
+    /// the share sheet. Returns whether that worked, like the PDF export.
+    @discardableResult
+    func createShareLink() async -> Bool {
+        guard !isCreatingShareLink else { return false }
+
+        isCreatingShareLink = true
+        shareErrorMessage = nil
+        shareLinkURL = nil
+        defer { isCreatingShareLink = false }
+
+        do {
+            shareLinkURL = try await createShareLinkUseCase.execute(bookmarkId: bookmarkDetail.id)
+            return true
+        } catch {
+            Logger.viewModel.error("❌ Share link failed: \(error.localizedDescription)")
+            shareErrorMessage = NSLocalizedString("Could not create a share link", comment: "Share link error")
+            return false
+        }
+    }
+
     func archiveBookmark(id: String, isArchive: Bool = true) async {
         isLoading = true
         errorMessage = nil
@@ -272,7 +399,6 @@ final class BookmarkDetailViewModel {
         isLoading = false
     }
 
-    @MainActor
     func deleteBookmark(id: String) async -> Bool {
         isLoading = true
         errorMessage = nil
@@ -292,7 +418,6 @@ final class BookmarkDetailViewModel {
         }
     }
 
-    @MainActor
     func refreshBookmarkDetail(id: String) async {
         await loadBookmarkDetail(id: id)
         await loadArticleContent(id: id, forceRefresh: true)
@@ -314,7 +439,6 @@ final class BookmarkDetailViewModel {
         SpeechQueue.shared.insertAfterCurrent(bookmarkDetail.toSpeechQueueItem(text))
     }
 
-    @MainActor
     func toggleFavorite(id: String) async {
         isLoading = true
         errorMessage = nil
@@ -343,8 +467,17 @@ final class BookmarkDetailViewModel {
         readProgressSubject.send((id, progress, anchor))
     }
 
-    @MainActor
-    func createAnnotation(bookmarkId: String, color: String, text: String, startOffset: Int, endOffset: Int, startSelector: String, endSelector: String) async {
+    /// Registers the new highlight with `undoManager`, so shake to undo removes it again.
+    func createAnnotation(
+        bookmarkId: String,
+        color: String,
+        text: String,
+        startOffset: Int,
+        endOffset: Int,
+        startSelector: String,
+        endSelector: String,
+        undoManager: UndoManager? = nil
+    ) async {
         do {
             let annotation = try await createAnnotationUseCase.execute(
                 bookmarkId: bookmarkId,
@@ -357,6 +490,7 @@ final class BookmarkDetailViewModel {
             Logger.viewModel.info("✅ Annotation created: \(annotation.id)")
             annotations.append(annotation)
             hasAnnotations = true
+            registerUndo(of: annotation.id, bookmarkId: bookmarkId, with: undoManager)
             await refreshArticleInBackground(id: bookmarkId)
         } catch {
             Logger.viewModel.error("❌ Failed to create annotation: \(error.localizedDescription)")
@@ -369,4 +503,67 @@ final class BookmarkDetailViewModel {
         }
     }
 
+    /// Removes a highlight and re-renders the article without it.
+    @discardableResult
+    func deleteAnnotation(bookmarkId: String, annotationId: String) async -> Bool {
+        do {
+            try await deleteAnnotationUseCase.execute(bookmarkId: bookmarkId, annotationId: annotationId)
+            removeAnnotationLocally(id: annotationId)
+            await refreshArticleInBackground(id: bookmarkId)
+            return true
+        } catch {
+            Logger.viewModel.error("❌ Failed to delete annotation: \(error.localizedDescription)")
+            errorMessage = NSLocalizedString("Error removing highlight", comment: "Annotation delete error")
+            return false
+        }
+    }
+
+    /// Brings the reader in sync with a highlight deleted elsewhere (the Annotations sheet),
+    /// so shake-to-undo and the article content don't keep pointing at a removed highlight.
+    func annotationWasDeleted(id: String, bookmarkId: String) {
+        removeAnnotationLocally(id: id)
+        Task {
+            await refreshArticleInBackground(id: bookmarkId)
+        }
+    }
+
+    /// Drops the annotation from state and strips its markup from the article right away,
+    /// instead of waiting for `refreshArticleInBackground`, which silently fails offline.
+    private func removeAnnotationLocally(id: String) {
+        annotations.removeAll { $0.id == id }
+        discardUndo(of: id)
+        articleContent = AnnotationMarkup.removingAnnotation(id: id, from: articleContent)
+        processArticleContent()
+    }
+
+    func annotationText(for annotationId: String) -> String? {
+        annotations.first { $0.id == annotationId }?.text
+    }
+
+    /// Drops the undo actions of all new highlights, e.g. when the article is closed.
+    func discardHighlightUndo() {
+        for annotationId in highlightUndoTargets.keys {
+            discardUndo(of: annotationId)
+        }
+    }
+
+    private func registerUndo(of annotationId: String, bookmarkId: String, with undoManager: UndoManager?) {
+        guard let undoManager else { return }
+        let target = HighlightUndoTarget()
+        highlightUndoTargets[annotationId] = target
+        highlightUndoManager = undoManager
+        undoManager.registerUndo(withTarget: target) { [weak self] _ in
+            Task { @MainActor in
+                await self?.deleteAnnotation(bookmarkId: bookmarkId, annotationId: annotationId)
+            }
+        }
+        undoManager.setActionName(NSLocalizedString("Highlight", comment: "Undo action name for a new highlight"))
+    }
+
+    private func discardUndo(of annotationId: String) {
+        guard let target = highlightUndoTargets.removeValue(forKey: annotationId) else { return }
+        highlightUndoManager?.removeAllActions(withTarget: target)
+    }
 }
+
+private final class HighlightUndoTarget {}

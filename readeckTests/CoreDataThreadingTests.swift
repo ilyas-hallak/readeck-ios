@@ -33,7 +33,7 @@ struct CoreDataThreadingTests {
         #expect(loadError == nil)
 
         container.viewContext.automaticallyMergesChangesFromParent = true
-        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        container.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
         return container
     }
 
@@ -41,7 +41,7 @@ struct CoreDataThreadingTests {
     private func makeBackgroundContext(_ container: NSPersistentContainer) -> NSManagedObjectContext {
         let context = container.newBackgroundContext()
         context.automaticallyMergesChangesFromParent = true
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        context.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
         return context
     }
 
@@ -56,12 +56,10 @@ struct CoreDataThreadingTests {
     }
 
     private func totalCount(in context: NSManagedObjectContext) -> Int {
-        var count = 0
         context.performAndWait {
             let request: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-            count = (try? context.count(for: request)) ?? 0
+            return (try? context.count(for: request)) ?? 0
         }
-        return count
     }
 
     // MARK: - Tests
@@ -103,11 +101,10 @@ struct CoreDataThreadingTests {
         let expected = writerCount * recordsPerWriter
         #expect(totalCount(in: viewContext) == expected)
 
-        var uniqueIDs = Set<String>()
-        viewContext.performAndWait {
+        let uniqueIDs = viewContext.performAndWait {
             let request: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
             let entities = (try? viewContext.fetch(request)) ?? []
-            uniqueIDs = Set(entities.compactMap { $0.id })
+            return Set(entities.compactMap { $0.id })
         }
         #expect(uniqueIDs.count == expected)
     }
@@ -126,12 +123,11 @@ struct CoreDataThreadingTests {
 
         // A fresh background context reading the same store must see the record.
         let readContext = makeBackgroundContext(container)
-        var found: String?
-        readContext.performAndWait {
+        let found = readContext.performAndWait {
             let request: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
             request.predicate = NSPredicate(format: "id == %@", "persist-1")
             request.fetchLimit = 1
-            found = (try? readContext.fetch(request))?.first?.htmlContent
+            return (try? readContext.fetch(request))?.first?.htmlContent
         }
 
         #expect(found == "<html><body>persist-1</body></html>")
@@ -143,14 +139,13 @@ struct CoreDataThreadingTests {
         let viewContext = container.viewContext
 
         // performAndWait is reentrant; nesting on the same queue must not deadlock.
-        var count = -1
-        viewContext.performAndWait {
+        let count = viewContext.performAndWait {
             makeBookmarkEntity(in: viewContext, id: "nested-1")
             viewContext.performAndWait {
                 try? viewContext.save()
             }
             let request: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
-            count = (try? viewContext.count(for: request)) ?? -1
+            return (try? viewContext.count(for: request)) ?? -1
         }
 
         #expect(count == 1)

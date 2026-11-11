@@ -3,7 +3,7 @@ import SafariServices
 
 // PreferenceKey for content height tracking
 struct ContentHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: Double = 0
+    static let defaultValue: Double = 0
     static func reduce(value: inout Double, nextValue: () -> Double) {
         value = nextValue()
     }
@@ -16,6 +16,7 @@ struct ContentHeightPreferenceKey: PreferenceKey {
 /// meant every one of those frames invalidated the whole reader — header, title,
 /// web view — which on a 120 Hz display is 120 full rebuilds per second. As an
 /// `@Observable` reference only the views that actually read `value` are invalidated.
+@MainActor
 @Observable
 final class ReadingProgressModel {
     var value: Double = 0
@@ -55,20 +56,21 @@ struct ArticleReaderLegacyView: View {
     @State private var webViewHeight: Double = 300
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
+    @State private var highlightToRemove: String?
     @State private var progressModel = ReadingProgressModel()
     @State private var scrollBox = ScrollTrackerBox()
     @State private var showJumpToProgressButton = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var showingImageViewer = false
     @State private var showingDeleteConfirmation = false
-    @State private var showingPDFShareSheet = false
-    @State private var showingExportError = false
+    @State private var showingShareSheet = false
 
     // MARK: - Envs
 
     @Environment(AppSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.undoManager) private var undoManager
 
     private let headerHeight: Double = 360
 
@@ -131,9 +133,13 @@ struct ArticleReaderLegacyView: View {
                                                 startOffset: startOffset,
                                                 endOffset: endOffset,
                                                 startSelector: startSelector,
-                                                endSelector: endSelector
+                                                endSelector: endSelector,
+                                                undoManager: undoManager
                                             )
                                         }
+                                    },
+                                    onAnnotationTapped: { annotationId in
+                                        highlightToRemove = annotationId
                                     },
                                     onScrollToPosition: { position in
                                         // Calculate scroll position: add header height and webview offset
@@ -151,10 +157,11 @@ struct ArticleReaderLegacyView: View {
                                 .padding(.horizontal, 4)
                                 .id(settings.webViewIdentifier)
                             } else if viewModel.isLoadingArticle {
-                                ProgressView("Loading article...")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding()
+                                ArticleLoadingView { viewModel.goOffline() }
                             } else {
+                                if !appSettings.isNetworkConnected {
+                                    OfflineArticleNote()
+                                }
                                 Button(action: {
                                     URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
                                 }) {
@@ -272,21 +279,16 @@ struct ArticleReaderLegacyView: View {
                         Label("Annotations".localized, systemImage: "pencil.line")
                     }
 
-                    ShareLink(item: viewModel.shareContent) {
+                    Button {
+                        showingShareSheet = true
+                    } label: {
                         Label("Share".localized, systemImage: "square.and.arrow.up")
                     }
 
                     Button {
-                        exportAsPDF()
-                    } label: {
-                        Label("Export as PDF".localized, systemImage: "doc.richtext")
-                    }
-                    .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
-
-                    Button {
                         showingFontSettings = true
                     } label: {
-                        Label("Font Settings".localized, systemImage: "textformat")
+                        Label("Reader Settings".localized, systemImage: "textformat.size")
                     }
 
                     Divider()
@@ -306,23 +308,25 @@ struct ArticleReaderLegacyView: View {
             BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
         }
         .sheet(isPresented: $showingAnnotationsSheet) {
-            AnnotationsListView(bookmarkId: bookmarkId) { annotationId in
-                viewModel.selectedAnnotationId = annotationId
-            }
+            AnnotationsListView(
+                bookmarkId: bookmarkId,
+                onAnnotationTap: { annotationId in
+                    viewModel.selectedAnnotationId = annotationId
+                },
+                onAnnotationDeleted: { annotationId in
+                    viewModel.annotationWasDeleted(id: annotationId, bookmarkId: bookmarkId)
+                }
+            )
         }
+        .highlightRemovalDialog(annotationId: $highlightToRemove, bookmarkId: bookmarkId, viewModel: viewModel)
         .sheet(isPresented: $showingImageViewer) {
             ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
         }
-        .sheet(isPresented: $showingPDFShareSheet) {
-            if let url = viewModel.exportedPDFURL {
-                ActivityView(activityItems: [url])
-            }
-        }
-        .alert("Error".localized, isPresented: $showingExportError) {
-            Button("OK".localized, role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }
+        .articleSharing(
+            isPresented: $showingShareSheet,
+            viewModel: viewModel,
+            isOnline: appSettings.isNetworkConnected
+        )
         .alert(
             "Delete this bookmark?".localized,
             isPresented: $showingDeleteConfirmation
@@ -374,21 +378,7 @@ struct ArticleReaderLegacyView: View {
             // Trigger WebView reload when annotation is selected
         }
         .task {
-            await viewModel.loadBookmarkDetail(id: bookmarkId)
-            await viewModel.waitForArticleReady(id: bookmarkId)
-            await viewModel.loadArticleContent(id: bookmarkId)
-        }
-    }
-
-    // MARK: - Actions
-
-    private func exportAsPDF() {
-        Task {
-            if await viewModel.exportArticleAsPDF() {
-                showingPDFShareSheet = true
-            } else {
-                showingExportError = true
-            }
+            await viewModel.loadReader(id: bookmarkId)
         }
     }
 
@@ -438,7 +428,7 @@ struct ArticleReaderLegacyView: View {
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                Text(viewModel.bookmarkDetail.title)
+                Text(viewModel.bookmarkDetail.displayTitle)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(nativeTextColor)
@@ -481,23 +471,26 @@ struct ArticleReaderLegacyView: View {
             .animation(.easeInOut, value: webViewHeight)
             .id(settings.webViewIdentifier)
         } else if viewModel.isLoadingArticle {
-            ProgressView("Loading article...")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+            ArticleLoadingView { viewModel.goOffline() }
         } else {
-            Button(action: {
-                URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-            }) {
-                HStack {
-                    Image(systemName: "safari")
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                }
-                .font(.title3.bold())
-                .frame(maxWidth: .infinity)
+            if !appSettings.isNetworkConnected {
+                OfflineArticleNote()
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
-            .padding(.top, 0)
+            if !viewModel.bookmarkDetail.url.isEmpty {
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    HStack {
+                        Image(systemName: "safari")
+                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+                    }
+                    .font(.title3.bold())
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
+                .padding(.top, 0)
+            }
         }
     }
 

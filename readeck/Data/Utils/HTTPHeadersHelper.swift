@@ -11,7 +11,7 @@
 
 import Foundation
 
-final class HTTPHeadersHelper {
+final class HTTPHeadersHelper: Sendable {
     static let shared = HTTPHeadersHelper()
     private init() {}
 

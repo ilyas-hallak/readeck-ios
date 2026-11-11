@@ -12,6 +12,7 @@
 import SwiftUI
 import Observation
 
+@MainActor
 @Observable
 final class DeepLinkRouter {
     /// The bookmark to present, if any. Setting this opens the reader; the sheet

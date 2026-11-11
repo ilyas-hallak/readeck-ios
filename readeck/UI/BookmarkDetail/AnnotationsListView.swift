@@ -6,6 +6,7 @@ struct AnnotationsListView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var appSettings
     var onAnnotationTap: ((String) -> Void)?
+    var onAnnotationDeleted: ((String) -> Void)?
 
     enum ViewState {
         case loading
@@ -93,6 +94,7 @@ struct AnnotationsListView: View {
                 }
             }
             .task {
+                viewModel.onAnnotationDeleted = onAnnotationDeleted
                 await viewModel.loadAnnotations(for: bookmarkId)
             }
             .alert("Error", isPresented: $viewModel.showErrorAlert) {

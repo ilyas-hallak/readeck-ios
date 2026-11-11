@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSyncTagsUseCase {
+protocol PSyncTagsUseCase: Sendable {
     func execute() async throws
 }
 

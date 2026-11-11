@@ -22,7 +22,7 @@ final class OAuthSession: NSObject {
     func start(
         url: URL,
         callbackURLScheme: String,
-        completion: @escaping (Result<URL, Error>) -> Void
+        completion: @escaping @Sendable (Result<URL, Error>) -> Void
     ) {
         logger.info("Starting OAuth authentication session with URL: \(url.absoluteString)")
 
@@ -30,7 +30,9 @@ final class OAuthSession: NSObject {
         authSession = ASWebAuthenticationSession(
             url: url,
             callbackURLScheme: callbackURLScheme
-        ) { [weak self] callbackURL, error in
+        ) { @Sendable [weak self] callbackURL, error in
+            // Not on the main actor: the docs leave open which thread calls this, and
+            // everything below is safe from any thread.
             guard let self else { return }
 
             if let error {

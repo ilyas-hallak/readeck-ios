@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import readeck
 
+@MainActor
 @Suite("DeepLinkRouter")
 struct DeepLinkRouterTests {
 

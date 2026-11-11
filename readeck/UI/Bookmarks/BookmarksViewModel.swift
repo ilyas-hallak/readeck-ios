@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 @Observable
 final class BookmarksViewModel {
     private let getBooksmarksUseCase: PGetBookmarksUseCase
@@ -9,6 +10,7 @@ final class BookmarksViewModel {
     private let deleteBookmarkUseCase: PDeleteBookmarkUseCase
     private let loadCardLayoutUseCase: PLoadCardLayoutUseCase
     private let getCachedBookmarksUseCase: PGetCachedBookmarksUseCase
+    private let networkMonitorUseCase: PNetworkMonitorUseCase
     private let logger = Logger.viewModel
 
     var bookmarks: BookmarksPage?
@@ -34,6 +36,7 @@ final class BookmarksViewModel {
 
     // Prevent concurrent updates
     private var isUpdating = false
+    private var needsReload = false
 
     private var cancellables = Set<AnyCancellable>()
     private var limit = 50
@@ -53,6 +56,7 @@ final class BookmarksViewModel {
         deleteBookmarkUseCase = factory.makeDeleteBookmarkUseCase()
         loadCardLayoutUseCase = factory.makeLoadCardLayoutUseCase()
         getCachedBookmarksUseCase = factory.makeGetCachedBookmarksUseCase()
+        networkMonitorUseCase = factory.makeNetworkMonitorUseCase()
 
         setupNotificationObserver()
 
@@ -131,21 +135,33 @@ final class BookmarksViewModel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
 
-    @MainActor
     func loadBookmarks(state: BookmarkState = .unread, type: [BookmarkType] = [.article], tag: String? = nil) async {
+        currentState = state
+        currentType = type
+        currentTag = tag
+
+        // A load that is already running may use outdated filters, so run again once it is done.
         guard !isUpdating else {
-            Logger.viewModel.debug("⏭️ Skipping loadBookmarks - already updating")
+            Logger.viewModel.debug("⏭️ Load already running - queueing a reload")
+            needsReload = true
             return
         }
         isUpdating = true
         defer { isUpdating = false }
 
+        repeat {
+            needsReload = false
+            await loadFirstPage()
+        } while needsReload
+    }
+
+    private func loadFirstPage() async {
+        let state = currentState
+        let type = currentType
+        let tag = currentTag
+
         isLoading = true
         errorMessage = nil
-        currentState = state
-        currentType = type
-        currentTag = tag
-
         offset = 0
         hasMoreData = true
 
@@ -187,7 +203,6 @@ final class BookmarksViewModel {
         isInitialLoading = false
     }
 
-    @MainActor
     private func loadCachedBookmarks() async {
         Logger.viewModel.info("📱 loadCachedBookmarks called for state: \(currentState.displayName)")
 
@@ -222,21 +237,30 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func loadCachedBookmarksFromUI() async {
         isNetworkError = true
         errorMessage = "No internet connection"
         await loadCachedBookmarks()
     }
 
-    @MainActor
     func loadMoreBookmarks() async {
         guard !isLoading && hasMoreData && !isUpdating else { return } // prevent multiple loads
         isUpdating = true
-        defer { isUpdating = false }
+        await loadNextPage()
+        isUpdating = false
 
+        if needsReload {
+            // The filter changed while the page above was in flight, so that page (if any)
+            // was for the old filter and got discarded. Refresh from page one for the filter
+            // that is current now.
+            await refreshBookmarks()
+        }
+    }
+
+    private func loadNextPage() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
             offset += limit // inc. offset
@@ -251,22 +275,34 @@ final class BookmarksViewModel {
                 tag: currentTag,
                 sort: sortToken
             )
+
+            // The filter may have changed while this request was in flight. Don't apply a
+            // page fetched for the old filter; loadMoreBookmarks() will trigger a full
+            // first-page refresh for the new filter right after this returns.
+            guard !needsReload else { return }
+
             bookmarks?.bookmarks.append(contentsOf: newBookmarks.bookmarks)
             hasMoreData = newBookmarks.currentPage != newBookmarks.totalPages
             logger.info("Successfully loaded \(newBookmarks.bookmarks.count) more bookmarks")
         } catch {
             handleError(error, context: "load more bookmarks (offset: \(offset), limit: \(limit))")
         }
-
-        isLoading = false
     }
 
-    @MainActor
     func refreshBookmarks() async {
         await loadBookmarks(state: currentState, type: currentType, tag: currentTag)
     }
 
-    @MainActor
+    /// Switches the app to offline mode, which also cuts off the requests still waiting.
+    func goOffline() {
+        networkMonitorUseCase.setForcedOffline(true)
+    }
+
+    /// Leaves offline mode. The list reloads once the app reports itself online again.
+    func goOnline() {
+        networkMonitorUseCase.setForcedOffline(false)
+    }
+
     func retryLoading() async {
         errorMessage = nil
         isNetworkError = false
@@ -285,7 +321,6 @@ final class BookmarksViewModel {
         return "\(direction)\(field)"
     }
 
-    @MainActor
     func toggleArchive(bookmark: Bookmark) async {
         do {
             try await updateBookmarkUseCase.toggleArchive(
@@ -299,7 +334,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func toggleFavorite(bookmark: Bookmark) async {
         do {
             try await updateBookmarkUseCase.toggleFavorite(
@@ -313,7 +347,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func handleSwipeAction(_ action: SwipeAction, bookmark: Bookmark) {
         switch action {
         case .archive:
@@ -331,7 +364,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func resetReadProgress(bookmark: Bookmark) async {
         do {
             try await updateBookmarkUseCase.updateReadProgress(
@@ -346,7 +378,6 @@ final class BookmarksViewModel {
         }
     }
 
-    @MainActor
     func deleteBookmarkWithUndo(bookmark: Bookmark) {
         // Don't remove from UI immediately - just mark as pending
         let pendingDelete = PendingDelete(bookmark: bookmark)
@@ -374,7 +405,6 @@ final class BookmarksViewModel {
         pendingDeletes[bookmark.id]?.deleteTask = deleteTask
     }
 
-    @MainActor
     func undoDelete(bookmarkId: String) {
         guard let pendingDelete = pendingDeletes[bookmarkId] else { return }
 
@@ -387,26 +417,29 @@ final class BookmarksViewModel {
     }
 
     private func startDeleteCountdown(for bookmarkId: String) {
+        // Scheduled on the main run loop, so the timer fires on the main thread.
         let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
-            DispatchQueue.main.async {
-                guard let self,
-                      let pendingDelete = self.pendingDeletes[bookmarkId] else {
-                    timer.invalidate()
-                    return
-                }
-
-                pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
-
-                // Trigger UI update by modifying the dictionary
-                self.pendingDeletes[bookmarkId] = pendingDelete
-
-                if pendingDelete.progress >= 1.0 {
-                    timer.invalidate()
-                }
+            let isRunning = MainActor.assumeIsolated {
+                self?.advanceDeleteCountdown(for: bookmarkId) ?? false
+            }
+            if !isRunning {
+                timer.invalidate()
             }
         }
 
         pendingDeletes[bookmarkId]?.timer = timer
+    }
+
+    /// Returns whether the countdown should keep running.
+    private func advanceDeleteCountdown(for bookmarkId: String) -> Bool {
+        guard let pendingDelete = pendingDeletes[bookmarkId] else { return false }
+
+        pendingDelete.progress += 1.0 / 30.0 // 3 seconds / 0.1 interval = 30 steps
+
+        // Trigger UI update by modifying the dictionary
+        pendingDeletes[bookmarkId] = pendingDelete
+
+        return pendingDelete.progress < 1.0
     }
 
     private func executeDelete(bookmark: Bookmark) async {

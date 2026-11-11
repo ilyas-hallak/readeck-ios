@@ -204,7 +204,7 @@ struct BookmarkCardView: View {
                 .overlay(alignment: .topTrailing) { favoriteBadge(diameter: 22, padding: 4) }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(bookmark.title)
+                Text(bookmark.displayTitle)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
@@ -286,7 +286,7 @@ struct BookmarkCardView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(bookmark.title)
+                Text(bookmark.displayTitle)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
@@ -373,7 +373,7 @@ struct BookmarkCardView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(bookmark.title)
+                Text(bookmark.displayTitle)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)

@@ -102,6 +102,17 @@ struct BookmarksRepositoryTests {
         #expect(detail.hasArticle == true)
     }
 
+    @Test("fetchBookmark maps a nil authors field to an empty array")
+    func fetchBookmarkMapsNilAuthorsToEmptyArray() async throws {
+        let api = StubAPI()
+        api.getBookmarkHandler = { id in DtoFixture.bookmark(id: id, authors: nil) }
+        let repository = BookmarksRepository(api: api)
+
+        let detail = try await repository.fetchBookmark(id: "bm43")
+
+        #expect(detail.authors.isEmpty)
+    }
+
     // MARK: - createBookmark
 
     @Test("createBookmark returns the message on an accepted status", arguments: [0, 202])

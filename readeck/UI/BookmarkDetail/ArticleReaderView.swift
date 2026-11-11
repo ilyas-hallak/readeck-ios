@@ -13,6 +13,7 @@ struct ArticleReaderView: View {
     @State private var webViewHeight: Double = 300
     @State private var showingLabelsSheet = false
     @State private var showingAnnotationsSheet = false
+    @State private var highlightToRemove: String?
     @State private var progressModel = ReadingProgressModel()
     @State private var showFloatingActions = false
     @State private var showJumpToProgressButton = false
@@ -21,9 +22,10 @@ struct ArticleReaderView: View {
     @State private var showingErrorAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var showingArchiveConfirmation = false
-    @State private var showingPDFShareSheet = false
-    @State private var showingExportError = false
+    @State private var showingShareSheet = false
     @State private var isToolbarVisible = true
+    @State private var topBarInset: Double = 0
+    @State private var scrollPause = ScrollPauseModel()
     @State private var scrollTrackerBox = ScrollTrackerBox()
 
     // MARK: - Envs
@@ -31,6 +33,7 @@ struct ArticleReaderView: View {
     @Environment(AppSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.undoManager) private var undoManager
 
     private let headerHeight: Double = 360
     private let readerSwitchTip = ReaderSwitchTip()
@@ -61,35 +64,36 @@ struct ArticleReaderView: View {
             .toolbar {
                 toolbarContent
             }
-            .toolbar(isToolbarVisible ? .visible : .hidden, for: .navigationBar)
             // Local to this screen on purpose: OLEDTheme.swift owns the global
             // UINavigationBar appearance proxy, and a second writer would leave the
             // bookmark list tinted after leaving the reader.
             .toolbarBackground(readerTheme.backgroundColor, for: .navigationBar)
-            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
             .toolbarColorScheme(readerTheme.colorScheme, for: .navigationBar)
-            .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
+            .navigationBarFaded(!isToolbarVisible)
             .sheet(isPresented: $showingLabelsSheet) {
                 BookmarkLabelsView(bookmarkId: bookmarkId, initialLabels: viewModel.bookmarkDetail.labels)
             }
             .sheet(isPresented: $showingAnnotationsSheet) {
-                AnnotationsListView(bookmarkId: bookmarkId) { annotationId in
-                    viewModel.selectedAnnotationId = annotationId
-                }
+                AnnotationsListView(
+                    bookmarkId: bookmarkId,
+                    onAnnotationTap: { annotationId in
+                        viewModel.selectedAnnotationId = annotationId
+                    },
+                    onAnnotationDeleted: { annotationId in
+                        viewModel.annotationWasDeleted(id: annotationId, bookmarkId: bookmarkId)
+                    }
+                )
             }
+            .highlightRemovalDialog(annotationId: $highlightToRemove, bookmarkId: bookmarkId, viewModel: viewModel)
             .sheet(isPresented: $showingImageViewer) {
                 ImageViewerView(imageUrl: viewModel.bookmarkDetail.imageUrl)
             }
-            .sheet(isPresented: $showingPDFShareSheet) {
-                if let url = viewModel.exportedPDFURL {
-                    ActivityView(activityItems: [url])
-                }
-            }
-            .alert("Error".localized, isPresented: $showingExportError) {
-                Button("OK".localized, role: .cancel) {}
-            } message: {
-                Text(viewModel.errorMessage ?? "")
-            }
+            .articleSharing(
+                isPresented: $showingShareSheet,
+                viewModel: viewModel,
+                isOnline: appSettings.isNetworkConnected
+            )
             .alert(
                 "Delete this bookmark?".localized,
                 isPresented: $showingDeleteConfirmation
@@ -151,31 +155,24 @@ struct ArticleReaderView: View {
                 // Trigger WebView reload when annotation is selected
             }
             .task {
-                await viewModel.loadBookmarkDetail(id: bookmarkId)
-                await viewModel.waitForArticleReady(id: bookmarkId)
-                await viewModel.loadArticleContent(id: bookmarkId)
+                await viewModel.loadReader(id: bookmarkId)
             }
     }
 
     private var content: some View {
-        VStack(spacing: 0) {
-            // Progress bar at top
-            if !(viewModel.settings?.hideProgressBar ?? false) {
-                ReadingProgressBar(model: progressModel)
+        scrollViewContent
+            .overlay(alignment: .top) {
+                topChrome
             }
-
-            // Main scroll content
-            scrollViewContent
-                .overlay(alignment: .bottomTrailing) {
-                    if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
-                        if showFloatingActions {
-                            floatingActionButtons
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
+            .overlay(alignment: .bottomTrailing) {
+                if viewModel.isLoadingArticle == false && viewModel.isLoading == false {
+                    if showFloatingActions {
+                        floatingActionButtons
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
-        }
+            }
+            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showFloatingActions)
         // Everything inside the reader adopts the theme's brightness so system-tinted
         // elements (progress bar, dividers, glass buttons, loading labels) stay legible
         // on a light theme while the app runs in dark mode, and vice versa. Applied
@@ -219,6 +216,8 @@ struct ArticleReaderView: View {
 
     private var scrollViewContent: some View {
         GeometryReader { geometry in
+            // The scroll view runs under the home indicator, so it is taller than the safe area
+            let visibleHeight = geometry.size.height + geometry.safeAreaInsets.bottom
             ScrollView {
                 VStack(spacing: 0) {
                     ZStack(alignment: .top) {
@@ -234,7 +233,7 @@ struct ArticleReaderView: View {
                             Divider().padding(.horizontal)
 
                             if showJumpToProgressButton {
-                                jumpButton(containerHeight: geometry.size.height)
+                                jumpButton(containerHeight: visibleHeight)
                             }
 
                             // Article content (WebView)
@@ -255,16 +254,22 @@ struct ArticleReaderView: View {
                             }
                         )
                 }
+                // Inside the content, so the helper finds the scroll view among its superviews
+                .disableScrollBounce()
             }
             .coordinateSpace(name: "scrollView")
+            // The scroll view runs under the bar, so the article has to start below it
+            .contentMargins(.top, topBarInset, for: .scrollContent)
             .clipped()
-            .ignoresSafeArea(edges: [.top, .bottom])
+            .ignoresSafeArea(edges: .bottom)
             .scrollPosition($scrollPosition)
-            .disableScrollBounce()
+            .onScrollPhaseChange { _, phase in
+                scrollPause.scrollPhaseChanged(isIdle: phase == .idle)
+            }
             .onPreferenceChange(ContentHeightPreferenceKey.self) { endPosition in
                 // Runs on every rendered frame while scrolling, so nothing in here may
                 // write `@State` unconditionally — see ReadingProgressModel.
-                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: geometry.size.height)
+                let result = scrollTrackerBox.tracker.update(endPosition: endPosition, containerHeight: visibleHeight)
 
                 if let progress = result.readingProgress {
                     progressModel.value = progress
@@ -284,6 +289,42 @@ struct ArticleReaderView: View {
                 }
             }
         }
+        .ignoresSafeArea(edges: .top)
+    }
+
+    // The scroll view ignores the top safe area, so the system scroll edge effect never
+    // kicks in. A frosted strip behind the bar takes its place and shrinks to the status
+    // bar while the bar is faded, with the progress line following its edge.
+    private var topChrome: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                FrostedTopStrip(height: isToolbarVisible ? topBarInset : statusBarHeight)
+
+                if !(viewModel.settings?.hideProgressBar ?? false) {
+                    ReadingProgressOverlay(
+                        style: viewModel.settings?.readingProgressStyle ?? .line,
+                        model: progressModel,
+                        isToolbarVisible: isToolbarVisible,
+                        pause: scrollPause,
+                        topBarInset: topBarInset,
+                        statusBarHeight: statusBarHeight
+                    )
+                }
+            }
+            .ignoresSafeArea(edges: .top)
+            .onChange(of: proxy.safeAreaInsets.top, initial: true) { _, inset in
+                // The slid away bar shrinks the safe area. Following it would shift the
+                // article, which flips the bar back and loops until the watchdog kills the app.
+                guard isToolbarVisible else { return }
+                topBarInset = inset
+            }
+        }
+        .allowsHitTesting(false)
+        .animation(.easeInOut(duration: 0.35), value: isToolbarVisible)
+    }
+
+    private var statusBarHeight: Double {
+        Double(UIWindow.current?.safeAreaInsets.top ?? 0)
     }
 
     @ToolbarContentBuilder
@@ -304,22 +345,17 @@ struct ArticleReaderView: View {
                     }
                 }
 
-                ShareLink(item: viewModel.shareContent) {
+                Button {
+                    showingShareSheet = true
+                } label: {
                     Label("Share".localized, systemImage: "square.and.arrow.up")
                 }
-
-                Button {
-                    exportAsPDF()
-                } label: {
-                    Label("Export as PDF".localized, systemImage: "doc.richtext")
-                }
-                .disabled(!viewModel.canExportPDF || viewModel.isExportingPDF)
 
                 Button {
                     readerSwitchTip.invalidate(reason: .actionPerformed)
                     showingFontSettings = true
                 } label: {
-                    Label("Font Settings".localized, systemImage: "textformat")
+                    Label("Reader Settings".localized, systemImage: "textformat.size")
                 }
 
                 Button {
@@ -348,18 +384,6 @@ struct ArticleReaderView: View {
         }
     }
 
-    // MARK: - Actions
-
-    private func exportAsPDF() {
-        Task {
-            if await viewModel.exportArticleAsPDF() {
-                showingPDFShareSheet = true
-            } else {
-                showingExportError = true
-            }
-        }
-    }
-
     // MARK: - ViewBuilder
 
     @ViewBuilder
@@ -380,7 +404,7 @@ struct ArticleReaderView: View {
     private var titleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                Text(viewModel.bookmarkDetail.title)
+                Text(viewModel.bookmarkDetail.displayTitle)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(nativeTextColor)
@@ -542,9 +566,13 @@ struct ArticleReaderView: View {
                                 startOffset: startOffset,
                                 endOffset: endOffset,
                                 startSelector: startSelector,
-                                endSelector: endSelector
+                                endSelector: endSelector,
+                                undoManager: undoManager
                             )
                         }
+                    },
+                    onAnnotationTapped: { annotationId in
+                        highlightToRemove = annotationId
                     },
                     onScrollToPosition: { position in
                         // Calculate scroll position: add header height and webview offset
@@ -563,23 +591,26 @@ struct ArticleReaderView: View {
                 .id(settings.webViewIdentifier)
             }
         } else if viewModel.isLoadingArticle {
-            ProgressView("Loading article...")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+            ArticleLoadingView { viewModel.goOffline() }
         } else {
-            Button(action: {
-                URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
-            }) {
-                HStack {
-                    Image(systemName: "safari")
-                    Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
-                }
-                .font(.title3.bold())
-                .frame(maxWidth: .infinity)
+            if !appSettings.isNetworkConnected {
+                OfflineArticleNote()
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
-            .padding(.top, 0)
+            if !viewModel.bookmarkDetail.url.isEmpty {
+                Button(action: {
+                    URLUtil.open(url: viewModel.bookmarkDetail.url, urlOpener: appSettings.urlOpener)
+                }) {
+                    HStack {
+                        Image(systemName: "safari")
+                        Text(URLUtil.openUrlLabel(for: viewModel.bookmarkDetail.url))
+                    }
+                    .font(.title3.bold())
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
+                .padding(.top, 0)
+            }
         }
     }
 
@@ -640,7 +671,7 @@ struct HeroHeaderView: View, Equatable {
     let height: Double
     let onTap: () -> Void
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
+    nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.imageUrl == rhs.imageUrl
             && lhs.cacheKey == rhs.cacheKey
             && lhs.width == rhs.width

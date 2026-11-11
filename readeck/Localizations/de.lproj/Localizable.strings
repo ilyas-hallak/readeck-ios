@@ -64,6 +64,7 @@
 "Sorted by usage count" = "Sortiert nach Verwendungshäufigkeit";
 "Sorted alphabetically" = "Alphabetisch sortiert";
 "Cancel" = "Abbrechen";
+"Undo" = "Widerrufen";
 "Category-specific Levels" = "Kategorie-spezifische Level";
 "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." = "Änderungen werden sofort wirksam. Niedrigere Log-Level enthalten höhere (Debug enthält alle, Critical nur kritische Nachrichten).";
 "Close" = "Schließen";
@@ -81,6 +82,7 @@
 "Enter your Readeck server details to get started." = "Readeck-Server-Details eingeben, um zu beginnen.";
 "Error" = "Fehler";
 "Error: %@" = "Fehler: %@";
+"Error removing highlight" = "Markierung konnte nicht entfernt werden";
 "Export as PDF" = "Als PDF exportieren";
 "Exporting PDF..." = "PDF wird erstellt...";
 "Favorite" = "Favorit";
@@ -136,6 +138,7 @@
 "Reading %lld/%lld: " = "Lese %1$lld/%2$lld: ";
 "Reader" = "Reader";
 "Remove" = "Entfernen";
+"Remove Highlight" = "Markierung entfernen";
 "Reset" = "Zurücksetzen";
 "Reset to Defaults" = "Auf Standardwerte zurücksetzen";
 "Restore" = "Wiederherstellen";
@@ -326,4 +329,46 @@
 
 /* Reader Switch Tip */
 "New reader" = "Neuer Reader";
-"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artikel öffnen jetzt im modernen Reader. Falls etwas nicht stimmt, kannst du unter Schrift zurückschalten.";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings." = "Artikel öffnen jetzt im modernen Reader. Falls etwas nicht stimmt, kannst du in den Reader-Einstellungen zurückschalten.";
+
+/* Slow connection and offline mode */
+"Your connection seems very slow or offline." = "Deine Verbindung ist sehr langsam oder weg.";
+"Go Offline" = "Offline gehen";
+"You're back online." = "Du bist wieder online.";
+"Go Online" = "Online gehen";
+"This article isn't available offline." = "Dieser Artikel ist offline nicht verfügbar.";
+"Offline mode, showing cached articles." = "Offline-Modus, gespeicherte Artikel werden angezeigt.";
+
+/* Sharing */
+"Share" = "Teilen";
+"Share Original Link" = "Originallink teilen";
+"Share Readeck Link" = "Readeck-Link teilen";
+"Send by Email" = "Per E-Mail senden";
+"Could not create a share link" = "Der Link zum Teilen konnte nicht erstellt werden";
+"Could not open the original link" = "Der Originallink konnte nicht geöffnet werden";
+"Email address" = "E-Mail-Adresse";
+"Format" = "Format";
+"Article" = "Artikel";
+"E-Book" = "E-Book";
+"Send" = "Senden";
+"Email Sent" = "E-Mail gesendet";
+"Could not send the email" = "Die E-Mail konnte nicht gesendet werden";
+
+/* Reading progress style */
+"Progress Style" = "Fortschrittsanzeige";
+"Off" = "Aus";
+"No progress is shown while you read." = "Beim Lesen wird kein Fortschritt angezeigt.";
+"Serif" = "Serifen";
+"Sans Serif" = "Serifenlos";
+"Monospace" = "Monospace";
+"font.sample" = "Franz jagt im komplett verwahrlosten Taxi quer durch Bayern.";
+"Line" = "Linie";
+"Island Ring" = "Ring um die Dynamic Island";
+"Island Ring on Pause" = "Ring bei Pause";
+"Percent in Corner" = "Prozent in der Ecke";
+"Percent at Scroll Indicator" = "Prozent an der Scrollleiste";
+"A thin line below the navigation bar slides away with it." = "Eine dünne Linie unter der Navigationsleiste, die mit ihr verschwindet.";
+"A ring around the Dynamic Island fills up as you read." = "Ein Ring um die Dynamic Island füllt sich beim Lesen.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "Der Ring um die Dynamic Island erscheint, sobald du aufhörst zu scrollen.";
+"The percentage pops up in the top corner when you stop scrolling." = "Der Prozentwert erscheint oben in der Ecke, sobald du aufhörst zu scrollen.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "Der Prozentwert folgt der Scrollleiste und erscheint, sobald du aufhörst zu scrollen.";

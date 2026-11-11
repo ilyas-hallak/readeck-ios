@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PProfileApiClient {
+protocol PProfileApiClient: Sendable {
     func getProfile() async throws -> UserProfileDto
 }
 

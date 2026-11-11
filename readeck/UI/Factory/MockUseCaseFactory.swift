@@ -6,8 +6,10 @@
 //
 
 import Foundation
-import Combine
+@preconcurrency import Combine
+import Synchronization
 
+@MainActor
 final class MockUseCaseFactory: UseCaseFactory {
     func makeGetCachedBookmarksUseCase() -> any PGetCachedBookmarksUseCase {
         MockGetCachedBookmarksUseCase()
@@ -15,6 +17,10 @@ final class MockUseCaseFactory: UseCaseFactory {
 
     func makeGetCachedArticleUseCase() -> any PGetCachedArticleUseCase {
         MockGetCachedArticleUseCase()
+    }
+
+    func makeGetCachedBookmarkDetailUseCase() -> any PGetCachedBookmarkDetailUseCase {
+        MockGetCachedBookmarkDetailUseCase()
     }
 
     func makeCreateAnnotationUseCase() -> any PCreateAnnotationUseCase {
@@ -236,6 +242,7 @@ final class MockSaveSettingsUseCase: PSaveSettingsUseCase {
     func execute(readerLayout horizontalMargin: Double, lineHeight: Double) async throws {}
     func execute(readerVisibility hideProgressBar: Bool, hideWordCount: Bool, hideHeroImage: Bool, hideSummary: Bool) async throws {}
     func execute(customCSS: String) async throws {}
+    func execute(readingProgressStyle: ReadingProgressStyle) async throws {}
     func execute(readerColorTheme: ReaderColorTheme, customBackgroundColor: String?, customTextColor: String?) async throws {}
     func execute(enableTTS: Bool) async throws {}
     func execute(theme: Theme) async throws {}
@@ -349,7 +356,11 @@ final class MockDeleteAnnotationUseCase: PDeleteAnnotationUseCase {
 }
 
 final class MockSettingsRepository: PSettingsRepository {
-    var hasFinishedSetup = true
+    private let setupFinished = Mutex(true)
+    var hasFinishedSetup: Bool {
+        get { setupFinished.withLock { $0 } }
+        set { setupFinished.withLock { $0 = newValue } }
+    }
 
     func saveSettings(_ settings: Settings) async throws {}
     func loadSettings() async throws -> Settings? {
@@ -397,8 +408,18 @@ final class MockOfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
 }
 
 final class MockNetworkMonitorRepository: PNetworkMonitorRepository {
+    private let forcedOfflineSubject = CurrentValueSubject<Bool, Never>(false)
+
     var isConnected: AnyPublisher<Bool, Never> {
-        Just(true).eraseToAnyPublisher()
+        forcedOfflineSubject.map { !$0 }.eraseToAnyPublisher()
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        forcedOfflineSubject.eraseToAnyPublisher()
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        forcedOfflineSubject.send(isForced)
     }
 
     func startMonitoring() {}
@@ -416,6 +437,14 @@ final class MockNetworkMonitorUseCase: PNetworkMonitorUseCase {
 
     var isConnected: AnyPublisher<Bool, Never> {
         repository.isConnected
+    }
+
+    var isForcedOffline: AnyPublisher<Bool, Never> {
+        repository.isForcedOffline
+    }
+
+    func setForcedOffline(_ isForced: Bool) {
+        repository.setForcedOffline(isForced)
     }
 
     func startMonitoring() {
@@ -445,6 +474,12 @@ final class MockGetCachedArticleUseCase: PGetCachedArticleUseCase {
     func execute(id: String) -> String? {
         let path = Bundle.main.path(forResource: "article", ofType: "html")
         return try? String(contentsOfFile: path!)
+    }
+}
+
+final class MockGetCachedBookmarkDetailUseCase: PGetCachedBookmarkDetailUseCase {
+    func execute(id: String) -> BookmarkDetail? {
+        nil
     }
 }
 
@@ -509,6 +544,24 @@ extension MockUseCaseFactory {
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase {
         MockExportArticlePDFUseCase()
     }
+
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase {
+        MockCreateShareLinkUseCase()
+    }
+
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase {
+        MockShareByEmailUseCase()
+    }
+}
+
+final class MockCreateShareLinkUseCase: PCreateShareLinkUseCase {
+    func execute(bookmarkId: String) async throws -> URL {
+        URL(string: "https://readeck.example.com/@b/mock")!
+    }
+}
+
+final class MockShareByEmailUseCase: PShareByEmailUseCase {
+    func execute(bookmarkId: String, email: String, format: EmailShareFormat) async throws {}
 }
 
 final class MockExportArticlePDFUseCase: PExportArticlePDFUseCase {

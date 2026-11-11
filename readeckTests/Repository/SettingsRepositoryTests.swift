@@ -119,6 +119,37 @@ struct SettingsRepositoryTests {
         #expect(loaded.horizontalMargin == nil)
     }
 
+    // MARK: - Reading Progress Style
+
+    @Test("readingProgressStyle survives the round-trip")
+    func readingProgressStyleRoundTrip() async throws {
+        let (repository, _) = makeRepository()
+
+        try await repository.saveSettings(Settings(readingProgressStyle: .islandRingOnStop))
+
+        let loaded = try #require(try await repository.loadSettings())
+        #expect(loaded.readingProgressStyle == .islandRingOnStop)
+    }
+
+    @Test("readingProgressStyle defaults to the line")
+    func readingProgressStyleDefault() async throws {
+        let (repository, _) = makeRepository()
+
+        let loaded = try #require(try await repository.loadSettings())
+        #expect(loaded.readingProgressStyle == .line)
+    }
+
+    @Test("saving another setting keeps the picked readingProgressStyle")
+    func readingProgressStyleIsKept() async throws {
+        let (repository, _) = makeRepository()
+
+        try await repository.saveSettings(Settings(readingProgressStyle: .percentTopTrailing))
+        try await repository.saveSettings(Settings(hideProgressBar: false))
+
+        let loaded = try #require(try await repository.loadSettings())
+        #expect(loaded.readingProgressStyle == .percentTopTrailing)
+    }
+
     // MARK: - Card Layout / Tag Sort
 
     @Test("saveCardLayoutStyle and loadCardLayoutStyle round-trip")

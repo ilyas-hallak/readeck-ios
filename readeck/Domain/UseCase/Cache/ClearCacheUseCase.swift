@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PClearCacheUseCase {
+protocol PClearCacheUseCase: Sendable {
     func execute() async throws
 }
 

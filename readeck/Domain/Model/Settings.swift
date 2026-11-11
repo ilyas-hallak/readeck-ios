@@ -45,6 +45,7 @@ struct Settings {
     var readerColorTheme: ReaderColorTheme?
     var customBackgroundColor: String?  // hex string
     var customTextColor: String?        // hex string
+    var readingProgressStyle: ReadingProgressStyle?
 
     var webViewIdentifier: String {
         let parts: [String] = [

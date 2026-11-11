@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class BookmarkLabelsViewModel {
     private let addLabelsUseCase: PAddLabelsToBookmarkUseCase
@@ -39,12 +40,10 @@ final class BookmarkLabelsViewModel {
 
     /// Triggers background sync of tags from server to Core Data
     /// CoreDataTagManagementView will automatically update via @FetchRequest
-    @MainActor
     func syncTags() async {
         try? await syncTagsUseCase.execute()
     }
 
-    @MainActor
     func loadAllLabels() async {
         isInitialLoading = true
         defer { isInitialLoading = false }
@@ -57,7 +56,6 @@ final class BookmarkLabelsViewModel {
         }
     }
 
-    @MainActor
     func addLabels(to bookmarkId: String, labels: [String]) async {
         isLoading = true
         errorMessage = nil
@@ -78,7 +76,6 @@ final class BookmarkLabelsViewModel {
         isLoading = false
     }
 
-    @MainActor
     func addLabel(to bookmarkId: String, label: String) async {
         let splitLabels = LabelUtils.splitLabelsFromInput(label)
         let uniqueLabels = LabelUtils.filterUniqueLabels(splitLabels, currentLabels: currentLabels)
@@ -90,7 +87,6 @@ final class BookmarkLabelsViewModel {
         searchText = ""
     }
 
-    @MainActor
     func removeLabels(from bookmarkId: String, labels: [String]) async {
         isLoading = true
         errorMessage = nil
@@ -110,13 +106,11 @@ final class BookmarkLabelsViewModel {
         isLoading = false
     }
 
-    @MainActor
     func removeLabel(from bookmarkId: String, label: String) async {
         await removeLabels(from: bookmarkId, labels: [label])
     }
 
     // Convenience method for toggling a label (add when missing, remove when present)
-    @MainActor
     func toggleLabel(for bookmarkId: String, label: String) async {
         if currentLabels.contains(label) {
             await removeLabel(from: bookmarkId, label: label)

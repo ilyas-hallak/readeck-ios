@@ -11,6 +11,7 @@ struct BookmarksView: View {
     @State private var showingAddBookmarkFromShare = false
     @State private var shareURL = ""
     @State private var shareTitle = ""
+    @State private var slowLoading = SlowLoadingMonitor()
 
     let state: BookmarkState
     let type: [BookmarkType]
@@ -84,10 +85,7 @@ struct BookmarksView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Offline banner
-                if !appSettings.isNetworkConnected && (viewModel.bookmarks?.bookmarks.isEmpty == false) {
-                    offlineBanner
-                }
+                connectionBanner
 
                 // Main content
                 if viewModel.isInitialLoading && (viewModel.bookmarks?.bookmarks.isEmpty != false) {
@@ -128,9 +126,11 @@ struct BookmarksView: View {
             // Set appSettings reference
             viewModel.appSettings = appSettings
 
-            // Wait briefly for initial network status to be set
-            // NetworkMonitor checks status synchronously in init, but the publisher
-            // might not have propagated to appSettings yet
+            // Wait briefly for initial network status to be set.
+            // readeckApp binds the network publisher to appSettings in its own onAppear,
+            // and that subscription's first value is delivered via receive(on: .main), i.e.
+            // asynchronously. This task can start before that delivery lands, so give it a
+            // moment, otherwise a device that's actually offline briefly reads as connected.
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
 
             Logger.ui.info("📲 BookmarksView.task - Loading bookmarks, isNetworkConnected: \(appSettings.isNetworkConnected)")
@@ -164,6 +164,9 @@ struct BookmarksView: View {
                     await viewModel.refreshBookmarks()
                 }
             }
+        }
+        .onChange(of: viewModel.isLoading, initial: true) { _, isLoading in
+            slowLoading.update(isLoading: isLoading)
         }
         .onChange(of: appSettings.isNetworkConnected) { oldValue, newValue in
             // Network status changed
@@ -436,27 +439,22 @@ struct BookmarksView: View {
     }
 
     @ViewBuilder
-    private var offlineBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "wifi.slash")
-                .font(.body)
-                .foregroundColor(.secondary)
-
-            Text("Offline Mode – Showing cached articles")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Spacer()
+    private var connectionBanner: some View {
+        if appSettings.isServerBackOnline {
+            ConnectionBanner(systemImage: "wifi", message: "You're back online.", actionTitle: "Go Online") {
+                viewModel.goOnline()
+            }
+        } else if !appSettings.isNetworkConnected, viewModel.bookmarks?.bookmarks.isEmpty == false {
+            ConnectionBanner(systemImage: "wifi.slash", message: "Offline mode, showing cached articles.")
+        } else if slowLoading.isSlow {
+            ConnectionBanner(
+                systemImage: "wifi.exclamationmark",
+                message: "Your connection seems very slow or offline.",
+                actionTitle: "Go Offline"
+            ) {
+                viewModel.goOffline()
+            }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemGray6))
-        .overlay(
-            Rectangle()
-                .frame(height: 0.5)
-                .foregroundColor(Color(.separator)),
-            alignment: .bottom
-        )
     }
 
     @ViewBuilder

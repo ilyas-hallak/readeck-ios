@@ -16,11 +16,18 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockSummarizeArticle = ConfigurableSummarizeArticleUseCase()
     let mockGetCachedArticle = ConfigurableGetCachedArticleUseCase()
     let mockGetCachedBookmarks = ConfigurableGetCachedBookmarksUseCase()
+    let mockGetCachedBookmarkDetail = ConfigurableGetCachedBookmarkDetailUseCase()
     let mockGetAnnotations = ConfigurableGetBookmarkAnnotationsUseCase()
     let mockCreateAnnotation = ConfigurableCreateAnnotationUseCase()
+    let mockDeleteAnnotation = ConfigurableDeleteAnnotationUseCase()
     let mockLogout = ConfigurableLogoutUseCase()
     let mockUpdateUnreadBadge = ConfigurableUpdateUnreadBadgeUseCase()
     let mockExportArticlePDF = ConfigurableExportArticlePDFUseCase()
+    let mockNetworkMonitor = MockNetworkMonitorUseCase()
+    let mockGetServerInfo = ConfigurableGetServerInfoUseCase()
+    let mockCreateShareLink = ConfigurableCreateShareLinkUseCase()
+    let mockShareByEmail = ConfigurableShareByEmailUseCase()
+    let mockSaveSettings = ConfigurableSaveSettingsUseCase()
 
     // Configurable use cases
     func makeLoginUseCase() -> PLoginUseCase { mockLogin }
@@ -31,17 +38,20 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase { mockDeleteBookmark }
     func makeCreateBookmarkUseCase() -> PCreateBookmarkUseCase { mockCreateBookmark }
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase { mockCheckReachability }
-    func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { MockGetServerInfoUseCase() }
+    func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { mockGetServerInfo }
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase { mockGetCachedArticle }
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase { mockGetCachedBookmarks }
+    func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase { mockGetCachedBookmarkDetail }
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase { mockGetAnnotations }
     func makeCreateAnnotationUseCase() -> PCreateAnnotationUseCase { mockCreateAnnotation }
     func makeLogoutUseCase() -> PLogoutUseCase { mockLogout }
     func makeUpdateUnreadBadgeUseCase() -> PUpdateUnreadBadgeUseCase { mockUpdateUnreadBadge }
     func makeExportArticlePDFUseCase() -> PExportArticlePDFUseCase { mockExportArticlePDF }
+    func makeCreateShareLinkUseCase() -> PCreateShareLinkUseCase { mockCreateShareLink }
+    func makeShareByEmailUseCase() -> PShareByEmailUseCase { mockShareByEmail }
+    func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { mockSaveSettings }
 
     // Non-configurable — use existing mocks from MockUseCaseFactory pattern
-    func makeSaveSettingsUseCase() -> PSaveSettingsUseCase { MockSaveSettingsUseCase() }
     func makeLoadSettingsUseCase() -> PLoadSettingsUseCase { MockLoadSettingsUseCase() }
     func makeSearchBookmarksUseCase() -> PSearchBookmarksUseCase { MockSearchBookmarksUseCase() }
     func makeSaveServerSettingsUseCase() -> PSaveServerSettingsUseCase { MockSaveServerSettingsUseCase() }
@@ -54,10 +64,10 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeOfflineBookmarkSyncUseCase() -> POfflineBookmarkSyncUseCase { MockOfflineBookmarkSyncUseCase() }
     func makeLoadCardLayoutUseCase() -> PLoadCardLayoutUseCase { MockLoadCardLayoutUseCase() }
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase { MockSaveCardLayoutUseCase() }
-    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase { MockDeleteAnnotationUseCase() }
+    func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase { mockDeleteAnnotation }
     func makeSettingsRepository() -> PSettingsRepository { mockSettingsRepository }
     func makeOfflineCacheSyncUseCase() -> POfflineCacheSyncUseCase { MockOfflineCacheSyncUseCase() }
-    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase { MockNetworkMonitorUseCase() }
+    func makeNetworkMonitorUseCase() -> PNetworkMonitorUseCase { mockNetworkMonitor }
     func makeGetCacheSizeUseCase() -> PGetCacheSizeUseCase { MockGetCacheSizeUseCase() }
     func makeGetMaxCacheSizeUseCase() -> PGetMaxCacheSizeUseCase { MockGetMaxCacheSizeUseCase() }
     func makeUpdateMaxCacheSizeUseCase() -> PUpdateMaxCacheSizeUseCase { MockUpdateMaxCacheSizeUseCase() }

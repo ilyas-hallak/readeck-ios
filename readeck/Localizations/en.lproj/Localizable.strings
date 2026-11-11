@@ -60,6 +60,7 @@
 "Sorted by usage count" = "Sorted by usage count";
 "Sorted alphabetically" = "Sorted alphabetically";
 "Cancel" = "Cancel";
+"Undo" = "Undo";
 "Category-specific Levels" = "Category-specific Levels";
 "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages)." = "Changes take effect immediately. Lower log levels include higher ones (Debug includes all, Critical includes only critical messages).";
 "Close" = "Close";
@@ -77,6 +78,7 @@
 "Enter your Readeck server details to get started." = "Enter your Readeck server details to get started.";
 "Error" = "Error";
 "Error: %@" = "Error: %@";
+"Error removing highlight" = "Error removing highlight";
 "Export as PDF" = "Export as PDF";
 "Exporting PDF..." = "Exporting PDF...";
 "Favorite" = "Favorite";
@@ -132,6 +134,7 @@
 "Reading %lld/%lld: " = "Reading %1$lld/%2$lld: ";
 "Reader" = "Reader";
 "Remove" = "Remove";
+"Remove Highlight" = "Remove Highlight";
 "Reset" = "Reset";
 "Reset to Defaults" = "Reset to Defaults";
 "Restore" = "Restore";
@@ -305,4 +308,46 @@
 
 /* Reader Switch Tip */
 "New reader" = "New reader";
-"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings." = "Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings.";
+
+/* Slow connection and offline mode */
+"Your connection seems very slow or offline." = "Your connection seems very slow or offline.";
+"Go Offline" = "Go Offline";
+"You're back online." = "You're back online.";
+"Go Online" = "Go Online";
+"This article isn't available offline." = "This article isn't available offline.";
+"Offline mode, showing cached articles." = "Offline mode, showing cached articles.";
+
+/* Sharing */
+"Share" = "Share";
+"Share Original Link" = "Share Original Link";
+"Share Readeck Link" = "Share Readeck Link";
+"Send by Email" = "Send by Email";
+"Could not create a share link" = "Could not create a share link";
+"Could not open the original link" = "Could not open the original link";
+"Email address" = "Email address";
+"Format" = "Format";
+"Article" = "Article";
+"E-Book" = "E-Book";
+"Send" = "Send";
+"Email Sent" = "Email Sent";
+"Could not send the email" = "Could not send the email";
+
+/* Reading progress style */
+"Progress Style" = "Progress Style";
+"Off" = "Off";
+"No progress is shown while you read." = "No progress is shown while you read.";
+"Serif" = "Serif";
+"Sans Serif" = "Sans Serif";
+"Monospace" = "Monospace";
+"font.sample" = "The quick brown fox jumps over the lazy dog.";
+"Line" = "Line";
+"Island Ring" = "Island Ring";
+"Island Ring on Pause" = "Island Ring on Pause";
+"Percent in Corner" = "Percent in Corner";
+"Percent at Scroll Indicator" = "Percent at Scroll Indicator";
+"A thin line below the navigation bar slides away with it." = "A thin line below the navigation bar slides away with it.";
+"A ring around the Dynamic Island fills up as you read." = "A ring around the Dynamic Island fills up as you read.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "The ring around the Dynamic Island shows up when you stop scrolling.";
+"The percentage pops up in the top corner when you stop scrolling." = "The percentage pops up in the top corner when you stop scrolling.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "The percentage follows the scroll indicator and shows up when you stop scrolling.";

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 struct ReaderFontCSSBuildResult {
     let fontFaceCSS: String
@@ -7,23 +8,15 @@ struct ReaderFontCSSBuildResult {
 }
 
 enum ReaderFontCSSBuilder {
-    private static let cacheLock = NSLock()
-    private static var cache: [FontFamily: ReaderFontCSSBuildResult] = [:]
+    private static let cache = Mutex<[FontFamily: ReaderFontCSSBuildResult]>([:])
 
     static func build(fontFamily: FontFamily) -> ReaderFontCSSBuildResult {
-        cacheLock.lock()
-        let cached = cache[fontFamily]
-        cacheLock.unlock()
-        if let cached {
+        if let cached = cache.withLock({ $0[fontFamily] }) {
             return cached
         }
 
         let result = makeResult(fontFamily: fontFamily)
-
-        cacheLock.lock()
-        cache[fontFamily] = result
-        cacheLock.unlock()
-
+        cache.withLock { $0[fontFamily] = result }
         return result
     }
 

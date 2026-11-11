@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PLoadSettingsUseCase {
+protocol PLoadSettingsUseCase: Sendable {
     func execute() async throws -> Settings?
 }
 

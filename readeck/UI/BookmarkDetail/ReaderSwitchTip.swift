@@ -18,7 +18,7 @@ struct ReaderSwitchTip: Tip {
     }
 
     var message: Text? {
-        Text("Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings.")
+        Text("Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings.")
     }
 
     var image: Image? {

@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 @Observable
 final class CachedArticlesPreviewViewModel {
     // MARK: - Dependencies
@@ -28,7 +29,6 @@ final class CachedArticlesPreviewViewModel {
 
     // MARK: - Public Methods
 
-    @MainActor
     func loadCachedBookmarks() async {
         isLoading = true
         errorMessage = nil
@@ -45,7 +45,6 @@ final class CachedArticlesPreviewViewModel {
         isLoading = false
     }
 
-    @MainActor
     func refreshList() async {
         await loadCachedBookmarks()
     }

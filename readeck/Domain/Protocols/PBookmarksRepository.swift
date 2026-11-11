@@ -5,7 +5,9 @@
 //  Created by Ilyas Hallak on 14.07.25.
 //
 
-protocol PBookmarksRepository {
+import Foundation
+
+protocol PBookmarksRepository: Sendable {
     // Bookmark API methods
     // swiftlint:disable:next discouraged_optional_collection
     func fetchBookmarks(state: BookmarkState?, limit: Int?, offset: Int?, search: String?, type: [BookmarkType]?, tag: String?, sort: String?) async throws -> BookmarksPage
@@ -15,4 +17,6 @@ protocol PBookmarksRepository {
     func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws
     func deleteBookmark(id: String) async throws
     func searchBookmarks(search: String) async throws -> BookmarksPage
+    func createShareLink(id: String) async throws -> URL
+    func shareByEmail(id: String, email: String, format: EmailShareFormat) async throws
 }

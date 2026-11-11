@@ -6,7 +6,7 @@
 
 import Foundation
 
-protocol PCheckServerReachabilityUseCase {
+protocol PCheckServerReachabilityUseCase: Sendable {
     func execute() async -> Bool
     func getServerInfo() async throws -> ServerInfo
 }

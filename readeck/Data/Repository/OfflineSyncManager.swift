@@ -2,12 +2,13 @@ import Foundation
 import CoreData
 import SwiftUI
 
-protocol POfflineSyncManager {
+protocol POfflineSyncManager: Sendable {
     func syncOfflineBookmarks() async
     func getOfflineBookmarks() -> [ArticleURLEntity]
     func deleteOfflineBookmark(_ entity: ArticleURLEntity)
 }
 
+// The @Published state is only written on the main actor, everything else is immutable.
 open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
     static let shared = OfflineSyncManager()
 
@@ -52,11 +53,10 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
 
         for bookmark in offlineBookmarks {
             // Read entity properties on the context queue (not thread-safe otherwise).
-            var snapshot: (url: String, title: String, tags: [String], html: String?)?
-            bookmark.managedObjectContext?.performAndWait {
-                guard let url = bookmark.url else { return }
+            let snapshot = try? bookmark.managedObjectContext?.safePerform { () -> (url: String, title: String, tags: [String], html: String?)? in
+                guard let url = bookmark.url else { return nil }
                 let tags = bookmark.tags?.components(separatedBy: ",").filter { !$0.isEmpty } ?? []
-                snapshot = (url, bookmark.title ?? "", tags, bookmark.html)
+                return (url, bookmark.title ?? "", tags, bookmark.html)
             }
 
             guard let snapshot else {
@@ -88,7 +88,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                     deleteOfflineBookmark(bookmark)
                     successCount += 1
                     lastError = nil
-                    await MainActor.run { syncStatus = "Synced \(successCount) bookmarks..." }
+                    await MainActor.run { [successCount] in syncStatus = "Synced \(successCount) bookmarks..." }
                     break
                 } catch {
                     lastError = error
@@ -112,7 +112,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
             }
         }
 
-        await MainActor.run {
+        await MainActor.run { [aborted, successCount, failedCount] in
             isSyncing = false
             if aborted {
                 syncStatus = "Server not reachable. \(failedCount) bookmark(s) kept for later."

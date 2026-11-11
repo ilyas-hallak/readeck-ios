@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import SwiftUI
 
+@MainActor
 @Observable
 final class SettingsGeneralViewModel {
     private let saveSettingsUseCase: PSaveSettingsUseCase
@@ -42,7 +43,6 @@ final class SettingsGeneralViewModel {
 
     /// Handles a change to the unread-badge toggle: requests permission when
     /// enabling, reverts the toggle if it was denied, then persists settings.
-    @MainActor
     func updateUnreadBadge() async {
         if showUnreadBadge {
             let granted = await updateUnreadBadgeUseCase.setEnabled(true)
@@ -57,7 +57,6 @@ final class SettingsGeneralViewModel {
         await saveGeneralSettings()
     }
 
-    @MainActor
     func loadGeneralSettings() async {
         isLoading = true
         defer { isLoading = false }
@@ -80,7 +79,6 @@ final class SettingsGeneralViewModel {
         }
     }
 
-    @MainActor
     func saveGeneralSettings() async {
         do {
             try await saveSettingsUseCase.execute(enableTTS: enableTTS)
@@ -99,7 +97,6 @@ final class SettingsGeneralViewModel {
         }
     }
 
-    @MainActor
     func saveBookmarkSortSettings() async {
         do {
             try await saveSettingsUseCase.execute(

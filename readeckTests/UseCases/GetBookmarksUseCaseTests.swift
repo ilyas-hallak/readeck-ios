@@ -7,7 +7,8 @@ struct GetBookmarksUseCaseTests {
 
     // MARK: - Fakes
 
-    private final class StubBookmarksRepository: PBookmarksRepository {
+    // Set up before the use case runs and only read afterwards.
+    private final class StubBookmarksRepository: PBookmarksRepository, @unchecked Sendable {
         var bookmarks: [Bookmark] = []
 
         // swiftlint:disable:next discouraged_optional_collection
@@ -21,6 +22,8 @@ struct GetBookmarksUseCaseTests {
         func updateBookmark(id: String, updateRequest: BookmarkUpdateRequest) async throws {}
         func deleteBookmark(id: String) async throws {}
         func searchBookmarks(search: String) async throws -> BookmarksPage { fatalError("unused") }
+        func createShareLink(id: String) async throws -> URL { fatalError("unused") }
+        func shareByEmail(id: String, email: String, format: EmailShareFormat) async throws {}
     }
 
     private func bookmark(id: String, isArchived: Bool = false, isMarked: Bool = false) -> Bookmark {

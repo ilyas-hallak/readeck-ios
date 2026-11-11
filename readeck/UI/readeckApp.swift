@@ -64,10 +64,11 @@ struct readeckApp: App {
                     .environment(appSettings)
             }
             .onAppear {
+                // NetFox's shake override on UIWindow swallows the shake unless the gesture is
+                // custom, in every build, so it reaches the debug menu and shake to undo.
+                NFX.sharedInstance().setGesture(.custom)
                 // Start NetFox in non-production builds
                 if !Bundle.main.isProduction {
-                    // Disable NetFox shake gesture since we use it for our debug menu
-                    NFX.sharedInstance().setGesture(.custom)
                     NFX.sharedInstance().start()
                 }
                 Task {

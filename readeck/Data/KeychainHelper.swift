@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-final class KeychainHelper {
+final class KeychainHelper: Sendable {
     static let shared = KeychainHelper()
     private init() {}
 

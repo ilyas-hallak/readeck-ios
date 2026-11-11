@@ -60,6 +60,7 @@
 "Sorted by usage count" = "Sorterad efter användning";
 "Sorted alphabetically" = "Sorterade alfabetiskt";
 "Cancel" = "Avbryt";
+"Undo" = "Ångra";
 "Category-specific Levels" = "Kategorispecifika nivåer";
 "Changes take effect immediately. Lower log levels include higher ones (Felsök includes all, Critical includes only critical messages)." = "Ändringar träder i kraft omedelbart. Lägre loggnivåer inkluderar högre (Felsök inkluderar alla, Kritisk inkluderar endast kritiska meddelanden).";
 "Close" = "Stäng";
@@ -77,6 +78,7 @@
 "Enter your Readeck server details to get started." = "Ange dina Readeck-serveruppgifter för att komma igång.";
 "Error" = "Fel";
 "Error: %@" = "Fel: %@";
+"Error removing highlight" = "Kunde inte ta bort markeringen";
 "Export as PDF" = "Exportera som PDF";
 "Exporting PDF..." = "Exporterar PDF...";
 "Favorite" = "Favorit";
@@ -132,6 +134,7 @@
 "Reading %lld/%lld: " = "Läser %1$lld/%2$lld: ";
 "Reader" = "Läsare";
 "Remove" = "Ta bort";
+"Remove Highlight" = "Ta bort markering";
 "Reset" = "Återställ";
 "Reset to Defaults" = "Återställ till standard";
 "Restore" = "Återskapa";
@@ -305,4 +308,46 @@
 
 /* Reader Switch Tip */
 "New reader" = "Ny läsare";
-"Articles now open in the modern reader. If anything looks off, you can switch back under Font Settings." = "Artiklar öppnas nu i den moderna läsaren. Om något ser fel ut kan du växla tillbaka under Typsnittsinställningar.";
+"Articles now open in the modern reader. If anything looks off, you can switch back under Reader Settings." = "Artiklar öppnas nu i den moderna läsaren. Om något ser fel ut kan du växla tillbaka under Läsarinställningar.";
+
+/* Slow connection and offline mode */
+"Your connection seems very slow or offline." = "Din anslutning verkar mycket långsam eller offline.";
+"Go Offline" = "Gå offline";
+"You're back online." = "Du är online igen.";
+"Go Online" = "Gå online";
+"This article isn't available offline." = "Den här artikeln är inte tillgänglig offline.";
+"Offline mode, showing cached articles." = "Offlineläge, visar cachade artiklar.";
+
+/* Sharing */
+"Share" = "Dela";
+"Share Original Link" = "Dela originallänk";
+"Share Readeck Link" = "Dela Readeck-länk";
+"Send by Email" = "Skicka via e-post";
+"Could not create a share link" = "Det gick inte att skapa en delningslänk";
+"Could not open the original link" = "Det gick inte att öppna originallänken";
+"Email address" = "E-postadress";
+"Format" = "Format";
+"Article" = "Artikel";
+"E-Book" = "E-bok";
+"Send" = "Skicka";
+"Email Sent" = "E-post skickat";
+"Could not send the email" = "Det gick inte att skicka e-postmeddelandet";
+
+/* Reading progress style */
+"Progress Style" = "Förloppsvisning";
+"Off" = "Av";
+"No progress is shown while you read." = "Ingen förloppsvisning medan du läser.";
+"Serif" = "Serif";
+"Sans Serif" = "Sans serif";
+"Monospace" = "Monospace";
+"font.sample" = "Flygande bäckasiner söka hwila på mjuka tuvor.";
+"Line" = "Linje";
+"Island Ring" = "Ring runt Dynamic Island";
+"Island Ring on Pause" = "Ring vid paus";
+"Percent in Corner" = "Procent i hörnet";
+"Percent at Scroll Indicator" = "Procent vid rullningslisten";
+"A thin line below the navigation bar slides away with it." = "En tunn linje under navigeringsfältet som försvinner med det.";
+"A ring around the Dynamic Island fills up as you read." = "En ring runt Dynamic Island fylls medan du läser.";
+"The ring around the Dynamic Island shows up when you stop scrolling." = "Ringen runt Dynamic Island visas när du slutar rulla.";
+"The percentage pops up in the top corner when you stop scrolling." = "Procenten visas i det övre hörnet när du slutar rulla.";
+"The percentage follows the scroll indicator and shows up when you stop scrolling." = "Procenten följer rullningslisten och visas när du slutar rulla.";

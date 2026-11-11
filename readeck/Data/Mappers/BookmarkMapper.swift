@@ -21,7 +21,7 @@ extension BookmarkDto {
             url: url,
             href: href,
             description: description,
-            authors: authors,
+            authors: authors ?? [],
             created: created,
             published: published,
             updated: updated,

@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PGetUserProfileUseCase {
+protocol PGetUserProfileUseCase: Sendable {
     func execute() async throws -> String
 }
 

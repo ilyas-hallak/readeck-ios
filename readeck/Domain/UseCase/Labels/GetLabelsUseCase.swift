@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PGetLabelsUseCase {
+protocol PGetLabelsUseCase: Sendable {
     func execute() async throws -> [BookmarkLabel]
 }
 

@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PSummarizeArticleUseCase {
+protocol PSummarizeArticleUseCase: Sendable {
     func execute(articleHTML: String, targetLanguage: String) async throws -> String
     func prewarm()
     static var isAvailable: Bool { get }

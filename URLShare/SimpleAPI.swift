@@ -20,7 +20,8 @@ final class SimpleAPI {
     private static let logger = Logger.network
 
     /// Overridable in tests; at runtime this stays on `live()`.
-    static var environment = SimpleAPIEnvironment.live()
+    // Only swapped by serialized tests before a request starts, never while one runs.
+    nonisolated(unsafe) static var environment = SimpleAPIEnvironment.live()
 
     // MARK: - Token Management
 
@@ -29,7 +30,7 @@ final class SimpleAPI {
 
         if authMethod == .oauth {
             // OAuth authentication - check and refresh if needed
-            guard var oauthToken = KeychainHelper.shared.loadOAuthToken() else {
+            guard let oauthToken = KeychainHelper.shared.loadOAuthToken() else {
                 logger.warning("OAuth token not found")
                 return nil
             }
@@ -69,7 +70,7 @@ final class SimpleAPI {
 
         do {
             let url = URL(string: "\(endpoint)/api/oauth/token")!
-            var formData: [String: String] = [
+            let formData: [String: String] = [
                 "grant_type": "refresh_token",
                 "client_id": clientId,
                 "refresh_token": refreshToken
@@ -144,23 +145,23 @@ final class SimpleAPI {
     // read from the `Bookmark-Id` response header on success and is nil on failure —
     // it lets the extension offer an "Open in Readeck" deep link.
     // swiftlint:disable:next discouraged_optional_collection
-    static func addBookmark(title: String, url: String, labels: [String]? = nil, html: String? = nil, showStatus: @escaping (String, Bool, String?) -> Void) async {
+    static func addBookmark(title: String, url: String, labels: [String]? = nil, html: String? = nil, showStatus: @escaping @MainActor @Sendable (String, Bool, String?) -> Void) async {
         logger.info("Adding bookmark: \(url)")
         guard let token = await getValidToken() else {
-            showStatus("No token found. Please log in via the main app.", true, nil)
+            await showStatus("No token found. Please log in via the main app.", true, nil)
             return
         }
         guard let endpoint = environment.loadEndpoint(), !endpoint.isEmpty else {
-            showStatus("No server endpoint found.", true, nil)
+            await showStatus("No server endpoint found.", true, nil)
             return
         }
         let requestDto = CreateBookmarkRequestDto(url: url, title: title, labels: labels, html: html)
         guard let requestData = try? JSONEncoder().encode(requestDto) else {
-            showStatus("Failed to encode request.", true, nil)
+            await showStatus("Failed to encode request.", true, nil)
             return
         }
         guard let apiUrl = URL(string: endpoint + "/api/bookmarks") else {
-            showStatus("Invalid server endpoint.", true, nil)
+            await showStatus("Invalid server endpoint.", true, nil)
             return
         }
         var request = URLRequest(url: apiUrl)
@@ -173,7 +174,7 @@ final class SimpleAPI {
             let (data, response) = try await environment.session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 logger.error("Invalid server response for bookmark creation")
-                showStatus("Invalid server response.", true, nil)
+                await showStatus("Invalid server response.", true, nil)
                 return
             }
 
@@ -185,26 +186,26 @@ final class SimpleAPI {
                         NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
                     logger.error("Authentication failed: 401 Unauthorized")
-                    showStatus("Session expired. Please log in via the Readeck app.", true, nil)
+                    await showStatus("Session expired. Please log in via the Readeck app.", true, nil)
                     return
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")
-                showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true, nil)
+                await showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true, nil)
                 return
             }
 
             let bookmarkId = extractBookmarkId(from: httpResponse)
             if let resp = try? JSONDecoder().decode(CreateBookmarkResponseDto.self, from: data) {
                 logger.info("Bookmark created successfully: \(resp.message), id: \(bookmarkId ?? "unknown")")
-                showStatus("Saved: \(resp.message)", false, bookmarkId)
+                await showStatus("Saved: \(resp.message)", false, bookmarkId)
             } else {
                 logger.info("Bookmark created successfully, id: \(bookmarkId ?? "unknown")")
-                showStatus("Bookmark saved!", false, bookmarkId)
+                await showStatus("Bookmark saved!", false, bookmarkId)
             }
         } catch {
             logger.logNetworkError(method: "POST", url: "/api/bookmarks", error: error)
-            showStatus("Network error: \(error.localizedDescription)", true, nil)
+            await showStatus("Network error: \(error.localizedDescription)", true, nil)
         }
     }
 
@@ -224,18 +225,18 @@ final class SimpleAPI {
     }
 
     // swiftlint:disable:next discouraged_optional_collection
-    static func getBookmarkLabels(showStatus: @escaping (String, Bool) -> Void) async -> [BookmarkLabelDto]? {
+    static func getBookmarkLabels(showStatus: @escaping @MainActor @Sendable (String, Bool) -> Void) async -> [BookmarkLabelDto]? {
         logger.info("Fetching bookmark labels")
         guard let token = await getValidToken() else {
-            showStatus("No token found. Please log in via the main app.", true)
+            await showStatus("No token found. Please log in via the main app.", true)
             return nil
         }
         guard let endpoint = environment.loadEndpoint(), !endpoint.isEmpty else {
-            showStatus("No server endpoint found.", true)
+            await showStatus("No server endpoint found.", true)
             return nil
         }
         guard let apiUrl = URL(string: endpoint + "/api/bookmarks/labels") else {
-            showStatus("Invalid server endpoint.", true)
+            await showStatus("Invalid server endpoint.", true)
             return nil
         }
         var request = URLRequest(url: apiUrl)
@@ -247,7 +248,7 @@ final class SimpleAPI {
             let (data, response) = try await environment.session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 logger.error("Invalid server response for labels request")
-                showStatus("Invalid server response.", true)
+                await showStatus("Invalid server response.", true)
                 return nil
             }
 
@@ -259,12 +260,12 @@ final class SimpleAPI {
                         NotificationCenter.default.post(name: .unauthorizedAPIResponse, object: nil)
                     }
                     logger.error("Authentication failed: 401 Unauthorized")
-                    showStatus("Session expired. Please log in via the Readeck app.", true)
+                    await showStatus("Session expired. Please log in via the Readeck app.", true)
                     return nil
                 }
                 let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logger.error("Server error \(httpResponse.statusCode): \(msg)")
-                showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
+                await showStatus("Server error: \(httpResponse.statusCode)\n\(msg)", true)
                 return nil
             }
 
@@ -273,7 +274,7 @@ final class SimpleAPI {
             return labels
         } catch {
             logger.logNetworkError(method: "GET", url: "/api/bookmarks/labels", error: error)
-            showStatus("Network error: \(error.localizedDescription)", true)
+            await showStatus("Network error: \(error.localizedDescription)", true)
             return nil
         }
     }

@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PAddLabelsToBookmarkUseCase {
+protocol PAddLabelsToBookmarkUseCase: Sendable {
     func execute(bookmarkId: String, labels: [String]) async throws
     func execute(bookmarkId: String, label: String) async throws
 }

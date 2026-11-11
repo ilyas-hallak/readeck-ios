@@ -139,6 +139,93 @@ struct AppViewModelTests {
 
     /// Polls until `condition` holds instead of sleeping for a fixed interval,
     /// so notification-driven tests neither flake nor pay a fixed delay.
+    // MARK: - Forced Offline
+
+    @Test("Going offline is mirrored into the app settings")
+    func forcedOffline_mirroredToAppSettings() async {
+        let factory = TestUseCaseFactory()
+        let vm = AppViewModel(factory: factory)
+        let appSettings = AppSettings()
+        vm.bindNetworkStatus(to: appSettings)
+
+        factory.mockNetworkMonitor.setForcedOffline(true)
+        await waitUntil { appSettings.isForcedOffline }
+
+        #expect(vm.isForcedOffline == true)
+        #expect(appSettings.isNetworkConnected == false)
+    }
+
+    @Test("While offline the server is polled and a reachable server is reported, without going online")
+    func forcedOffline_reportsServerBackOnline() async {
+        let factory = TestUseCaseFactory()
+        factory.mockCheckReachability.isReachable = false
+        let vm = AppViewModel(factory: factory, reconnectInterval: .milliseconds(20))
+        let appSettings = AppSettings()
+        vm.bindNetworkStatus(to: appSettings)
+
+        factory.mockNetworkMonitor.setForcedOffline(true)
+        await waitUntil { factory.mockCheckReachability.executeCount >= 2 }
+        #expect(vm.isServerBackOnline == false)
+
+        factory.mockCheckReachability.isReachable = true
+        await waitUntil { vm.isServerBackOnline }
+
+        #expect(vm.isServerBackOnline == true)
+        #expect(appSettings.isServerBackOnline == true)
+        #expect(vm.isForcedOffline == true)
+    }
+
+    @Test("Polling stops once the server is back")
+    func forcedOffline_stopsPollingWhenBack() async throws {
+        let factory = TestUseCaseFactory()
+        let vm = AppViewModel(factory: factory, reconnectInterval: .milliseconds(20))
+
+        factory.mockNetworkMonitor.setForcedOffline(true)
+        await waitUntil { vm.isServerBackOnline }
+        let count = factory.mockCheckReachability.executeCount
+        try await Task.sleep(for: .milliseconds(150))
+
+        #expect(factory.mockCheckReachability.executeCount == count)
+    }
+
+    @Test("The server is not polled while online")
+    func online_doesNotPoll() async throws {
+        let factory = TestUseCaseFactory()
+        let vm = AppViewModel(factory: factory, reconnectInterval: .milliseconds(20))
+
+        try await Task.sleep(for: .milliseconds(150))
+
+        #expect(factory.mockCheckReachability.executeCount == 0)
+        withExtendedLifetime(vm) {}
+    }
+
+    @Test("Going online again clears the back online hint")
+    func goingOnline_clearsBackOnline() async {
+        let factory = TestUseCaseFactory()
+        let vm = AppViewModel(factory: factory, reconnectInterval: .milliseconds(20))
+        factory.mockNetworkMonitor.setForcedOffline(true)
+        await waitUntil { vm.isServerBackOnline }
+
+        factory.mockNetworkMonitor.setForcedOffline(false)
+        await waitUntil { !vm.isForcedOffline }
+
+        #expect(vm.isServerBackOnline == false)
+    }
+
+    @Test("Resuming while offline only checks the server")
+    func onAppResume_whileForcedOffline_reportsBackOnline() async {
+        let factory = TestUseCaseFactory()
+        let vm = AppViewModel(factory: factory)
+        factory.mockNetworkMonitor.setForcedOffline(true)
+        await waitUntil { vm.isForcedOffline }
+
+        await vm.onAppResume()
+
+        #expect(vm.isServerBackOnline == true)
+        #expect(vm.isForcedOffline == true)
+        #expect(factory.mockUpdateUnreadBadge.refreshCount == 0)
+    }
+
     private func waitUntil(timeout: TimeInterval = 2, _ condition: () -> Bool) async {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() && Date() < deadline {

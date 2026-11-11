@@ -9,13 +9,12 @@ extension BookmarkDto {
         let entity = BookmarkEntity(context: context)
         entity.title = self.title
         entity.url = self.url
-        entity.authors = self.authors.first
         entity.desc = self.description
         entity.created = self.created
 
         entity.siteName = self.siteName
         entity.site = self.site
-        entity.authors = self.authors.first // TODO: support multiple authors
+        entity.authors = self.authors?.first // TODO: support multiple authors
         entity.published = self.published
         entity.created = self.created
         entity.update = self.updated
@@ -130,6 +129,33 @@ extension BookmarkEntity {
             textDirection: self.textDirection ?? "",
             type: self.type ?? "",
             resources: resources
+        )
+    }
+}
+
+// MARK: - Cached Bookmark to BookmarkDetail Mapping
+extension Bookmark {
+    func toBookmarkDetail() -> BookmarkDetail {
+        BookmarkDetail(
+            id: id,
+            title: title,
+            url: url,
+            description: description,
+            siteName: siteName,
+            authors: authors,
+            created: created,
+            updated: updated,
+            wordCount: wordCount,
+            readingTime: readingTime,
+            hasArticle: hasArticle,
+            loaded: loaded,
+            isMarked: isMarked,
+            isArchived: isArchived,
+            labels: labels,
+            thumbnailUrl: resources.thumbnail?.src ?? "",
+            imageUrl: resources.image?.src ?? "",
+            lang: lang ?? "",
+            readProgress: readProgress
         )
     }
 }

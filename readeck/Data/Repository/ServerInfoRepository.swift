@@ -5,19 +5,20 @@
 //  Created by Ilyas Hallak
 
 import Foundation
+import Synchronization
 
 final class ServerInfoRepository: PServerInfoRepository {
     private let apiClient: PInfoApiClient
     private let logger = Logger.network
 
-    // Cache properties
-    private var cachedServerInfo: ServerInfo?
-    private var lastCheckTime: Date?
+    private struct Cache {
+        var serverInfo: ServerInfo?
+        var lastCheckTime: Date?
+    }
+
+    private let cache = Mutex(Cache())
     private let cacheTTL: TimeInterval = 30.0 // 30 seconds cache
     private let rateLimitInterval: TimeInterval = 5.0 // min 5 seconds between requests
-
-    // Thread safety
-    private let queue = DispatchQueue(label: "com.readeck.serverInfoRepository", attributes: .concurrent)
 
     init(apiClient: PInfoApiClient) {
         self.apiClient = apiClient
@@ -33,7 +34,7 @@ final class ServerInfoRepository: PServerInfoRepository {
         // Check rate limiting
         if isRateLimited() {
             logger.debug("Server reachability check rate limited, using cached value")
-            return cachedServerInfo?.isReachable ?? false
+            return cache.withLock { $0.serverInfo?.isReachable } ?? false
         }
 
         // Perform actual check
@@ -59,7 +60,7 @@ final class ServerInfoRepository: PServerInfoRepository {
         }
 
         // Check rate limiting (only if no custom endpoint provided)
-        if endpoint == nil, isRateLimited(), let cached = cachedServerInfo {
+        if endpoint == nil, isRateLimited(), let cached = cache.withLock({ $0.serverInfo }) {
             logger.debug("Server info check rate limited, using cached value")
             return cached
         }
@@ -81,30 +82,22 @@ final class ServerInfoRepository: PServerInfoRepository {
 
     // swiftlint:disable:next discouraged_optional_boolean
     private func getCachedReachability() -> Bool? {
-        queue.sync {
-            guard let lastCheck = lastCheckTime,
-                  Date().timeIntervalSince(lastCheck) < cacheTTL,
-                  let cached = cachedServerInfo else {
-                return nil
-            }
-            return cached.isReachable
-        }
+        getCachedServerInfo()?.isReachable
     }
 
     private func getCachedServerInfo() -> ServerInfo? {
-        queue.sync {
-            guard let lastCheck = lastCheckTime,
-                  Date().timeIntervalSince(lastCheck) < cacheTTL,
-                  let cached = cachedServerInfo else {
+        cache.withLock { cache in
+            guard let lastCheck = cache.lastCheckTime,
+                  Date().timeIntervalSince(lastCheck) < cacheTTL else {
                 return nil
             }
-            return cached
+            return cache.serverInfo
         }
     }
 
     private func isRateLimited() -> Bool {
-        queue.sync {
-            guard let lastCheck = lastCheckTime else {
+        cache.withLock { cache in
+            guard let lastCheck = cache.lastCheckTime else {
                 return false
             }
             return Date().timeIntervalSince(lastCheck) < rateLimitInterval
@@ -112,9 +105,6 @@ final class ServerInfoRepository: PServerInfoRepository {
     }
 
     private func updateCache(serverInfo: ServerInfo) {
-        queue.async(flags: .barrier) { [weak self] in
-            self?.cachedServerInfo = serverInfo
-            self?.lastCheckTime = Date()
-        }
+        cache.withLock { $0 = Cache(serverInfo: serverInfo, lastCheckTime: Date()) }
     }
 }

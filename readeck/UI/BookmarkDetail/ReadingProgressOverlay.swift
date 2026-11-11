@@ -1,0 +1,116 @@
+import SwiftUI
+
+/// Whether scrolling came to rest a moment ago. A reference type, so a change only
+/// redraws the progress overlay and not the whole reader with its web view.
+@MainActor
+@Observable
+final class ScrollPauseModel {
+    var isPaused = false
+    @ObservationIgnored private var resetTask: Task<Void, Never>?
+
+    func scrollPhaseChanged(isIdle: Bool, holdFor duration: Duration = .seconds(1.5)) {
+        resetTask?.cancel()
+        setPaused(isIdle)
+        guard isIdle else { return }
+        resetTask = Task { [weak self] in
+            try? await Task.sleep(for: duration)
+            guard !Task.isCancelled else { return }
+            self?.setPaused(false)
+        }
+    }
+
+    // Every write notifies the observers, even one that changes nothing
+    private func setPaused(_ paused: Bool) {
+        if isPaused != paused {
+            isPaused = paused
+        }
+    }
+}
+
+/// The reading progress in the top chrome of the reader, in the style the user picked.
+@available(iOS 26.0, *)
+struct ReadingProgressOverlay: View {
+    let style: ReadingProgressStyle
+    let model: ReadingProgressModel
+    let isToolbarVisible: Bool
+    /// The styles that pop up show while scrolling is paused.
+    let pause: ScrollPauseModel
+    let topBarInset: Double
+    let statusBarHeight: Double
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            indicator
+        }
+        .animation(.easeInOut(duration: 0.3), value: pause.isPaused)
+    }
+
+    // Devices without a Dynamic Island fall back to the line
+    private var resolvedStyle: ReadingProgressStyle {
+        guard style.requiresDynamicIsland,
+              !IslandProgressRing.isAvailable(statusBarHeight: statusBarHeight) else { return style }
+        return .line
+    }
+
+    private var isPopUpShown: Bool {
+        !isToolbarVisible && pause.isPaused
+    }
+
+    @ViewBuilder
+    private var indicator: some View {
+        switch resolvedStyle {
+        case .line:
+            ReadingProgressBar(model: model)
+                .offset(y: isToolbarVisible ? topBarInset : statusBarHeight)
+        case .islandRing, .islandRingOnStop:
+            let isShown = resolvedStyle == .islandRing ? !isToolbarVisible : isPopUpShown
+            IslandProgressRing(model: model, isShown: isShown)
+                .opacity(isShown ? 1 : 0)
+        case .percentTopTrailing:
+            ProgressPill(model: model)
+                .padding(.trailing, 16)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .offset(y: statusBarHeight + 8)
+                .opacity(isPopUpShown ? 1 : 0)
+                .scaleEffect(isPopUpShown ? 1 : 0.8, anchor: .trailing)
+        case .percentAtScrollIndicator:
+            ProgressPillAtScrollIndicator(model: model, top: statusBarHeight + 8)
+                .opacity(isPopUpShown ? 1 : 0)
+                .offset(x: isPopUpShown ? 0 : 20)
+        }
+    }
+}
+
+/// The reading progress in percent.
+@available(iOS 26.0, *)
+struct ProgressPill: View {
+    let model: ReadingProgressModel
+
+    var body: some View {
+        Text(model.value, format: .percent.precision(.fractionLength(0)))
+            .font(.footnote.weight(.semibold).monospacedDigit())
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .glassEffect(.regular, in: .capsule)
+    }
+}
+
+/// Places the pill next to the scroll indicator, which moves with the progress.
+@available(iOS 26.0, *)
+struct ProgressPillAtScrollIndicator: View {
+    let model: ReadingProgressModel
+    let top: Double
+
+    // Keeps the pill clear of the bottom edge at 100 percent
+    private static let bottomClearance: Double = 60
+
+    var body: some View {
+        GeometryReader { proxy in
+            let travel = max(proxy.size.height - top - Self.bottomClearance, 0)
+            ProgressPill(model: model)
+                .padding(.trailing, 12)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .offset(y: top + travel * model.value)
+        }
+    }
+}

@@ -1,104 +1,107 @@
-# Readeck iOS App
+<div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<img src="readeck/Assets.xcassets/AppIcon.appiconset/512.png" width="128" alt="Readeck for iOS app icon" />
 
-A native iOS client for [readeck](https://readeck.org) bookmark management.
+# Readeck for iOS
 
-The official repository is on Codeberg:
-https://codeberg.org/readeck/readeck
+**Save the story, cut the clutter.**
 
-## Download
+The native iPhone and iPad app for [Readeck](https://readeck.org), the self-hosted read-it-later service.
+Save articles from anywhere, read them distraction free, and take them offline.
 
-### App Store (Stable Releases)
-<a href="https://apps.apple.com/de/app/readeck/id6748764703">
-  <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" width="200">
-</a>
+[![Download on the App Store](https://img.shields.io/badge/App%20Store-Download-0D5866?style=for-the-badge&logo=appstore&logoColor=white)](https://apps.apple.com/app/readeck/id6748764703)
+[![Join the TestFlight beta](https://img.shields.io/badge/TestFlight-Join%20the%20beta-4AB7D6?style=for-the-badge&logo=apple&logoColor=white)](https://testflight.apple.com/join/cV55mKsR)
 
-### TestFlight Beta Access (Early Releases)
-[Join the Readeck Beta on TestFlight](https://testflight.apple.com/join/cV55mKsR)
+[![App Store version](https://img.shields.io/itunes/v/6748764703?label=App%20Store&color=4AB7D6)](https://apps.apple.com/app/readeck/id6748764703)
+[![Platform](https://img.shields.io/badge/iPhone%20%7C%20iPad-iOS%2018.1%2B-000000?logo=apple&logoColor=white)](#getting-started)
+[![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white)](#getting-started)
+[![Readeck](https://img.shields.io/badge/Readeck-self--hosted-0D5866)](https://readeck.org)
+[![MIT License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-For early access to new features and beta versions (use with caution). To participate, simply install TestFlight from the App Store and open the link above on your iPhone, iPad, or Mac. This early version lets you explore all core features before the official release. Your feedback is incredibly valuable and will help shape the final app.
+<br />
 
-What to test:
-- See the feature list below for an overview of what you can try out.
-- For details and recent changes, please refer to the release notes in TestFlight or the [Release Notes](./readeck/UI/Resources/RELEASE_NOTES.md).
+<img src="screenshots/iphone_1.png" width="160" alt="See all your bookmarks" />
+<img src="screenshots/iphone_3.png" width="160" alt="Read articles and track your progress" />
+<img src="screenshots/iphone_4.png" width="160" alt="Save from any app with the share extension" />
+<img src="screenshots/iphone_5.png" width="160" alt="Personalize the app" />
+<img src="screenshots/iphone_6.png" width="160" alt="Sync and read offline" />
 
-Please report any bugs, crashes, or suggestions directly through TestFlight, or email me at ilhallak@gmail.com. Thank you for helping make Readeck better!
+</div>
 
-If you are interested in joining the internal beta, please contact me directly at mooonki:matrix.org.
+## Why Readeck for iOS
 
-## Screenshots
+- **Made for reading.** A clean reader with your font, size, margins and color theme, and progress that follows you.
+- **Save from anywhere.** The share extension adds a page from Safari or any other app in two taps.
+- **Works offline.** Articles are cached on the device, so the train or the plane is no problem.
+- **Your server, your data.** The app only talks to your own Readeck server, no tracking, no third party account.
 
-### iPhone
+## Features
 
-<p align="center">  
-  <img src="screenshots/iphone_1.png" height="400" alt="iPhone Screenshot 1">
-  <img src="screenshots/iphone_2.png" height="400" alt="iPhone Screenshot 2">
-  <img src="screenshots/iphone_3.png" height="400" alt="iPhone Screenshot 3">
-  <img src="screenshots/iphone_4.png" height="400" alt="iPhone Screenshot 4">
-  <img src="screenshots/iphone_5.png" height="400" alt="iPhone Screenshot 5">
-</p>
+**Reading**
+- Classic and modern reader, with progress as a line, a ring around the Dynamic Island or a percent pill
+- Fonts, text size, margins, line height, 7 color themes and custom CSS
+- Highlights and annotations, tap a highlight to remove it, shake to undo
+- Export any article as PDF, share a public Readeck link or have your server send it by email
+- Choose what happens after archiving: stay, open the next article or go back to the list
 
-### iPad
+**Library**
+- All, Unread, Favorites, Archive, Articles, Videos and Pictures
+- Search, labels and swipe actions, fast even with thousands of labels
+- Optional unread count on the app icon
+- Full iPad support with a multi column split view
 
-<p align="center">  
-  <img src="screenshots/ipad_1.jpg" height="400" alt="iPad Screenshot 1">
-  <img src="screenshots/ipad_2.jpg" height="400" alt="iPad Screenshot 2">
-  <img src="screenshots/ipad_3.jpg" height="400" alt="iPad Screenshot 3">
-  <img src="screenshots/ipad_4.jpg" height="400" alt="iPad Screenshot 4">
-  <img src="screenshots/ipad_5.jpg" height="400" alt="iPad Screenshot 5">
-</p>
+**Sync and offline**
+- Offline reading with cached images, saved articles open instantly
+- Bookmarks saved while the server is unreachable sync once it is back
+- OAuth login, VPN and private network support (for example Tailscale), self-signed certificates
+- Custom HTTP headers for setups behind an auth proxy
 
+Available in English, German and Swedish.
+See the [release notes](readeck/UI/Resources/RELEASE_NOTES.md) for what landed in each version.
 
-## Core Features
+<details>
+<summary><b>iPad screenshots</b></summary>
 
-- Browse and manage bookmarks (All, Unread, Favorites, Archive, Article, Videos, Pictures)
-- Share Extension for adding URLs from Safari and other apps
-- Swipe actions for quick bookmark management
-- Native iOS design with Dark Mode support
-- Full iPad Support with Multi-Column Split View
-- Font Customization
-- Article View with Reading Time and Word Count
-- Search functionality
-- Support for reading progress
-- Save bookmarks when server is unavailable and sync when reconnected
+<br />
 
-## Configuration
+<img src="screenshots/ipad_1.jpg" width="400" alt="iPad Screenshot 1" />
+<img src="screenshots/ipad_2.jpg" width="400" alt="iPad Screenshot 2" />
+<img src="screenshots/ipad_3.jpg" width="400" alt="iPad Screenshot 3" />
+<img src="screenshots/ipad_4.jpg" width="400" alt="iPad Screenshot 4" />
 
-After installing the app:
+</details>
 
-1. Open the readeck app
-2. Enter your readeck server URL and credentials
-3. The app will automatically load your bookmarks
+## Getting started
 
-Notice: Local Network Addresses are supported. If you use external Domains, you need to add a HTTPS Certificate to your readeck server. Apple does not allow to use HTTP on iOS for external domains in release versions. If you want to use HTTP, you are free to use the beta version of the app, where the HTTP is supported.
+1. Install the app from the [App Store](https://apps.apple.com/app/readeck/id6748764703), or join the [TestFlight beta](https://testflight.apple.com/join/cV55mKsR) for early access to new features
+2. Enter the URL of your Readeck server and sign in
+3. Your bookmarks load right away
 
-### Custom HTTP Headers
+To save a page, share it from Safari or any other app and pick Readeck in the share sheet.
 
-The app supports custom HTTP headers for advanced configurations such as proxy authentication. 
-A common scenario is when serving Readeck behind something like Pangolin.
-These headers will be included in all API requests to your server.
+<details>
+<summary><b>Server setup notes</b></summary>
 
-**Note:** Content-Type and Authorization headers are protected and cannot be customized, as they are managed automatically by the app for proper API communication.
+<br />
 
-## Share Extension
+Local network and VPN addresses (for example Tailscale) also work over plain HTTP and with self-signed certificates.
+For a public domain, your Readeck server needs HTTPS, since iOS does not allow plain HTTP there.
 
-The app includes a Share Extension that allows adding bookmarks directly from Safari:
+Custom HTTP headers are sent with every API request, which helps when Readeck runs behind a proxy like Pangolin.
+`Content-Type` and `Authorization` are managed by the app and cannot be overridden.
 
-1. Share any webpage in Safari
-2. Select "readeck" from the share sheet
-3. Enter a title if you want and hit save
-4. The bookmark is automatically added to your collection
+</details>
 
-## Versions
+## Feedback and contributing
 
-[see Release Notes](./readeck/UI/Resources/RELEASE_NOTES.md)
+Bugs, crashes and ideas are welcome through TestFlight, as an issue, or by email at hi@ilyashallak.de.
+Pull requests too, see [Contribute.md](Contribute.md) for how to get started.
 
+The Readeck server itself lives on [Codeberg](https://codeberg.org/readeck/readeck).
 
-## Contributing
+## License
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+MIT, see [LICENSE](LICENSE).
+
+Made by [Ilyas Hallak](https://ilyashallak.de).
+More about the app on [ilyashallak.de/readeck](https://ilyashallak.de/readeck/).

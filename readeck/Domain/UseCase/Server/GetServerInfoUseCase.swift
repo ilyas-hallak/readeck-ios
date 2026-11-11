@@ -6,7 +6,7 @@
 
 import Foundation
 
-protocol PGetServerInfoUseCase {
+protocol PGetServerInfoUseCase: Sendable {
     func execute(endpoint: String?) async throws -> ServerInfo
 }
 

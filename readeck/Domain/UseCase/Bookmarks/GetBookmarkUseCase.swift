@@ -1,6 +1,6 @@
 import Foundation
 
-protocol PGetBookmarkUseCase {
+protocol PGetBookmarkUseCase: Sendable {
     func execute(id: String) async throws -> BookmarkDetail
 }
 
