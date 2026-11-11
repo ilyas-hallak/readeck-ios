@@ -2,10 +2,16 @@ import Foundation
 import Testing
 @testable import readeck
 
-@Suite("SettingsServerViewModel login method")
+@Suite("SettingsServerViewModel login method", .serialized)
 @MainActor
-struct SettingsServerViewModelTests {
+final class SettingsServerViewModelTests {
     private let factory = TestUseCaseFactory()
+    // The view model writes custom headers to the real keychain, so put the old value back
+    private let savedHeaders = KeychainHelper.shared.loadCustomHeaders()
+
+    deinit {
+        KeychainHelper.shared.saveCustomHeaders(savedHeaders ?? [:])
+    }
 
     @Test("failed server check shows an error and no login method")
     func failedServerCheck() async {
@@ -55,6 +61,19 @@ struct SettingsServerViewModelTests {
 
         #expect(viewModel.serverRequiresOAuth == false)
         #expect(viewModel.errorMessage != nil)
+    }
+
+    @Test("a new password login attempt clears the OAuth hint of the last one")
+    func retryClearsOAuthHint() async {
+        factory.mockLogin.result = .failure(APIError.serverError(401))
+        let viewModel = makeViewModel()
+        viewModel.serverRequiresOAuth = true
+        viewModel.username = "user"
+        viewModel.password = "wrong"
+
+        await viewModel.saveServerSettings()
+
+        #expect(viewModel.serverRequiresOAuth == false)
     }
 
     private func makeViewModel() -> SettingsServerViewModel {

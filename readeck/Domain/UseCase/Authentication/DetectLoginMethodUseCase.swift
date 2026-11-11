@@ -7,8 +7,6 @@ protocol PDetectLoginMethodUseCase: Sendable {
 }
 
 final class DetectLoginMethodUseCase: PDetectLoginMethodUseCase {
-    private static let oauthFeature = "oauth"
-
     private let repository: PServerInfoRepository
 
     init(repository: PServerInfoRepository) {
@@ -24,7 +22,6 @@ final class DetectLoginMethodUseCase: PDetectLoginMethodUseCase {
             return .password
         }
 
-        let hasOAuth = capabilities.features.contains(Self.oauthFeature)
-        return hasOAuth || !capabilities.canUsePasswordLogin ? .oauth : .password
+        return capabilities.prefersOAuthLogin ? .oauth : .password
     }
 }

@@ -4,9 +4,9 @@ import Testing
 
 @Suite("DetectLoginMethodUseCase")
 struct DetectLoginMethodUseCaseTests {
-    @Test("server with the oauth feature uses OAuth")
+    @Test("server with the oauth feature uses OAuth while it still has password login")
     func oauthFeature() async throws {
-        let useCase = makeUseCase(.success(ServerInfo(version: "0.23.5", isReachable: true, features: ["oauth"])))
+        let useCase = makeUseCase(.success(ServerInfo(version: "0.21.0", isReachable: true, features: ["oauth"])))
 
         #expect(try await useCase.execute(endpoint: "http://192.168.1.205:8000") == .oauth)
     }
@@ -33,14 +33,22 @@ struct DetectLoginMethodUseCaseTests {
     }
 
     @Test("unreachable server is an error, not a reason to use the password", arguments: [
-        URLError(.timedOut) as Error,
-        URLError(.notConnectedToInternet) as Error,
-        APIError.serverError(502) as Error
+        URLError(.timedOut),
+        URLError(.notConnectedToInternet)
     ])
-    func unreachableServer(error: Error) async {
+    func unreachableServer(error: URLError) async {
         let useCase = makeUseCase(.failure(error))
 
-        await #expect(throws: (any Error).self) {
+        await #expect(throws: error) {
+            _ = try await useCase.execute(endpoint: "http://192.168.1.205:8000")
+        }
+    }
+
+    @Test("server error is passed on, not a reason to use the password")
+    func serverError() async {
+        let useCase = makeUseCase(.failure(APIError.serverError(502)))
+
+        await #expect(throws: APIError.serverError(502)) {
             _ = try await useCase.execute(endpoint: "http://192.168.1.205:8000")
         }
     }
