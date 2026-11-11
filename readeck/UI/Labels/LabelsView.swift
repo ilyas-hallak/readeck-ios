@@ -6,7 +6,7 @@ struct LabelsView: View {
     @Binding var selectedTag: BookmarkLabel?
 
     init(viewModel: LabelsViewModel = LabelsViewModel(), selectedTag: Binding<BookmarkLabel?>) {
-        self.viewModel = viewModel
+        self._viewModel = State(initialValue: viewModel)
         self._selectedTag = selectedTag
     }
 
