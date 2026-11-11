@@ -47,6 +47,7 @@ struct AddBookmarkView: View {
                     Button("Done") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
+                    .accessibilityIdentifier(AccessibilityID.AddBookmark.keyboardDoneButton)
                 }
             }
             .ignoresSafeArea(.keyboard)

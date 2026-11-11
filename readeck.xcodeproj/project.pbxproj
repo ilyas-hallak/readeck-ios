@@ -70,6 +70,7 @@
 		004F78962C51C3A61A09A657 /* Exceptions for "URLShare" folder in "URLShareTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AccessibilityIdentifiers.swift,
 				OfflineBookmarkManager.swift,
 				ShareExtensionServerCheck.swift,
 				SimpleAPI.swift,

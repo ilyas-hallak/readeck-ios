@@ -1,0 +1,48 @@
+appId: de.ilyashallak.readeck
+---
+# Adds a bookmark through the UI and tags it with this run's e2e label so
+# scripts/e2e.sh can clean it up afterwards, same as the bookmarks it seeds
+# directly via the API.
+- launchApp:
+    clearState: true
+    arguments:
+      e2eEndpoint: "${E2E_ENDPOINT}"
+      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
+      e2eOAuthClientId: "${E2E_CLIENT_ID}"
+- runFlow:
+    when:
+      visible:
+        id: "releaseNotes.doneButton"
+    commands:
+      - tapOn:
+          id: "releaseNotes.doneButton"
+- tapOn:
+    id: "bookmarks.addButton"
+- tapOn:
+    id: "addBookmark.urlField"
+- inputText: "https://example.com"
+- tapOn:
+    id: "labels.searchField"
+- inputText: "${E2E_LABEL}"
+- runFlow:
+    when:
+      visible:
+        id: "labels.addCustomTagButton"
+    commands:
+      - tapOn:
+          id: "labels.addCustomTagButton"
+- runFlow:
+    when:
+      visible:
+        id: "labels.chip.${E2E_LABEL}"
+    commands:
+      - tapOn:
+          id: "labels.chip.${E2E_LABEL}"
+- tapOn:
+    id: "addBookmark.keyboardDoneButton"
+- tapOn:
+    id: "addBookmark.saveButton"
+- assertNotVisible:
+    id: "addBookmark.saveButton"
+- assertVisible:
+    id: "bookmarks.list"

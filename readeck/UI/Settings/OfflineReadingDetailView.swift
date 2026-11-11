@@ -127,6 +127,7 @@ struct OfflineReadingDetailView: View {
                         ) {
                             CachedArticlesPreviewView()
                         }
+                        .accessibilityIdentifier(AccessibilityID.Settings.previewCachedArticlesRow)
                     }
                 } header: {
                     Text("Synchronization".localized)

@@ -1,0 +1,35 @@
+appId: de.ilyashallak.readeck
+---
+# Regression test for cb#39: archiving one unread bookmark used to make other
+# unread bookmarks disappear from the list until you left and came back.
+# scripts/e2e.sh seeds two unread, e2e-labelled bookmarks before this runs and
+# passes their ids as E2E_BOOKMARK_A_ID / E2E_BOOKMARK_B_ID.
+- launchApp:
+    clearState: true
+    arguments:
+      e2eEndpoint: "${E2E_ENDPOINT}"
+      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
+      e2eOAuthClientId: "${E2E_CLIENT_ID}"
+- runFlow:
+    when:
+      visible:
+        id: "releaseNotes.doneButton"
+    commands:
+      - tapOn:
+          id: "releaseNotes.doneButton"
+- tapOn:
+    id: "bookmarks.tab.unread"
+- assertVisible:
+    id: "bookmarks.row.${E2E_BOOKMARK_A_ID}"
+- assertVisible:
+    id: "bookmarks.row.${E2E_BOOKMARK_B_ID}"
+- swipe:
+    from:
+      id: "bookmarks.row.${E2E_BOOKMARK_A_ID}"
+    direction: RIGHT
+- tapOn:
+    id: "bookmarks.swipe.archive"
+- assertNotVisible:
+    id: "bookmarks.row.${E2E_BOOKMARK_A_ID}"
+- assertVisible:
+    id: "bookmarks.row.${E2E_BOOKMARK_B_ID}"

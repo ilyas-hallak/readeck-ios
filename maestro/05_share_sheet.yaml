@@ -1,0 +1,33 @@
+appId: de.ilyashallak.readeck
+---
+# Opens the reader's share sheet and checks the options render. Doesn't follow
+# through on an option: that would hand off to system UI (Mail, the share
+# sheet) Maestro can't drive reliably.
+#
+# Uses bookmark B, not A: flow 03 archives bookmark A, and flows in this
+# suite share the same two seeded bookmarks and run against the same demo
+# account state, so this one needs the bookmark 03 leaves untouched.
+- launchApp:
+    clearState: true
+    arguments:
+      e2eEndpoint: "${E2E_ENDPOINT}"
+      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
+      e2eOAuthClientId: "${E2E_CLIENT_ID}"
+- runFlow:
+    when:
+      visible:
+        id: "releaseNotes.doneButton"
+    commands:
+      - tapOn:
+          id: "releaseNotes.doneButton"
+- tapOn:
+    id: "bookmarks.row.${E2E_BOOKMARK_B_ID}"
+- tapOn:
+    id: "reader.menuButton"
+- tapOn:
+    id: "reader.menu.share"
+- assertVisible:
+    id: "shareSheet.option.readeckLink"
+- assertVisible:
+    id: "shareSheet.option.originalLink"
+- back

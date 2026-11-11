@@ -1,0 +1,22 @@
+appId: de.ilyashallak.readeck
+---
+# Smoke check: a pre-authenticated launch lands straight on the bookmark list.
+- launchApp:
+    clearState: true
+    arguments:
+      e2eEndpoint: "${E2E_ENDPOINT}"
+      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
+      e2eOAuthClientId: "${E2E_CLIENT_ID}"
+- runFlow:
+    when:
+      visible:
+        id: "releaseNotes.doneButton"
+    commands:
+      - tapOn:
+          id: "releaseNotes.doneButton"
+- assertVisible:
+    id: "bookmarks.tab.all"
+- assertVisible:
+    id: "bookmarks.list"
+- assertVisible:
+    id: "bookmarks.addButton"

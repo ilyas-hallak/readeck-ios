@@ -19,6 +19,7 @@ enum AccessibilityID {
         static let titleField = "addBookmark.titleField"
         static let saveButton = "addBookmark.saveButton"
         static let closeButton = "addBookmark.closeButton"
+        static let keyboardDoneButton = "addBookmark.keyboardDoneButton"
     }
 
     enum Reader {
@@ -47,5 +48,10 @@ enum AccessibilityID {
         static let syncNowButton = "settings.offlineReading.syncNowButton"
         static let offlineReadingRow = "settings.offlineReading.row"
         static let simulateOfflineToggle = "settings.offlineReading.simulateOfflineToggle"
+        static let previewCachedArticlesRow = "settings.offlineReading.previewCachedArticlesRow"
+    }
+
+    enum ReleaseNotes {
+        static let doneButton = "releaseNotes.doneButton"
     }
 }
