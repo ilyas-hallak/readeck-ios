@@ -159,6 +159,7 @@ struct OfflineReadingDetailView: View {
                                     }
                                 }
                             }
+                            .accessibilityIdentifier(AccessibilityID.Settings.simulateOfflineToggle)
                         }
                     } header: {
                         Text("Debug".localized)

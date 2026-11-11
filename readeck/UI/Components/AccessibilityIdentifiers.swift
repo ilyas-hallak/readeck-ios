@@ -37,4 +37,15 @@ enum AccessibilityID {
         static let addCustomTagButton = "labels.addCustomTagButton"
         static func chip(_ name: String) -> String { "labels.chip.\(name)" }
     }
+
+    enum More {
+        static func row(_ tab: SidebarTab) -> String { "more.row.\(tab)" }
+    }
+
+    enum Settings {
+        static let enableOfflineReadingToggle = "settings.offlineReading.enableToggle"
+        static let syncNowButton = "settings.offlineReading.syncNowButton"
+        static let offlineReadingRow = "settings.offlineReading.row"
+        static let simulateOfflineToggle = "settings.offlineReading.simulateOfflineToggle"
+    }
 }

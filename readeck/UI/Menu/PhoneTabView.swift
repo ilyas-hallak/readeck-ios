@@ -134,6 +134,7 @@ struct PhoneTabView: View {
                     }
                 }
                 .badge(offlineBookmarksBadgeCount)
+                .accessibilityIdentifier(AccessibilityID.Bookmarks.tab(.search))
             } else {
                 Tab(value: SidebarTab.settings) {
                     NavigationStack(path: $morePath) {
@@ -250,6 +251,7 @@ struct PhoneTabView: View {
                 } label: {
                     Label(tab.label, systemImage: tab.systemImage)
                 }
+                .accessibilityIdentifier(AccessibilityID.More.row(tab))
                 .listRowBackground(listBackground)
             }
 
