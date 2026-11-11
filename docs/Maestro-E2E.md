@@ -24,6 +24,8 @@ The demo server only supports OAuth, and Maestro can't reliably drive the system
 `scripts/e2e.sh` runs the OAuth authorization code flow itself with `curl` (register a client, submit the login form, approve the consent screen, exchange the code), the same steps a human would go through, then launches the app with the resulting token as a Debug-only launch argument.
 `E2ETestSupport` (in the app, compiled out of Release builds) picks it up before the first render and writes straight to the keychain, so every flow starts already logged in.
 The OAuth login screen itself stays a manual device check, same as the Local Network prompt.
+The access token never expires on its own (Readeck doesn't send `expires_in`), so `scripts/e2e.sh` revokes it via `/api/oauth/revoke` when it exits, even on failure.
+The dynamically-registered OAuth client isn't revoked separately: Readeck only keeps client registrations in a 10-minute cache, not persisted storage, so they expire on their own.
 
 ## Test data
 

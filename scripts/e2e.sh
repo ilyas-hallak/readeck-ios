@@ -70,6 +70,11 @@ cleanup() {
     if [ -n "$ACCESS_TOKEN" ]; then
         log "Cleaning up test data (label: $E2E_LABEL)"
         delete_e2e_bookmarks || echo "warning: cleanup failed, check the demo server for leftover '$E2E_LABEL' bookmarks" >&2
+        # Readeck's OAuth tokens never expire on their own (no expires_in), so a
+        # leftover one stays valid on the demo account indefinitely. The
+        # dynamically-registered client isn't a lasting concern: Readeck only
+        # keeps it in a 10-minute cache, not persisted storage.
+        revoke_token || echo "warning: token revoke failed, check the demo account's connected apps for a leftover 'Readeck iOS E2E' entry" >&2
     fi
     rm -rf "$WORKDIR"
     exit "$exit_code"
@@ -177,6 +182,15 @@ print(qs.get('code', [''])[0])
         -d "{\"grant_type\":\"authorization_code\",\"client_id\":\"$CLIENT_ID\",\"code\":\"$code\",\"code_verifier\":\"$verifier\",\"redirect_uri\":\"${OAUTH_REDIRECT_URI}\"}")"
 
     ACCESS_TOKEN="$(echo "$token_json" | json_get "d['access_token']")"
+}
+
+# Self-revocation (RFC 7009-style): authenticate with the token being revoked
+# and name that same token in the body. Readeck checks the two match.
+revoke_token() {
+    curl -sf -X POST "$DEMO_SERVER/api/oauth/revoke" \
+        -H "Authorization: Bearer $ACCESS_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"token\":\"$ACCESS_TOKEN\"}" >/dev/null
 }
 
 api() {
