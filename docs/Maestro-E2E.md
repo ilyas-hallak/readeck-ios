@@ -49,3 +49,4 @@ Add a flow once it has.
 - A fresh install always shows a "What's New" sheet (`VersionManager`), so every flow dismisses it first via `releaseNotes.doneButton`.
 - Tapping a `Toggle`'s accessibility identifier dead-center lands on its label text, not the switch: use `point: "90%,50%"` to hit the switch.
 - The new iOS 26 tab bar's "Search" tab replaces the whole tab bar with a search field while active; the other tabs aren't reachable from there without leaving through a regular list screen first.
+- `inputText` writes to the simulator's pasteboard via CoreSimulatorBridge. The next screen that reads the clipboard (e.g. the add-bookmark screen's clipboard check) can trigger iOS's "Allow Paste" system dialog, which once shown persists across app relaunches for the rest of the simulator's boot session. Every flow dismisses it defensively right after the release-notes sheet.
