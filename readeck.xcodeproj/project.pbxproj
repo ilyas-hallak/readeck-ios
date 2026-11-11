@@ -32,13 +32,6 @@
 			remoteGlobalIDString = 5D45F9C72DF858680048D5B8;
 			remoteInfo = readeck;
 		};
-		5D45F9E92DF8586A0048D5B8 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5D45F9C02DF858680048D5B8 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 5D45F9C72DF858680048D5B8;
-			remoteInfo = readeck;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -69,7 +62,6 @@
 		5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = URLShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9C82DF858680048D5B8 /* readeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = readeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = readeckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6D21C83CCC049BB1E7E1CA7 /* URLShareTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = URLShareTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0C0D569DFD3B5483557CD50 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
@@ -219,11 +211,6 @@
 			path = readeckTests;
 			sourceTree = "<group>";
 		};
-		5D45F9EB2DF8586A0048D5B8 /* readeckUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = readeckUITests;
-			sourceTree = "<group>";
-		};
 		C8442F1795FF22F013BE0B9B /* URLShareTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = URLShareTests;
@@ -253,13 +240,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5D45F9DB2DF8586A0048D5B8 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5D45F9E52DF8586A0048D5B8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -298,7 +278,6 @@
 			children = (
 				5D45F9CA2DF858680048D5B8 /* readeck */,
 				5D45F9E12DF8586A0048D5B8 /* readeckTests */,
-				5D45F9EB2DF8586A0048D5B8 /* readeckUITests */,
 				5D2B7FB02DFA27A400EBDB2B /* URLShare */,
 				5D45F9C92DF858680048D5B8 /* Products */,
 				377752A5ABDC44A73B21F1B9 /* Frameworks */,
@@ -311,7 +290,6 @@
 			children = (
 				5D45F9C82DF858680048D5B8 /* readeck.app */,
 				5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */,
-				5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */,
 				5D2B7FAF2DFA27A400EBDB2B /* URLShare.appex */,
 				B6D21C83CCC049BB1E7E1CA7 /* URLShareTests.xctest */,
 			);
@@ -395,27 +373,6 @@
 			productReference = 5D45F9DE2DF8586A0048D5B8 /* readeckTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		5D45F9E72DF8586A0048D5B8 /* readeckUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5D45F9F82DF8586A0048D5B8 /* Build configuration list for PBXNativeTarget "readeckUITests" */;
-			buildPhases = (
-				5D45F9E42DF8586A0048D5B8 /* Sources */,
-				5D45F9E52DF8586A0048D5B8 /* Frameworks */,
-				5D45F9E62DF8586A0048D5B8 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				5D45F9EA2DF8586A0048D5B8 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				5D45F9EB2DF8586A0048D5B8 /* readeckUITests */,
-			);
-			name = readeckUITests;
-			productName = readeckUITests;
-			productReference = 5D45F9E82DF8586A0048D5B8 /* readeckUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		CBCF65D6F1178F453B97EB43 /* URLShareTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 67AE5D586EE73295D4B99E70 /* Build configuration list for PBXNativeTarget "URLShareTests" */;
@@ -456,10 +413,6 @@
 						CreatedOnToolsVersion = 16.1;
 						TestTargetID = 5D45F9C72DF858680048D5B8;
 					};
-					5D45F9E72DF8586A0048D5B8 = {
-						CreatedOnToolsVersion = 16.1;
-						TestTargetID = 5D45F9C72DF858680048D5B8;
-					};
 				};
 			};
 			buildConfigurationList = 5D45F9C32DF858680048D5B8 /* Build configuration list for PBXProject "readeck" */;
@@ -487,7 +440,6 @@
 			targets = (
 				5D45F9C72DF858680048D5B8 /* readeck */,
 				5D45F9DD2DF8586A0048D5B8 /* readeckTests */,
-				5D45F9E72DF8586A0048D5B8 /* readeckUITests */,
 				5D2B7FAE2DFA27A400EBDB2B /* URLShare */,
 				CBCF65D6F1178F453B97EB43 /* URLShareTests */,
 			);
@@ -510,13 +462,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5D45F9DC2DF8586A0048D5B8 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5D45F9E62DF8586A0048D5B8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -583,13 +528,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5D45F9E42DF8586A0048D5B8 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -602,11 +540,6 @@
 			isa = PBXTargetDependency;
 			target = 5D45F9C72DF858680048D5B8 /* readeck */;
 			targetProxy = 5D45F9DF2DF8586A0048D5B8 /* PBXContainerItemProxy */;
-		};
-		5D45F9EA2DF8586A0048D5B8 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5D45F9C72DF858680048D5B8 /* readeck */;
-			targetProxy = 5D45F9E92DF8586A0048D5B8 /* PBXContainerItemProxy */;
 		};
 		5DA241FF2E17C3CE007531C3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -938,50 +871,6 @@
 			};
 			name = Release;
 		};
-		5D45F9F92DF8586A0048D5B8 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 68;
-				DEVELOPMENT_TEAM = 8J69P655GN;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
-				MACOSX_DEPLOYMENT_TARGET = 15.1;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.readeckUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = readeck;
-				XROS_DEPLOYMENT_TARGET = 2.1;
-			};
-			name = Debug;
-		};
-		5D45F9FA2DF8586A0048D5B8 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 68;
-				DEVELOPMENT_TEAM = 8J69P655GN;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
-				MACOSX_DEPLOYMENT_TARGET = 15.1;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = de.ilyashallak.readeckUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = readeck;
-				XROS_DEPLOYMENT_TARGET = 2.1;
-			};
-			name = Release;
-		};
 		923BC3116D37E441E48DFFB5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1050,15 +939,6 @@
 			buildConfigurations = (
 				5D45F9F62DF8586A0048D5B8 /* Debug */,
 				5D45F9F72DF8586A0048D5B8 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		5D45F9F82DF8586A0048D5B8 /* Build configuration list for PBXNativeTarget "readeckUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5D45F9F92DF8586A0048D5B8 /* Debug */,
-				5D45F9FA2DF8586A0048D5B8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
