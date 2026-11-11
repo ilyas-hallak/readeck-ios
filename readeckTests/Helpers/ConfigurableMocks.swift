@@ -206,6 +206,30 @@ class ConfigurableLogoutUseCase: PLogoutUseCase, @unchecked Sendable {
     }
 }
 
+final class ConfigurableAuthRepository: PAuthRepository, @unchecked Sendable {
+    var logoutError: Error?
+    private(set) var logoutCallCount = 0
+
+    func login(endpoint: String, username: String, password: String) async throws -> User {
+        User(id: "mock_user", token: "mock_token")
+    }
+
+    func logout() async throws {
+        logoutCallCount += 1
+        if let logoutError { throw logoutError }
+    }
+
+    func getCurrentSettings() async throws -> Settings? { nil }
+
+    func loginWithOAuth(endpoint: String, token: OAuthToken, clientId: String) async throws {}
+
+    func getAuthenticationMethod() async -> AuthenticationMethod? { nil }
+
+    func switchToClassicAuth(endpoint: String, username: String, password: String) async throws -> User {
+        User(id: "mock_user", token: "mock_token")
+    }
+}
+
 class ConfigurableUpdateUnreadBadgeUseCase: PUpdateUnreadBadgeUseCase, @unchecked Sendable {
     var refreshCount = 0
 

@@ -103,6 +103,10 @@ class TestMockAPI: PAPI {
     func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto {
         fatalError("Not implemented for tests")
     }
+
+    func revokeOAuthToken() async throws {
+        fatalError("Not implemented for tests")
+    }
 }
 
 // MARK: - Mock Token Provider
