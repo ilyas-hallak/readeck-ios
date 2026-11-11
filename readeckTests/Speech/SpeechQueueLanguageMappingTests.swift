@@ -4,9 +4,9 @@ import Testing
 @Suite("SpeechQueue language mapping Tests")
 @MainActor
 struct SpeechQueueLanguageMappingTests {
-    @Test("Portuguese articles resolve to the European voice locale")
-    func portugueseResolvesToEuropeanLocale() {
-        #expect(SpeechQueue.convertToBCP47("pt") == "pt-PT")
+    @Test("Portuguese articles keep resolving to the Brazilian voice locale")
+    func portugueseResolvesToBrazilianLocale() {
+        #expect(SpeechQueue.convertToBCP47("pt") == "pt-BR")
     }
 
     @Test("A BCP 47 code is passed through unchanged")

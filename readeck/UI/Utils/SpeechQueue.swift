@@ -64,7 +64,7 @@ final class SpeechQueue {
 
     // Convert ISO 639-1 language codes (e.g., "de", "en") to BCP 47 (e.g., "de-DE", "en-US")
     static func convertToBCP47(_ isoCode: String) -> String {
-        // Already a BCP 47 code (e.g. "en-US", "pt-PT")
+        // Already a BCP 47 code (e.g. "en-US", "pt-BR")
         if isoCode.contains("-") { return isoCode }
 
         let mapping: [String: String] = [
@@ -73,7 +73,7 @@ final class SpeechQueue {
             "es": "es-ES",
             "fr": "fr-FR",
             "it": "it-IT",
-            "pt": "pt-PT",
+            "pt": "pt-BR",
             "nl": "nl-NL",
             "ja": "ja-JP",
             "zh": "zh-CN",
