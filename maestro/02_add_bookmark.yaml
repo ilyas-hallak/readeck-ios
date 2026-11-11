@@ -18,6 +18,17 @@ appId: de.ilyashallak.readeck
           id: "releaseNotes.doneButton"
 - tapOn:
     id: "bookmarks.addButton"
+# The add-bookmark screen checks the clipboard on appear, which can trigger
+# iOS's "Allow Paste" system dialog the first time something else (here:
+# Maestro's own inputText, earlier in the suite) wrote to the pasteboard.
+# Left open, it blocks every subsequent tap, in this flow and the next one.
+- runFlow:
+    when:
+      visible:
+        text: "Einsetzen erlauben"
+    commands:
+      - tapOn:
+          text: "Einsetzen erlauben"
 - tapOn:
     id: "addBookmark.urlField"
 - inputText: "https://example.com"

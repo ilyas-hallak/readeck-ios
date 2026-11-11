@@ -35,10 +35,11 @@ ACCESS_TOKEN=""
 
 log() { echo "==> $*"; }
 
-# --- JAVA_HOME for Maestro: it needs a real JDK, which isn't `java` on PATH on a
-# fresh machine, only installed via `brew install openjdk`.
+# --- JAVA_HOME for Maestro: it needs a real JDK. `command -v java` isn't enough
+# to check for one: macOS ships a /usr/bin/java stub that's present on PATH but
+# errors out at runtime when no JDK is registered, so call it for real instead.
 setup_java() {
-    if command -v java >/dev/null 2>&1; then
+    if java -version >/dev/null 2>&1; then
         return
     fi
     local brew_openjdk

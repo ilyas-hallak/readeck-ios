@@ -14,6 +14,15 @@ appId: de.ilyashallak.readeck
     commands:
       - tapOn:
           id: "releaseNotes.doneButton"
+# A leftover iOS "Allow Paste" dialog from an earlier flow in the suite (see
+# 02_add_bookmark) would otherwise block every tap below.
+- runFlow:
+    when:
+      visible:
+        text: "Einsetzen erlauben"
+    commands:
+      - tapOn:
+          text: "Einsetzen erlauben"
 - assertVisible:
     id: "bookmarks.tab.all"
 - assertVisible:
