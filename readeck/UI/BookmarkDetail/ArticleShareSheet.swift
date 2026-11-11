@@ -21,6 +21,7 @@ struct ArticleShareSheet: View {
                         ShareOptionRow(option: option)
                     }
                     .buttonStyle(ShareOptionButtonStyle())
+                    .accessibilityIdentifier(AccessibilityID.ShareSheet.option(option))
                     .disabled(!isEnabled(option))
 
                     if option != options.last {

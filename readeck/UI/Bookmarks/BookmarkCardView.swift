@@ -23,7 +23,7 @@ struct BookmarkCardView: View {
     let swipeActionConfig: SwipeActionConfig
     let onSwipeAction: (SwipeAction, Bookmark) -> Void
     let onUndoDelete: ((String) -> Void)?
-    var onPlayNext: ((Bookmark) -> Void)? = nil
+    var onPlayNext: ((Bookmark) -> Void)?
 
     init(
         bookmark: Bookmark,
@@ -118,14 +118,14 @@ struct BookmarkCardView: View {
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: !swipeActionConfig.trailingActions.isEmpty) {
             if pendingDelete == nil {
-                ForEach(Array(swipeActionConfig.trailingActions.enumerated()), id: \.element) { index, action in
+                ForEach(Array(swipeActionConfig.trailingActions.enumerated()), id: \.element) { _, action in
                     swipeButton(for: action)
                 }
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: !swipeActionConfig.leadingActions.isEmpty) {
             if pendingDelete == nil {
-                ForEach(Array(swipeActionConfig.leadingActions.enumerated()), id: \.element) { index, action in
+                ForEach(Array(swipeActionConfig.leadingActions.enumerated()), id: \.element) { _, action in
                     swipeButton(for: action)
                 }
 
@@ -155,6 +155,7 @@ struct BookmarkCardView: View {
                 }
             }
             .tint(currentState == .archived ? .blue : .orange)
+            .accessibilityIdentifier(AccessibilityID.SwipeActionButton.id(.archive))
 
         case .favorite:
             Button {
@@ -164,6 +165,7 @@ struct BookmarkCardView: View {
                     .environment(\.symbolVariants, .none)
             }
             .tint(.pink)
+            .accessibilityIdentifier(AccessibilityID.SwipeActionButton.id(.favorite))
 
         case .delete:
             Button(role: .destructive) {
@@ -172,6 +174,7 @@ struct BookmarkCardView: View {
                 Label("Delete", systemImage: "trash")
             }
             .tint(.red)
+            .accessibilityIdentifier(AccessibilityID.SwipeActionButton.id(.delete))
 
         case .showTags:
             Button {
@@ -180,6 +183,7 @@ struct BookmarkCardView: View {
                 Label("Tags", systemImage: "tag")
             }
             .tint(.teal)
+            .accessibilityIdentifier(AccessibilityID.SwipeActionButton.id(.showTags))
 
         case .openInBrowser:
             Button {
@@ -188,6 +192,7 @@ struct BookmarkCardView: View {
                 Label("Open", systemImage: "safari")
             }
             .tint(.blue)
+            .accessibilityIdentifier(AccessibilityID.SwipeActionButton.id(.openInBrowser))
         }
     }
 

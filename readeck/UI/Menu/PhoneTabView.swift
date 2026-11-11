@@ -48,14 +48,18 @@ struct PhoneTabView: View {
             if #available(iOS 26.1, *) {
                 tabViewContent
                     .tabViewBottomAccessory(isEnabled: appSettings.enableTTS && speechPlayerViewModel.hasItems && !isPlayerDismissed) {
-                        MiniPlayerView(viewModel: speechPlayerViewModel, onTap: {
-                            isPlayerSheetPresented = true
-                        }, onClose: {
-                            // Closing the player ends playback; hiding it while the
-                            // voice keeps reading leaves no way to stop it.
-                            speechPlayerViewModel.stop()
-                            isPlayerDismissed = true
-                        })
+                        MiniPlayerView(
+                            viewModel: speechPlayerViewModel,
+                            onTap: {
+                                isPlayerSheetPresented = true
+                            },
+                            onClose: {
+                                // Closing the player ends playback; hiding it while the
+                                // voice keeps reading leaves no way to stop it.
+                                speechPlayerViewModel.stop()
+                                isPlayerDismissed = true
+                            }
+                        )
                     }
             } else {
                 GlobalPlayerContainerView(viewModel: speechPlayerViewModel, isPlayerDismissed: $isPlayerDismissed) {
@@ -82,7 +86,6 @@ struct PhoneTabView: View {
     @ViewBuilder
     private var tabViewContent: some View {
         TabView(selection: $selectedTab) {
-
             Tab(value: SidebarTab.all) {
                 NavigationStack(path: $allPath) {
                     tabView(for: .all)
@@ -90,6 +93,7 @@ struct PhoneTabView: View {
             } label: {
                 Label(SidebarTab.all.label, systemImage: SidebarTab.all.systemImage)
             }
+            .accessibilityIdentifier(AccessibilityID.Bookmarks.tab(.all))
 
             Tab(value: SidebarTab.unread) {
                 NavigationStack(path: $unreadPath) {
@@ -98,6 +102,7 @@ struct PhoneTabView: View {
             } label: {
                 Label(SidebarTab.unread.label, systemImage: SidebarTab.unread.systemImage)
             }
+            .accessibilityIdentifier(AccessibilityID.Bookmarks.tab(.unread))
 
             Tab(value: SidebarTab.favorite) {
                 NavigationStack(path: $favoritePath) {
@@ -106,6 +111,7 @@ struct PhoneTabView: View {
             } label: {
                 Label(SidebarTab.favorite.label, systemImage: SidebarTab.favorite.systemImage)
             }
+            .accessibilityIdentifier(AccessibilityID.Bookmarks.tab(.favorite))
 
             Tab(value: SidebarTab.archived) {
                 NavigationStack(path: $archivedPath) {
@@ -114,6 +120,7 @@ struct PhoneTabView: View {
             } label: {
                 Label(SidebarTab.archived.label, systemImage: SidebarTab.archived.systemImage)
             }
+            .accessibilityIdentifier(AccessibilityID.Bookmarks.tab(.archived))
 
             // iOS 26+: Dedicated search tab with role
             if #available(iOS 26, *) {
@@ -131,7 +138,6 @@ struct PhoneTabView: View {
                 Tab(value: SidebarTab.settings) {
                     NavigationStack(path: $morePath) {
                         VStack(spacing: 0) {
-
                             // Classic search bar for iOS 18
                             HStack {
                                 Image(systemName: "magnifyingglass")

@@ -2,7 +2,6 @@ import SwiftUI
 import CoreData
 
 struct ShareBookmarkView: View {
-    // swiftlint:disable:next swiftui_state_private
     @Bindable var viewModel: ShareBookmarkViewModel
     @State private var keyboardHeight: Double = 0
     @FocusState private var focusedField: AddBookmarkFieldFocus?
@@ -164,6 +163,7 @@ struct ShareBookmarkView: View {
             .frame(maxWidth: 420)
             .frame(maxWidth: .infinity, alignment: .center)
             .focused($focusedField, equals: .title)
+            .accessibilityIdentifier(AccessibilityID.ShareExtension.titleField)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -275,6 +275,7 @@ struct ShareBookmarkView: View {
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 32)
+        .accessibilityIdentifier(AccessibilityID.ShareExtension.saveButton)
         .disabled(viewModel.isSaving)
     }
 

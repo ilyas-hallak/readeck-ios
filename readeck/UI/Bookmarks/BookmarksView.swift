@@ -367,6 +367,7 @@ struct BookmarksView: View {
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
+                .accessibilityIdentifier(AccessibilityID.Bookmarks.row(bookmark.id))
                 .contextMenu {
                     if bookmark.readProgress > 0 {
                         Button(role: .destructive) {
@@ -401,6 +402,7 @@ struct BookmarksView: View {
             }
         }
         .listStyle(.plain)
+        .accessibilityIdentifier(AccessibilityID.Bookmarks.list)
         .background(listBackground)
         .scrollContentBackground(.hidden)
         .refreshable {
@@ -476,6 +478,7 @@ struct BookmarksView: View {
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
                 }
+                .accessibilityIdentifier(AccessibilityID.Bookmarks.addButton)
                 .padding(.trailing, 20)
                 .padding(.bottom, 20)
             }
