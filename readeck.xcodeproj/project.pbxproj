@@ -79,6 +79,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				OfflineBookmarkManager.swift,
+				ShareBookmarkViewModel.swift,
 				ShareExtensionServerCheck.swift,
 				SimpleAPI.swift,
 				SimpleAPIDTOs.swift,

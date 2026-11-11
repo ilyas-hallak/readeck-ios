@@ -2,7 +2,6 @@ import SwiftUI
 import CoreData
 
 struct ShareBookmarkView: View {
-    // swiftlint:disable:next swiftui_state_private
     @Bindable var viewModel: ShareBookmarkViewModel
     @State private var keyboardHeight: Double = 0
     @FocusState private var focusedField: AddBookmarkFieldFocus?
@@ -14,6 +13,24 @@ struct ShareBookmarkView: View {
     }
 
     var body: some View {
+        NavigationStack {
+            content
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            viewModel.cancel()
+                        } label: {
+                            Label("Cancel", systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                        }
+                        .keyboardShortcut(.cancelAction)
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         VStack(spacing: 0) {
             if !viewModel.isConfigured || viewModel.sessionExpired {
                 // Show setup required screen
