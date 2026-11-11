@@ -18,6 +18,9 @@ struct readeckApp: App {
     @State private var showDebugMenu = false
 
     init() {
+        #if DEBUG
+        E2ETestSupport.applyLaunchArgumentsIfNeeded()
+        #endif
         try? Tips.configure()
         markUpgradingUserForReaderTip()
     }
