@@ -254,21 +254,23 @@ struct OnboardingServerView: View {
                                 oauthFailed = false
                             }
                         } else if !showLoginFields {
-                            // Phase 1: Check server for OAuth support
-                            await viewModel.checkServerOAuthSupport()
-                            if viewModel.serverSupportsOAuth {
-                                // Try OAuth login
-                                await viewModel.loginWithOAuth()
-                                if viewModel.errorMessage != nil {
-                                    oauthFailed = true
-                                }
-                            } else {
-                                // No OAuth → show login fields for classic auth
+                            // Phase 1: Check which login the server supports.
+                            // On failure the error stays visible and Continue retries.
+                            switch await viewModel.checkLoginMethod() {
+                            case .oauth:
+                                await startOAuthLogin()
+                            case .password:
                                 showLoginFields = true
+                            case nil:
+                                break
                             }
                         } else {
                             // Phase 2: Classic login
                             await viewModel.saveServerSettings()
+                            if viewModel.serverRequiresOAuth {
+                                showLoginFields = false
+                                await startOAuthLogin()
+                            }
                         }
                     }
                 }) {
@@ -299,6 +301,13 @@ struct OnboardingServerView: View {
                     .foregroundColor(.secondary)
                 }
             }
+        }
+    }
+
+    private func startOAuthLogin() async {
+        await viewModel.loginWithOAuth()
+        if viewModel.errorMessage != nil {
+            oauthFailed = true
         }
     }
 }

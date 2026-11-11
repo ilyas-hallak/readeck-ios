@@ -25,6 +25,7 @@ protocol UseCaseFactory {
     func makeSaveCardLayoutUseCase() -> PSaveCardLayoutUseCase
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase
     func makeGetServerInfoUseCase() -> PGetServerInfoUseCase
+    func makeDetectLoginMethodUseCase() -> PDetectLoginMethodUseCase
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase
     func makeDeleteAnnotationUseCase() -> PDeleteAnnotationUseCase
     func makeSettingsRepository() -> PSettingsRepository
@@ -169,6 +170,10 @@ final class DefaultUseCaseFactory: UseCaseFactory {
 
     func makeGetServerInfoUseCase() -> PGetServerInfoUseCase {
         GetServerInfoUseCase(repository: serverInfoRepository)
+    }
+
+    func makeDetectLoginMethodUseCase() -> PDetectLoginMethodUseCase {
+        DetectLoginMethodUseCase(repository: serverInfoRepository)
     }
 
     func makeGetBookmarkAnnotationsUseCase() -> PGetBookmarkAnnotationsUseCase {

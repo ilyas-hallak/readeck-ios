@@ -118,6 +118,9 @@
     "Configure log levels and categories" : {
 
     },
+    "Could not reach the server: %@" : {
+
+    },
     "Critical" : {
 
     },

@@ -39,9 +39,17 @@ final class InfoApiClient: PInfoApiClient {
             throw APIError.invalidResponse
         }
 
+        guard httpResponse.statusCode != 404 else {
+            throw endpointNotAvailable(url)
+        }
+
         guard 200...299 ~= httpResponse.statusCode else {
             logger.logNetworkError(method: "GET", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
             throw APIError.serverError(httpResponse.statusCode)
+        }
+
+        guard !httpResponse.isHTMLPage else {
+            throw endpointNotAvailable(url)
         }
 
         logger.logNetworkRequest(method: "GET", url: url.absoluteString, statusCode: httpResponse.statusCode)
@@ -50,6 +58,11 @@ final class InfoApiClient: PInfoApiClient {
     }
 
     // MARK: - Private Helpers
+
+    private func endpointNotAvailable(_ url: URL) -> APIError {
+        logger.warning("Server has no /api/info at \(url.absoluteString)")
+        return .endpointNotAvailable
+    }
 
     private func resolveEndpoint(_ providedEndpoint: String?) async throws -> String {
         if let providedEndpoint {

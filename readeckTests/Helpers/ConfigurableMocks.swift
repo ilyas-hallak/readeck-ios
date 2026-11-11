@@ -237,6 +237,14 @@ class ConfigurableGetServerInfoUseCase: PGetServerInfoUseCase, @unchecked Sendab
     }
 }
 
+final class ConfigurableDetectLoginMethodUseCase: PDetectLoginMethodUseCase, @unchecked Sendable {
+    var result: Result<LoginMethod, Error> = .success(.oauth)
+
+    func execute(endpoint: String) async throws -> LoginMethod {
+        try result.get()
+    }
+}
+
 class ConfigurableCreateShareLinkUseCase: PCreateShareLinkUseCase, @unchecked Sendable {
     var result: Result<URL, Error> = .success(URL(string: "https://readeck.example.com/@b/abc")!)
     var lastBookmarkId: String?

@@ -165,3 +165,8 @@ So lässt sich das Fehlen von `POST /api/auth` ab 0.22.0 gegen eine laufende Ins
 Wichtig für den Client: `URLSession` folgt dem 303 automatisch, bekommt die HTML-Loginseite mit Status 200 und läuft dann in einen JSON-Decoding-Fehler.
 Der Nutzer sieht eine irreführende Formatfehlermeldung statt "Endpunkt nicht verfügbar".
 Deshalb muss der Content-Type der Antwort geprüft werden, bevor dekodiert wird.
+
+Umgesetzt für `GET /api/info` und `POST /api/auth`: eine 2xx-Antwort mit `text/html` (und bei `/api/info` ein 404) wird zu `APIError.endpointNotAvailable`.
+Die Login-Weiche (`DetectLoginMethodUseCase`) wertet nur diesen Fehler als "alter Server, Passwort-Login".
+Netzwerkfehler und 5xx beim Info-Check führen nicht mehr zum Passwort-Login, sondern zu einer Fehlermeldung mit erneutem Versuch.
+Hintergrund ist Codeberg-Issue #51: bei frischer Installation blockiert iOS die erste Anfrage ins lokale Netz, solange der Local-Network-Dialog offen ist.

@@ -25,6 +25,7 @@ class TestUseCaseFactory: UseCaseFactory {
     let mockExportArticlePDF = ConfigurableExportArticlePDFUseCase()
     let mockNetworkMonitor = MockNetworkMonitorUseCase()
     let mockGetServerInfo = ConfigurableGetServerInfoUseCase()
+    let mockDetectLoginMethod = ConfigurableDetectLoginMethodUseCase()
     let mockCreateShareLink = ConfigurableCreateShareLinkUseCase()
     let mockShareByEmail = ConfigurableShareByEmailUseCase()
     let mockSaveSettings = ConfigurableSaveSettingsUseCase()
@@ -39,6 +40,7 @@ class TestUseCaseFactory: UseCaseFactory {
     func makeCreateBookmarkUseCase() -> PCreateBookmarkUseCase { mockCreateBookmark }
     func makeCheckServerReachabilityUseCase() -> PCheckServerReachabilityUseCase { mockCheckReachability }
     func makeGetServerInfoUseCase() -> PGetServerInfoUseCase { mockGetServerInfo }
+    func makeDetectLoginMethodUseCase() -> PDetectLoginMethodUseCase { mockDetectLoginMethod }
     func makeGetCachedArticleUseCase() -> PGetCachedArticleUseCase { mockGetCachedArticle }
     func makeGetCachedBookmarksUseCase() -> PGetCachedBookmarksUseCase { mockGetCachedBookmarks }
     func makeGetCachedBookmarkDetailUseCase() -> PGetCachedBookmarkDetailUseCase { mockGetCachedBookmarkDetail }
