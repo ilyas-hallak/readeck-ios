@@ -295,7 +295,7 @@ final class BookmarkDetailViewModel {
         processArticleContent()
         self.summaryViewModel = ArticleSummaryViewModel(articleContent: html)
         #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), canSummarize {
             summaryViewModel.prewarm()
         }
         #endif
