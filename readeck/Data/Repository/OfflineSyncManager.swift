@@ -167,7 +167,7 @@ open class OfflineSyncManager: ObservableObject, @unchecked Sendable {
                 return statusCode == 502 || statusCode == 503 || statusCode == 504
             case .serverErrorWithMessage(let statusCode, _):
                 return statusCode == 502 || statusCode == 503 || statusCode == 504
-            case .invalidURL, .invalidResponse:
+            case .invalidURL, .invalidResponse, .endpointNotAvailable:
                 return false
             }
         }

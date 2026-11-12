@@ -35,6 +35,10 @@ final class MockUseCaseFactory: UseCaseFactory {
         MockGetServerInfoUseCase()
     }
 
+    func makeDetectLoginMethodUseCase() -> any PDetectLoginMethodUseCase {
+        MockDetectLoginMethodUseCase()
+    }
+
     func makeOfflineBookmarkSyncUseCase() -> any POfflineBookmarkSyncUseCase {
         MockOfflineBookmarkSyncUseCase()
     }
@@ -338,6 +342,12 @@ final class MockCheckServerReachabilityUseCase: PCheckServerReachabilityUseCase 
 final class MockGetServerInfoUseCase: PGetServerInfoUseCase {
     func execute(endpoint: String? = nil) async throws -> ServerInfo {
         ServerInfo(version: "1.0.0", isReachable: true, features: ["oauth"])
+    }
+}
+
+final class MockDetectLoginMethodUseCase: PDetectLoginMethodUseCase {
+    func execute(endpoint: String) async throws -> LoginMethod {
+        .oauth
     }
 }
 

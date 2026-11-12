@@ -494,6 +494,9 @@ final class BookmarksViewModel {
             case .invalidResponse:
                 errorMessage = "Server returned invalid data. Please try again."
                 logger.error("Invalid response error - server data may be corrupted")
+            case .endpointNotAvailable:
+                errorMessage = apiError.localizedDescription
+                logger.error("Endpoint not available on this server version")
             case .serverError(let statusCode):
                 errorMessage = formatServerErrorMessage(statusCode: statusCode)
                 logger.error("Server error with status code: \(statusCode)")

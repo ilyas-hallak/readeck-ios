@@ -11,7 +11,7 @@ final class SettingsServerViewModel {
     private let logoutUseCase: PLogoutUseCase
     private let saveServerSettingsUseCase: PSaveServerSettingsUseCase
     private let loadSettingsUseCase: PLoadSettingsUseCase
-    private let getServerInfoUseCase: PGetServerInfoUseCase
+    private let detectLoginMethodUseCase: PDetectLoginMethodUseCase
     private let loginWithOAuthUseCase: PLoginWithOAuthUseCase
     private let authRepository: PAuthRepository
     private let settingsRepository: PSettingsRepository
@@ -24,8 +24,8 @@ final class SettingsServerViewModel {
     var isLoggedIn = false
 
     // MARK: - OAuth Support
-    var serverSupportsOAuth = false
-
+    /// Set when the password login hit a server that has no password login.
+    var serverRequiresOAuth = false
 
     var customHeaders: [String: String] = [:]
     var showingHeadersSection = false
@@ -47,7 +47,7 @@ final class SettingsServerViewModel {
         self.logoutUseCase = factory.makeLogoutUseCase()
         self.saveServerSettingsUseCase = factory.makeSaveServerSettingsUseCase()
         self.loadSettingsUseCase = factory.makeLoadSettingsUseCase()
-        self.getServerInfoUseCase = factory.makeGetServerInfoUseCase()
+        self.detectLoginMethodUseCase = factory.makeDetectLoginMethodUseCase()
         self.loginWithOAuthUseCase = factory.makeLoginWithOAuthUseCase()
         self.authRepository = factory.makeAuthRepository()
         self.settingsRepository = factory.makeSettingsRepository()
@@ -82,6 +82,7 @@ final class SettingsServerViewModel {
             return
         }
         clearMessages()
+        serverRequiresOAuth = false
         isLoading = true
         defer { isLoading = false }
         do {
@@ -101,6 +102,9 @@ final class SettingsServerViewModel {
             successMessage = "Server settings saved and successfully logged in."
             try await settingsRepository.saveHasFinishedSetup(true)
             NotificationCenter.default.post(name: .setupStatusChanged, object: nil)
+        } catch APIError.endpointNotAvailable {
+            serverRequiresOAuth = true
+            isLoggedIn = false
         } catch {
             errorMessage = "Connection or login failed: \(error.localizedDescription)"
             isLoggedIn = false
@@ -129,22 +133,22 @@ final class SettingsServerViewModel {
 
     // MARK: - OAuth Methods
 
-    func checkServerOAuthSupport() async {
-        guard !endpoint.isEmpty else {
-            serverSupportsOAuth = false
-            return
-        }
+    /// Returns nil and shows an error when the server could not be asked.
+    func checkLoginMethod() async -> LoginMethod? {
+        guard !endpoint.isEmpty else { return nil }
 
+        clearMessages()
         isLoading = true
         defer { isLoading = false }
 
-        let normalizedEndpoint = EndpointValidator.normalize(endpoint)
+        // Proxies that need custom headers would reject the server check without them
+        _ = KeychainHelper.shared.saveCustomHeaders(customHeaders)
 
         do {
-            let serverInfo = try await getServerInfoUseCase.execute(endpoint: normalizedEndpoint)
-            serverSupportsOAuth = serverInfo.supportsOAuth
+            return try await detectLoginMethodUseCase.execute(endpoint: EndpointValidator.normalize(endpoint))
         } catch {
-            serverSupportsOAuth = false
+            errorMessage = String(localized: "Could not reach the server: \(error.localizedDescription)")
+            return nil
         }
     }
 
