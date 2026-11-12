@@ -6,6 +6,11 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ## Version 3.3.0
 
+### Summaries
+
+- **Summaries run entirely on your device**, using Apple's on-device model. Nothing is sent to your Readeck server or anyone else
+- Turn them off completely in Settings → Reader Settings → "Hide article summary"; this now also stops the model from preloading in the background
+
 ### Modern Reader
 
 - **New progress styles:** a line, a ring around the Dynamic Island, a percent pill, or off
@@ -19,6 +24,7 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - **Share Readeck Link** creates a public link to the article on your server (Readeck 0.19 or newer)
 - **Send by Email** has your server mail the article as HTML or EPUB, when the server has email set up
 - **Share Original Link** and **Export as PDF** moved into the same sheet
+- The Share Extension's **Cancel button** (and Escape key) closes it without sharing, handy when running the iOS app on a Mac
 
 ### Highlights
 
@@ -40,6 +46,16 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 - **Every saved bookmark shows up**, including pages the server could not fetch
 - Bookmarks without a title show the site name instead of an empty card
 - Changing the filter while more items are loading no longer mixes in results from the old filter
+
+### Language & Voices
+
+- Added **Portuguese (pt-PT)**
+- A voice you pick now also applies to other variants of the same language, e.g. your pt-PT voice is used for pt articles, your en-GB voice for en-US
+
+### Bug Fixes & Stability
+
+- Login on Readeck 0.22+ no longer silently falls back to password login when the first server check fails (e.g. during the "Local Network" prompt or over a slow VPN); you now get a clear error with retry
+- Fixed text-to-speech progress after seeking
 
 ## Version 3.2.0
 
