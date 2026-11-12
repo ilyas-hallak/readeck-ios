@@ -103,6 +103,7 @@ struct ShareBookmarkView: View {
             .resizable()
             .scaledToFit()
             .frame(height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .padding(.top, 24)
             .opacity(0.9)
     }
