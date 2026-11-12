@@ -70,6 +70,9 @@ struct ServerCapabilities: Equatable, Sendable {
     /// Feature name reported by `/api/info` when the caller may send mails.
     private static let emailFeature = "email"
 
+    /// Feature name reported by `/api/info` from 0.21.0 on.
+    private static let oauthFeature = "oauth"
+
     /// The parsed server version, or `nil` when it is unknown. Unknown means
     /// either a server below 0.20.0 (no `/api/info` at all) or an unreachable
     /// or unparsable response.
@@ -119,6 +122,13 @@ struct ServerCapabilities: Equatable, Sendable {
     /// from 0.21.0 on and says nothing about actual availability.
     var canUseOAuth: Bool {
         hasOAuthMetadata
+    }
+
+    /// Whether the login screen should start OAuth instead of asking for a password.
+    /// Uses the "oauth" feature until the login flow probes the OAuth metadata,
+    /// see `canUseOAuth`.
+    var prefersOAuthLogin: Bool {
+        features.contains(Self.oauthFeature) || !canUsePasswordLogin
     }
 
     // MARK: - Bookmarks

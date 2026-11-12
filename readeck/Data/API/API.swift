@@ -259,6 +259,11 @@ final class API: PAPI {
             throw APIError.serverError(httpResponse.statusCode)
         }
 
+        guard !httpResponse.isHTMLPage else {
+            logger.warning("Server has no password login at \(loginEndpoint)")
+            throw APIError.endpointNotAvailable
+        }
+
         logger.logNetworkRequest(method: "POST", url: loginEndpoint, statusCode: httpResponse.statusCode)
         logger.info("Login successful for user: \(username)")
         return try JSONDecoder().decode(UserDto.self, from: data)
@@ -873,6 +878,8 @@ enum APIError: Error, Equatable {
     case invalidResponse
     case serverError(Int)
     case serverErrorWithMessage(statusCode: Int, message: String)
+    /// The server does not know this API path, so it is too old or too new for it.
+    case endpointNotAvailable
 }
 
 extension APIError: LocalizedError {
@@ -886,6 +893,16 @@ extension APIError: LocalizedError {
             return "Server error: HTTP \(statusCode)"
         case .serverErrorWithMessage(_, let message):
             return message
+        case .endpointNotAvailable:
+            return "This server does not support this request"
         }
+    }
+}
+
+extension HTTPURLResponse {
+    /// Readeck redirects unknown API paths to its HTML login page, and URLSession
+    /// follows that redirect. An HTML answer on an API path means the endpoint is missing.
+    var isHTMLPage: Bool {
+        value(forHTTPHeaderField: "Content-Type")?.lowercased().hasPrefix("text/html") ?? false
     }
 }

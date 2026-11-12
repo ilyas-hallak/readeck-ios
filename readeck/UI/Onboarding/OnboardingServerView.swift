@@ -11,6 +11,7 @@ struct OnboardingServerView: View {
     @State private var viewModel = SettingsServerViewModel()
     @State private var showLoginFields = false
     @State private var oauthFailed = false
+    @FocusState private var isEditing: Bool
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
@@ -119,6 +120,7 @@ struct OnboardingServerView: View {
                         prompt: Text("Server Endpoint").foregroundColor(.secondary)
                     )
                         .textFieldStyle(.roundedBorder)
+                        .focused($isEditing)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
@@ -174,6 +176,7 @@ struct OnboardingServerView: View {
                             prompt: Text("Username").foregroundColor(.secondary)
                         )
                             .textFieldStyle(.roundedBorder)
+                            .focused($isEditing)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
                             .onChange(of: viewModel.username) {
@@ -189,6 +192,7 @@ struct OnboardingServerView: View {
                             prompt: Text("Password").foregroundColor(.secondary)
                         )
                             .textFieldStyle(.roundedBorder)
+                            .focused($isEditing)
                             .onChange(of: viewModel.password) {
                                 viewModel.clearMessages()
                             }
@@ -225,27 +229,31 @@ struct OnboardingServerView: View {
 
             // Messages
             if let errorMessage = viewModel.errorMessage {
-                HStack {
+                HStack(alignment: .firstTextBaseline) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.red)
                     Text(errorMessage)
                         .foregroundColor(.red)
                         .font(.caption)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let successMessage = viewModel.successMessage {
-                HStack {
+                HStack(alignment: .firstTextBaseline) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
                     Text(successMessage)
                         .foregroundColor(.green)
                         .font(.caption)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             VStack(spacing: 10) {
                 Button(action: {
+                    // The keyboard would cover the result and the button
+                    isEditing = false
                     Task {
                         if oauthFailed {
                             // Retry OAuth instead of immediately falling back to classic login
@@ -254,21 +262,23 @@ struct OnboardingServerView: View {
                                 oauthFailed = false
                             }
                         } else if !showLoginFields {
-                            // Phase 1: Check server for OAuth support
-                            await viewModel.checkServerOAuthSupport()
-                            if viewModel.serverSupportsOAuth {
-                                // Try OAuth login
-                                await viewModel.loginWithOAuth()
-                                if viewModel.errorMessage != nil {
-                                    oauthFailed = true
-                                }
-                            } else {
-                                // No OAuth → show login fields for classic auth
+                            // Phase 1: Check which login the server supports.
+                            // On failure the error stays visible and Continue retries.
+                            switch await viewModel.checkLoginMethod() {
+                            case .oauth:
+                                await startOAuthLogin()
+                            case .password:
                                 showLoginFields = true
+                            case nil:
+                                break
                             }
                         } else {
                             // Phase 2: Classic login
                             await viewModel.saveServerSettings()
+                            if viewModel.serverRequiresOAuth {
+                                showLoginFields = false
+                                await startOAuthLogin()
+                            }
                         }
                     }
                 }) {
@@ -299,6 +309,13 @@ struct OnboardingServerView: View {
                     .foregroundColor(.secondary)
                 }
             }
+        }
+    }
+
+    private func startOAuthLogin() async {
+        await viewModel.loginWithOAuth()
+        if viewModel.errorMessage != nil {
+            oauthFailed = true
         }
     }
 }

@@ -211,7 +211,7 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
             case .serverError(let statusCode):
                 // Retry on: 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout
                 return statusCode == 502 || statusCode == 503 || statusCode == 504
-            case .invalidURL, .invalidResponse:
+            case .invalidURL, .invalidResponse, .endpointNotAvailable:
                 return false // Don't retry on permanent errors
             case .serverErrorWithMessage(statusCode: let statusCode, message: let message):
                 return statusCode == 400
@@ -239,6 +239,8 @@ final class OfflineCacheSyncUseCase: POfflineCacheSyncUseCase {
                 Logger.sync.error("❌ Failed to cache '\(bookmark.title)'\(retryInfo) - APIError: Invalid URL for bookmark ID '\(bookmark.id)'")
             case .invalidResponse:
                 Logger.sync.error("❌ Failed to cache '\(bookmark.title)'\(retryInfo) - APIError: Invalid server response (nicht 200 OK)")
+            case .endpointNotAvailable:
+                Logger.sync.error("❌ Failed to cache '\(bookmark.title)'\(retryInfo) - APIError: Endpoint not available on this server")
             case .serverError(let statusCode):
                 Logger.sync.error("❌ Failed to cache '\(bookmark.title)'\(retryInfo) - APIError: Server error HTTP \(statusCode)")
             case .serverErrorWithMessage(statusCode: let statusCode, message: let message):
