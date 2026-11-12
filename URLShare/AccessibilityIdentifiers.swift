@@ -5,5 +5,6 @@ enum AccessibilityID {
     enum ShareExtension {
         static let titleField = "shareExtension.titleField"
         static let saveButton = "shareExtension.saveButton"
+        static let cancelButton = "shareExtension.cancelButton"
     }
 }

@@ -92,6 +92,7 @@ struct ShareBookmarkView: View {
         }
         .cancelButtonBackground()
         .accessibilityLabel("Cancel")
+        .accessibilityIdentifier(AccessibilityID.ShareExtension.cancelButton)
         .keyboardShortcut(.cancelAction)
         .padding(.leading, 16)
         .padding(.top, 22)

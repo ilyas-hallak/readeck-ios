@@ -41,8 +41,7 @@ The suite only ever touches bookmarks under its own label and deletes all of the
 - `04_offline_article`: regression test for cb#45: enables offline reading, syncs, flips the debug-only "simulate offline" toggle, and opens whatever Preview Cached Articles lists, not a specific seeded bookmark, since the sync's own cap decides what gets cached on a server with this much existing content.
 - `05_share_sheet`: opens the reader's share sheet and checks the options render. Doesn't follow through on an option, since that hands off to system UI Maestro can't drive.
 
-Cancelling the share extension (cb#50) isn't covered yet: the fix for it hadn't merged when this suite was written.
-Add a flow once it has.
+Cancelling the share extension (cb#50, merged as #162) isn't covered: a share extension isn't a launchable app (`simctl launch` on its bundle id fails with "unknown to FrontBoard"), so it can only be reached through Safari's real share sheet, which is system UI in another process that Maestro can't drive reliably, same as the share options in `05_share_sheet`.
 
 ## Notes for the next change
 
