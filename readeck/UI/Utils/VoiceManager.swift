@@ -31,9 +31,13 @@ final class VoiceManager {
             return cachedVoice
         }
 
-        // Check per-language selection
-        if let voiceId = perLanguageVoices[language],
-           let voice = availableVoices.first(where: { $0.identifier == voiceId }) {
+        // Check per-language selection, exact match or same-language fallback
+        // (e.g. a pt-PT choice also applies to articles resolved as pt-BR).
+        if let voice = Self.resolvePerLanguageVoice(
+            for: language,
+            perLanguageVoices: perLanguageVoices,
+            availableVoices: availableVoices
+        ) {
             cachedVoices[language] = voice
             return voice
         }
@@ -64,6 +68,33 @@ final class VoiceManager {
     func refreshVoices() {
         cachedVoices.removeAll()
         loadAvailableVoices()
+    }
+
+    /// Resolves a per-language voice choice for `language`, falling back to a choice
+    /// made for a different region of the same language (e.g. a `pt-PT` pick also
+    /// covers `pt-BR` articles). Returns `nil` when nothing was ever picked, so the
+    /// caller can fall back to its own default.
+    static func resolvePerLanguageVoice(
+        for language: String,
+        perLanguageVoices: [String: String],
+        availableVoices: [AVSpeechSynthesisVoice]
+    ) -> AVSpeechSynthesisVoice? {
+        if let voiceId = perLanguageVoices[language],
+           let voice = availableVoices.first(where: { $0.identifier == voiceId }) {
+            return voice
+        }
+
+        let prefix = language.prefix(2)
+        let fallbackKeys = perLanguageVoices.keys
+            .filter { $0 != language && $0.hasPrefix(prefix) }
+            .sorted()
+        for key in fallbackKeys {
+            if let voiceId = perLanguageVoices[key],
+               let voice = availableVoices.first(where: { $0.identifier == voiceId }) {
+                return voice
+            }
+        }
+        return nil
     }
 
     // MARK: - Private Methods
@@ -112,7 +143,9 @@ final class VoiceManager {
 
     func setVoice(_ voice: AVSpeechSynthesisVoice, for language: String) {
         perLanguageVoices[language] = voice.identifier
-        cachedVoices.removeValue(forKey: language)
+        // A same-language fallback (see resolvePerLanguageVoice) may have cached this
+        // choice under a different key, e.g. pt-BR after picking a pt-PT voice.
+        cachedVoices.removeAll()
         if let data = try? JSONEncoder().encode(perLanguageVoices) {
             userDefaults.set(data, forKey: perLanguageVoiceKey)
         }
@@ -124,7 +157,7 @@ final class VoiceManager {
 
     func clearPerLanguageVoice(for language: String) {
         perLanguageVoices.removeValue(forKey: language)
-        cachedVoices.removeValue(forKey: language)
+        cachedVoices.removeAll()
         if let data = try? JSONEncoder().encode(perLanguageVoices) {
             userDefaults.set(data, forKey: perLanguageVoiceKey)
         }
