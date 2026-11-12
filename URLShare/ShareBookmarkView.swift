@@ -92,6 +92,7 @@ struct ShareBookmarkView: View {
         }
         .cancelButtonBackground()
         .accessibilityLabel("Cancel")
+        .accessibilityIdentifier(AccessibilityID.ShareExtension.cancelButton)
         .keyboardShortcut(.cancelAction)
         .padding(.leading, 16)
         .padding(.top, 22)
@@ -184,6 +185,7 @@ struct ShareBookmarkView: View {
             .frame(maxWidth: 420)
             .frame(maxWidth: .infinity, alignment: .center)
             .focused($focusedField, equals: .title)
+            .accessibilityIdentifier(AccessibilityID.ShareExtension.titleField)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -295,6 +297,7 @@ struct ShareBookmarkView: View {
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 32)
+        .accessibilityIdentifier(AccessibilityID.ShareExtension.saveButton)
         .disabled(viewModel.isSaving)
     }
 

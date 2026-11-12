@@ -62,11 +62,11 @@ struct CachedArticlesPreviewView: View {
                         BookmarkCardView(
                             bookmark: bookmark,
                             currentState: .unread,
-                            layout: .magazine,
-                            onSwipeAction: { _, _ in }
-                        )
+                            layout: .magazine
+                        ) { _, _ in }
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .accessibilityIdentifier(AccessibilityID.Bookmarks.row(bookmark.id))
                     .listRowInsets(EdgeInsets(
                         top: 12,
                         leading: 16,

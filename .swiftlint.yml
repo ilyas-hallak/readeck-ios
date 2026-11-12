@@ -9,7 +9,6 @@ excluded:
   - .claude
   - DerivedData
   - readeckTests
-  - readeckUITests
   - Tests
   - Package.swift
 

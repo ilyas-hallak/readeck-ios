@@ -31,6 +31,7 @@ struct SettingsContainerView: View {
                             await offlineViewModel.saveSettings()
                         }
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.enableOfflineReadingToggle)
 
                 if offlineViewModel.offlineSettings.enabled {
                     Button(action: {
@@ -65,6 +66,7 @@ struct SettingsContainerView: View {
                             Spacer()
                         }
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.syncNowButton)
                     .disabled(offlineViewModel.isSyncing)
 
                     SettingsRowNavigationLink(
@@ -75,6 +77,7 @@ struct SettingsContainerView: View {
                     ) {
                         OfflineReadingDetailView()
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.offlineReadingRow)
                 }
             } header: {
                 Text("Offline Reading".localized)

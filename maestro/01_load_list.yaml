@@ -1,0 +1,10 @@
+appId: de.ilyashallak.readeck
+---
+# Smoke check: a pre-authenticated launch lands straight on the bookmark list.
+- runFlow: subflows/launch_signed_in.yaml
+- assertVisible:
+    id: "bookmarks.tab.all"
+- assertVisible:
+    id: "bookmarks.list"
+- assertVisible:
+    id: "bookmarks.addButton"

@@ -24,6 +24,7 @@ struct ReleaseNotesView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .accessibilityIdentifier(AccessibilityID.ReleaseNotes.doneButton)
                 }
             }
         }

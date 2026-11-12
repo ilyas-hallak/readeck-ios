@@ -58,6 +58,7 @@ struct UnifiedLabelChip: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityIdentifier(AccessibilityID.Labels.chip(label))
     }
 }
 

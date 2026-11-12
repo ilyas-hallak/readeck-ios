@@ -1,0 +1,12 @@
+appId: de.ilyashallak.readeck
+---
+# iOS asks "Allow Paste" when the app reads a pasteboard another app wrote to,
+# here Maestro's own inputText. Left open, it blocks every following tap.
+# Matches the German and English button so the suite runs on any simulator.
+- runFlow:
+    when:
+      visible:
+        text: "Einsetzen erlauben|Allow Paste"
+    commands:
+      - tapOn:
+          text: "Einsetzen erlauben|Allow Paste"

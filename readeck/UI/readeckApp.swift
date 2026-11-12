@@ -11,6 +11,16 @@ import netfox
 
 @main
 struct readeckApp: App {
+    // Declared before `appViewModel` on purpose: stored property defaults run in
+    // declaration order, and AppViewModel.init() reads the settings this writes.
+    // Running it from this init()'s body would be too late, since Swift evaluates
+    // every other property's default value before a custom init's body executes.
+    private let e2eSetupRan: Void = {
+        #if DEBUG
+        E2ETestSupport.applyLaunchArgumentsIfNeeded()
+        #endif
+    }()
+
     @State private var appViewModel = AppViewModel()
     @State private var appSettings = AppSettings()
     @State private var deepLinkRouter = DeepLinkRouter()

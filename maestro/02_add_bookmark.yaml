@@ -1,0 +1,42 @@
+appId: de.ilyashallak.readeck
+---
+# Adds a bookmark through the UI and tags it with this run's e2e label so
+# scripts/e2e.sh can clean it up afterwards, same as the bookmarks it seeds
+# directly via the API.
+- runFlow: subflows/launch_signed_in.yaml
+- tapOn:
+    id: "bookmarks.addButton"
+# The screen reads the clipboard on appear and again on every URL change,
+# so the paste dialog can show up at either point.
+- runFlow: subflows/dismiss_paste_dialog.yaml
+- tapOn:
+    id: "addBookmark.urlField"
+- inputText: "https://example.com"
+- runFlow: subflows/dismiss_paste_dialog.yaml
+- tapOn:
+    id: "labels.searchField"
+- inputText: "${E2E_LABEL}"
+- runFlow:
+    when:
+      visible:
+        id: "labels.addCustomTagButton"
+    commands:
+      - tapOn:
+          id: "labels.addCustomTagButton"
+- runFlow:
+    when:
+      visible:
+        id: "labels.chip.${E2E_LABEL}"
+    commands:
+      - tapOn:
+          id: "labels.chip.${E2E_LABEL}"
+- tapOn:
+    id: "addBookmark.keyboardDoneButton"
+- tapOn:
+    id: "addBookmark.saveButton"
+- assertNotVisible:
+    id: "addBookmark.saveButton"
+- assertVisible:
+    id: "bookmarks.list"
+- assertVisible:
+    text: ".*example\\.com.*"

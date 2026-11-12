@@ -350,6 +350,7 @@ struct ArticleReaderView: View {
                 } label: {
                     Label("Share".localized, systemImage: "square.and.arrow.up")
                 }
+                .accessibilityIdentifier(AccessibilityID.Reader.shareMenuItem)
 
                 Button {
                     readerSwitchTip.invalidate(reason: .actionPerformed)
@@ -367,6 +368,7 @@ struct ArticleReaderView: View {
                         Label("Archive".localized, systemImage: "archivebox")
                     }
                 }
+                .accessibilityIdentifier(AccessibilityID.Reader.archiveMenuItem)
                 .disabled(!appSettings.isNetworkConnected || viewModel.isLoading)
 
                 Divider()
@@ -380,6 +382,7 @@ struct ArticleReaderView: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
+            .accessibilityIdentifier(AccessibilityID.Reader.menuButton)
             .popoverTip(readerSwitchTip)
         }
     }

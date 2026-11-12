@@ -1,0 +1,18 @@
+appId: de.ilyashallak.readeck
+---
+# Fresh launch with the session scripts/e2e.sh fetched, past the What's New
+# sheet and any "Allow Paste" dialog left over from an earlier flow.
+- launchApp:
+    clearState: true
+    arguments:
+      e2eEndpoint: "${E2E_ENDPOINT}"
+      e2eOAuthAccessToken: "${E2E_ACCESS_TOKEN}"
+      e2eOAuthClientId: "${E2E_CLIENT_ID}"
+- runFlow:
+    when:
+      visible:
+        id: "releaseNotes.doneButton"
+    commands:
+      - tapOn:
+          id: "releaseNotes.doneButton"
+- runFlow: dismiss_paste_dialog.yaml

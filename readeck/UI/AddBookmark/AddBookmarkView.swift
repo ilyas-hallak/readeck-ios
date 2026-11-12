@@ -33,6 +33,7 @@ struct AddBookmarkView: View {
                         dismiss()
                         viewModel.clearForm()
                     }
+                    .accessibilityIdentifier(AccessibilityID.AddBookmark.closeButton)
                 }
             }
             .alert("Error", isPresented: $viewModel.showErrorAlert) {
@@ -46,6 +47,7 @@ struct AddBookmarkView: View {
                     Button("Done") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
+                    .accessibilityIdentifier(AccessibilityID.AddBookmark.keyboardDoneButton)
                 }
             }
             .ignoresSafeArea(.keyboard)
@@ -124,6 +126,7 @@ struct AddBookmarkView: View {
                 .autocapitalization(.none)
                 .autocorrectionDisabled()
                 .focused($focusedField, equals: .url)
+                .accessibilityIdentifier(AccessibilityID.AddBookmark.urlField)
                 .onChange(of: viewModel.url) { _, _ in
                     viewModel.checkClipboard()
                 }
@@ -178,6 +181,7 @@ struct AddBookmarkView: View {
             TextField("Optional: Custom title", text: $viewModel.title)
                 .textFieldStyle(CustomTextFieldStyle())
                 .focused($focusedField, equals: .title)
+                .accessibilityIdentifier(AccessibilityID.AddBookmark.titleField)
         }
     }
 
@@ -248,6 +252,7 @@ struct AddBookmarkView: View {
             .foregroundColor(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+        .accessibilityIdentifier(AccessibilityID.AddBookmark.saveButton)
         .disabled(!viewModel.isValid || viewModel.isLoading)
     }
 }

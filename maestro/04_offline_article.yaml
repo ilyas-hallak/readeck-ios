@@ -1,0 +1,52 @@
+appId: de.ilyashallak.readeck
+---
+# Regression test for cb#45: a cached article should still open while offline.
+# Enables offline reading, syncs, then opens whatever Preview Cached Articles
+# lists (not a specific seeded bookmark: the demo server has plenty of its own
+# content, and the sync's own 20-article cap decides what gets cached, not
+# us). Uses the debug-only "simulate offline" toggle instead of touching the
+# simulator's real network.
+- runFlow: subflows/launch_signed_in.yaml
+- tapOn:
+    id: "bookmarks.tab.search"
+- tapOn:
+    id: "more.row.settings"
+- scrollUntilVisible:
+    element:
+      id: "settings.offlineReading.enableToggle"
+    direction: DOWN
+- tapOn:
+    id: "settings.offlineReading.enableToggle"
+    # Tapping dead-center lands on the row's label text, not the switch:
+    # the switch itself is the narrow control at the row's trailing edge.
+    point: "90%,50%"
+- scrollUntilVisible:
+    element:
+      id: "settings.offlineReading.syncNowButton"
+    direction: DOWN
+- tapOn:
+    id: "settings.offlineReading.syncNowButton"
+- extendedWaitUntil:
+    visible:
+      id: "settings.offlineReading.syncNowButton"
+      enabled: true
+    timeout: 45000
+- scrollUntilVisible:
+    element:
+      id: "settings.offlineReading.row"
+    direction: DOWN
+- tapOn:
+    id: "settings.offlineReading.row"
+- tapOn:
+    id: "settings.offlineReading.simulateOfflineToggle"
+    point: "90%,50%"
+- scrollUntilVisible:
+    element:
+      id: "settings.offlineReading.previewCachedArticlesRow"
+    direction: DOWN
+- tapOn:
+    id: "settings.offlineReading.previewCachedArticlesRow"
+- tapOn:
+    id: "bookmarks\\.row\\..+"
+- assertVisible:
+    id: "reader.menuButton"

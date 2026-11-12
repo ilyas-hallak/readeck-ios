@@ -127,6 +127,7 @@ struct OfflineReadingDetailView: View {
                         ) {
                             CachedArticlesPreviewView()
                         }
+                        .accessibilityIdentifier(AccessibilityID.Settings.previewCachedArticlesRow)
                     }
                 } header: {
                     Text("Synchronization".localized)
@@ -159,6 +160,7 @@ struct OfflineReadingDetailView: View {
                                     }
                                 }
                             }
+                            .accessibilityIdentifier(AccessibilityID.Settings.simulateOfflineToggle)
                         }
                     } header: {
                         Text("Debug".localized)

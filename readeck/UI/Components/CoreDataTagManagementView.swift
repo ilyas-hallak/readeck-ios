@@ -109,6 +109,7 @@ struct CoreDataTagManagementView: View {
             .onSubmit {
                 onAddCustomTag()
             }
+            .accessibilityIdentifier(AccessibilityID.Labels.searchField)
             .modifier(FocusModifier(focusBinding: searchFieldFocus, field: .labels))
     }
 
@@ -135,6 +136,7 @@ struct CoreDataTagManagementView: View {
                     }
                 }
                 .foregroundColor(.accentColor)
+                .accessibilityIdentifier(AccessibilityID.Labels.addCustomTagButton)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 12)
