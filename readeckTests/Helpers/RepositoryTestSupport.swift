@@ -33,11 +33,13 @@ final class StubAPI: PAPI, @unchecked Sendable {
     var loginHandler: ((String, String, String) async throws -> UserDto)?
     var getBookmarkShareLinkHandler: ((String) async throws -> BookmarkShareLinkDto)?
     var shareBookmarkByEmailHandler: ((String, ShareBookmarkEmailRequestDto) async throws -> Void)?
+    var revokeOAuthTokenHandler: (() async throws -> Void)?
 
     // Recorded calls for assertions
     private(set) var updateBookmarkCalls: [(String, UpdateBookmarkRequestDto)] = []
     private(set) var deleteBookmarkCalls: [String] = []
     private(set) var createBookmarkCalls: [CreateBookmarkRequestDto] = []
+    private(set) var revokeOAuthTokenCallCount = 0
 
     func login(endpoint: String, username: String, password: String) async throws -> UserDto {
         guard let loginHandler else { throw StubError.notStubbed("login") }
@@ -114,6 +116,12 @@ final class StubAPI: PAPI, @unchecked Sendable {
 
     func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto {
         throw StubError.notStubbed("exchangeOAuthToken")
+    }
+
+    func revokeOAuthToken() async throws {
+        revokeOAuthTokenCallCount += 1
+        guard let revokeOAuthTokenHandler else { throw StubError.notStubbed("revokeOAuthToken") }
+        try await revokeOAuthTokenHandler()
     }
 }
 

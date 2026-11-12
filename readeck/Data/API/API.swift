@@ -28,12 +28,17 @@ protocol PAPI: Sendable {
     // OAuth methods
     func registerOAuthClient(endpoint: String, request: OAuthClientCreateDto) async throws -> OAuthClientResponseDto
     func exchangeOAuthToken(endpoint: String, request: OAuthTokenRequestDto) async throws -> OAuthTokenResponseDto
+    func revokeOAuthToken() async throws
 }
 
 final class API: PAPI {
     let tokenProvider: TokenProvider
     private let session: HTTPSession
     private let logger = Logger.network
+
+    /// Logout must not hang waiting for an unreachable server, so the revoke
+    /// call gets a much shorter timeout than the session default.
+    private static let revokeTimeoutInterval: TimeInterval = 5
 
     init(
         tokenProvider: TokenProvider = KeychainTokenProvider(),
@@ -862,6 +867,48 @@ final class API: PAPI {
         let tokenResponse = try JSONDecoder().decode(OAuthTokenResponseDto.self, from: data)
         logger.info("Successfully \(isRefresh ? "refreshed" : "exchanged") OAuth token")
         return tokenResponse
+    }
+
+    /// Readeck OAuth tokens never expire on their own, so logout must actively revoke them
+    /// server-side. Self-revocation per RFC 7009: authenticate with the token being revoked
+    /// and name that same token in the body.
+    func revokeOAuthToken() async throws {
+        guard let endpoint = await tokenProvider.getEndpoint(), let token = await tokenProvider.getToken() else {
+            logger.error("Cannot revoke OAuth token: missing endpoint or token")
+            throw APIError.invalidResponse
+        }
+
+        guard let url = URL(string: "\(endpoint)/api/oauth/revoke") else {
+            logger.error("Invalid URL for OAuth token revoke: \(endpoint)")
+            throw APIError.invalidURL
+        }
+
+        let requestData = try JSONEncoder().encode(OAuthRevokeRequestDto(token: token))
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.timeoutInterval = Self.revokeTimeoutInterval
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        urlRequest.httpBody = requestData
+
+        HTTPHeadersHelper.shared.applyCustomHeaders(to: &urlRequest)
+
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString)
+
+        let (_, response) = try await session.data(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid HTTP response for OAuth token revoke")
+            throw APIError.invalidResponse
+        }
+
+        guard 200...299 ~= httpResponse.statusCode else {
+            logger.logNetworkError(method: "POST", url: url.absoluteString, error: APIError.serverError(httpResponse.statusCode))
+            throw APIError.serverError(httpResponse.statusCode)
+        }
+
+        logger.logNetworkRequest(method: "POST", url: url.absoluteString, statusCode: httpResponse.statusCode)
+        logger.info("Revoked OAuth token on logout")
     }
 }
 
