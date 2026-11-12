@@ -4,6 +4,17 @@ import UIKit
 import UniformTypeIdentifiers
 import CoreData
 
+/// The part of `NSExtensionContext` used to end the share sheet, split out so tests can
+/// verify cancel/complete without a real extension context.
+@MainActor
+protocol ExtensionRequestCompleting: AnyObject {
+    // swiftlint:disable:next discouraged_optional_collection
+    func completeRequest(returningItems items: [Any]?, completionHandler: (@Sendable (Bool) -> Void)?)
+    func cancelRequest(withError error: Error)
+}
+
+extension NSExtensionContext: ExtensionRequestCompleting {}
+
 @MainActor
 @Observable
 final class ShareBookmarkViewModel {
@@ -35,11 +46,16 @@ final class ShareBookmarkViewModel {
     private let logger = Logger.viewModel
     private let serverCheck = ShareExtensionServerCheck.shared
     private let tagRepository = TagRepository()
+    private let requestCompleter: ExtensionRequestCompleting?
     private var notificationObserver: Any?
     private var autoCloseTask: Task<Void, Never>?
+    /// The extension request may be completed or cancelled only once. A save that is
+    /// still running when the user cancels would otherwise complete it afterwards.
+    private var isRequestFinished = false
 
-    init(extensionContext: NSExtensionContext?) {
+    init(extensionContext: NSExtensionContext?, requestCompleter: ExtensionRequestCompleting? = nil) {
         self.extensionContext = extensionContext
+        self.requestCompleter = requestCompleter ?? extensionContext
         self.tagSortOrder = Self.loadTagSortOrder()
         logger.info("ShareBookmarkViewModel initialized with extension context: \(extensionContext != nil)")
 
@@ -334,20 +350,36 @@ final class ShareBookmarkViewModel {
         }
     }
 
-    private func completeExtensionRequest() {
+    func completeExtensionRequest() {
         logger.debug("Completing extension request")
-        guard let context = extensionContext else {
-            logger.warning("Extension context not available for completion")
+        guard !isRequestFinished else { return }
+        guard let requestCompleter else {
+            logger.warning("Request completer not available for completion")
             return
         }
+        isRequestFinished = true
 
-        context.completeRequest(returningItems: []) { [weak self] error in
+        requestCompleter.completeRequest(returningItems: []) { [weak self] error in
             if error {
                 self?.logger.error("Extension completion failed: \(error)")
             } else {
                 self?.logger.info("Extension request completed successfully")
             }
         }
+    }
+
+    /// Dismisses the share sheet without saving, e.g. via the Cancel button or Escape.
+    /// Needed on the Mac, where there is no swipe-to-dismiss gesture to fall back on.
+    func cancel() {
+        logger.info("Cancelling share sheet")
+        autoCloseTask?.cancel()
+        guard !isRequestFinished else { return }
+        guard let requestCompleter else {
+            logger.warning("Request completer not available for cancellation")
+            return
+        }
+        isRequestFinished = true
+        requestCompleter.cancelRequest(withError: CocoaError(.userCancelled))
     }
 
     deinit {
