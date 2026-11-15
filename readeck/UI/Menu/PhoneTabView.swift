@@ -27,6 +27,8 @@ struct PhoneTabView: View {
     // Search functionality
     @State private var searchViewModel = SearchBookmarksViewModel()
     @FocusState private var searchFieldIsFocused: Bool
+    @State private var isSearchPresented = false
+    @State private var didCancelSearch = false
 
     @Environment(AppSettings.self) private var appSettings
 
@@ -130,7 +132,7 @@ struct PhoneTabView: View {
                             moreTabContent
                             moreTabsFooter
                         }
-                        .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
+                        .searchable(text: $searchViewModel.searchQuery, isPresented: searchPresentedBinding, prompt: "Search bookmarks...")
                     }
                 }
                 .badge(offlineBookmarksBadgeCount)
@@ -178,6 +180,34 @@ struct PhoneTabView: View {
         .tabBarMinimizeBehaviorIfAvailable()
         .accentColor(.accentColor)
         .searchBehaviorIfAvailable()
+        .onChange(of: selectedTab) { oldTab, newTab in
+            stayInSearchTabAfterCancel(from: oldTab, to: newTab)
+        }
+        .onChange(of: isSearchPresented) {
+            didCancelSearch = false
+        }
+    }
+
+    /// Notes when the system closes search, so a tab change in the same update
+    /// can be told apart from the user picking another tab.
+    private var searchPresentedBinding: Binding<Bool> {
+        Binding(
+            get: { isSearchPresented },
+            set: { isPresented in
+                if isSearchPresented && !isPresented {
+                    didCancelSearch = true
+                }
+                isSearchPresented = isPresented
+            }
+        )
+    }
+
+    // With .searchTabSelection on iOS 27, the cancel button also switches back to
+    // the previous tab. Cancel should only close search.
+    private func stayInSearchTabAfterCancel(from oldTab: SidebarTab, to newTab: SidebarTab) {
+        guard oldTab == .search, newTab != .search, didCancelSearch else { return }
+        didCancelSearch = false
+        selectedTab = .search
     }
 
     // MARK: - Tab Content
