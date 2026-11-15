@@ -177,7 +177,7 @@ struct PhoneTabView: View {
         }
         .tabBarMinimizeBehaviorIfAvailable()
         .accentColor(.accentColor)
-        .searchToolbarBehaviorIfAvailable()
+        .searchBehaviorIfAvailable()
     }
 
     // MARK: - Tab Content
@@ -320,8 +320,14 @@ struct PhoneTabView: View {
 // MARK: - View Extension for iOS 26+ Compatibility
 extension View {
     @ViewBuilder
-    func searchToolbarBehaviorIfAvailable() -> some View {
-        if #available(iOS 26, *) {
+    func searchBehaviorIfAvailable() -> some View {
+        if #available(iOS 27, *) {
+            // Since the iOS 27 SDK, the search tab only stays a separate button with
+            // the search field at the bottom when selecting it activates search.
+            self
+                .searchToolbarBehavior(.minimize)
+                .tabViewSearchActivation(.searchTabSelection)
+        } else if #available(iOS 26, *) {
             self
                 .searchToolbarBehavior(.minimize)
         } else {
