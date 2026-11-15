@@ -27,6 +27,8 @@ struct PhoneTabView: View {
     // Search functionality
     @State private var searchViewModel = SearchBookmarksViewModel()
     @FocusState private var searchFieldIsFocused: Bool
+    @State private var isSearchPresented = false
+    @State private var didCancelSearch = false
 
     @Environment(AppSettings.self) private var appSettings
 
@@ -130,7 +132,7 @@ struct PhoneTabView: View {
                             moreTabContent
                             moreTabsFooter
                         }
-                        .searchable(text: $searchViewModel.searchQuery, prompt: "Search bookmarks...")
+                        .searchable(text: $searchViewModel.searchQuery, isPresented: searchPresentedBinding, prompt: "Search bookmarks...")
                     }
                 }
                 .badge(offlineBookmarksBadgeCount)
@@ -177,7 +179,38 @@ struct PhoneTabView: View {
         }
         .tabBarMinimizeBehaviorIfAvailable()
         .accentColor(.accentColor)
-        .searchToolbarBehaviorIfAvailable()
+        .searchBehaviorIfAvailable()
+        .onChange(of: selectedTab) { oldTab, newTab in
+            stayInSearchTabAfterCancel(from: oldTab, to: newTab)
+        }
+        // Relies on SwiftUI running the selectedTab handler before this one, which
+        // the docs don't promise. If that ever flips, cancel just falls back to
+        // switching tabs again, it can never trap the user in the search tab.
+        .onChange(of: isSearchPresented) {
+            didCancelSearch = false
+        }
+    }
+
+    /// Notes when the system closes search, so a tab change in the same update
+    /// can be told apart from the user picking another tab.
+    private var searchPresentedBinding: Binding<Bool> {
+        Binding(
+            get: { isSearchPresented },
+            set: { isPresented in
+                if isSearchPresented && !isPresented {
+                    didCancelSearch = true
+                }
+                isSearchPresented = isPresented
+            }
+        )
+    }
+
+    /// With .searchTabSelection on iOS 27, the cancel button also switches back to
+    /// the previous tab. Cancel should only close search.
+    private func stayInSearchTabAfterCancel(from oldTab: SidebarTab, to newTab: SidebarTab) {
+        guard oldTab == .search, newTab != .search, didCancelSearch else { return }
+        didCancelSearch = false
+        selectedTab = .search
     }
 
     // MARK: - Tab Content
@@ -315,13 +348,17 @@ struct PhoneTabView: View {
     }
 }
 
-
-
-// MARK: - View Extension for iOS 26+ Compatibility
+// MARK: - View Extension for OS Specific Tab and Search Behavior
 extension View {
     @ViewBuilder
-    func searchToolbarBehaviorIfAvailable() -> some View {
-        if #available(iOS 26, *) {
+    func searchBehaviorIfAvailable() -> some View {
+        if #available(iOS 27, *) {
+            // Since the iOS 27 SDK, the search tab only stays a separate button with
+            // the search field at the bottom when selecting it activates search.
+            self
+                .searchToolbarBehavior(.minimize)
+                .tabViewSearchActivation(.searchTabSelection)
+        } else if #available(iOS 26, *) {
             self
                 .searchToolbarBehavior(.minimize)
         } else {
