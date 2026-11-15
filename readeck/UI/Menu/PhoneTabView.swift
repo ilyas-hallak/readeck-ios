@@ -183,6 +183,9 @@ struct PhoneTabView: View {
         .onChange(of: selectedTab) { oldTab, newTab in
             stayInSearchTabAfterCancel(from: oldTab, to: newTab)
         }
+        // Relies on SwiftUI running the selectedTab handler before this one, which
+        // the docs don't promise. If that ever flips, cancel just falls back to
+        // switching tabs again, it can never trap the user in the search tab.
         .onChange(of: isSearchPresented) {
             didCancelSearch = false
         }
@@ -202,8 +205,8 @@ struct PhoneTabView: View {
         )
     }
 
-    // With .searchTabSelection on iOS 27, the cancel button also switches back to
-    // the previous tab. Cancel should only close search.
+    /// With .searchTabSelection on iOS 27, the cancel button also switches back to
+    /// the previous tab. Cancel should only close search.
     private func stayInSearchTabAfterCancel(from oldTab: SidebarTab, to newTab: SidebarTab) {
         guard oldTab == .search, newTab != .search, didCancelSearch else { return }
         didCancelSearch = false
@@ -345,9 +348,7 @@ struct PhoneTabView: View {
     }
 }
 
-
-
-// MARK: - View Extension for iOS 26+ Compatibility
+// MARK: - View Extension for OS Specific Tab and Search Behavior
 extension View {
     @ViewBuilder
     func searchBehaviorIfAvailable() -> some View {
