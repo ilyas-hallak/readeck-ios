@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// Request body for `POST /api/oauth/revoke`. Self-revocation (RFC 7009-style):
-/// the same token authenticates the request (Bearer header) and is named again here.
+/// Request body for `POST /api/oauth/revoke`.
 struct OAuthRevokeRequestDto: Codable {
     let token: String
 }

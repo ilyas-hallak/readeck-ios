@@ -864,9 +864,7 @@ final class API: PAPI {
         return tokenResponse
     }
 
-    /// Readeck OAuth tokens never expire on their own, so logout must actively revoke them
-    /// server-side. Self-revocation per RFC 7009: authenticate with the token being revoked
-    /// and name that same token in the body.
+    /// The token being revoked also authenticates the request.
     func revokeOAuthToken() async throws {
         guard let endpoint = await tokenProvider.getEndpoint(), let token = await tokenProvider.getToken() else {
             logger.error("Cannot revoke OAuth token: missing endpoint or token")
