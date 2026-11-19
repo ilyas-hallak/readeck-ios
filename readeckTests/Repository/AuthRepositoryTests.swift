@@ -85,6 +85,50 @@ struct AuthRepositoryTests {
         #expect(tokenProvider.authMethod == .apiToken)
     }
 
+    @Test("logout revokes the OAuth token on the server before clearing it locally")
+    func logoutRevokesOAuthTokenBeforeClearing() async throws {
+        let tokenProvider = RecordingTokenProvider(token: "oauth-access-1")
+        await tokenProvider.setAuthMethod(.oauth)
+        let (repository, api, provider, _) = makeRepository(tokenProvider: tokenProvider)
+
+        var tokenAtRevokeTime: String?
+        api.revokeOAuthTokenHandler = {
+            tokenAtRevokeTime = provider.token
+        }
+
+        try await repository.logout()
+
+        #expect(api.revokeOAuthTokenCallCount == 1)
+        #expect(tokenAtRevokeTime == "oauth-access-1")
+        #expect(provider.clearTokenCallCount == 1)
+        #expect(provider.authMethod == .apiToken)
+    }
+
+    @Test("logout does not revoke a classic API-token session")
+    func logoutSkipsRevokeForApiToken() async throws {
+        let tokenProvider = RecordingTokenProvider(token: "api-token-1")
+        await tokenProvider.setAuthMethod(.apiToken)
+        let (repository, api, provider, _) = makeRepository(tokenProvider: tokenProvider)
+
+        try await repository.logout()
+
+        #expect(api.revokeOAuthTokenCallCount == 0)
+        #expect(provider.clearTokenCallCount == 1)
+    }
+
+    @Test("logout still clears the token locally when the revoke call fails")
+    func logoutClearsLocallyWhenRevokeFails() async throws {
+        let tokenProvider = RecordingTokenProvider(token: "oauth-access-1")
+        await tokenProvider.setAuthMethod(.oauth)
+        let (repository, api, provider, _) = makeRepository(tokenProvider: tokenProvider)
+        api.revokeOAuthTokenHandler = { throw APIError.serverError(500) }
+
+        try await repository.logout()
+
+        #expect(provider.clearTokenCallCount == 1)
+        #expect(provider.authMethod == .apiToken)
+    }
+
     // MARK: - OAuth Login
 
     @Test("loginWithOAuth persists token, method, client id and endpoint")

@@ -4,6 +4,7 @@ final class AuthRepository: PAuthRepository {
     private let api: PAPI
     private let settingsRepository: PSettingsRepository
     private let getUserProfileUseCase: PGetUserProfileUseCase
+    private let logger = Logger.auth
 
     init(api: PAPI, settingsRepository: PSettingsRepository, getUserProfileUseCase: PGetUserProfileUseCase) {
         self.api = api
@@ -19,8 +20,23 @@ final class AuthRepository: PAuthRepository {
     }
 
     func logout() async throws {
+        await revokeTokenIfNeeded()
         await api.tokenProvider.clearToken()
         await api.tokenProvider.setAuthMethod(.apiToken)
+    }
+
+    /// Revokes the token on the server before it's cleared locally. Readeck's OAuth tokens
+    /// never expire on their own, so skipping this leaves a permanently valid token behind.
+    /// Password-login API tokens have no documented revoke endpoint (docs/api-compatibility.md),
+    /// so only OAuth sessions are revoked here. A failed revoke (offline, server error, timeout)
+    /// is logged but never blocks the local logout.
+    private func revokeTokenIfNeeded() async {
+        guard await api.tokenProvider.getAuthMethod() == .oauth else { return }
+        do {
+            try await api.revokeOAuthToken()
+        } catch {
+            logger.error("Failed to revoke OAuth token on logout, logging out locally anyway: \(error.localizedDescription)")
+        }
     }
 
     func getCurrentSettings() async throws -> Settings? {

@@ -66,7 +66,6 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     private lazy var authRepository: PAuthRepository = AuthRepository(api: api, settingsRepository: settingsRepository, getUserProfileUseCase: getUserProfileUseCase)
     private lazy var bookmarksRepository: PBookmarksRepository = BookmarksRepository(api: api)
     private lazy var settingsRepository: PSettingsRepository = SettingsRepository(tokenProvider: tokenProvider)
-    private lazy var tokenManager = TokenManager(settingsRepository: settingsRepository)
     private lazy var infoApiClient: PInfoApiClient = InfoApiClient(tokenProvider: tokenProvider, session: httpSession)
     private lazy var serverInfoRepository: PServerInfoRepository = ServerInfoRepository(apiClient: infoApiClient)
     private lazy var annotationsRepository: PAnnotationsRepository = AnnotationsRepository(api: api)
@@ -109,7 +108,7 @@ final class DefaultUseCaseFactory: UseCaseFactory {
     }
 
     func makeLogoutUseCase() -> PLogoutUseCase {
-        LogoutUseCase(settingsRepository: settingsRepository, tokenManager: tokenManager)
+        LogoutUseCase(authRepository: authRepository, settingsRepository: settingsRepository)
     }
 
     func makeDeleteBookmarkUseCase() -> PDeleteBookmarkUseCase {
