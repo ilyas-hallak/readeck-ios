@@ -54,6 +54,8 @@ Thanks for using the Readeck iOS app! Below are the release notes for each versi
 
 ### Bug Fixes & Stability
 
+- Search is back at the bottom right on iOS 27
+- Logging out now also signs the app out on your Readeck server
 - Login on Readeck 0.22+ no longer silently falls back to password login when the first server check fails (e.g. during the "Local Network" prompt or over a slow VPN); you now get a clear error with retry
 - Fixed text-to-speech progress after seeking
 
