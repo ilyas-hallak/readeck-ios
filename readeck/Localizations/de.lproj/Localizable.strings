@@ -373,3 +373,28 @@
 "The ring around the Dynamic Island shows up when you stop scrolling." = "Der Ring um die Dynamic Island erscheint, sobald du aufhörst zu scrollen.";
 "The percentage pops up in the top corner when you stop scrolling." = "Der Prozentwert erscheint oben in der Ecke, sobald du aufhörst zu scrollen.";
 "The percentage follows the scroll indicator and shows up when you stop scrolling." = "Der Prozentwert folgt der Scrollleiste und erscheint, sobald du aufhörst zu scrollen.";
+
+/* Reader settings */
+"Reader Layout" = "Reader-Layout";
+"Horizontal margin" = "Seitenrand";
+"Line height" = "Zeilenhöhe";
+"Color Theme" = "Farbschema";
+"Background" = "Hintergrund";
+"Text" = "Text";
+"Visibility" = "Sichtbarkeit";
+"Hide progress bar" = "Fortschrittsanzeige ausblenden";
+"Hide word count & reading time" = "Wortanzahl & Lesezeit ausblenden";
+"Hide hero image" = "Titelbild ausblenden";
+"Hide article summary" = "Artikelzusammenfassung ausblenden";
+"Custom CSS" = "Eigenes CSS";
+"Reading Settings" = "Lese-Einstellungen";
+"Disable Back Swipe in Reader" = "Zurückwischen im Reader deaktivieren";
+"Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges." = "Deaktiviert die Wischgeste vom Rand zum Zurückgehen im Reader. So lässt sich Text nahe am Bildschirmrand leichter auswählen und markieren.";
+"Sepia" = "Sepia";
+"Night Blue" = "Nachtblau";
+"Mint" = "Mint";
+"Solarized Light" = "Solarized Hell";
+"Dark Gray" = "Dunkelgrau";
+"Mocha" = "Mokka";
+"System" = "System";
+"Custom" = "Eigene";

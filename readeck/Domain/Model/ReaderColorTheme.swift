@@ -6,25 +6,25 @@
 import SwiftUI
 
 enum ReaderColorTheme: String, CaseIterable {
-    case system = "system"
-    case sepia = "sepia"
-    case nightBlue = "nightBlue"
-    case mint = "mint"
-    case solarizedLight = "solarizedLight"
-    case darkGray = "darkGray"
-    case mocha = "mocha"
-    case custom = "custom"
+    case system
+    case sepia
+    case nightBlue
+    case mint
+    case solarizedLight
+    case darkGray
+    case mocha
+    case custom
 
     var displayName: String {
         switch self {
-        case .system: return "System"
-        case .sepia: return "Sepia"
-        case .nightBlue: return "Night Blue"
-        case .mint: return "Mint"
-        case .solarizedLight: return "Solarized Light"
-        case .darkGray: return "Dark Gray"
-        case .mocha: return "Mocha"
-        case .custom: return "Custom"
+        case .system: return "System".localized
+        case .sepia: return "Sepia".localized
+        case .nightBlue: return "Night Blue".localized
+        case .mint: return "Mint".localized
+        case .solarizedLight: return "Solarized Light".localized
+        case .darkGray: return "Dark Gray".localized
+        case .mocha: return "Mocha".localized
+        case .custom: return "Custom".localized
         }
     }
 
