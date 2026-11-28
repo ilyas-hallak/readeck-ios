@@ -352,3 +352,28 @@
 "The ring around the Dynamic Island shows up when you stop scrolling." = "Ringen runt Dynamic Island visas när du slutar rulla.";
 "The percentage pops up in the top corner when you stop scrolling." = "Procenten visas i det övre hörnet när du slutar rulla.";
 "The percentage follows the scroll indicator and shows up when you stop scrolling." = "Procenten följer rullningslisten och visas när du slutar rulla.";
+
+/* Reader settings */
+"Reader Layout" = "Läsarlayout";
+"Horizontal margin" = "Horisontell marginal";
+"Line height" = "Radhöjd";
+"Color Theme" = "Färgtema";
+"Background" = "Bakgrund";
+"Text" = "Text";
+"Visibility" = "Synlighet";
+"Hide progress bar" = "Dölj förloppsindikator";
+"Hide word count & reading time" = "Dölj antal ord och lästid";
+"Hide hero image" = "Dölj omslagsbild";
+"Hide article summary" = "Dölj artikelsammanfattning";
+"Custom CSS" = "Egen CSS";
+"Reading Settings" = "Läsinställningar";
+"Disable Back Swipe in Reader" = "Inaktivera bakåtsvep i läsaren";
+"Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges." = "Inaktiverar svepgesten från kanten för att gå tillbaka i läsaren. Det gör det lättare att markera text nära skärmens kanter.";
+"Sepia" = "Sepia";
+"Night Blue" = "Nattblå";
+"Mint" = "Mint";
+"Solarized Light" = "Solarized ljus";
+"Dark Gray" = "Mörkgrå";
+"Mocha" = "Mocka";
+"System" = "System";
+"Custom" = "Anpassad";

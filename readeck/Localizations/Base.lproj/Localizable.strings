@@ -247,3 +247,28 @@
 "The ring around the Dynamic Island shows up when you stop scrolling." = "The ring around the Dynamic Island shows up when you stop scrolling.";
 "The percentage pops up in the top corner when you stop scrolling." = "The percentage pops up in the top corner when you stop scrolling.";
 "The percentage follows the scroll indicator and shows up when you stop scrolling." = "The percentage follows the scroll indicator and shows up when you stop scrolling.";
+
+/* Reader settings */
+"Reader Layout" = "Reader Layout";
+"Horizontal margin" = "Horizontal margin";
+"Line height" = "Line height";
+"Color Theme" = "Color Theme";
+"Background" = "Background";
+"Text" = "Text";
+"Visibility" = "Visibility";
+"Hide progress bar" = "Hide progress bar";
+"Hide word count & reading time" = "Hide word count & reading time";
+"Hide hero image" = "Hide hero image";
+"Hide article summary" = "Hide article summary";
+"Custom CSS" = "Custom CSS";
+"Reading Settings" = "Reading Settings";
+"Disable Back Swipe in Reader" = "Disable Back Swipe in Reader";
+"Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges." = "Disables the edge swipe gesture to go back in the article reader. This makes it easier to select and highlight text near the screen edges.";
+"Sepia" = "Sepia";
+"Night Blue" = "Night Blue";
+"Mint" = "Mint";
+"Solarized Light" = "Solarized Light";
+"Dark Gray" = "Dark Gray";
+"Mocha" = "Mocha";
+"System" = "System";
+"Custom" = "Custom";
