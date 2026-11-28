@@ -278,6 +278,7 @@
 "Generating summary..." = "Generating summary...";
 "Retry" = "Retry";
 "Language" = "Language";
+"Summarized on-device. Nothing leaves your device." = "Summarized on-device. Nothing leaves your device.";
 "AI summarization is not available on this device." = "AI summarization is not available on this device.";
 "No article content to summarize." = "No article content to summarize.";
 "Delete this bookmark?" = "Delete this bookmark?";

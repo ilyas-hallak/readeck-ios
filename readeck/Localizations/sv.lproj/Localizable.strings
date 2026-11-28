@@ -278,6 +278,7 @@
 "Generating summary..." = "Genererar sammanfattning...";
 "Retry" = "Försök igen";
 "Language" = "Språk";
+"Summarized on-device. Nothing leaves your device." = "Skapad på enheten. Inget lämnar din enhet.";
 "AI summarization is not available on this device." = "AI-sammanfattning är inte tillgänglig på denna enhet.";
 "No article content to summarize." = "Inget artikelinnehåll att sammanfatta.";
 "Delete this bookmark?" = "Ta bort detta bokmärke?";

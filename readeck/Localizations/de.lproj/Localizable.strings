@@ -286,6 +286,7 @@
 "Generating summary..." = "Zusammenfassung wird erstellt...";
 "Retry" = "Erneut versuchen";
 "Language" = "Sprache";
+"Summarized on-device. Nothing leaves your device." = "Auf dem Gerät erstellt. Nichts verlässt dein Gerät.";
 "AI summarization is not available on this device." = "KI-Zusammenfassung ist auf diesem Gerät nicht verfügbar.";
 "No article content to summarize." = "Kein Artikelinhalt zum Zusammenfassen vorhanden.";
 "Delete this bookmark?" = "Dieses Lesezeichen löschen?";

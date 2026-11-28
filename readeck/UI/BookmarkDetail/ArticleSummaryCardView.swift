@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ArticleSummaryCardView: View {
     @Bindable var viewModel: ArticleSummaryViewModel
-    var backgroundColor: Color = Color(.secondarySystemBackground)
+    var backgroundColor = Color(.secondarySystemBackground)
     var textColor: Color = .primary
     @State private var summaryTask: Task<Void, Never>?
 
@@ -73,6 +73,8 @@ struct ArticleSummaryCardView: View {
             Divider()
                 .padding(.horizontal, 14)
 
+            onDeviceHint
+
             if viewModel.isLoading && viewModel.summaryMarkdown.isEmpty {
                 HStack(spacing: 8) {
                     ProgressView()
@@ -128,4 +130,25 @@ struct ArticleSummaryCardView: View {
             }
         }
     }
+
+    // MARK: - On-device Hint
+
+    private var onDeviceHint: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "lock.fill")
+            Text("Summarized on-device. Nothing leaves your device.".localized)
+        }
+        .font(.caption2)
+        .foregroundColor(textColor.opacity(0.6))
+        .padding(.horizontal, 14)
+    }
+}
+
+#Preview("Expanded summary") {
+    let vm = ArticleSummaryViewModel(articleContent: "preview", MockUseCaseFactory())
+    vm.isExpanded = true
+    vm.hasGenerated = true
+    vm.summaryMarkdown = "This is a mock summary used only to preview the on-device hint."
+    return ArticleSummaryCardView(viewModel: vm)
+        .padding()
 }
