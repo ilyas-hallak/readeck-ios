@@ -56,18 +56,22 @@ final class BookmarkDetailViewModel {
     var shareOptions: [ArticleShareOption] {
         ArticleShareOption.allCases.filter { option in
             switch option {
-            case .email: canSendByEmail
             case .readeckLink: canShareReadeckLink
-            case .originalLink, .pdf: true
+            case .email, .originalLink, .pdf: true
             }
         }
+    }
+
+    /// The server sends the mail when it can, otherwise the article goes into a local mail draft.
+    func emailShareMode(isOnline: Bool) -> EmailShareMode {
+        canSendByEmail && isOnline ? .server : .localDraft
     }
 
     func isShareOptionEnabled(_ option: ArticleShareOption, isOnline: Bool) -> Bool {
         guard !isPreparingShare else { return false }
         return switch option {
-        case .email: isOnline
         case .readeckLink: isOnline
+        case .email: true
         case .originalLink: true
         case .pdf: canExportPDF
         }
@@ -81,6 +85,12 @@ final class BookmarkDetailViewModel {
             return nil
         }
         return url
+    }
+
+    /// Subject and body for a local mail draft, with the original link of the article.
+    func prepareMailDraft() -> MailDraft? {
+        guard let url = prepareOriginalLinkShare() else { return nil }
+        return MailDraft(subject: bookmarkDetail.title, body: url.absoluteString)
     }
 
     func clearShareError() {

@@ -39,6 +39,9 @@ if auth.HasPermission(r.Context(), "email", "send") {
 - `"email"` ist request-abhängig, nicht instanz-abhängig.
   Es erscheint nur, wenn der aufrufende Request die Permission `email:send` besitzt.
   Ein unauthentifizierter Aufruf von `/api/info` liefert es systematisch nie.
+  Für OAuth-Tokens gibt es keinen eigenen Mail-Scope, `bookmarks:read` enthält `/email/send` bereits (`internal/acls/default.go`).
+  Fehlt `email` bei einem OAuth-Login, hat der Server also kein Mail-Backend: `email.CanSendEmail()` ist nur wahr, wenn `email.host` gesetzt ist (`internal/email/email.go`).
+  Die App bietet "Send by Email" dann trotzdem an und öffnet einen lokalen Mail-Entwurf.
 - Mehr als diese zwei Werte gibt es nicht (`enum: [email, oauth]` in `docs/api/info/routes.yaml`).
 
 Konsequenzen für den Client:
