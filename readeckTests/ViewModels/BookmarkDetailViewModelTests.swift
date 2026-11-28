@@ -797,23 +797,54 @@ struct BookmarkDetailViewModelTests {
         #expect(vm.shareOptions == [.email, .originalLink, .readeckLink, .pdf])
     }
 
-    @Test("Without server info the share sheet offers the original link and the PDF")
+    @Test("Without server info the share sheet offers email, the original link and the PDF")
     func shareSheetFallsBackToLocalOptions() async {
         let (vm, factory) = createSUT()
         factory.mockGetServerInfo.result = .failure(TestError.networkError)
 
         await vm.loadBookmarkDetail(id: "123")
 
-        #expect(vm.shareOptions == [.originalLink, .pdf])
+        #expect(vm.shareOptions == [.email, .originalLink, .pdf])
     }
 
-    @Test("Offline the server backed options are disabled")
+    @Test("Email goes through the server only when it can send mail and the app is online")
+    func emailShareModeFollowsServerAndConnection() async {
+        let (vm, factory) = createSUT()
+        factory.mockGetServerInfo.result = .success(
+            ServerInfo(version: "0.23.2", isReachable: true, features: ["email"])
+        )
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.emailShareMode(isOnline: true) == .server)
+        #expect(vm.emailShareMode(isOnline: false) == .localDraft)
+    }
+
+    @Test("Without the email feature email falls back to a local draft")
+    func emailShareModeWithoutFeature() async {
+        let (vm, _) = createSUT()
+        await vm.loadBookmarkDetail(id: "123")
+
+        #expect(vm.emailShareMode(isOnline: true) == .localDraft)
+    }
+
+    @Test("The local mail draft carries the title and the original link")
+    func mailDraftUsesTitleAndOriginalLink() async {
+        let (vm, _) = createSUT()
+        await vm.loadBookmarkDetail(id: "123")
+
+        let draft = vm.prepareMailDraft()
+
+        #expect(!vm.bookmarkDetail.url.isEmpty)
+        #expect(draft == MailDraft(subject: vm.bookmarkDetail.title, body: vm.bookmarkDetail.url))
+    }
+
+    @Test("Offline only the Readeck link is disabled")
     func serverOptionsDisabledOffline() async {
         let (vm, factory) = createSUT()
         factory.mockGetBookmarkArticle.result = .success("<p>Body</p>")
         await vm.loadArticleContent(id: "123")
 
-        #expect(!vm.isShareOptionEnabled(.email, isOnline: false))
+        #expect(vm.isShareOptionEnabled(.email, isOnline: false))
         #expect(!vm.isShareOptionEnabled(.readeckLink, isOnline: false))
         #expect(vm.isShareOptionEnabled(.originalLink, isOnline: false))
         #expect(vm.isShareOptionEnabled(.pdf, isOnline: false))

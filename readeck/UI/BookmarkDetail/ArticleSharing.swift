@@ -7,6 +7,7 @@ struct ArticleSharing: ViewModifier {
     let viewModel: BookmarkDetailViewModel
     let isOnline: Bool
 
+    @Environment(\.openURL) private var openURL
     @State private var pendingOption: ArticleShareOption?
     @State private var destination: Destination?
 
@@ -29,6 +30,9 @@ struct ArticleSharing: ViewModifier {
                     ActivityView(activityItems: items)
                 case .email:
                     ShareByEmailView(bookmarkId: viewModel.bookmarkDetail.id)
+                case .mailDraft(let draft):
+                    MailComposeView(draft: draft)
+                        .ignoresSafeArea()
                 }
             }
             .alert(
@@ -52,7 +56,7 @@ struct ArticleSharing: ViewModifier {
 
         switch option {
         case .email:
-            destination = .email
+            sendByEmail()
         case .originalLink:
             if let url = viewModel.prepareOriginalLinkShare() {
                 destination = .activity([url])
@@ -73,17 +77,33 @@ struct ArticleSharing: ViewModifier {
             }
         }
     }
+
+    private func sendByEmail() {
+        switch viewModel.emailShareMode(isOnline: isOnline) {
+        case .server:
+            destination = .email
+        case .localDraft:
+            guard let draft = viewModel.prepareMailDraft() else { return }
+            if MailComposeView.canSendMail {
+                destination = .mailDraft(draft)
+            } else if let url = draft.mailtoURL {
+                openURL(url)
+            }
+        }
+    }
 }
 
 extension ArticleSharing {
     enum Destination: Identifiable {
         case activity([Any])
         case email
+        case mailDraft(MailDraft)
 
         var id: String {
             switch self {
             case .activity: "activity"
             case .email: "email"
+            case .mailDraft: "mailDraft"
             }
         }
     }
